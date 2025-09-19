@@ -64,7 +64,7 @@
 </head>
 <body>
 
-    <h1>🛒 Trading Calculator</h1>
+    <h1>🛒 Vak Store Trading Calculator</h1>
 
     <!-- Quick Individual Calculator -->
     <div class="section">
@@ -275,10 +275,14 @@ function renderBuyList(){
     list.appendChild(li);
   });
 
-  // Correct total: sum items excluding account balance (applied in net)
-  let total = buyCart.reduce((sum,e)=>sum+(e.isBalance?0:e.qty*e.price),0);
-  document.getElementById("buyTotal").textContent=total.toFixed(2);
-  calculateNet();
+    // Show Account Balance as positive in Buy Total
+    let total = buyCart.reduce((sum, e) => {
+        if (e.isBalance) return sum + e.price; // show as positive
+        return sum + (e.qty * e.price);
+    }, 0);
+
+    document.getElementById("buyTotal").textContent = total.toFixed(2);
+    calculateNet();
 }
 
 // Sell Multiple Items
@@ -323,10 +327,20 @@ function renderSellList(){
 
 // Net Total
 function calculateNet(){
-  let buyTotal = buyCart.reduce((s,e)=>s+(e.isBalance?0:e.qty*e.price),0);
-  let buyBalance = buyCart.filter(e=>e.isBalance).reduce((s,e)=>s+e.price,0);
-  let sellTotal = sellCart.reduce((s,e)=>s+(e.isBalance?e.price:e.qty*e.price),0);
-  let net = sellTotal - buyTotal - buyBalance;
+    let buyTotal = buyCart.reduce((s, e) => {
+        if (e.isBalance) return s + e.price; // keep positive for receipt
+        return s + (e.qty * e.price);
+    }, 0);
+
+    let sellTotal = sellCart.reduce((s, e) => s + (e.isBalance ? e.price : e.qty * e.price), 0);
+
+    // Net balance: subtract both items and account balance
+    let accountBalance = buyCart.filter(e => e.isBalance).reduce((s, e) => s + e.price, 0);
+    let itemTotal = buyCart.filter(e => !e.isBalance).reduce((s, e) => s + (e.qty * e.price), 0);
+
+    let net = sellTotal - itemTotal - accountBalance;
+
+    document.getElementById("netTotal").textContent = net.toFixed(2);
   document.getElementById("sellTotal").textContent=sellTotal.toFixed(2);
   let netEl=document.getElementById("netTotal");
   netEl.textContent=net.toFixed(2);
@@ -355,35 +369,54 @@ function addPayRow(){
   document.getElementById("payOptions").appendChild(div);
 }
 
-function calculatePayment(){
-  let payList=document.getElementById("payList");
-  payList.innerHTML="";
-  let total = parseFloat(document.getElementById("netTotal").textContent)||0;
-  if(total>=0){
-    document.getElementById("paymentResult").textContent=`✅ Net Balance is ${total.toFixed(2)} BT. No payment needed.`;
-    return;
-  }
-  let owed=-total;
-  let usedPercent=0;
-  document.querySelectorAll(".payRow").forEach(row=>{
-    let name=row.querySelector('input[list="payDatalist"]').value;
-    let percent=parseFloat(row.querySelector("input[type=number]").value)||0;
-    let item=payItems.find(i=>i.name===name);
-    if(item && percent>0){
-      let portion=(percent/100)*owed;
-      let qtyNeeded=portion/item.buyEach;
-      let li=document.createElement("li");
-      li.textContent=`${percent}% = ${qtyNeeded.toFixed(2)} × ${name}`;
-      payList.appendChild(li);
-      usedPercent+=percent;
-    }
-  });
-  if(usedPercent!==100){
-    document.getElementById("paymentResult").textContent=`⚠️ Warning: payment percentages total ${usedPercent}%, not 100%.`;
-  } else {
-    document.getElementById("paymentResult").textContent=`To pay ${owed.toFixed(2)} BT, bring the items listed above.`;
-  }
-}
+        function calculatePayment() {
+            let payList = document.getElementById("payList");
+            payList.innerHTML = "";
+            let total = parseFloat(document.getElementById("netTotal").textContent) || 0;
+            if (total >= 0) {
+                document.getElementById("paymentResult").textContent = `✅ Net Balance is ${total.toFixed(2)} BT. No payment needed.`;
+                return;
+            }
+
+            let owed = -total;
+            let usedPercent = 0;
+
+            // Clear previous "Pay With" items from Sell Cart
+            sellCart = sellCart.filter(e => !e.isPayWith);
+
+            document.querySelectorAll(".payRow").forEach(row => {
+                let name = row.querySelector('input[list="payDatalist"]').value;
+                let percent = parseFloat(row.querySelector("input[type=number]").value) || 0;
+                let item = payItems.find(i => i.name === name);
+
+                if (item && percent > 0) {
+                    let portion = (percent / 100) * owed;
+                    let qtyNeeded = portion / item.buyEach;
+
+                    // 🔹 Round to whole numbers
+                    qtyNeeded = Math.round(qtyNeeded);
+
+                    // Add to receipt
+                    let li = document.createElement("li");
+                    li.textContent = `${percent}% = ${qtyNeeded} × ${name}`;
+                    payList.appendChild(li);
+
+                    // Also push as "virtual sell" item so it affects net balance
+                    sellCart.push({ name, qty: qtyNeeded, price: item.buyEach, isPayWith: true });
+
+                    usedPercent += percent;
+                }
+            });
+
+            if (usedPercent !== 100) {
+                document.getElementById("paymentResult").textContent = `⚠️ Warning: payment percentages total ${usedPercent}%, not 100%.`;
+            } else {
+                document.getElementById("paymentResult").textContent = `To pay ${owed.toFixed(2)} BT, bring the items listed above.`;
+            }
+
+            // Recalculate totals with new "Pay With" items
+            renderSellList();
+        }
 
 loadData();
     </script>
