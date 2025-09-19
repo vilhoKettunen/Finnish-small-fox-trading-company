@@ -1,35 +1,391 @@
 ﻿<!DOCTYPE html>
 <html>
-<style>
-    table, th, td {
-        border: 1px solid black;
-    }
-</style>
+<head>
+    <meta charset="UTF-8">
+    <title>Trading Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        h1, h2, h3 {
+            color: #333;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        select, input[type="number"], input[list], button {
+            padding: 6px;
+            margin: 6px 0;
+        }
+
+        ul {
+            margin-top: 10px;
+        }
+
+        .result {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .payRow {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .payRow input {
+                width: 60px;
+            }
+
+        #totalBox {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .negative {
+            color: red;
+        }
+
+        .positive {
+            color: green;
+        }
+    </style>
+</head>
 <body>
 
-    <h2>TH elements define table headers</h2>
+    <h1>🛒 Trading Calculator</h1>
 
-    <table style="width:600px">
-        <tr>
-            <th>T</th>
-            <th>E</th>
-            <th>S</th>
-            <th>T</th>
-        </tr>
-        <tr>
-            <td>Emil</td>
-            <td>Tobias</td>
-            <td>Linus</td>
-            <td><img src="kukka.jpg" alt="Italian Trulli" width="100" height="100"></td>
-        </tr>
-        <tr>
-            <td>16</td>
-            <td>14</td>
-            <td>10</td>
-            <td>10</td>
-        </tr>
-    </table>
+    <!-- Quick Individual Calculator -->
+    <div class="section">
+        <h2>🔹 Quick Individual Item Calculator</h2>
 
+        <div>
+            <label>
+                Select Full Stack Item:
+                <input list="quickStackList" id="quickStackSelect">
+                <datalist id="quickStackList"></datalist>
+            </label>
+            <input type="number" id="quickStackQty" value="1" min="1">
+            <button onclick="quickStackCalc()">Calculate Stack</button>
+            <div id="quickStackResult" class="result"></div>
+        </div>
 
+        <div>
+            <label>
+                Select Individual Item:
+                <input list="quickIndivList" id="quickIndivSelect">
+                <datalist id="quickIndivList"></datalist>
+            </label>
+            <input type="number" id="quickIndivQty" value="1" min="1">
+            <button onclick="quickIndivCalc()">Calculate Individual</button>
+            <div id="quickIndivResult" class="result"></div>
+        </div>
+    </div>
+
+    <!-- Buy Multiple Items -->
+    <div class="section">
+        <h2>🔹 Buy Multiple Items</h2>
+
+        <h3>Full Stacks</h3>
+        <input list="stackList" id="stackSelect">
+        <datalist id="stackList"></datalist>
+        <input type="number" id="stackQty" value="1" min="1">
+        <button onclick="addStack()">Add Stack</button>
+
+        <h3>Individual Items</h3>
+        <input list="indivList" id="indivSelect">
+        <datalist id="indivList"></datalist>
+        <input type="number" id="indivQty" value="1" min="1">
+        <button onclick="addIndividual()">Add Individual</button>
+
+        <h3>Account Balance</h3>
+        <label>
+            Enter Balance (BT):
+            <input type="number" id="buyAccountBalanceInput" value="0">
+        </label>
+        <button onclick="addBuyAccountBalance()">➕ Add Balance</button>
+
+        <ul id="buyList"></ul>
+        <div id="buyTotalBox" class="negative">Buy Total: <span id="buyTotal">0.00</span> BT</div>
+    </div>
+
+    <!-- Sell Multiple Items -->
+    <div class="section">
+        <h2>🔹 Sell Multiple Items</h2>
+
+        <h3>Full Stacks</h3>
+        <input list="sellStackList" id="sellStackSelect">
+        <datalist id="sellStackList"></datalist>
+        <input type="number" id="sellStackQty" value="1" min="1">
+        <button onclick="addSellStack()">Add Stack</button>
+
+        <h3>Individual Items</h3>
+        <input list="sellIndivList" id="sellIndivSelect">
+        <datalist id="sellIndivList"></datalist>
+        <input type="number" id="sellIndivQty" value="1" min="1">
+        <button onclick="addSellIndividual()">Add Individual</button>
+
+        <h3>Account Balance</h3>
+        <label>
+            Enter Balance (BT):
+            <input type="number" id="accountBalanceInput" value="0">
+        </label>
+        <button onclick="addAccountBalance()">➕ Add Balance</button>
+
+        <ul id="sellList"></ul>
+        <div id="sellTotalBox" class="positive">Sell Total: <span id="sellTotal">0.00</span> BT</div>
+    </div>
+
+    <!-- Combined Totals -->
+    <div class="section">
+        <h2>🔹 Combined Totals</h2>
+        <div id="combinedTotalBox">Net Balance: <span id="netTotal">0.00</span> BT</div>
+    </div>
+
+    <!-- Pay With -->
+    <div class="section">
+        <h2>🔹 Pay With</h2>
+        <div id="payOptions"></div>
+        <button onclick="addPayRow()">➕ Add Item</button>
+        <ul id="payList"></ul>
+        <button onclick="calculatePayment()">Calculate Payment</button>
+        <div id="paymentResult" class="result"></div>
+    </div>
+
+    <script>
+const sheetURL = "https://docs.google.com/spreadsheets/d/1ObWed3580CeI9m5sN3qPVTgU67WH8Qkg-cot6etPOr4/gviz/tq?tqx=out:json";
+let items=[], payItems=[], buyCart=[], sellCart=[];
+
+async function loadData(){
+  let response=await fetch(sheetURL);
+  let text=await response.text();
+  let json=JSON.parse(text.substring(47,text.length-2));
+  let rows=json.table.rows;
+  rows.forEach(row=>{
+    let name=row.c[0]?.v||"";
+    let buyStack=row.c[1]?.v||"";
+    let sellStack=row.c[2]?.v||"";
+    let bundleSize=row.c[4]?.v||1;
+    let buyEach=row.c[5]?.v||"";
+    let sellEach=row.c[6]?.v||"";
+    if(!name) return;
+    if((buyStack==="X"&&sellStack==="X")&&(buyEach==="X"&&sellEach==="X")) return;
+    let item={
+      name,
+      bundleSize,
+      buyStack:buyStack!=="X"?parseFloat(buyStack):null,
+      sellStack:sellStack!=="X"?parseFloat(sellStack):null,
+      buyEach:buyEach!=="X"?parseFloat(buyEach):null,
+      sellEach:sellEach!=="X"?parseFloat(sellEach):null
+    };
+    items.push(item);
+    if(item.buyEach) payItems.push(item);
+  });
+  populateSelectors();
+  addPayRow();
+}
+
+function populateSelectors(){
+  const stackList=document.getElementById("stackList");
+  const indivList=document.getElementById("indivList");
+  const sellStackList=document.getElementById("sellStackList");
+  const sellIndivList=document.getElementById("sellIndivList");
+  const quickStackList=document.getElementById("quickStackList");
+  const quickIndivList=document.getElementById("quickIndivList");
+  items.forEach(item=>{
+    if(item.sellStack){
+      stackList.appendChild(new Option(item.name,item.name));
+      quickStackList.appendChild(new Option(item.name,item.name));
+    }
+    if(item.sellEach){
+      indivList.appendChild(new Option(item.name,item.name));
+      quickIndivList.appendChild(new Option(item.name,item.name));
+    }
+    if(item.buyStack) sellStackList.appendChild(new Option(item.name,item.name));
+    if(item.buyEach) sellIndivList.appendChild(new Option(item.name,item.name));
+  });
+}
+
+// Quick Calculator
+function quickStackCalc(){
+  let name=document.getElementById("quickStackSelect").value;
+  let qty=parseInt(document.getElementById("quickStackQty").value)||0;
+  let item=items.find(i=>i.name===name);
+  if(!item) return;
+  let buyText=item.buyStack?`${qty} × ${item.bundleSize} ${item.name} buys for ${(qty*item.buyStack).toFixed(2)} BT`:"";
+  let sellText=item.sellStack?`${qty} × ${item.bundleSize} ${item.name} sells for ${(qty*item.sellStack).toFixed(2)} BT`:"";
+  document.getElementById("quickStackResult").textContent=[buyText,sellText].filter(Boolean).join(" | ");
+}
+function quickIndivCalc(){
+  let name=document.getElementById("quickIndivSelect").value;
+  let qty=parseInt(document.getElementById("quickIndivQty").value)||0;
+  let item=items.find(i=>i.name===name);
+  if(!item) return;
+  let buyText=item.buyEach?`${qty} × ${item.name} buys for ${(qty*item.buyEach).toFixed(2)} BT`:"";
+  let sellText=item.sellEach?`${qty} × ${item.name} sells for ${(qty*item.sellEach).toFixed(2)} BT`:"";
+  document.getElementById("quickIndivResult").textContent=[buyText,sellText].filter(Boolean).join(" | ");
+}
+
+// Buy Multiple Items
+function addStack(){
+  let name=document.getElementById("stackSelect").value;
+  let qty=parseInt(document.getElementById("stackQty").value)||0;
+  let item=items.find(i=>i.name===name);
+  if(!item||!item.sellStack) return;
+  buyCart.push({name,qty,price:item.sellStack,bundleSize:item.bundleSize});
+  renderBuyList();
+}
+function addIndividual(){
+  let name=document.getElementById("indivSelect").value;
+  let qty=parseInt(document.getElementById("indivQty").value)||0;
+  let item=items.find(i=>i.name===name);
+  if(!item||!item.sellEach) return;
+  buyCart.push({name,qty,price:item.sellEach});
+  renderBuyList();
+}
+function addBuyAccountBalance(){
+  let balance=parseFloat(document.getElementById("buyAccountBalanceInput").value)||0;
+  if(balance<=0) return;
+  buyCart.push({name:"Account Balance",qty:1,price:balance,isBalance:true});
+  renderBuyList();
+}
+function renderBuyList(){
+  const list=document.getElementById("buyList");
+  list.innerHTML="";
+  buyCart.forEach((e,index)=>{
+    let li=document.createElement("li");
+    if(e.isBalance) li.textContent=`Account Balance: ${e.price.toFixed(2)} BT`;
+    else if(e.bundleSize) li.textContent=`${e.qty} × ${e.bundleSize} ${e.name} (${e.price} BT stack)`;
+    else li.textContent=`${e.qty} × ${e.name} (${e.price} BT each)`;
+    let removeBtn=document.createElement("button");
+    removeBtn.textContent="❌";
+    removeBtn.onclick=()=>{buyCart.splice(index,1); renderBuyList();};
+    li.appendChild(removeBtn);
+    list.appendChild(li);
+  });
+
+  // Correct total: sum items excluding account balance (applied in net)
+  let total = buyCart.reduce((sum,e)=>sum+(e.isBalance?0:e.qty*e.price),0);
+  document.getElementById("buyTotal").textContent=total.toFixed(2);
+  calculateNet();
+}
+
+// Sell Multiple Items
+function addSellStack(){
+  let name=document.getElementById("sellStackSelect").value;
+  let qty=parseInt(document.getElementById("sellStackQty").value)||0;
+  let item=items.find(i=>i.name===name);
+  if(!item||!item.buyStack) return;
+  sellCart.push({name,qty,price:item.buyStack,bundleSize:item.bundleSize});
+  renderSellList();
+}
+function addSellIndividual(){
+  let name=document.getElementById("sellIndivSelect").value;
+  let qty=parseInt(document.getElementById("sellIndivQty").value)||0;
+  let item=items.find(i=>i.name===name);
+  if(!item||!item.buyEach) return;
+  sellCart.push({name,qty,price:item.buyEach});
+  renderSellList();
+}
+function addAccountBalance(){
+  let balance=parseFloat(document.getElementById("accountBalanceInput").value)||0;
+  if(balance<=0) return;
+  sellCart.push({name:"Account Balance",qty:1,price:balance,isBalance:true});
+  renderSellList();
+}
+function renderSellList(){
+  const list=document.getElementById("sellList");
+  list.innerHTML="";
+  sellCart.forEach((e,index)=>{
+    let li=document.createElement("li");
+    if(e.isBalance) li.textContent=`Account Balance: ${e.price.toFixed(2)} BT`;
+    else if(e.bundleSize) li.textContent=`${e.qty} × ${e.bundleSize} ${e.name} (${e.price} BT stack)`;
+    else li.textContent=`${e.qty} × ${e.name} (${e.price} BT each)`;
+    let removeBtn=document.createElement("button");
+    removeBtn.textContent="❌";
+    removeBtn.onclick=()=>{sellCart.splice(index,1); renderSellList();};
+    li.appendChild(removeBtn);
+    list.appendChild(li);
+  });
+  calculateNet();
+}
+
+// Net Total
+function calculateNet(){
+  let buyTotal = buyCart.reduce((s,e)=>s+(e.isBalance?0:e.qty*e.price),0);
+  let buyBalance = buyCart.filter(e=>e.isBalance).reduce((s,e)=>s+e.price,0);
+  let sellTotal = sellCart.reduce((s,e)=>s+(e.isBalance?e.price:e.qty*e.price),0);
+  let net = sellTotal - buyTotal - buyBalance;
+  document.getElementById("sellTotal").textContent=sellTotal.toFixed(2);
+  let netEl=document.getElementById("netTotal");
+  netEl.textContent=net.toFixed(2);
+  netEl.className=net>=0?"positive":"negative";
+}
+
+// Pay With Section
+function addPayRow(){
+  const div=document.createElement("div");
+  div.className="payRow";
+  const input=document.createElement("input");
+  input.type="number"; input.value=0; input.min=0; input.max=100;
+  const select=document.createElement("input");
+  select.setAttribute("list","payDatalist");
+  const datalist=document.getElementById("payDatalist")||document.createElement("datalist");
+  datalist.id="payDatalist";
+  if(!document.getElementById("payDatalist")) document.body.appendChild(datalist);
+  payItems.forEach(i=>datalist.appendChild(new Option(i.name,i.name)));
+  const removeBtn=document.createElement("button");
+  removeBtn.textContent="❌"; removeBtn.type="button";
+  removeBtn.onclick=()=>{div.remove();};
+  div.appendChild(select);
+  div.appendChild(document.createTextNode("% of total:"));
+  div.appendChild(input);
+  div.appendChild(removeBtn);
+  document.getElementById("payOptions").appendChild(div);
+}
+
+function calculatePayment(){
+  let payList=document.getElementById("payList");
+  payList.innerHTML="";
+  let total = parseFloat(document.getElementById("netTotal").textContent)||0;
+  if(total>=0){
+    document.getElementById("paymentResult").textContent=`✅ Net Balance is ${total.toFixed(2)} BT. No payment needed.`;
+    return;
+  }
+  let owed=-total;
+  let usedPercent=0;
+  document.querySelectorAll(".payRow").forEach(row=>{
+    let name=row.querySelector('input[list="payDatalist"]').value;
+    let percent=parseFloat(row.querySelector("input[type=number]").value)||0;
+    let item=payItems.find(i=>i.name===name);
+    if(item && percent>0){
+      let portion=(percent/100)*owed;
+      let qtyNeeded=portion/item.buyEach;
+      let li=document.createElement("li");
+      li.textContent=`${percent}% = ${qtyNeeded.toFixed(2)} × ${name}`;
+      payList.appendChild(li);
+      usedPercent+=percent;
+    }
+  });
+  if(usedPercent!==100){
+    document.getElementById("paymentResult").textContent=`⚠️ Warning: payment percentages total ${usedPercent}%, not 100%.`;
+  } else {
+    document.getElementById("paymentResult").textContent=`To pay ${owed.toFixed(2)} BT, bring the items listed above.`;
+  }
+}
+
+loadData();
+    </script>
 </body>
 </html>
