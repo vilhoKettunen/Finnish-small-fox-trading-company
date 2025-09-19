@@ -79,14 +79,13 @@
             padding: 10px;
             margin-top: 10px;
             border-radius: 6px;
-            position: relative;
         }
 
             .info-box button {
-                position: absolute;
-                top: 5px;
-                right: 5px;
+                position: static;
+                margin-top: 5px;
                 font-size: 0.8em;
+                cursor: pointer;
             }
     </style>
 </head>
@@ -99,8 +98,8 @@
         <h2>🔹 Quick Individual Item Calculator</h2>
         <button class="more-info-btn" onclick="toggleInfo('quickInfo')">More Info</button>
         <div id="quickInfo" class="info-box">
-            <button onclick="toggleInfo('quickInfo')">❌ Close</button>
             <p>This tool lets you quickly calculate the price of a single stack or individual items. Choose the item, enter quantity, and it shows both buy and sell values.</p>
+            <button onclick="toggleInfo('quickInfo')">❌ Close</button>
         </div>
 
         <div>
@@ -131,8 +130,8 @@
         <h2>🔹 Buy Multiple Items</h2>
         <button class="more-info-btn" onclick="toggleInfo('buyInfo')">More Info</button>
         <div id="buyInfo" class="info-box">
-            <button onclick="toggleInfo('buyInfo')">❌ Close</button>
             <p>Use this to add multiple items you want to buy. You can add full stacks or individuals, and even enter your existing account balance. The Buy Total updates automatically.</p>
+            <button onclick="toggleInfo('buyInfo')">❌ Close</button>
         </div>
 
         <h3>Full Stacks</h3>
@@ -163,8 +162,8 @@
         <h2>🔹 Sell Multiple Items</h2>
         <button class="more-info-btn" onclick="toggleInfo('sellInfo')">More Info</button>
         <div id="sellInfo" class="info-box">
-            <button onclick="toggleInfo('sellInfo')">❌ Close</button>
             <p>Here you can add items you are selling. Both full stacks and individual items are supported, as well as your current account balance. The Sell Total will be calculated automatically.</p>
+            <button onclick="toggleInfo('sellInfo')">❌ Close</button>
         </div>
 
         <h3>Full Stacks</h3>
@@ -195,8 +194,8 @@
         <h2>🔹 Combined Totals</h2>
         <button class="more-info-btn" onclick="toggleInfo('combinedInfo')">More Info</button>
         <div id="combinedInfo" class="info-box">
-            <button onclick="toggleInfo('combinedInfo')">❌ Close</button>
             <p>This section calculates the Net Balance: how much you owe or how much you will receive after buying and selling items.</p>
+            <button onclick="toggleInfo('combinedInfo')">❌ Close</button>
         </div>
         <div id="combinedTotalBox">Net Balance: <span id="netTotal">0.00</span> BT</div>
     </div>
@@ -206,8 +205,8 @@
         <h2>🔹 Pay With</h2>
         <button class="more-info-btn" onclick="toggleInfo('payInfo')">More Info</button>
         <div id="payInfo" class="info-box">
-            <button onclick="toggleInfo('payInfo')">❌ Close</button>
             <p>If your Net Balance is negative, you can choose which items you want to pay with. Select an item, choose what % of the balance it covers, and it will show the quantities you need to bring.</p>
+            <button onclick="toggleInfo('payInfo')">❌ Close</button>
         </div>
         <div id="payOptions"></div>
         <button onclick="addPayRow()">➕ Add Item</button>
@@ -328,6 +327,7 @@
                 list.appendChild(li);
             });
 
+            // Show Account Balance as positive in Buy Total
             let total = buyCart.reduce((sum, e) => {
                 if (e.isBalance) return sum + e.price;
                 return sum + (e.qty * e.price);
