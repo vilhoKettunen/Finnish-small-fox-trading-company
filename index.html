@@ -10,490 +10,585 @@
             max-width: 1000px;
             margin: auto;
         }
-
-        h1, h2, h3 {
-            color: #333;
-        }
-
-        .section {
-            margin-bottom: 25px;
-            padding: 15px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            position: relative;
-        }
-
-        select, input[type="number"], input[list], button {
-            padding: 6px;
-            margin: 6px 0;
-        }
-
-        ul {
-            margin-top: 10px;
-        }
-
-        .result {
-            margin-top: 10px;
-            font-weight: bold;
-        }
-
-        .payRow {
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-            .payRow input {
-                width: 60px;
-            }
-
-        #totalBox {
-            font-size: 1.3em;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-
-        .negative {
-            color: red;
-        }
-
-        .positive {
-            color: green;
-        }
-
-        /* 🔹 More Info System */
-        .more-info-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 0.8em;
-            padding: 4px 8px;
-            cursor: pointer;
-        }
-
-        .info-box {
-            display: none;
-            background: #f9f9f9;
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-top: 10px;
-            border-radius: 6px;
-        }
-
-            .info-box button {
-                position: static;
-                margin-top: 5px;
-                font-size: 0.8em;
-                cursor: pointer;
-            }
+        h1,h2,h3 { color:#333; }
+        .section { margin-bottom:25px; padding:15px; border:1px solid #ccc; border-radius:8px; position:relative; }
+        select, input[type="number"], input[list], input[type="text"], button { padding:6px; margin:6px 0; }
+        ul { margin-top:10px; padding-left:18px; }
+        .result { margin-top:10px; font-weight:bold; }
+        .payRow { margin-bottom:8px; display:flex; align-items:center; gap:10px; }
+        .payRow input { width:60px; }
+        .negative { color:red; }
+        .positive { color:green; }
+        .more-info-btn { position:absolute; top:10px; right:10px; font-size:0.8em; padding:4px 8px; cursor:pointer; }
+        .info-box { display:none; background:#f9f9f9; border:1px solid #ccc; padding:10px; margin-top:10px; border-radius:6px; }
+        .info-box button { display:block; margin-top:6px; font-size:0.8em; cursor:pointer; }
+        li .remove { margin-left:8px; color:red; cursor:pointer; }
+        li.payment-item { font-style:italic; }
     </style>
 </head>
 <body>
 
-    <h1>🛒 Vak Store Trading Calculator</h1>
+<h1>🛒 Vak Store Trading Calculator</h1>
 
-    <!-- Quick Individual Calculator -->
-    <div class="section">
-        <h2>🔹 Quick Individual Item Calculator</h2>
-        <button class="more-info-btn" onclick="toggleInfo('quickInfo')">More Info</button>
-        <div id="quickInfo" class="info-box">
-            <p>This tool lets you quickly calculate the price of a single stack or individual items. Choose the item, enter quantity, and it shows both buy and sell values.</p>
-            <button onclick="toggleInfo('quickInfo')">❌ Close</button>
-        </div>
-
-        <div>
-            <label>
-                Select Full Stack Item:
-                <input list="quickStackList" id="quickStackSelect">
-                <datalist id="quickStackList"></datalist>
-            </label>
-            <input type="number" id="quickStackQty" value="1" min="1">
-            <button onclick="quickStackCalc()">Calculate Stack</button>
-            <div id="quickStackResult" class="result"></div>
-        </div>
-
-        <div>
-            <label>
-                Select Individual Item:
-                <input list="quickIndivList" id="quickIndivSelect">
-                <datalist id="quickIndivList"></datalist>
-            </label>
-            <input type="number" id="quickIndivQty" value="1" min="1">
-            <button onclick="quickIndivCalc()">Calculate Individual</button>
-            <div id="quickIndivResult" class="result"></div>
-        </div>
+<!-- Quick Individual Calculator -->
+<div class="section">
+    <h2>🔹 Quick Individual Item Calculator</h2>
+    <button class="more-info-btn" onclick="toggleInfo('quickInfo')">More Info</button>
+    <div id="quickInfo" class="info-box">
+        <p>Quick calc for a stack or individual item. Pick item and qty to see buy & sell totals.</p>
+        <button onclick="toggleInfo('quickInfo')">❌ Close</button>
     </div>
 
-    <!-- Buy Multiple Items -->
-    <div class="section">
-        <h2>🔹 Buy Multiple Items</h2>
-        <button class="more-info-btn" onclick="toggleInfo('buyInfo')">More Info</button>
-        <div id="buyInfo" class="info-box">
-            <p>Use this to add multiple items you want to buy. You can add full stacks or individuals, and even enter your existing account balance. The Buy Total updates automatically.</p>
-            <button onclick="toggleInfo('buyInfo')">❌ Close</button>
-        </div>
-
-        <h3>Full Stacks</h3>
-        <input list="stackList" id="stackSelect">
-        <datalist id="stackList"></datalist>
-        <input type="number" id="stackQty" value="1" min="1">
-        <button onclick="addStack()">Add Stack</button>
-
-        <h3>Individual Items</h3>
-        <input list="indivList" id="indivSelect">
-        <datalist id="indivList"></datalist>
-        <input type="number" id="indivQty" value="1" min="1">
-        <button onclick="addIndividual()">Add Individual</button>
-
-        <h3>Account Balance</h3>
-        <label>
-            Enter Balance (BT):
-            <input type="number" id="buyAccountBalanceInput" value="0">
+    <div>
+        <label>Select Full Stack Item:
+            <input list="quickStackList" id="quickStackSelect">
+            <datalist id="quickStackList"></datalist>
         </label>
-        <button onclick="addBuyAccountBalance()">➕ Add Balance</button>
-
-        <ul id="buyList"></ul>
-        <div id="buyTotalBox" class="negative">Buy Total: <span id="buyTotal">0.00</span> BT</div>
+        <input type="number" id="quickStackQty" value="1" min="1">
+        <button onclick="quickStackCalc()">Calculate Stack</button>
+        <div id="quickStackResult" class="result"></div>
     </div>
 
-    <!-- Sell Multiple Items -->
-    <div class="section">
-        <h2>🔹 Sell Multiple Items</h2>
-        <button class="more-info-btn" onclick="toggleInfo('sellInfo')">More Info</button>
-        <div id="sellInfo" class="info-box">
-            <p>Here you can add items you are selling. Both full stacks and individual items are supported, as well as your current account balance. The Sell Total will be calculated automatically. Pay With selections are added here to update Net Balance.</p>
-            <button onclick="toggleInfo('sellInfo')">❌ Close</button>
-        </div>
-
-        <h3>Full Stacks</h3>
-        <input list="sellStackList" id="sellStackSelect">
-        <datalist id="sellStackList"></datalist>
-        <input type="number" id="sellStackQty" value="1" min="1">
-        <button onclick="addSellStack()">Add Stack</button>
-
-        <h3>Individual Items</h3>
-        <input list="sellIndivList" id="sellIndivSelect">
-        <datalist id="sellIndivList"></datalist>
-        <input type="number" id="sellIndivQty" value="1" min="1">
-        <button onclick="addSellIndividual()">Add Individual</button>
-
-        <h3>Account Balance</h3>
-        <label>
-            Enter Balance (BT):
-            <input type="number" id="accountBalanceInput" value="0">
+    <div>
+        <label>Select Individual Item:
+            <input list="quickIndivList" id="quickIndivSelect">
+            <datalist id="quickIndivList"></datalist>
         </label>
-        <button onclick="addAccountBalance()">➕ Add Balance</button>
+        <input type="number" id="quickIndivQty" value="1" min="1">
+        <button onclick="quickIndivCalc()">Calculate Individual</button>
+        <div id="quickIndivResult" class="result"></div>
+    </div>
+</div>
 
-        <ul id="sellList"></ul>
-        <div id="sellTotalBox" class="positive">Sell Total: <span id="sellTotal">0.00</span> BT</div>
+<!-- Buy Multiple Items -->
+<div class="section">
+    <h2>🔹 Buy Multiple Items</h2>
+    <button class="more-info-btn" onclick="toggleInfo('buyInfo')">More Info</button>
+    <div id="buyInfo" class="info-box">
+        <p>Add stacks/individuals you want to buy. Add account balance and custom entries if needed. Totals update automatically.</p>
+        <button onclick="toggleInfo('buyInfo')">❌ Close</button>
     </div>
 
-    <!-- Combined Totals -->
-    <div class="section">
-        <h2>🔹 Combined Totals</h2>
-        <button class="more-info-btn" onclick="toggleInfo('combinedInfo')">More Info</button>
-        <div id="combinedInfo" class="info-box">
-            <p>This section calculates the Net Balance: how much you owe or how much you will receive after buying and selling items.</p>
-            <button onclick="toggleInfo('combinedInfo')">❌ Close</button>
-        </div>
-        <div id="combinedTotalBox">Net Balance: <span id="netTotal">0.00</span> BT</div>
+    <h3>Full Stacks</h3>
+    <input list="stackList" id="stackSelect">
+    <datalist id="stackList"></datalist>
+    <input type="number" id="stackQty" value="1" min="1">
+    <button onclick="addStack()">Add Stack</button>
+
+    <h3>Individual Items</h3>
+    <input list="indivList" id="indivSelect">
+    <datalist id="indivList"></datalist>
+    <input type="number" id="indivQty" value="1" min="1">
+    <button onclick="addIndividual()">Add Individual</button>
+
+    <h3>Account Balance</h3>
+    <label>Enter Balance (BT):
+        <input type="number" id="buyAccountBalanceInput" value="0">
+    </label>
+    <button onclick="addBuyAccountBalance()">➕ Add Balance</button>
+
+    <h3>Custom Inputs</h3>
+    <div>
+        <strong>From Spreadsheet — Stack</strong><br>
+        <input list="stackList" id="customBuyStackSelect" placeholder="Pick item from list">
+        <input type="number" id="customBuyStackQty" placeholder="Quantity" min="1">
+        <input type="number" id="customBuyStackPrice" placeholder="Price per Stack" step="0.01">
+        <button onclick="addCustomBuyStack()">Add Custom Stack</button>
+    </div>
+    <div>
+        <strong>From Spreadsheet — Individual</strong><br>
+        <input list="indivList" id="customBuyIndivSelect" placeholder="Pick item from list">
+        <input type="number" id="customBuyIndivQty" placeholder="Quantity" min="1">
+        <input type="number" id="customBuyIndivPrice" placeholder="Price per Each" step="0.01">
+        <button onclick="addCustomBuyIndividual()">Add Custom Individual</button>
+    </div>
+    <div>
+        <strong>Fully Custom (not on spreadsheet)</strong><br>
+        <input type="text" id="customBuyName" placeholder="Name">
+        <input type="number" id="customBuyQty" placeholder="Quantity (pieces)" min="1">
+        <input type="number" id="customBuyStackSize" placeholder="Stack size (pieces per stack)" min="1">
+        <input type="number" id="customBuyPrice" placeholder="Price per Stack" step="0.01">
+        <button onclick="addFullyCustomBuy()">Add Fully Custom</button>
     </div>
 
-    <!-- Pay With -->
-    <div class="section">
-        <h2>🔹 Pay With</h2>
-        <button class="more-info-btn" onclick="toggleInfo('payInfo')">More Info</button>
-        <div id="payInfo" class="info-box">
-            <p>If your Net Balance is negative, you can choose which items you want to pay with. Select an item, choose what % of the balance it covers, and it will show the quantities you need to bring. These will also appear in the Sell Multiple Items list.</p>
-            <button onclick="toggleInfo('payInfo')">❌ Close</button>
-        </div>
-        <div id="payOptions"></div>
-        <button onclick="addPayRow()">➕ Add Item</button>
-        <ul id="payList"></ul>
-        <button onclick="calculatePayment()">Calculate Payment</button>
-        <div id="paymentResult" class="result"></div>
+    <ul id="buyList"></ul>
+    <div id="buyTotalBox" class="negative">Buy Total: <span id="buyTotal">0.00</span> BT</div>
+</div>
+
+<!-- Sell Multiple Items -->
+<div class="section">
+    <h2>🔹 Sell Multiple Items</h2>
+    <button class="more-info-btn" onclick="toggleInfo('sellInfo')">More Info</button>
+    <div id="sellInfo" class="info-box">
+        <p>Add items you sell. Pay With selections will be added here so the customer can see what to bring.</p>
+        <button onclick="toggleInfo('sellInfo')">❌ Close</button>
     </div>
 
-    <script>
-        const sheetURL = "https://docs.google.com/spreadsheets/d/1ObWed3580CeI9m5sN3qPVTgU67WH8Qkg-cot6etPOr4/gviz/tq?tqx=out:json";
-        let items = [], payItems = [], buyCart = [], sellCart = [], payCart = [];
+    <h3>Full Stacks</h3>
+    <input list="sellStackList" id="sellStackSelect">
+    <datalist id="sellStackList"></datalist>
+    <input type="number" id="sellStackQty" value="1" min="1">
+    <button onclick="addSellStack()">Add Stack</button>
 
-        async function loadData() {
-            let response = await fetch(sheetURL);
-            let text = await response.text();
-            let json = JSON.parse(text.substring(47, text.length - 2));
-            let rows = json.table.rows;
-            rows.forEach(row => {
-                let name = row.c[0]?.v || "";
-                let buyStack = row.c[1]?.v || "";
-                let sellStack = row.c[2]?.v || "";
-                let bundleSize = row.c[4]?.v || 1;
-                let buyEach = row.c[5]?.v || "";
-                let sellEach = row.c[6]?.v || "";
-                if (!name) return;
-                if ((buyStack === "X" && sellStack === "X") && (buyEach === "X" && sellEach === "X")) return;
-                let item = {
-                    name,
-                    bundleSize,
-                    buyStack: buyStack !== "X" ? parseFloat(buyStack) : null,
-                    sellStack: sellStack !== "X" ? parseFloat(sellStack) : null,
-                    buyEach: buyEach !== "X" ? parseFloat(buyEach) : null,
-                    sellEach: sellEach !== "X" ? parseFloat(sellEach) : null
-                };
-                items.push(item);
-                if (item.buyEach) payItems.push(item);
-            });
-            populateSelectors();
-            addPayRow();
-        }
+    <h3>Individual Items</h3>
+    <input list="sellIndivList" id="sellIndivSelect">
+    <datalist id="sellIndivList"></datalist>
+    <input type="number" id="sellIndivQty" value="1" min="1">
+    <button onclick="addSellIndividual()">Add Individual</button>
 
-        function populateSelectors() {
-            const stackList = document.getElementById("stackList");
-            const indivList = document.getElementById("indivList");
-            const sellStackList = document.getElementById("sellStackList");
-            const sellIndivList = document.getElementById("sellIndivList");
-            const quickStackList = document.getElementById("quickStackList");
-            const quickIndivList = document.getElementById("quickIndivList");
-            items.forEach(item => {
-                if (item.sellStack) {
-                    stackList.appendChild(new Option(item.name, item.name));
-                    quickStackList.appendChild(new Option(item.name, item.name));
-                }
-                if (item.sellEach) {
-                    indivList.appendChild(new Option(item.name, item.name));
-                    quickIndivList.appendChild(new Option(item.name, item.name));
-                }
-                if (item.buyStack) sellStackList.appendChild(new Option(item.name, item.name));
-                if (item.buyEach) sellIndivList.appendChild(new Option(item.name, item.name));
-            });
-        }
+    <h3>Account Balance</h3>
+    <label>Enter Balance (BT):
+        <input type="number" id="accountBalanceInput" value="0">
+    </label>
+    <button onclick="addAccountBalance()">➕ Add Balance</button>
 
-        // Quick Calculator
-        function quickStackCalc() {
-            let name = document.getElementById("quickStackSelect").value;
-            let qty = parseInt(document.getElementById("quickStackQty").value) || 0;
-            let item = items.find(i => i.name === name);
-            if (!item) return;
-            let buyText = item.buyStack ? `${qty} × ${item.bundleSize} ${item.name} buys for ${(qty * item.buyStack).toFixed(2)} BT` : "";
-            let sellText = item.sellStack ? `${qty} × ${item.bundleSize} ${item.name} sells for ${(qty * item.sellStack).toFixed(2)} BT` : "";
-            document.getElementById("quickStackResult").textContent = [buyText, sellText].filter(Boolean).join(" | ");
-        }
-        function quickIndivCalc() {
-            let name = document.getElementById("quickIndivSelect").value;
-            let qty = parseInt(document.getElementById("quickIndivQty").value) || 0;
-            let item = items.find(i => i.name === name);
-            if (!item) return;
-            let buyText = item.buyEach ? `${qty} × ${item.name} buys for ${(qty * item.buyEach).toFixed(2)} BT` : "";
-            let sellText = item.sellEach ? `${qty} × ${item.name} sells for ${(qty * item.sellEach).toFixed(2)} BT` : "";
-            document.getElementById("quickIndivResult").textContent = [buyText, sellText].filter(Boolean).join(" | ");
-        }
+    <h3>Custom Inputs</h3>
+    <div>
+        <strong>From Spreadsheet — Stack</strong><br>
+        <input list="sellStackList" id="customSellStackSelect" placeholder="Pick item from list">
+        <input type="number" id="customSellStackQty" placeholder="Quantity" min="1">
+        <input type="number" id="customSellStackPrice" placeholder="Price per Stack" step="0.01">
+        <button onclick="addCustomSellStack()">Add Custom Stack</button>
+    </div>
+    <div>
+        <strong>From Spreadsheet — Individual</strong><br>
+        <input list="sellIndivList" id="customSellIndivSelect" placeholder="Pick item from list">
+        <input type="number" id="customSellIndivQty" placeholder="Quantity" min="1">
+        <input type="number" id="customSellIndivPrice" placeholder="Price per Each" step="0.01">
+        <button onclick="addCustomSellIndividual()">Add Custom Individual</button>
+    </div>
+    <div>
+        <strong>Fully Custom (not on spreadsheet)</strong><br>
+        <input type="text" id="customSellName" placeholder="Name">
+        <input type="number" id="customSellQty" placeholder="Quantity (pieces)" min="1">
+        <input type="number" id="customSellStackSize" placeholder="Stack size (pieces per stack)" min="1">
+        <input type="number" id="customSellPrice" placeholder="Price per Stack" step="0.01">
+        <button onclick="addFullyCustomSell()">Add Fully Custom</button>
+    </div>
 
-        // Buy Multiple Items
-        function addStack() {
-            let name = document.getElementById("stackSelect").value;
-            let qty = parseInt(document.getElementById("stackQty").value) || 0;
-            let item = items.find(i => i.name === name);
-            if (!item || !item.sellStack) return;
-            buyCart.push({ name, qty, price: item.sellStack, bundleSize: item.bundleSize });
-            renderBuyList();
-        }
-        function addIndividual() {
-            let name = document.getElementById("indivSelect").value;
-            let qty = parseInt(document.getElementById("indivQty").value) || 0;
-            let item = items.find(i => i.name === name);
-            if (!item || !item.sellEach) return;
-            buyCart.push({ name, qty, price: item.sellEach });
-            renderBuyList();
-        }
-        function addBuyAccountBalance() {
-            let balance = parseFloat(document.getElementById("buyAccountBalanceInput").value) || 0;
-            if (balance <= 0) return;
-            buyCart.push({ name: "Account Balance", qty: 1, price: balance, isBalance: true });
-            renderBuyList();
-        }
-        function renderBuyList() {
-            const list = document.getElementById("buyList");
-            list.innerHTML = "";
-            buyCart.forEach((e, index) => {
-                let li = document.createElement("li");
-                if (e.isBalance) li.textContent = `Account Balance: ${e.price.toFixed(2)} BT`;
-                else if (e.bundleSize) li.textContent = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price} BT stack)`;
-                else li.textContent = `${e.qty} × ${e.name} (${e.price} BT each)`;
-                let removeBtn = document.createElement("button");
-                removeBtn.textContent = "❌";
-                removeBtn.onclick = () => { buyCart.splice(index, 1); renderBuyList(); };
-                li.appendChild(removeBtn);
-                list.appendChild(li);
-            });
+    <ul id="sellList"></ul>
+    <div id="sellTotalBox" class="positive">Sell Total: <span id="sellTotal">0.00</span> BT</div>
+</div>
 
-            let total = buyCart.reduce((sum, e) => e.isBalance ? sum + e.price : sum + (e.qty * e.price), 0);
-            document.getElementById("buyTotal").textContent = total.toFixed(2);
-            calculateNet();
-        }
+<!-- Combined Totals -->
+<div class="section">
+    <h2>🔹 Combined Totals</h2>
+    <button class="more-info-btn" onclick="toggleInfo('combinedInfo')">More Info</button>
+    <div id="combinedInfo" class="info-box">
+        <p>This shows the Net Balance: how much is owed (negative) or available (positive).</p>
+        <button onclick="toggleInfo('combinedInfo')">❌ Close</button>
+    </div>
+    <div id="combinedTotalBox">Net Balance: <span id="netTotal">0.00</span> BT</div>
+</div>
 
-        // Sell Multiple Items
-        function addSellStack() {
-            let name = document.getElementById("sellStackSelect").value;
-            let qty = parseInt(document.getElementById("sellStackQty").value) || 0;
-            let item = items.find(i => i.name === name);
-            if (!item || !item.buyStack) return;
-            sellCart.push({ name, qty, price: item.buyStack, bundleSize: item.bundleSize });
-            renderSellList();
-        }
-        function addSellIndividual() {
-            let name = document.getElementById("sellIndivSelect").value;
-            let qty = parseInt(document.getElementById("sellIndivQty").value) || 0;
-            let item = items.find(i => i.name === name);
-            if (!item || !item.buyEach) return;
-            sellCart.push({ name, qty, price: item.buyEach });
-            renderSellList();
-        }
-        function addAccountBalance() {
-            let balance = parseFloat(document.getElementById("accountBalanceInput").value) || 0;
-            if (balance <= 0) return;
-            sellCart.push({ name: "Account Balance", qty: 1, price: balance, isBalance: true });
-            renderSellList();
-        }
-        function renderSellList() {
-            const list = document.getElementById("sellList");
-            list.innerHTML = "";
-            sellCart.forEach((e, index) => {
-                let li = document.createElement("li");
-                if (e.isBalance) li.textContent = `Account Balance: ${e.price.toFixed(2)} BT`;
-                else if (e.bundleSize) li.textContent = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price} BT stack)`;
-                else li.textContent = `${e.qty} × ${e.name} (${e.price} BT each)`;
-                let removeBtn = document.createElement("button");
-                removeBtn.textContent = "❌";
-                removeBtn.onclick = () => { sellCart.splice(index, 1); renderSellList(); };
-                li.appendChild(removeBtn);
-                list.appendChild(li);
-            });
-            calculateNet();
-        }
+<!-- Pay With -->
+<div class="section">
+    <h2>🔹 Pay With</h2>
+    <button class="more-info-btn" onclick="toggleInfo('payInfo')">More Info</button>
+    <div id="payInfo" class="info-box">
+        <p>When net balance is negative, choose items to pay with. Calculated items are added to the Sell receipt so customers see what to bring.</p>
+        <button onclick="toggleInfo('payInfo')">❌ Close</button>
+    </div>
 
-        // Net Total
-        function calculateNet() {
-            let buyTotal = buyCart.reduce((s, e) => e.isBalance ? s + e.price : s + (e.qty * e.price), 0);
-            let sellTotal = sellCart.reduce((s, e) => s + (e.isBalance ? e.price : e.qty * e.price), 0);
+    <div id="payOptions"></div>
+    <button onclick="addPayRow()">➕ Add Item</button>
+    <ul id="payList"></ul>
+    <button onclick="calculatePayment()">Calculate Payment</button>
+    <div id="paymentResult" class="result"></div>
+</div>
 
-            // Include Pay With contributions
-            let payTotal = payCart.reduce((sum, e) => sum + (e.qty * e.price), 0);
+<script>
+const sheetURL = "https://docs.google.com/spreadsheets/d/1ObWed3580CeI9m5sN3qPVTgU67WH8Qkg-cot6etPOr4/gviz/tq?tqx=out:json";
 
-            let net = sellTotal + payTotal - buyTotal;
+let items = [], payItems = [], buyCart = [], sellCart = [];
 
-            document.getElementById("netTotal").textContent = net.toFixed(2);
-            document.getElementById("sellTotal").textContent = (sellTotal + payTotal).toFixed(2);
+// --- Load data from sheet ---
+async function loadData(){
+  const res = await fetch(sheetURL);
+  const text = await res.text();
+  const json = JSON.parse(text.substring(47, text.length-2));
+  const rows = json.table.rows;
+  rows.forEach(row=>{
+    const name = row.c[0]?.v || "";
+    const buyStack = row.c[1]?.v || "";
+    const sellStack = row.c[2]?.v || "";
+    const bundleSize = row.c[4]?.v || 1;
+    const buyEach = row.c[5]?.v || "";
+    const sellEach = row.c[6]?.v || "";
+    if(!name) return;
+    if((buyStack==="X" && sellStack==="X") && (buyEach==="X" && sellEach==="X")) return;
+    const item = {
+      name,
+      bundleSize,
+      buyStack: buyStack!=="X"?parseFloat(buyStack):null,
+      sellStack: sellStack!=="X"?parseFloat(sellStack):null,
+      buyEach: buyEach!=="X"?parseFloat(buyEach):null,
+      sellEach: sellEach!=="X"?parseFloat(sellEach):null
+    };
+    items.push(item);
+    if(item.buyEach) payItems.push(item);
+  });
+  populateSelectors();
+  addPayRow(); // add one pay row to start
+}
 
-            let netEl = document.getElementById("netTotal");
-            netEl.className = net >= 0 ? "positive" : "negative";
-        }
+// --- Populate datalists/selectors ---
+function populateSelectors(){
+  const stackList = document.getElementById("stackList");
+  const indivList = document.getElementById("indivList");
+  const sellStackList = document.getElementById("sellStackList");
+  const sellIndivList = document.getElementById("sellIndivList");
+  const quickStackList = document.getElementById("quickStackList");
+  const quickIndivList = document.getElementById("quickIndivList");
 
-        // Pay With Section
-        function addPayRow() {
-            const div = document.createElement("div");
-            div.className = "payRow";
-            const input = document.createElement("input");
-            input.type = "number"; input.value = 0; input.min = 0; input.max = 100;
-            const select = document.createElement("input");
-            select.setAttribute("list", "payDatalist");
-            const datalist = document.getElementById("payDatalist") || document.createElement("datalist");
-            datalist.id = "payDatalist";
-            if (!document.getElementById("payDatalist")) document.body.appendChild(datalist);
-            payItems.forEach(i => datalist.appendChild(new Option(i.name, i.name)));
-            const removeBtn = document.createElement("button");
-            removeBtn.textContent = "❌"; removeBtn.type = "button";
-            removeBtn.onclick = () => { div.remove(); calculatePayment(); };
-            div.appendChild(select);
-            div.appendChild(document.createTextNode("% of total:"));
-            div.appendChild(input);
-            div.appendChild(removeBtn);
-            document.getElementById("payOptions").appendChild(div);
-        }
+  items.forEach(item=>{
+    if(item.sellStack){
+      stackList.appendChild(new Option(item.name,item.name));
+      quickStackList.appendChild(new Option(item.name,item.name));
+    }
+    if(item.sellEach){
+      indivList.appendChild(new Option(item.name,item.name));
+      quickIndivList.appendChild(new Option(item.name,item.name));
+    }
+    if(item.buyStack) sellStackList.appendChild(new Option(item.name,item.name));
+    if(item.buyEach) sellIndivList.appendChild(new Option(item.name,item.name));
+  });
+}
 
-        function calculatePayment() {
-            let payList = document.getElementById("payList");
-            payList.innerHTML = "";
-            let total = parseFloat(document.getElementById("netTotal").textContent) || 0;
-            if (total >= 0) {
-                document.getElementById("paymentResult").textContent = `✅ Net Balance is ${total.toFixed(2)} BT. No payment needed.`;
-                return;
-            }
+// --- Quick calculators ---
+function quickStackCalc(){
+  const name = document.getElementById("quickStackSelect").value;
+  const qty = parseInt(document.getElementById("quickStackQty").value)||0;
+  const item = items.find(i=>i.name===name);
+  if(!item) return;
+  const buyText = item.buyStack ? `${qty} × ${item.bundleSize} ${item.name} buys for ${(qty*item.buyStack).toFixed(2)} BT` : "";
+  const sellText = item.sellStack ? `${qty} × ${item.bundleSize} ${item.name} sells for ${(qty*item.sellStack).toFixed(2)} BT` : "";
+  document.getElementById("quickStackResult").textContent = [buyText,sellText].filter(Boolean).join(" | ");
+}
+function quickIndivCalc(){
+  const name = document.getElementById("quickIndivSelect").value;
+  const qty = parseInt(document.getElementById("quickIndivQty").value)||0;
+  const item = items.find(i=>i.name===name);
+  if(!item) return;
+  const buyText = item.buyEach ? `${qty} × ${item.name} buys for ${(qty*item.buyEach).toFixed(2)} BT` : "";
+  const sellText = item.sellEach ? `${qty} × ${item.name} sells for ${(qty*item.sellEach).toFixed(2)} BT` : "";
+  document.getElementById("quickIndivResult").textContent = [buyText,sellText].filter(Boolean).join(" | ");
+}
 
-            let owed = -total;
-            let usedPercent = 0;
+// === Buy functions ===
+function addStack(){
+  const name = document.getElementById("stackSelect").value;
+  const qty = parseInt(document.getElementById("stackQty").value)||0;
+  const item = items.find(i=>i.name===name);
+  if(!item || !item.sellStack) return;
+  buyCart.push({ name:item.name, qty, price: item.sellStack, bundleSize: item.bundleSize });
+  renderBuyList();
+}
+function addIndividual(){
+  const name = document.getElementById("indivSelect").value;
+  const qty = parseInt(document.getElementById("indivQty").value)||0;
+  const item = items.find(i=>i.name===name);
+  if(!item || !item.sellEach) return;
+  buyCart.push({ name:item.name, qty, price: item.sellEach });
+  renderBuyList();
+}
+function addBuyAccountBalance(){
+  const balance = parseFloat(document.getElementById("buyAccountBalanceInput").value)||0;
+  if(balance<=0) return;
+  buyCart.push({ name:"Account Balance", qty:1, price: balance, isBalance:true });
+  renderBuyList();
+}
 
-            // Clear previous "Pay With" items from Sell Cart
-            sellCart = sellCart.filter(e => !e.isPayWith);
+// custom from spreadsheet (stack)
+function addCustomBuyStack(){
+  const name = document.getElementById("customBuyStackSelect").value;
+  const qty = parseInt(document.getElementById("customBuyStackQty").value)||0;
+  const price = parseFloat(document.getElementById("customBuyStackPrice").value)||0;
+  const item = items.find(i=>i.name===name);
+  if(!item || qty<=0 || price<=0) return;
+  buyCart.push({ name: item.name, qty, price, bundleSize: item.bundleSize, isCustom:true });
+  renderBuyList();
+}
+// custom from spreadsheet (individual)
+function addCustomBuyIndividual(){
+  const name = document.getElementById("customBuyIndivSelect").value;
+  const qty = parseInt(document.getElementById("customBuyIndivQty").value)||0;
+  const price = parseFloat(document.getElementById("customBuyIndivPrice").value)||0;
+  const item = items.find(i=>i.name===name);
+  if(!item || qty<=0 || price<=0) return;
+  buyCart.push({ name: item.name, qty, price, isCustom:true });
+  renderBuyList();
+}
+// fully custom not in sheet:
+function addFullyCustomBuy(){
+  const name = document.getElementById("customBuyName").value.trim();
+  const qty = parseInt(document.getElementById("customBuyQty").value)||0; // pieces
+  const stackSize = parseInt(document.getElementById("customBuyStackSize").value)||1;
+  const price = parseFloat(document.getElementById("customBuyPrice").value)||0; // price per stack
+  if(!name || qty<=0 || price<=0 || stackSize<=0) return;
+  buyCart.push({ name, qty, bundleSize: stackSize, price, isFullyCustom:true });
+  renderBuyList();
+}
 
-            document.querySelectorAll(".payRow").forEach(row => {
-                let name = row.querySelector('input[list="payDatalist"]').value;
-                let percent = parseFloat(row.querySelector("input[type=number]").value) || 0;
-                let item = payItems.find(i => i.name === name);
+function renderBuyList(){
+  const list = document.getElementById("buyList");
+  list.innerHTML = "";
+  let total = 0;
+  buyCart.forEach((e, idx)=>{
+    const li = document.createElement("li");
+    let rowTotal = 0;
+    if(e.isBalance){
+      li.textContent = `Account Balance: ${e.price.toFixed(2)} BT`;
+      rowTotal = e.price;
+    } else if(e.bundleSize && e.isFullyCustom){
+      rowTotal = (e.qty / e.bundleSize) * e.price;
+      li.textContent = `${e.qty} × ${e.name} (${e.price} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
+    } else if(e.bundleSize){
+      rowTotal = e.qty * e.price;
+      li.textContent = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price} BT stack) (${rowTotal.toFixed(2)} BT)`;
+    } else {
+      rowTotal = e.qty * e.price;
+      li.textContent = `${e.qty} × ${e.name} (${e.price} BT each) (${rowTotal.toFixed(2)} BT)`;
+    }
+    total += rowTotal;
+    const removeBtn = document.createElement("button");
+    removeBtn.textContent = "❌";
+    removeBtn.onclick = ()=>{ buyCart.splice(idx,1); renderBuyList(); };
+    li.appendChild(removeBtn);
+    list.appendChild(li);
+  });
+  document.getElementById("buyTotal").textContent = total.toFixed(2);
+  calculateNet();
+}
 
-                if (item && percent > 0) {
-                    let portion = (percent / 100) * owed;
-                    let qtyNeeded = portion / item.buyEach;
+// === Sell functions ===
+function addSellStack(){
+  const name = document.getElementById("sellStackSelect").value;
+  const qty = parseInt(document.getElementById("sellStackQty").value)||0;
+  const item = items.find(i=>i.name===name);
+  if(!item || !item.buyStack) return;
+  sellCart.push({ name: item.name, qty, price: item.buyStack, bundleSize: item.bundleSize });
+  renderSellList();
+}
+function addSellIndividual(){
+  const name = document.getElementById("sellIndivSelect").value;
+  const qty = parseInt(document.getElementById("sellIndivQty").value)||0;
+  const item = items.find(i=>i.name===name);
+  if(!item || !item.buyEach) return;
+  sellCart.push({ name: item.name, qty, price: item.buyEach });
+  renderSellList();
+}
+function addAccountBalance(){
+  const balance = parseFloat(document.getElementById("accountBalanceInput").value)||0;
+  if(balance<=0) return;
+  sellCart.push({ name: "Account Balance", qty:1, price: balance, isBalance:true });
+  renderSellList();
+}
 
-                    // 🔹 Round to whole numbers
-                    qtyNeeded = Math.round(qtyNeeded);
+// custom sell from sheet (stack)
+function addCustomSellStack(){
+  const name = document.getElementById("customSellStackSelect").value;
+  const qty = parseInt(document.getElementById("customSellStackQty").value)||0;
+  const price = parseFloat(document.getElementById("customSellStackPrice").value)||0;
+  const item = items.find(i=>i.name===name);
+  if(!item || qty<=0 || price<=0) return;
+  sellCart.push({ name: item.name, qty, price, bundleSize: item.bundleSize, isCustom:true });
+  renderSellList();
+}
+// custom sell individual
+function addCustomSellIndividual(){
+  const name = document.getElementById("customSellIndivSelect").value;
+  const qty = parseInt(document.getElementById("customSellIndivQty").value)||0;
+  const price = parseFloat(document.getElementById("customSellIndivPrice").value)||0;
+  const item = items.find(i=>i.name===name);
+  if(!item || qty<=0 || price<=0) return;
+  sellCart.push({ name: item.name, qty, price, isCustom:true });
+  renderSellList();
+}
+// fully custom sell
+function addFullyCustomSell(){
+  const name = document.getElementById("customSellName").value.trim();
+  const qty = parseInt(document.getElementById("customSellQty").value)||0;
+  const stackSize = parseInt(document.getElementById("customSellStackSize").value)||1;
+  const price = parseFloat(document.getElementById("customSellPrice").value)||0;
+  if(!name || qty<=0 || price<=0 || stackSize<=0) return;
+  sellCart.push({ name, qty, bundleSize: stackSize, price, isFullyCustom:true });
+  renderSellList();
+}
 
-                    // Add to receipt
-                    let li = document.createElement("li");
-                    li.textContent = `${percent}% = ${qtyNeeded} × ${name}`;
-                    payList.appendChild(li);
+function renderSellList(){
+  const list = document.getElementById("sellList");
+  list.innerHTML = "";
+  let total = 0;
+  sellCart.forEach((e, idx)=>{
+    const li = document.createElement("li");
+    let rowTotal = 0;
+    if(e.isBalance){
+      li.textContent = `Account Balance: ${e.price.toFixed(2)} BT`;
+      rowTotal = e.price;
+    } else if(e.bundleSize && e.isFullyCustom){
+      rowTotal = (e.qty / e.bundleSize) * e.price;
+      li.textContent = `${e.qty} × ${e.name} (${e.price} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
+    } else if(e.bundleSize){
+      rowTotal = e.qty * e.price;
+      li.textContent = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price} BT stack) (${rowTotal.toFixed(2)} BT)`;
+    } else {
+      rowTotal = e.qty * e.price;
+      li.textContent = `${e.qty} × ${e.name} (${e.price} BT each) (${rowTotal.toFixed(2)} BT)`;
+    }
 
-                    // Also push as "virtual sell" item so it affects net balance
-                    sellCart.push({ name, qty: qtyNeeded, price: item.buyEach, isPayWith: true });
+    if(e.isPayWith) li.classList.add("payment-item"); // visually mark
+    total += rowTotal;
 
-                    usedPercent += percent;
-                }
-            });
+    const removeBtn = document.createElement("button");
+    removeBtn.textContent = "❌";
+    removeBtn.onclick = ()=>{
+      // If this is a pay-with item, remove associated payList li(s)
+      if(e.isPayWith && e._payId) removePayListEntry(e._payId);
+      sellCart.splice(idx,1);
+      renderSellList();
+    };
+    li.appendChild(removeBtn);
+    list.appendChild(li);
+  });
+  document.getElementById("sellTotal").textContent = total.toFixed(2);
+  calculateNet();
+}
 
-            if (usedPercent !== 100) {
-                document.getElementById("paymentResult").textContent = `⚠️ Warning: payment percentages total ${usedPercent}%, not 100%.`;
-            } else {
-                document.getElementById("paymentResult").textContent = `To pay ${owed.toFixed(2)} BT, bring the items listed above.`;
-            }
+// --- Net calculation ---
+function calculateNet(){
+  // buyTotal: account balances are shown positive in buyTotal (receipt)
+  let buyTotal = buyCart.reduce((s,e)=>{
+    if(e.isBalance) return s + (e.price||0);
+    if(e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
+    if(e.bundleSize) return s + (e.qty * e.price);
+    return s + (e.qty * e.price);
+  }, 0);
 
-            // Recalculate totals with new "Pay With" items
-            renderSellList(); // update the Sell List to include Pay With items
-            calculateNet();
-        }
+  let sellTotal = sellCart.reduce((s,e)=>{
+    if(e.isBalance) return s + (e.price||0);
+    if(e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
+    if(e.bundleSize) return s + (e.qty * e.price);
+    return s + (e.qty * e.price);
+  }, 0);
 
-        // Update renderSellList to mark pay-contributed items
-        function renderSellList() {
-            const list = document.getElementById("sellList");
-            list.innerHTML = "";
-            sellCart.forEach((e, index) => {
-                let li = document.createElement("li");
-                if (e.isBalance) li.textContent = `Account Balance: ${e.price.toFixed(2)} BT`;
-                else if (e.bundleSize) li.textContent = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price} BT stack)`;
-                else li.textContent = `${e.qty} × ${e.name} (${e.price} BT each)`;
+  // Net = sellTotal - buyTotal (Pay With items are already added to sellCart when calculated)
+  const net = sellTotal - buyTotal;
+  document.getElementById("netTotal").textContent = net.toFixed(2);
+  // color the net display
+  const netSpan = document.getElementById("netTotal");
+  netSpan.className = net >= 0 ? "positive" : "negative";
+  // ensure sell total displayed too
+  document.getElementById("sellTotal").textContent = sellTotal.toFixed(2);
+}
 
-                if (e.fromPay) li.style.fontStyle = "italic"; // visually mark Pay With items
+// --- Pay With section ---
+// Add an input row; we use datalist for item names (buyEach must exist)
+function addPayRow(){
+  const div = document.createElement("div");
+  div.className = "payRow";
+  const select = document.createElement("input");
+  select.setAttribute("list","payDatalist");
+  const datalist = document.getElementById("payDatalist")||document.createElement("datalist");
+  datalist.id = "payDatalist";
+  if(!document.getElementById("payDatalist")) document.body.appendChild(datalist);
+  // ensure datalist options exist (avoid duplicates)
+  datalist.innerHTML = "";
+  payItems.forEach(i => datalist.appendChild(new Option(i.name, i.name)));
+  const percent = document.createElement("input");
+  percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
+  const removeRowBtn = document.createElement("button");
+  removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
+  removeRowBtn.onclick = ()=>{ div.remove(); calculatePayment(); };
+  div.appendChild(select);
+  div.appendChild(document.createTextNode(" % of total: "));
+  div.appendChild(percent);
+  div.appendChild(removeRowBtn);
+  document.getElementById("payOptions").appendChild(div);
+}
 
-                let removeBtn = document.createElement("button");
-                removeBtn.textContent = "❌";
-                removeBtn.onclick = () => {
-                    sellCart.splice(index, 1);
-                    renderSellList();
-                    calculateNet();
-                };
-                li.appendChild(removeBtn);
-                list.appendChild(li);
-            });
-            calculateNet();
-        }
+// helper: remove a payList entry by payId (used when user removes from Sell list)
+function removePayListEntry(payId){
+  const payList = document.getElementById("payList");
+  const items = Array.from(payList.children);
+  items.forEach(li => {
+    if(li.dataset && li.dataset.payid === String(payId)){
+      li.remove();
+    }
+  });
+}
 
+// calculate which items to use to cover owed amount, add them to sellCart as isPayWith
+function calculatePayment(){
+  const payListEl = document.getElementById("payList");
+  payListEl.innerHTML = "";
+  const totalNet = parseFloat(document.getElementById("netTotal").textContent) || 0;
 
-        // Toggle Info Boxes
-        function toggleInfo(id) {
-            let box = document.getElementById(id);
-            box.style.display = (box.style.display === "block") ? "none" : "block";
-        }
+  if(totalNet >= 0){
+    document.getElementById("paymentResult").textContent = `✅ Net Balance is ${totalNet.toFixed(2)} BT. No payment needed.`;
+    return;
+  }
 
-        loadData();
-    </script>
+  const owed = -totalNet;
+  let usedPercent = 0;
+
+  // remove previous pay-with items from sellCart
+  sellCart = sellCart.filter(e => !e.isPayWith);
+
+  const rows = document.querySelectorAll(".payRow");
+  rows.forEach(row => {
+    const name = row.querySelector('input[list="payDatalist"]').value;
+    const percent = parseFloat(row.querySelector('input[type="number"]').value)||0;
+    const item = payItems.find(i=>i.name===name);
+    if(!item || percent <= 0) return;
+    usedPercent += percent;
+
+    const portion = (percent / 100) * owed;
+    let qtyNeeded = 0;
+    if(item.buyEach) qtyNeeded = Math.round(portion / item.buyEach);
+    else qtyNeeded = 0;
+
+    // create a pay-list li with remove button and a unique id
+    const payId = 'pay_' + Date.now() + '_' + Math.floor(Math.random()*10000);
+    const li = document.createElement("li");
+    li.dataset.payid = payId;
+    li.textContent = `${percent}% = ${qtyNeeded} × ${name}`;
+    const removeBtn = document.createElement("button");
+    removeBtn.textContent = "❌";
+    removeBtn.onclick = ()=>{
+      // remove the corresponding sellCart pay-with item(s)
+      sellCart = sellCart.filter(it => !(it.isPayWith && it._payId === payId));
+      li.remove();
+      renderSellList();
+      calculateNet();
+    };
+    li.appendChild(removeBtn);
+    payListEl.appendChild(li);
+
+    // add to sellCart as pay-with item so it affects net + appears in receipt
+    const pricePerEach = item.buyEach || 0;
+    const payEntry = { name, qty: qtyNeeded, price: pricePerEach, isPayWith:true, _payId: payId };
+    sellCart.push(payEntry);
+  });
+
+  if(usedPercent !== 100){
+    document.getElementById("paymentResult").textContent = `⚠️ Warning: payment percentages total ${usedPercent}%, not 100%.`;
+  } else {
+    document.getElementById("paymentResult").textContent = `To pay ${owed.toFixed(2)} BT, bring the items listed above.`;
+  }
+
+  renderSellList(); // show pay-with items in sell receipt
+  calculateNet();
+}
+
+// --- Toggle info boxes ---
+function toggleInfo(id){
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === "block" ? "none" : "block";
+}
+
+// load sheet on open
+loadData();
+</script>
 </body>
 </html>
