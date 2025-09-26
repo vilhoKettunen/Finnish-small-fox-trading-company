@@ -10,106 +10,131 @@
             max-width: 1000px;
             margin: auto;
         }
-        h1,h2,h3 { color:#333; }
-        .section { margin-bottom:25px; padding:15px; border:1px solid #ccc; border-radius:8px; position:relative; }
-        select, input[type="number"], input[list], input[type="text"], button { padding:6px; margin:6px 0; }
-        ul { margin-top:10px; padding-left:18px; }
-        .result { margin-top:10px; font-weight:bold; }
-        .payRow { margin-bottom:8px; display:flex; align-items:center; gap:10px; }
-        .payRow input { width:60px; }
-        .negative { color:red; }
-        .positive { color:green; }
-        .more-info-btn { position:absolute; top:10px; right:10px; font-size:0.8em; padding:4px 8px; cursor:pointer; }
-        .info-box { display:none; background:#f9f9f9; border:1px solid #ccc; padding:10px; margin-top:10px; border-radius:6px; }
-        .info-box button { display:block; margin-top:6px; font-size:0.8em; cursor:pointer; }
-        li .remove { margin-left:8px; color:red; cursor:pointer; }
-        li.payment-item { font-style:italic; }
-        .section ul li a {
-  color: #0066cc;
-  text-decoration: none;
-}
 
-.section ul li a:hover {
-  text-decoration: underline;
-}
+        h1, h2, h3 {
+            color: #333;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        select, input[type="number"], input[list], input[type="text"], button {
+            padding: 6px;
+            margin: 6px 0;
+        }
+
+        ul {
+            margin-top: 10px;
+            padding-left: 18px;
+        }
+
+        .result {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .payRow {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+            .payRow input {
+                width: 60px;
+            }
+
+        .negative {
+            color: red;
+        }
+
+        .positive {
+            color: green;
+        }
+
+        .more-info-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 0.8em;
+            padding: 4px 8px;
+            cursor: pointer;
+        }
+
+        .info-box {
+            display: none;
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 6px;
+        }
+
+            .info-box button {
+                display: block;
+                margin-top: 6px;
+                font-size: 0.8em;
+                cursor: pointer;
+            }
+
+        li .remove {
+            margin-left: 8px;
+            color: red;
+            cursor: pointer;
+        }
+
+        li.payment-item {
+            font-style: italic;
+        }
+
+        .section ul li a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+
+            .section ul li a:hover {
+                text-decoration: underline;
+            }
     </style>
 </head>
 <body>
 
     <h1>🛒 Vak Store Trading Calculator</h1>
 
-    <!-- Quick Individual Calculator -->
-    <div class="section">
-        <h2>🔹 Quick Individual Item Calculator</h2>
-        <button class="more-info-btn" onclick="toggleInfo('quickInfo')">More Info</button>
-        <div id="quickInfo" class="info-box">
-            <p>Quick calc for a stack or individual item. Pick item and qty to see buy & sell totals.</p>
-            <button onclick="toggleInfo('quickInfo')">❌ Close</button>
-        </div>
-
-        <div>
-            <label>
-                Select Full Stack Item:
-                <input list="quickStackList" id="quickStackSelect">
-                <datalist id="quickStackList"></datalist>
-            </label>
-            <input type="number" id="quickStackQty" value="1" min="1">
-            <button onclick="quickStackCalc()">Calculate Stack</button>
-            <div id="quickStackResult" class="result"></div>
-        </div>
-
-        <div>
-            <label>
-                Select Individual Item:
-                <input list="quickIndivList" id="quickIndivSelect">
-                <datalist id="quickIndivList"></datalist>
-            </label>
-            <input type="number" id="quickIndivQty" value="1" min="1">
-            <button onclick="quickIndivCalc()">Calculate Individual</button>
-            <div id="quickIndivResult" class="result"></div>
-        </div>
-    </div>
-
-
     <!-- Item Converter -->
     <div class="section">
         <h2>🔹 Item Converter</h2>
         <button class="more-info-btn" onclick="toggleInfo('converterInfo')">More Info</button>
         <div id="converterInfo" class="info-box">
-            <p>Select an item to sell and quantity, then choose an item to receive. The converter calculates how much you get based on Google Sheet prices.</p>
+            <p>Convert between stack and individual quantities. Adding to cart automatically updates Buy/Sell lists.</p>
             <button onclick="toggleInfo('converterInfo')">❌ Close</button>
         </div>
-
-        <h3>Sell Items</h3>
-
-        <div class="payRow">
-            <label>Sell (stack):</label>
-            <input list="convertSellStackList" id="convertSellStack" placeholder="Choose stack item...">
-            <datalist id="convertSellStackList"></datalist>
-            <input type="number" id="convertSellStackQty" value="1" min="1">
-            <button onclick="addConvertSellStack()">Add Stack</button>
+        <div>
+            <label>
+                Item:
+                <input list="converterList" id="converterSelect">
+                <datalist id="converterList"></datalist>
+            </label>
+            <label>
+                Quantity:
+                <input type="number" id="converterQty" value="1" min="1">
+            </label>
+            <label>
+                Type:
+                <select id="converterType">
+                    <option value="stack">Stack</option>
+                    <option value="each">Individual</option>
+                </select>
+            </label>
+            <button onclick="convertItem()">Convert & Add</button>
+            <div id="converterResult" class="result"></div>
         </div>
-
-        <div class="payRow">
-            <label>Sell (individual):</label>
-            <input list="convertSellEachList" id="convertSellEach" placeholder="Choose individual item...">
-            <datalist id="convertSellEachList"></datalist>
-            <input type="number" id="convertSellEachQty" value="1" min="1">
-            <button onclick="addConvertSellIndividual()">Add Individual</button>
-        </div>
-
-        <h3>Choose Item To Receive</h3>
-        <label>
-            Receive:
-            <input list="convertReceiveList" id="convertReceiveItem" placeholder="Choose item to receive...">
-            <datalist id="convertReceiveList"></datalist>
-        </label>
-
-        <h3>Receipt</h3>
-        <ul id="convertReceipt"></ul>
     </div>
-
-
 
     <!-- Buy Multiple Items -->
     <div class="section">
@@ -250,7 +275,6 @@
         <div id="paymentResult" class="result"></div>
     </div>
 
-
     <!-- Links Section -->
     <div class="section">
         <h2>🔗 Useful Links</h2>
@@ -263,68 +287,11 @@
             <li><a href="https://www.vintagestory.at/" target="_blank">Vintage Story official website</a></li>
         </ul>
     </div>
+
     <script>
         const sheetURL = "https://docs.google.com/spreadsheets/d/1ObWed3580CeI9m5sN3qPVTgU67WH8Qkg-cot6etPOr4/gviz/tq?tqx=out:json";
 
         let items = [], payItems = [], buyCart = [], sellCart = [];
-        let convertSellStackCart = [];
-        let convertSellEachCart = [];
-
-        function runConverter() {
-            const sellName = document.getElementById("convertSell").value;
-            const buyName = document.getElementById("convertBuy").value;
-            const qty = parseInt(document.getElementById("convertSellQty").value) || 0;
-            const sellItem = findItemByName(sellName);
-            const buyItem = findItemByName(buyName);
-            const outEl = document.getElementById("convertOutput");
-            outEl.innerHTML = "";
-
-            if (!sellItem || !buyItem || qty <= 0) {
-                outEl.textContent = "Choose sell and buy items and enter a positive quantity.";
-                return;
-            }
-
-            // Per-piece BT values
-            let sellEach = sellItem.sellEach ?? (sellItem.sellStack ? sellItem.sellStack / sellItem.bundleSize : null);
-            let buyEach = buyItem.buyEach ?? (buyItem.buyStack ? buyItem.buyStack / buyItem.bundleSize : null);
-
-            if (sellEach == null || buyEach == null) {
-                outEl.textContent = "Missing individual prices for one of the items.";
-                return;
-            }
-
-            // Total BT value for selling
-            const totalBT = qty * sellEach;
-
-            // How many buying items can be purchased
-            const buyQty = Math.floor(totalBT / buyEach);
-
-            // Format "stacks and remainder"
-            function formatStacks(qty, stackSize, name) {
-                if (!stackSize || stackSize <= 1) return `${qty} × ${name}`;
-                const stacks = Math.floor(qty / stackSize);
-                const remainder = qty % stackSize;
-                let extra = [];
-                if (stacks > 0) extra.push(`${stacks} stack${stacks > 1 ? "s" : ""}`);
-                if (remainder > 0) extra.push(`${remainder} ${name}`);
-                return `${qty} × ${name} (${extra.join(" and ")})`;
-            }
-
-            // Receipt building
-            const receipt = document.createElement("div");
-            receipt.classList.add("receipt");
-
-            const sellLine = document.createElement("div");
-            sellLine.textContent = `Selling: ${formatStacks(qty, sellItem.bundleSize, sellItem.name)} = ${formatBT(totalBT)} BT`;
-
-            const buyLine = document.createElement("div");
-            buyLine.textContent = `You receive: ${formatStacks(buyQty, buyItem.bundleSize, buyItem.name)}`;
-
-            receipt.appendChild(sellLine);
-            receipt.appendChild(buyLine);
-
-            outEl.appendChild(receipt);
-        }
 
         // --- Load data from sheet ---
         async function loadData() {
@@ -342,8 +309,7 @@
                 if (!name) return;
                 if ((buyStack === "X" && sellStack === "X") && (buyEach === "X" && sellEach === "X")) return;
                 const item = {
-                    name,
-                    bundleSize,
+                    name, bundleSize,
                     buyStack: buyStack !== "X" ? parseFloat(buyStack) : null,
                     sellStack: sellStack !== "X" ? parseFloat(sellStack) : null,
                     buyEach: buyEach !== "X" ? parseFloat(buyEach) : null,
@@ -352,12 +318,9 @@
                 items.push(item);
                 if (item.buyEach) payItems.push(item);
             });
-
-            populateSelectors();             // existing: populate Buy/Sell lists
-            populateConverterSelectors();    // NEW: populate Item Converter lists
-            addPayRow();                     // existing: initial pay row
+            populateSelectors();
+            addPayRow(); // add one pay row to start
         }
-
 
         // --- Populate datalists/selectors ---
         function populateSelectors() {
@@ -365,125 +328,49 @@
             const indivList = document.getElementById("indivList");
             const sellStackList = document.getElementById("sellStackList");
             const sellIndivList = document.getElementById("sellIndivList");
-            const quickStackList = document.getElementById("quickStackList");
-            const quickIndivList = document.getElementById("quickIndivList");
-
-            // Clear previous options to prevent duplicates
-            [stackList, indivList, sellStackList, sellIndivList, quickStackList, quickIndivList].forEach(el => el.innerHTML = "");
+            const converterList = document.getElementById("converterList");
 
             items.forEach(item => {
                 if (item.sellStack) {
                     stackList.appendChild(new Option(item.name, item.name));
-                    quickStackList.appendChild(new Option(item.name, item.name));
                 }
                 if (item.sellEach) {
                     indivList.appendChild(new Option(item.name, item.name));
-                    quickIndivList.appendChild(new Option(item.name, item.name));
                 }
                 if (item.buyStack) sellStackList.appendChild(new Option(item.name, item.name));
                 if (item.buyEach) sellIndivList.appendChild(new Option(item.name, item.name));
+                converterList.appendChild(new Option(item.name, item.name));
             });
         }
 
-        // --- Populate Item Converter selectors from Google Sheet data ---
-        function populateConverterSelectors() {
-            const sellStackList = document.getElementById("convertSellStackList");
-            const sellEachList = document.getElementById("convertSellEachList");
-            const receiveList = document.getElementById("convertReceiveList");
-
-            // Clear previous options
-            [sellStackList, sellEachList, receiveList].forEach(el => el.innerHTML = "");
-
-            items.forEach(item => {
-                if (item.sellStack) sellStackList.appendChild(new Option(item.name, item.name));
-                if (item.sellEach) sellEachList.appendChild(new Option(item.name, item.name));
-                if (item.buyStack || item.buyEach) receiveList.appendChild(new Option(item.name, item.name));
-            });
-        }
-
-       
-        // --- Add sell stack item ---
-        function addConvertSellStack() {
-            const name = document.getElementById("convertSellStack").value;
-            const qty = parseInt(document.getElementById("convertSellStackQty").value) || 0;
-            const item = items.find(i => i.name === name && i.sellStack);
+        // --- Item Converter ---
+        function convertItem() {
+            const name = document.getElementById("converterSelect").value;
+            const qty = parseInt(document.getElementById("converterQty").value) || 0;
+            const type = document.getElementById("converterType").value;
+            const item = items.find(i => i.name === name);
             if (!item || qty <= 0) return;
 
-            convertSellStackCart.push({ name, qty, bundleSize: item.bundleSize, price: item.sellStack });
-            renderConvertReceipt();
-        }
-
-        // --- Add sell individual item ---
-        function addConvertSellIndividual() {
-            const name = document.getElementById("convertSellEach").value;
-            const qty = parseInt(document.getElementById("convertSellEachQty").value) || 0;
-            const item = items.find(i => i.name === name && i.sellEach);
-            if (!item || qty <= 0) return;
-
-            convertSellEachCart.push({ name, qty, price: item.sellEach });
-            renderConvertReceipt();
-        }
-
-        // --- Render converter receipt ---
-        document.getElementById("convertReceiveItem").addEventListener("change", renderConvertReceipt);
-
-        function renderConvertReceipt() {
-            const receiptEl = document.getElementById("convertReceipt");
-            receiptEl.innerHTML = ""; // override previous receipt
-
-            const receiveName = document.getElementById("convertReceiveItem").value;
-            const receiveItem = items.find(i => i.name === receiveName);
-            if (!receiveItem) return;
-
-            // Process stack items
-            convertSellStackCart.forEach(e => {
-                const totalBT = e.qty * e.price;
-                let receivedQty = 0;
-                let receivedText = "";
-
-                if (receiveItem.buyStack) {
-                    receivedQty = Math.floor(totalBT / receiveItem.buyStack) * receiveItem.bundleSize;
-                    const stacks = Math.floor(receivedQty / receiveItem.bundleSize);
-                    const remainder = receivedQty % receiveItem.bundleSize;
-                    receivedText = `(${stacks} stacks and ${remainder} ${receiveItem.name})`;
-                } else if (receiveItem.buyEach) {
-                    receivedQty = Math.floor(totalBT / receiveItem.buyEach);
-                    receivedText = `(${receivedQty} ${receiveItem.name})`;
+            let resultText = "";
+            if (type === "stack") {
+                if (item.sellStack) {
+                    const total = qty * item.sellStack;
+                    resultText = `${qty} × ${item.bundleSize} ${name} = ${total.toFixed(2)} BT`;
+                    buyCart.push({ name: item.name, qty, price: item.sellStack, bundleSize: item.bundleSize });
+                    renderBuyList();
                 }
-
-                const li = document.createElement("li");
-                li.textContent = `Sell ${e.qty} × ${e.bundleSize} ${e.name} → Receive ${receivedQty} ${receiveItem.name} ${receivedText}`;
-                receiptEl.appendChild(li);
-            });
-
-            // Process individual items
-            convertSellEachCart.forEach(e => {
-                const totalBT = e.qty * e.price;
-                let receivedQty = 0;
-                let receivedText = "";
-
-                if (receiveItem.buyStack) {
-                    receivedQty = Math.floor(totalBT / receiveItem.buyStack) * receiveItem.bundleSize;
-                    const stacks = Math.floor(receivedQty / receiveItem.bundleSize);
-                    const remainder = receivedQty % receiveItem.bundleSize;
-                    receivedText = `(${stacks} stacks and ${remainder} ${receiveItem.name})`;
-                } else if (receiveItem.buyEach) {
-                    receivedQty = Math.floor(totalBT / receiveItem.buyEach);
-                    receivedText = `(${receivedQty} ${receiveItem.name})`;
+            } else {
+                if (item.sellEach) {
+                    const total = qty * item.sellEach;
+                    resultText = `${qty} × ${name} = ${total.toFixed(2)} BT`;
+                    buyCart.push({ name: item.name, qty, price: item.sellEach });
+                    renderBuyList();
                 }
-
-                const li = document.createElement("li");
-                li.textContent = `Sell ${e.qty} × ${e.name} → Receive ${receivedQty} ${receiveItem.name} ${receivedText}`;
-                receiptEl.appendChild(li);
-            });
+            }
+            document.getElementById("converterResult").textContent = resultText;
         }
 
-
-        // --- Initialize converter after sheet loads ---
-        loadData().then(() => {
-            populateConverterSelectors();
-        });
-
+        
 
         // --- Quick calculators ---
         function quickStackCalc() {
