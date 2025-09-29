@@ -325,19 +325,26 @@
                 const name = row.c[0]?.v || "";
                 const buyStack = row.c[1]?.v || "";
                 const sellStack = row.c[2]?.v || "";
+                const stackStock = row.c[3]?.v || 0;   // 👈 NEW: column D
                 const bundleSize = row.c[4]?.v || 1;
                 const buyEach = row.c[5]?.v || "";
                 const sellEach = row.c[6]?.v || "";
+                const indivStock = row.c[7]?.v || 0;   // already added before
+
                 if (!name) return;
                 if ((buyStack === "X" && sellStack === "X") && (buyEach === "X" && sellEach === "X")) return;
+
                 const item = {
                     name,
                     bundleSize,
+                    stackStock,   // 👈 NEW
+                    indivStock,   // already there
                     buyStack: buyStack !== "X" ? parseFloat(buyStack) : null,
                     sellStack: sellStack !== "X" ? parseFloat(sellStack) : null,
                     buyEach: buyEach !== "X" ? parseFloat(buyEach) : null,
                     sellEach: sellEach !== "X" ? parseFloat(sellEach) : null
                 };
+
                 items.push(item);
                 if (item.buyEach) payItems.push(item);
             });
@@ -357,15 +364,23 @@
 
             items.forEach(item => {
                 if (item.sellStack) {
-                    stackList.appendChild(new Option(item.name, item.name));
-                    quickStackList.appendChild(new Option(item.name, item.name));
+                    const label = `${item.name} (stack stock: ${item.stackStock})`;
+                    stackList.appendChild(new Option(label, item.name));
+                    quickStackList.appendChild(new Option(label, item.name));
                 }
                 if (item.sellEach) {
-                    indivList.appendChild(new Option(item.name, item.name));
-                    quickIndivList.appendChild(new Option(item.name, item.name));
+                const label = `${item.name} (individual stock: ${item.indivStock})`;
+                indivList.appendChild(new Option(label, item.name));
+                quickIndivList.appendChild(new Option(label, item.name));
+            }
+                if (item.buyStack) {
+                    const label = `${item.name} (stack stock: ${item.stackStock})`;
+                    sellStackList.appendChild(new Option(label, item.name));
                 }
-                if (item.buyStack) sellStackList.appendChild(new Option(item.name, item.name));
-                if (item.buyEach) sellIndivList.appendChild(new Option(item.name, item.name));
+                if (item.buyEach) {
+                const label = `${item.name} (individual stock: ${item.indivStock})`;
+                sellIndivList.appendChild(new Option(label, item.name));
+            }
             });
         }
 
