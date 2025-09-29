@@ -316,41 +316,45 @@
         let items = [], payItems = [], buyCart = [], sellCart = [];
 
         // --- Load data from sheet ---
-        async function loadData() {
-            const res = await fetch(sheetURL);
-            const text = await res.text();
-            const json = JSON.parse(text.substring(47, text.length - 2));
-            const rows = json.table.rows;
-            rows.forEach(row => {
-                const name = row.c[0]?.v || "";
-                const buyStack = row.c[1]?.v || "";
-                const sellStack = row.c[2]?.v || "";
-                const stackStock = row.c[3]?.v || 0;   // 👈 NEW: column D
-                const bundleSize = row.c[4]?.v || 1;
-                const buyEach = row.c[5]?.v || "";
-                const sellEach = row.c[6]?.v || "";
-                const indivStock = row.c[7]?.v || 0;   // already added before
+        function loadData() {
+            const url = "https://docs.google.com/spreadsheets/d/1ObWed3580CeI9m5sN3qPVTgU67WH8Qkg-cot6etPOr4/gviz/tq?tqx=out:json";
+            fetch(url)
+                .then(res => res.text())
+                .then(text => {
+                    const json = JSON.parse(text.substr(47).slice(0, -2));
+                    items = json.table.rows.map(row => {
+                        const name = row.c[0]?.v || "";
+                        const buyStack = row.c[1]?.v || "";
+                        const sellStack = row.c[2]?.v || "";
+                        const stackStock = row.c[3]?.v || 0;   // 👈 column D
+                        const bundleSize = row.c[4]?.v || 1;
+                        const buyEach = row.c[5]?.v || "";
+                        const sellEach = row.c[6]?.v || "";
+                        const indivStock = row.c[7]?.v || 0;   // 👈 column H
+                        const availPercent = row.c[8]?.v || 0; // 👈 column I
 
-                if (!name) return;
-                if ((buyStack === "X" && sellStack === "X") && (buyEach === "X" && sellEach === "X")) return;
+                        if (!name) return null;
+                        if ((buyStack === "X" && sellStack === "X") && (buyEach === "X" && sellEach === "X")) return null;
 
-                const item = {
-                    name,
-                    bundleSize,
-                    stackStock,   // 👈 NEW
-                    indivStock,   // already there
-                    buyStack: buyStack !== "X" ? parseFloat(buyStack) : null,
-                    sellStack: sellStack !== "X" ? parseFloat(sellStack) : null,
-                    buyEach: buyEach !== "X" ? parseFloat(buyEach) : null,
-                    sellEach: sellEach !== "X" ? parseFloat(sellEach) : null
-                };
+                        return {
+                            name,
+                            bundleSize,
+                            stackStock,
+                            indivStock,
+                            availPercent,
+                            buyStack: buyStack !== "X" ? parseFloat(buyStack) : null,
+                            sellStack: sellStack !== "X" ? parseFloat(sellStack) : null,
+                            buyEach: buyEach !== "X" ? parseFloat(buyEach) : null,
+                            sellEach: sellEach !== "X" ? parseFloat(sellEach) : null
+                        };
+                    }).filter(Boolean);
 
-                items.push(item);
-                if (item.buyEach) payItems.push(item);
-            });
-            populateSelectors();
-            addPayRow(); // add one pay row to start
-            populateConverterList();
+                    populateSelectors();
+                    addBuyRow();
+                    addSellRow();
+                    addPayRow();
+                    populateConverterList();
+                });
         }
 
         // --- Populate datalists/selectors ---
@@ -361,26 +365,37 @@
             const sellIndivList = document.getElementById("sellIndivList");
             const quickStackList = document.getElementById("quickStackList");
             const quickIndivList = document.getElementById("quickIndivList");
+            const payList = document.getElementById("payList");
+
+            // Clear existing options
+            [stackList, indivList, sellStackList, sellIndivList, quickStackList, quickIndivList, payList]
+                .forEach(list => list.innerHTML = "");
 
             items.forEach(item => {
+                // Stack options
                 if (item.sellStack) {
-                    const label = `${item.name} (stack stock: ${item.stackStock})`;
+                    const label = `${item.name} (stack stock: ${item.stackStock} | avail: ${item.availPercent}%)`;
                     stackList.appendChild(new Option(label, item.name));
                     quickStackList.appendChild(new Option(label, item.name));
                 }
-                if (item.sellEach) {
-                const label = `${item.name} (individual stock: ${item.indivStock})`;
-                indivList.appendChild(new Option(label, item.name));
-                quickIndivList.appendChild(new Option(label, item.name));
-            }
                 if (item.buyStack) {
-                    const label = `${item.name} (stack stock: ${item.stackStock})`;
+                    const label = `${item.name} (stack stock: ${item.stackStock} | avail: ${item.availPercent}%)`;
                     sellStackList.appendChild(new Option(label, item.name));
                 }
+
+                // Individual options
+                if (item.sellEach) {
+                    const label = `${item.name} (individual stock: ${item.indivStock} | avail: ${item.availPercent}%)`;
+                    indivList.appendChild(new Option(label, item.name));
+                    quickIndivList.appendChild(new Option(label, item.name));
+                }
                 if (item.buyEach) {
-                const label = `${item.name} (individual stock: ${item.indivStock})`;
-                sellIndivList.appendChild(new Option(label, item.name));
-            }
+                    const label = `${item.name} (individual stock: ${item.indivStock} | avail: ${item.availPercent}%)`;
+                    sellIndivList.appendChild(new Option(label, item.name));
+                }
+
+                // Pay With dropdown
+                payList.appendChild(new Option(item.name, item.name));
             });
         }
 
