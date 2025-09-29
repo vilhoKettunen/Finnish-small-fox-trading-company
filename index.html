@@ -365,11 +365,12 @@
             const sellIndivList = document.getElementById("sellIndivList");
             const quickStackList = document.getElementById("quickStackList");
             const quickIndivList = document.getElementById("quickIndivList");
-            const payList = document.getElementById("payList");
 
             // Clear existing options
-            [stackList, indivList, sellStackList, sellIndivList, quickStackList, quickIndivList, payList]
+            [stackList, indivList, sellStackList, sellIndivList, quickStackList, quickIndivList]
                 .forEach(list => list.innerHTML = "");
+
+            payItems = []; // reset payItems
 
             items.forEach(item => {
                 // Stack options
@@ -394,8 +395,8 @@
                     sellIndivList.appendChild(new Option(label, item.name));
                 }
 
-                // Pay With dropdown
-                payList.appendChild(new Option(item.name, item.name));
+                // Store in payItems for Pay With dropdown
+                payItems.push(item);
             });
         }
 
