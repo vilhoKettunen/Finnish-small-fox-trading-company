@@ -273,22 +273,20 @@
     </div>
 
     <!-- Item Converter -->
-    <div class="section">
-        <h2>🔹 Item Converter</h2>
-        <button class="more-info-btn" onclick="toggleInfo('converterInfo')">More Info</button>
-        <div id="converterInfo" class="info-box">
-            <p>Converts your Net Balance (BT) into the maximum amount of a chosen item. Prioritizes full stacks, then individuals, with leftover BT shown.</p>
-            <button onclick="toggleInfo('converterInfo')">❌ Close</button>
-        </div>
-
-        <label>
-            Select Item to Convert Into:
-            <input list="converterList" id="converterSelect" placeholder="Pick item">
-            <datalist id="converterList"></datalist>
-        </label>
-        <button onclick="convertNetBalance()">Convert Balance</button>
-        <div id="converterResult" class="result"></div>
+<div class="section">
+    <h2>🔹 Item Converter</h2>
+    <button class="more-info-btn" onclick="toggleInfo('converterInfo')">More Info</button>
+    <div id="converterInfo" class="info-box">
+        <p>Allocate % of your Net Balance (BT) into multiple chosen items. Each allocation updates the Buy receipt.</p>
+        <button onclick="toggleInfo('converterInfo')">❌ Close</button>
     </div>
+
+    <div id="converterOptions"></div>
+    <button onclick="addConverterRow()">➕ Add Item</button>
+    <ul id="converterListDisplay"></ul>
+    <button onclick="calculateConversion()">Convert Balance</button>
+    <div id="converterResult" class="result"></div>
+</div>
 
     <script>
         const sheetURL = "https://docs.google.com/spreadsheets/d/1ObWed3580CeI9m5sN3qPVTgU67WH8Qkg-cot6etPOr4/gviz/tq?tqx=out:json";
@@ -692,16 +690,108 @@
         }
 
         // --- Populate Item Converter list ---
-        function populateConverterList() {
-            const list = document.getElementById("converterList");
-            list.innerHTML = "";
-            items.forEach(item => {
-                // only add items that have selling prices
-                if (item.sellEach || item.sellStack) {
-                    list.appendChild(new Option(item.name, item.name));
-                }
-            });
+        // --- Populate Item Converter list (with stock info) ---
+function populateConverterList() {
+    const datalist = document.getElementById("converterDatalist") || document.createElement("datalist");
+    datalist.id = "converterDatalist";
+    datalist.innerHTML = "";
+    items.forEach(item => {
+        if (item.sellEach || item.sellStack) {
+            let label = `${item.name}`;
+            if (item.sellStack) label += ` | Stack: ${item.stackStock} in stock`;
+            if (item.sellEach) label += ` | Each: ${item.indivStock} in stock`;
+            label += ` | Availability: ${item.availPercent}%`;
+            datalist.appendChild(new Option(label, item.name));
         }
+    });
+    if (!document.getElementById("converterDatalist")) {
+        document.body.appendChild(datalist);
+    }
+}
+
+// --- Add a new converter row ---
+function addConverterRow() {
+    const div = document.createElement("div");
+    div.className = "payRow";
+
+    const select = document.createElement("input");
+    select.setAttribute("list", "converterDatalist");
+
+    const percent = document.createElement("input");
+    percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
+
+    const removeRowBtn = document.createElement("button");
+    removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
+    removeRowBtn.onclick = () => { div.remove(); calculateConversion(); };
+
+    div.appendChild(select);
+    div.appendChild(document.createTextNode(" % of Net Balance: "));
+    div.appendChild(percent);
+    div.appendChild(removeRowBtn);
+
+    document.getElementById("converterOptions").appendChild(div);
+}
+
+// --- Calculate conversion allocations ---
+function calculateConversion() {
+    const converterList = document.getElementById("converterListDisplay");
+    converterList.innerHTML = "";
+
+    const netBT = parseFloat(document.getElementById("netTotal").textContent) || 0;
+    if (netBT <= 0) {
+        document.getElementById("converterResult").textContent = "⚠️ Net Balance is not positive.";
+        return;
+    }
+
+    // remove old converter-added items
+    buyCart = buyCart.filter(e => !e.isConverter);
+
+    const rows = document.querySelectorAll("#converterOptions .payRow");
+    let usedPercent = 0;
+
+    rows.forEach(row => {
+        const name = row.querySelector('input[list="converterDatalist"]').value;
+        const percent = parseFloat(row.querySelector('input[type="number"]').value) || 0;
+        const item = items.find(i => i.name === name);
+        if (!item || percent <= 0) return;
+        usedPercent += percent;
+
+        const portion = (percent / 100) * netBT;
+
+        // resolve prices
+        let stackPrice = item.sellStack || (item.sellEach && item.bundleSize ? item.sellEach * item.bundleSize : 0);
+        let indivPrice = item.sellEach || (item.sellStack && item.bundleSize ? item.sellStack / item.bundleSize : 0);
+
+        if (!stackPrice && !indivPrice) return;
+
+        let stacks = 0, individuals = 0, leftover = portion;
+        if (stackPrice > 0) {
+            stacks = Math.floor(portion / stackPrice);
+            leftover -= stacks * stackPrice;
+        }
+        if (indivPrice > 0) {
+            const addIndividuals = Math.floor(leftover / indivPrice);
+            individuals += addIndividuals;
+            leftover -= addIndividuals * indivPrice;
+        }
+
+        // add to Buy Cart
+        if (stacks > 0) buyCart.push({ name: item.name, qty: stacks, price: stackPrice, bundleSize: item.bundleSize, isConverter: true });
+        if (individuals > 0) buyCart.push({ name: item.name, qty: individuals, price: indivPrice, isConverter: true });
+
+        // show in converter list UI
+        const li = document.createElement("li");
+        li.textContent = `${percent}% = ${stacks} stack(s) + ${individuals} individual(s) of ${item.name}`;
+        converterList.appendChild(li);
+    });
+
+    renderBuyList();
+    if (usedPercent === 0) {
+        document.getElementById("converterResult").textContent = "⚠️ No allocations set.";
+    } else {
+        document.getElementById("converterResult").textContent = `✅ Conversion done. Allocated ${usedPercent}% of Net Balance.`;
+    }
+}
 
         // --- Converter logic (adds to Buy Cart + deducts BT) ---
         function convertNetBalance() {
