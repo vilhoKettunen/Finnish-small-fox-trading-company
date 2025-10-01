@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -114,7 +114,6 @@
             <p>Quick calc for a stack or individual item. Pick item and qty to see buy & sell totals.</p>
             <button onclick="toggleInfo('quickInfo')">❌ Close</button>
         </div>
-
         <div>
             <label>
                 Select Full Stack Item:
@@ -125,7 +124,6 @@
             <button onclick="quickStackCalc()">Calculate Stack</button>
             <div id="quickStackResult" class="result"></div>
         </div>
-
         <div>
             <label>
                 Select Individual Item:
@@ -146,7 +144,6 @@
             <p>Add stacks/individuals you want to buy. Add account balance and custom entries if needed. Totals update automatically.</p>
             <button onclick="toggleInfo('buyInfo')">❌ Close</button>
         </div>
-
         <h3>Full Stacks</h3>
         <input list="stackList" id="stackSelect">
         <datalist id="stackList"></datalist>
@@ -189,7 +186,6 @@
             <input type="number" id="customBuyPrice" placeholder="Price per Stack" step="0.01">
             <button onclick="addFullyCustomBuy()">Add Fully Custom</button>
         </div>
-
         <ul id="buyList"></ul>
         <div id="buyTotalBox" class="negative">Buy Total: <span id="buyTotal">0.00</span> BT</div>
     </div>
@@ -245,7 +241,6 @@
             <input type="number" id="customSellPrice" placeholder="Price per Stack" step="0.01">
             <button onclick="addFullyCustomSell()">Add Fully Custom</button>
         </div>
-
         <ul id="sellList"></ul>
         <div id="sellTotalBox" class="positive">Sell Total: <span id="sellTotal">0.00</span> BT</div>
     </div>
@@ -282,10 +277,7 @@
         <h2>🔹 Item Converter</h2>
         <button class="more-info-btn" onclick="toggleInfo('converterInfo')">More Info</button>
         <div id="converterInfo" class="info-box">
-            <p>
-                Converts your Net Balance (BT) into the maximum amount of a chosen item.
-                Prioritizes full stacks, then individuals, with leftover BT shown.
-            </p>
+            <p>Converts your Net Balance (BT) into the maximum amount of a chosen item. Prioritizes full stacks, then individuals, with leftover BT shown.</p>
             <button onclick="toggleInfo('converterInfo')">❌ Close</button>
         </div>
 
@@ -298,66 +290,42 @@
         <div id="converterResult" class="result"></div>
     </div>
 
-    <!-- Links Section -->
-    <div class="section">
-        <h2>🔗 Useful Links</h2>
-        <ul>
-            <li><a href="https://translocator.moe/" target="_blank">TL rute calculator</a></li>
-            <li><a href="https://map.tops.vintagestory.at/?x=-419&y=416&zoom=6" target="_blank">TOPS map</a></li>
-            <li><a href="https://wiki.vintagestory.at/Main_Page" target="_blank">Wiki</a></li>
-            <li><a href="https://docs.google.com/spreadsheets/d/1W9ByTiwX3lPakqoYXTHgnOiMNNzwSVnkgmTPqvMrSUc/edit?gid=0#gid=0" target="_blank">Mailbox names</a></li>
-            <li><a href="https://docs.google.com/spreadsheets/d/1ObWed3580CeI9m5sN3qPVTgU67WH8Qkg-cot6etPOr4/edit?gid=0#gid=0" target="_blank">PRICE SHEET</a></li>
-            <li><a href="https://www.vintagestory.at/" target="_blank">Vintage Story official website</a></li>
-        </ul>
-    </div>
     <script>
         const sheetURL = "https://docs.google.com/spreadsheets/d/1ObWed3580CeI9m5sN3qPVTgU67WH8Qkg-cot6etPOr4/gviz/tq?tqx=out:json";
-
         let items = [], payItems = [], buyCart = [], sellCart = [];
 
-        // --- Load data from sheet ---
+        // --- Load data from Google Sheet ---
         function loadData() {
-            const url = "https://docs.google.com/spreadsheets/d/1ObWed3580CeI9m5sN3qPVTgU67WH8Qkg-cot6etPOr4/gviz/tq?tqx=out:json";
-            fetch(url)
-                .then(res => res.text())
-                .then(text => {
-                    const json = JSON.parse(text.substr(47).slice(0, -2));
-                    items = json.table.rows.map(row => {
-                        const name = row.c[0]?.v || "";
-                        const buyStack = row.c[1]?.v || "";
-                        const sellStack = row.c[2]?.v || "";
-                        const stackStock = row.c[3]?.v || 0;   // 👈 column D
-                        const bundleSize = row.c[4]?.v || 1;
-                        const buyEach = row.c[5]?.v || "";
-                        const sellEach = row.c[6]?.v || "";
-                        const indivStock = row.c[7]?.v || 0;   // 👈 column H
-                        const availPercent = row.c[8]?.v || 0; // 👈 column I
-
+            fetch(sheetURL)
+                .then(r => r.text())
+                .then(t => {
+                    const json = JSON.parse(t.substr(47).slice(0, -2));
+                    items = json.table.rows.map(r => {
+                        const name = r.c[0]?.v || "";
+                        const buyStack = r.c[1]?.v || "";
+                        const sellStack = r.c[2]?.v || "";
+                        const stackStock = r.c[3]?.v || 0;
+                        const bundleSize = r.c[4]?.v || 1;
+                        const buyEach = r.c[5]?.v || "";
+                        const sellEach = r.c[6]?.v || "";
+                        const indivStock = r.c[7]?.v || 0;
+                        const availPercent = r.c[8]?.v || 0;
                         if (!name) return null;
                         if ((buyStack === "X" && sellStack === "X") && (buyEach === "X" && sellEach === "X")) return null;
-
                         return {
-                            name,
-                            bundleSize,
-                            stackStock,
-                            indivStock,
-                            availPercent,
+                            name, bundleSize, stackStock, indivStock, availPercent,
                             buyStack: buyStack !== "X" ? parseFloat(buyStack) : null,
                             sellStack: sellStack !== "X" ? parseFloat(sellStack) : null,
                             buyEach: buyEach !== "X" ? parseFloat(buyEach) : null,
                             sellEach: sellEach !== "X" ? parseFloat(sellEach) : null
                         };
                     }).filter(Boolean);
-
                     populateSelectors();
-                    addBuyRow();
-                    addSellRow();
-                    addPayRow();
                     populateConverterList();
                 });
         }
 
-        // --- Populate datalists/selectors ---
+        // --- Populate datalists ---
         function populateSelectors() {
             const stackList = document.getElementById("stackList");
             const indivList = document.getElementById("indivList");
@@ -365,38 +333,28 @@
             const sellIndivList = document.getElementById("sellIndivList");
             const quickStackList = document.getElementById("quickStackList");
             const quickIndivList = document.getElementById("quickIndivList");
-
-            // Clear existing options
-            [stackList, indivList, sellStackList, sellIndivList, quickStackList, quickIndivList]
-                .forEach(list => list.innerHTML = "");
-
-            payItems = []; // reset payItems
-
-            items.forEach(item => {
-                // Stack options
-                if (item.sellStack) {
-                    const label = `${item.name} (stack stock: ${item.stackStock} | avail: ${item.availPercent}%)`;
-                    stackList.appendChild(new Option(label, item.name));
-                    quickStackList.appendChild(new Option(label, item.name));
+            [stackList, indivList, sellStackList, sellIndivList, quickStackList, quickIndivList].forEach(l => l.innerHTML = "");
+            payItems = [];
+            items.forEach(i => {
+                if (i.sellStack) {
+                    const label = `${i.name} (stock: ${i.stackStock})`;
+                    stackList.appendChild(new Option(label, i.name));
+                    quickStackList.appendChild(new Option(label, i.name));
                 }
-                if (item.buyStack) {
-                    const label = `${item.name} (stack stock: ${item.stackStock} | avail: ${item.availPercent}%)`;
-                    sellStackList.appendChild(new Option(label, item.name));
+                if (i.buyStack) {
+                    const label = `${i.name} (stock: ${i.stackStock})`;
+                    sellStackList.appendChild(new Option(label, i.name));
                 }
-
-                // Individual options
-                if (item.sellEach) {
-                    const label = `${item.name} (individual stock: ${item.indivStock} | avail: ${item.availPercent}%)`;
-                    indivList.appendChild(new Option(label, item.name));
-                    quickIndivList.appendChild(new Option(label, item.name));
+                if (i.sellEach) {
+                    const label = `${i.name} (stock: ${i.indivStock})`;
+                    indivList.appendChild(new Option(label, i.name));
+                    quickIndivList.appendChild(new Option(label, i.name));
                 }
-                if (item.buyEach) {
-                    const label = `${item.name} (individual stock: ${item.indivStock} | avail: ${item.availPercent}%)`;
-                    sellIndivList.appendChild(new Option(label, item.name));
+                if (i.buyEach) {
+                    const label = `${i.name} (stock: ${i.indivStock})`;
+                    sellIndivList.appendChild(new Option(label, i.name));
                 }
-
-                // Store in payItems for Pay With dropdown
-                payItems.push(item);
+                payItems.push(i);
             });
         }
 
@@ -806,12 +764,12 @@
 
             // confirmation text
             resultBox.innerHTML = `
-      ✅ Converted ${netBT.toFixed(2)} BT into:<br>
-      • ${stacks} stack(s) of ${item.bundleSize} ${item.name}<br>
-      • ${individuals} individual(s)<br>
-      • Leftover: ${leftover.toFixed(2)} BT<br>
-      <b>Items added to Buy receipt ✅</b>
-    `;
+              ✅ Converted ${netBT.toFixed(2)} BT into:<br>
+              • ${stacks} stack(s) of ${item.bundleSize} ${item.name}<br>
+              • ${individuals} individual(s)<br>
+              • Leftover: ${leftover.toFixed(2)} BT<br>
+              <b>Items added to Buy receipt ✅</b>
+            `;
         }
 
         // --- Initialize everything on page load ---
