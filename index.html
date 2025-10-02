@@ -336,38 +336,50 @@
                 });
         }
 
-        // --- Populate datalists ---
+        // --- Populate datalists/selectors ---
         function populateSelectors() {
-            const stackList = document.getElementById("stackList");
-            const indivList = document.getElementById("indivList");
-            const sellStackList = document.getElementById("sellStackList");
-            const sellIndivList = document.getElementById("sellIndivList");
-            const quickStackList = document.getElementById("quickStackList");
-            const quickIndivList = document.getElementById("quickIndivList");
-            [stackList, indivList, sellStackList, sellIndivList, quickStackList, quickIndivList].forEach(l => l.innerHTML = "");
-            payItems = [];
-            items.forEach(i => {
-                if (i.sellStack) {
-                    const label = `${i.name} (stock: ${i.stackStock})`;
-                    stackList.appendChild(new Option(label, i.name));
-                    quickStackList.appendChild(new Option(label, i.name));
-                }
-                if (i.buyStack) {
-                    const label = `${i.name} (stock: ${i.stackStock})`;
-                    sellStackList.appendChild(new Option(label, i.name));
-                }
-                if (i.sellEach) {
-                    const label = `${i.name} (stock: ${i.indivStock})`;
-                    indivList.appendChild(new Option(label, i.name));
-                    quickIndivList.appendChild(new Option(label, i.name));
-                }
-                if (i.buyEach) {
-                    const label = `${i.name} (stock: ${i.indivStock})`;
-                    sellIndivList.appendChild(new Option(label, i.name));
-                }
-                payItems.push(i);
-            });
+    const stackList = document.getElementById("stackList");
+    const indivList = document.getElementById("indivList");
+    const sellStackList = document.getElementById("sellStackList");
+    const sellIndivList = document.getElementById("sellIndivList");
+    const quickStackList = document.getElementById("quickStackList");
+    const quickIndivList = document.getElementById("quickIndivList");
+    // Pay With datalist
+    let payDatalist = document.getElementById("payDatalist");
+    if (!payDatalist) {
+        payDatalist = document.createElement("datalist");
+        payDatalist.id = "payDatalist";
+        document.body.appendChild(payDatalist);
+    }
+    payDatalist.innerHTML = "";
+
+    [stackList, indivList, sellStackList, sellIndivList, quickStackList, quickIndivList].forEach(l => l.innerHTML = "");
+    payItems = [];
+    items.forEach(i => {
+        // Show availability in all sections except Pay With
+        if (i.sellStack) {
+            const label = `${i.name} (stack stock: ${i.stackStock} | avail: ${i.availPercent}%)`;
+            stackList.appendChild(new Option(label, i.name));
+            quickStackList.appendChild(new Option(label, i.name));
         }
+        if (i.buyStack) {
+            const label = `${i.name} (stack stock: ${i.stackStock} | avail: ${i.availPercent}%)`;
+            sellStackList.appendChild(new Option(label, i.name));
+        }
+        if (i.sellEach) {
+            const label = `${i.name} (individual stock: ${i.indivStock} | avail: ${i.availPercent}%)`;
+            indivList.appendChild(new Option(label, i.name));
+            quickIndivList.appendChild(new Option(label, i.name));
+        }
+        if (i.buyEach) {
+            const label = `${i.name} (individual stock: ${i.indivStock} | avail: ${i.availPercent}%)`;
+            sellIndivList.appendChild(new Option(label, i.name));
+        }
+        // Pay With datalist: just the name
+        payDatalist.appendChild(new Option(i.name, i.name));
+        payItems.push(i);
+    });
+}
 
         // --- Quick calculators ---
         function quickStackCalc() {
@@ -551,7 +563,10 @@
                     li.textContent = `${e.qty} × ${e.name} (${e.price} BT each) (${rowTotal.toFixed(2)} BT)`;
                 }
 
-                if (e.isPayWith) li.classList.add("payment-item"); // visually mark
+                if (e.isPayWith) {
+                    li.classList.add("payment-item"); // visually mark
+                    li.textContent += " [Pay With]";
+                }
                 total += rowTotal;
 
                 const removeBtn = document.createElement("button");
@@ -855,7 +870,6 @@ function calculateConversion() {
                 totalSpent = individuals * indivPrice;
                 leftover = netBT - totalSpent;
             }
-
             // add to Buy Cart
             if (stacks > 0) {
                 buyCart.push({ name: item.name, qty: stacks, price: stackPrice, bundleSize: item.bundleSize });
@@ -879,8 +893,8 @@ function calculateConversion() {
         window.onload = () => {
             loadData();
             populateConverterList();
-        };
-
+            addPayRow(); // Add this so the Pay With section is initialized!
+};
     </script>
 </body>
 </html>
