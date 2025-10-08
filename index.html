@@ -100,11 +100,21 @@
             .section ul li a:hover {
                 text-decoration: underline;
             }
+
     </style>
 </head>
 <body>
 
     <h1>🛒 Vak Store Trading Calculator</h1>
+
+    <!-- === Currency Toggle (keeps same style as other datalist inputs) === -->
+    <div class="section">
+      <label for="currencyInput"><b>Display Currency:</b></label>
+      <input id="currencyInput" list="currencyDatalist" placeholder="Search currency / item (type part of name)" />
+      <!-- hidden value kept so existing code using #currencySelect.value continues to work -->
+      <input id="currencySelect" type="hidden" value="BT" />
+      <datalist id="currencyDatalist"></datalist>
+    </div>
 
     <!-- Quick Individual Calculator -->
     <div class="section">
@@ -303,7 +313,10 @@
 
     <script>
         const sheetURL = "https://docs.google.com/spreadsheets/d/1ObWed3580CeI9m5sN3qPVTgU67WH8Qkg-cot6etPOr4/gviz/tq?tqx=out:json";
+        // === GLOBALS ===
         let items = [], payItems = [], buyCart = [], sellCart = [];
+
+        const BASE_CURRENCY = "BT"; // main default currency
 
         // --- Load data from Google Sheet ---
         function loadData() {
@@ -333,53 +346,121 @@
                     }).filter(Boolean);
                     populateSelectors();
                     populateConverterList();
+
+                    // keep display currency default set (input + hidden)
+                    const input = document.getElementById("currencyInput");
+                    const hidden = document.getElementById("currencySelect");
+                    if (input) input.value = BASE_CURRENCY;
+                    if (hidden) hidden.value = BASE_CURRENCY;
+                })
+                .catch(err => {
+                  console.error("Failed to load sheet:", err);
                 });
         }
 
         // --- Populate datalists/selectors ---
         function populateSelectors() {
-    const stackList = document.getElementById("stackList");
-    const indivList = document.getElementById("indivList");
-    const sellStackList = document.getElementById("sellStackList");
-    const sellIndivList = document.getElementById("sellIndivList");
-    const quickStackList = document.getElementById("quickStackList");
-    const quickIndivList = document.getElementById("quickIndivList");
-    // Pay With datalist
-    let payDatalist = document.getElementById("payDatalist");
-    if (!payDatalist) {
-        payDatalist = document.createElement("datalist");
-        payDatalist.id = "payDatalist";
-        document.body.appendChild(payDatalist);
-    }
-    payDatalist.innerHTML = "";
+            const stackList = document.getElementById("stackList");
+            const indivList = document.getElementById("indivList");
+            const sellStackList = document.getElementById("sellStackList");
+            const sellIndivList = document.getElementById("sellIndivList");
+            const quickStackList = document.getElementById("quickStackList");
+            const quickIndivList = document.getElementById("quickIndivList");
 
-    [stackList, indivList, sellStackList, sellIndivList, quickStackList, quickIndivList].forEach(l => l.innerHTML = "");
-    payItems = [];
-    items.forEach(i => {
-        // Show availability in all sections except Pay With
-        if (i.sellStack) {
-            const label = `${i.name} (stack stock: ${i.stackStock} | avail: ${i.availPercent}%)`;
-            stackList.appendChild(new Option(label, i.name));
-            quickStackList.appendChild(new Option(label, i.name));
+            // Pay With datalist
+            let payDatalist = document.getElementById("payDatalist");
+            if (!payDatalist) {
+                payDatalist = document.createElement("datalist");
+                payDatalist.id = "payDatalist";
+                document.body.appendChild(payDatalist);
+            }
+            payDatalist.innerHTML = "";
+
+            // Currency datalist (for Display Currency control)
+            let currencyDatalist = document.getElementById("currencyDatalist");
+            if (!currencyDatalist) {
+                currencyDatalist = document.createElement("datalist");
+                currencyDatalist.id = "currencyDatalist";
+                document.body.appendChild(currencyDatalist);
+            }
+            currencyDatalist.innerHTML = "";
+
+            [stackList, indivList, sellStackList, sellIndivList, quickStackList, quickIndivList].forEach(l => l.innerHTML = "");
+            payItems = [];
+
+            items.forEach(i => {
+                // Show availability in all sections except Pay With
+                if (i.sellStack) {
+                    const label = `${i.name} (stack stock: ${i.stackStock} | avail: ${i.availPercent}%)`;
+                    stackList.appendChild(new Option(label, i.name));
+                    quickStackList.appendChild(new Option(label, i.name));
+                }
+                if (i.buyStack) {
+                    const label = `${i.name} (stack stock: ${i.stackStock} | avail: ${i.availPercent}%)`;
+                    sellStackList.appendChild(new Option(label, i.name));
+                }
+                if (i.sellEach) {
+                    const label = `${i.name} (individual stock: ${i.indivStock} | avail: ${i.availPercent}%)`;
+                    indivList.appendChild(new Option(label, i.name));
+                    quickIndivList.appendChild(new Option(label, i.name));
+                }
+                if (i.buyEach) {
+                    const label = `${i.name} (individual stock: ${i.indivStock} | avail: ${i.availPercent}%)`;
+                    sellIndivList.appendChild(new Option(label, i.name));
+                }
+
+                // Pay With datalist: just the name
+                payDatalist.appendChild(new Option(i.name, i.name));
+                payItems.push(i);
+
+                // Currency datalist: show same rich label as other lists (so typing matches name)
+                const currencyLabel = `${i.name} — stack:${i.stackStock} each:${i.indivStock} avail:${i.availPercent}%`;
+                currencyDatalist.appendChild(new Option(currencyLabel, i.name));
+            });
+
+            // also add base currency to currency datalist
+            currencyDatalist.prepend(new Option(BASE_CURRENCY, BASE_CURRENCY));
+
+            // wire display-currency input -> update hidden #currencySelect so the rest of code works unchanged
+            const currencyInput = document.getElementById("currencyInput");
+            const currencyHidden = document.getElementById("currencySelect");
+            if (currencyInput && currencyHidden) {
+                // on change (user picks from datalist or finishes typing) set hidden value to exact match or keep base
+                currencyInput.onchange = () => {
+                    const val = currencyInput.value && currencyInput.value.trim();
+                    if (!val) {
+                        currencyHidden.value = BASE_CURRENCY;
+                    } else {
+                        // if exact match to an item name, set that; datalist option value is the item name for our options
+                        // some browsers set input value to option.label; we used Option(label, item.name) so exact string
+                        // match to item name is safe
+                        const exact = items.find(it => it.name.toLowerCase() === val.toLowerCase());
+                        if (val.toLowerCase() === BASE_CURRENCY.toLowerCase()) {
+                            currencyHidden.value = BASE_CURRENCY;
+                        } else if (exact) {
+                            currencyHidden.value = exact.name;
+                        } else {
+                            // attempt to find an item whose label includes the typed text (helps if browser fills label)
+                            const matchByLabel = items.find(it => ((`${it.name} — stack:${it.stackStock} each:${it.indivStock} avail:${it.availPercent}%`).toLowerCase()).includes(val.toLowerCase()));
+                            if (matchByLabel) currencyHidden.value = matchByLabel.name;
+                            // otherwise leave previous hidden value unchanged until user selects a real option
+                        }
+                    }
+                    updateAllDisplays();
+                };
+                // on input we don't overwrite hidden value until onchange (selection) to avoid partial writes
+                currencyInput.oninput = () => {
+                    // noop - keep datalist suggestions visible; developers can type partial (e.g. "copp") and pick
+                    // but also update the hidden if there's an exact name typed
+                    const v = currencyInput.value && currencyInput.value.trim();
+                    const exact = items.find(it => it.name.toLowerCase() === (v || "").toLowerCase());
+                    if (exact) {
+                        currencyHidden.value = exact.name;
+                        updateAllDisplays();
+                    }
+                };
+            }
         }
-        if (i.buyStack) {
-            const label = `${i.name} (stack stock: ${i.stackStock} | avail: ${i.availPercent}%)`;
-            sellStackList.appendChild(new Option(label, i.name));
-        }
-        if (i.sellEach) {
-            const label = `${i.name} (individual stock: ${i.indivStock} | avail: ${i.availPercent}%)`;
-            indivList.appendChild(new Option(label, i.name));
-            quickIndivList.appendChild(new Option(label, i.name));
-        }
-        if (i.buyEach) {
-            const label = `${i.name} (individual stock: ${i.indivStock} | avail: ${i.availPercent}%)`;
-            sellIndivList.appendChild(new Option(label, i.name));
-        }
-        // Pay With datalist: just the name
-        payDatalist.appendChild(new Option(i.name, i.name));
-        payItems.push(i);
-    });
-}
 
         // --- Quick calculators ---
         function quickStackCalc() {
@@ -407,7 +488,8 @@
             const qty = parseInt(document.getElementById("stackQty").value) || 0;
             const item = items.find(i => i.name === name);
             if (!item || !item.sellStack) return;
-            buyCart.push({ name: item.name, qty, price: item.sellStack, bundleSize: item.bundleSize });
+            const rowId = 'row_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            buyCart.push({ name: item.name, qty, price: item.sellStack, bundleSize: item.bundleSize, _rowId: rowId });
             renderBuyList();
         }
         function addIndividual() {
@@ -415,13 +497,15 @@
             const qty = parseInt(document.getElementById("indivQty").value) || 0;
             const item = items.find(i => i.name === name);
             if (!item || !item.sellEach) return;
-            buyCart.push({ name: item.name, qty, price: item.sellEach });
+            const rowId = 'row_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            buyCart.push({ name: item.name, qty, price: item.sellEach, _rowId: rowId });
             renderBuyList();
         }
         function addBuyAccountBalance() {
             const balance = parseFloat(document.getElementById("buyAccountBalanceInput").value) || 0;
             if (balance <= 0) return;
-            buyCart.push({ name: "Account Balance", qty: 1, price: balance, isBalance: true });
+            const rowId = 'row_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            buyCart.push({ name: "Account Balance", qty: 1, price: balance, isBalance: true, _rowId: rowId });
             renderBuyList();
         }
 
@@ -432,7 +516,8 @@
             const price = parseFloat(document.getElementById("customBuyStackPrice").value) || 0;
             const item = items.find(i => i.name === name);
             if (!item || qty <= 0 || price <= 0) return;
-            buyCart.push({ name: item.name, qty, price, bundleSize: item.bundleSize, isCustom: true });
+            const rowId = 'row_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            buyCart.push({ name: item.name, qty, price, bundleSize: item.bundleSize, isCustom: true, _rowId: rowId });
             renderBuyList();
         }
         // custom from spreadsheet (individual)
@@ -442,7 +527,8 @@
             const price = parseFloat(document.getElementById("customBuyIndivPrice").value) || 0;
             const item = items.find(i => i.name === name);
             if (!item || qty <= 0 || price <= 0) return;
-            buyCart.push({ name: item.name, qty, price, isCustom: true });
+            const rowId = 'row_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            buyCart.push({ name: item.name, qty, price, isCustom: true, _rowId: rowId });
             renderBuyList();
         }
         // fully custom not in sheet:
@@ -452,40 +538,120 @@
             const stackSize = parseInt(document.getElementById("customBuyStackSize").value) || 1;
             const price = parseFloat(document.getElementById("customBuyPrice").value) || 0; // price per stack
             if (!name || qty <= 0 || price <= 0 || stackSize <= 0) return;
-            buyCart.push({ name, qty, bundleSize: stackSize, price, isFullyCustom: true });
+            const rowId = 'row_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            buyCart.push({ name, qty, bundleSize: stackSize, price, isFullyCustom: true, _rowId: rowId });
             renderBuyList();
         }
 
-        function renderBuyList() {
-            const list = document.getElementById("buyList");
-            list.innerHTML = "";
-            let total = 0;
-            buyCart.forEach((e, idx) => {
-                const li = document.createElement("li");
-                let rowTotal = 0;
-                if (e.isBalance) {
-                    li.textContent = `Account Balance: ${e.price.toFixed(2)} BT`;
-                    rowTotal = e.price;
-                } else if (e.bundleSize && e.isFullyCustom) {
-                    rowTotal = (e.qty / e.bundleSize) * e.price;
-                    li.textContent = `${e.qty} × ${e.name} (${e.price} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
-                } else if (e.bundleSize) {
-                    rowTotal = e.qty * e.price;
-                    li.textContent = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price} BT stack) (${rowTotal.toFixed(2)} BT)`;
-                } else {
-                    rowTotal = e.qty * e.price;
-                    li.textContent = `${e.qty} × ${e.name} (${e.price} BT each) (${rowTotal.toFixed(2)} BT)`;
-                }
-                total += rowTotal;
-                const removeBtn = document.createElement("button");
-                removeBtn.textContent = "❌";
-                removeBtn.onclick = () => { buyCart.splice(idx, 1); renderBuyList(); };
-                li.appendChild(removeBtn);
-                list.appendChild(li);
-            });
-            document.getElementById("buyTotal").textContent = total.toFixed(2);
-            calculateNet();
+       // === Currency conversion helpers (use correct column depending on section) ===
+        // forBuySection = true  -> use column F (buyEach / buyStack)  (Buy Multiple Items display)
+        // forBuySection = false -> use column G (sellEach / sellStack) (Sell Multiple Items & Combined)
+        function convertValue(btValue, currencyName, forBuySection) {
+          if (!currencyName || currencyName === BASE_CURRENCY) return { bt: btValue, converted: null };
+          const currency = items.find(i => i.name.toLowerCase() === currencyName.toLowerCase());
+          if (!currency) return { bt: btValue, converted: null };
+
+          // prefer individual price (each), fallback to stack price
+          const rate = forBuySection
+            ? (currency.buyEach || currency.buyStack || 0)
+            : (currency.sellEach || currency.sellStack || 0);
+
+          if (!rate || rate <= 0) return { bt: btValue, converted: null };
+          return { bt: btValue, converted: btValue / rate };
         }
+
+        function formatValue(btValue, currencyName, forBuySection) {
+          if (isNaN(btValue)) btValue = 0;
+          let txt = `${btValue.toFixed(2)} ${BASE_CURRENCY}`;
+          if (currencyName && currencyName !== BASE_CURRENCY) {
+            const { converted } = convertValue(btValue, currencyName, !!forBuySection);
+            if (converted != null && !isNaN(converted)) {
+              txt += ` (≈ ${converted.toFixed(2)} ${currencyName})`;
+            }
+          }
+          return txt;
+        }
+
+        function updateAllDisplays() {
+          renderBuyList();
+          renderSellList();
+          calculateNet();
+        }
+
+        function removeBuyItemById(rowId) {
+          buyCart = buyCart.filter(e => e._rowId !== rowId);
+          renderBuyList();
+        }
+
+        function removeSellItemById(rowId) {
+          sellCart = sellCart.filter(e => e._rowId !== rowId);
+          renderSellList();
+        }
+
+        // remove converter allocation (removes buyCart entries with same _rowId and removes converter list li)
+        function removeConverterAllocation(rowId) {
+          // remove from buyCart
+          buyCart = buyCart.filter(e => !(e.isConverter && e._rowId === rowId));
+          // remove converter list UI entries
+          const converterList = document.getElementById("converterListDisplay");
+          Array.from(converterList.children).forEach(li => {
+            if (li.dataset && li.dataset.rowid === String(rowId)) li.remove();
+          });
+          renderBuyList();
+          calculateNet();
+        }
+
+        function renderBuyList() {
+          const list = document.getElementById("buyList");
+          list.innerHTML = "";
+          let total = 0;
+          const curr = document.getElementById("currencySelect").value;
+
+          buyCart.forEach((e) => {
+            const li = document.createElement("li");
+            let rowTotal = 0;
+            let rowText = "";
+
+            if (e.isBalance) {
+              rowTotal = e.price || 0;
+              rowText = `Account Balance: ${rowTotal.toFixed(2)} BT`;
+            } else if (e.bundleSize && e.isFullyCustom) {
+              rowTotal = (e.qty / e.bundleSize) * e.price;
+              rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
+            } else if (e.bundleSize) {
+              rowTotal = e.qty * e.price;
+              rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`;
+            } else {
+              rowTotal = e.qty * e.price;
+              rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`;
+            }
+
+            total += rowTotal;
+
+            // mark converted items (from Item Converter) visually and text
+            if (e.isConverter) {
+              li.classList.add("converter-item");
+              rowText += " [Converted]";
+            }
+
+            // show the selected-currency equivalent using the BUY rate (column F)
+            if (curr && curr !== BASE_CURRENCY) {
+              rowText += " " + formatValue(rowTotal, curr, true); // true -> use F row
+            }
+
+            li.textContent = rowText;
+            const removeBtn = document.createElement("button");
+            removeBtn.textContent = "❌";
+            removeBtn.onclick = () => removeBuyItemById(e._rowId);
+            li.appendChild(removeBtn);
+            list.appendChild(li);
+          });
+
+          document.getElementById("buyTotal").textContent = formatValue(total, curr, true); // buy total uses F row as requested
+          // do not override sellTotal here — renderSellList owns it
+          calculateNet();
+        }
+
 
         // === Sell functions ===
         function addSellStack() {
@@ -493,122 +659,148 @@
             const qty = parseInt(document.getElementById("sellStackQty").value) || 0;
             const item = items.find(i => i.name === name);
             if (!item || !item.buyStack) return;
-            sellCart.push({ name: item.name, qty, price: item.buyStack, bundleSize: item.bundleSize });
+            const rowId = 'row_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            sellCart.push({ name: item.name, qty, price: item.buyStack, bundleSize: item.bundleSize, _rowId: rowId });
             renderSellList();
         }
+
         function addSellIndividual() {
             const name = document.getElementById("sellIndivSelect").value;
             const qty = parseInt(document.getElementById("sellIndivQty").value) || 0;
             const item = items.find(i => i.name === name);
             if (!item || !item.buyEach) return;
-            sellCart.push({ name: item.name, qty, price: item.buyEach });
-            renderSellList();
-        }
-        function addAccountBalance() {
-            const balance = parseFloat(document.getElementById("accountBalanceInput").value) || 0;
-            if (balance <= 0) return;
-            sellCart.push({ name: "Account Balance", qty: 1, price: balance, isBalance: true });
+            const rowId = 'row_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            sellCart.push({ name: item.name, qty, price: item.buyEach, _rowId: rowId });
             renderSellList();
         }
 
-        // custom sell from sheet (stack)
+        function addAccountBalance() {
+            const balance = parseFloat(document.getElementById("accountBalanceInput").value) || 0;
+            if (balance <= 0) return;
+            const rowId = 'row_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            sellCart.push({ name: "Account Balance", qty: 1, price: balance, isBalance: true, _rowId: rowId });
+            renderSellList();
+        }
+
+        // --- Custom from spreadsheet (stack)
         function addCustomSellStack() {
             const name = document.getElementById("customSellStackSelect").value;
             const qty = parseInt(document.getElementById("customSellStackQty").value) || 0;
             const price = parseFloat(document.getElementById("customSellStackPrice").value) || 0;
             const item = items.find(i => i.name === name);
             if (!item || qty <= 0 || price <= 0) return;
-            sellCart.push({ name: item.name, qty, price, bundleSize: item.bundleSize, isCustom: true });
+            const rowId = 'row_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            sellCart.push({ name: item.name, qty, price, bundleSize: item.bundleSize, isCustom: true, _rowId: rowId });
             renderSellList();
         }
-        // custom sell individual
+
+        // --- Custom from spreadsheet (individual)
         function addCustomSellIndividual() {
             const name = document.getElementById("customSellIndivSelect").value;
             const qty = parseInt(document.getElementById("customSellIndivQty").value) || 0;
             const price = parseFloat(document.getElementById("customSellIndivPrice").value) || 0;
             const item = items.find(i => i.name === name);
             if (!item || qty <= 0 || price <= 0) return;
-            sellCart.push({ name: item.name, qty, price, isCustom: true });
+            const rowId = 'row_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            sellCart.push({ name: item.name, qty, price, isCustom: true, _rowId: rowId });
             renderSellList();
         }
-        // fully custom sell
+
+        // --- Fully custom (not in sheet)
         function addFullyCustomSell() {
             const name = document.getElementById("customSellName").value.trim();
-            const qty = parseInt(document.getElementById("customSellQty").value) || 0;
+            const qty = parseInt(document.getElementById("customSellQty").value) || 0; // pieces
             const stackSize = parseInt(document.getElementById("customSellStackSize").value) || 1;
-            const price = parseFloat(document.getElementById("customSellPrice").value) || 0;
+            const price = parseFloat(document.getElementById("customSellPrice").value) || 0; // price per stack
             if (!name || qty <= 0 || price <= 0 || stackSize <= 0) return;
-            sellCart.push({ name, qty, bundleSize: stackSize, price, isFullyCustom: true });
+            const rowId = 'row_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            sellCart.push({ name, qty, bundleSize: stackSize, price, isFullyCustom: true, _rowId: rowId });
             renderSellList();
         }
 
         function renderSellList() {
-            const list = document.getElementById("sellList");
-            list.innerHTML = "";
-            let total = 0;
-            sellCart.forEach((e, idx) => {
-                const li = document.createElement("li");
-                let rowTotal = 0;
-                if (e.isBalance) {
-                    li.textContent = `Account Balance: ${e.price.toFixed(2)} BT`;
-                    rowTotal = e.price;
-                } else if (e.bundleSize && e.isFullyCustom) {
-                    rowTotal = (e.qty / e.bundleSize) * e.price;
-                    li.textContent = `${e.qty} × ${e.name} (${e.price} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
-                } else if (e.bundleSize) {
-                    rowTotal = e.qty * e.price;
-                    li.textContent = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price} BT stack) (${rowTotal.toFixed(2)} BT)`;
-                } else {
-                    rowTotal = e.qty * e.price;
-                    li.textContent = `${e.qty} × ${e.name} (${e.price} BT each) (${rowTotal.toFixed(2)} BT)`;
-                }
+          const list = document.getElementById("sellList");
+          list.innerHTML = "";
+          let total = 0;
+          const curr = document.getElementById("currencySelect").value;
 
-                if (e.isPayWith) {
-                    li.classList.add("payment-item"); // visually mark
-                    li.textContent += " [Pay With]";
-                }
-                total += rowTotal;
+          sellCart.forEach((e) => {
+            const li = document.createElement("li");
+            let rowTotal = 0;
+            let rowText = "";
 
-                const removeBtn = document.createElement("button");
-                removeBtn.textContent = "❌";
-                removeBtn.onclick = () => {
-                    // If this is a pay-with item, remove associated payList li(s)
-                    if (e.isPayWith && e._payId) removePayListEntry(e._payId);
-                    sellCart.splice(idx, 1);
-                    renderSellList();
-                };
-                li.appendChild(removeBtn);
-                list.appendChild(li);
-            });
-            document.getElementById("sellTotal").textContent = total.toFixed(2);
-            calculateNet();
+            if (e.isBalance) {
+              rowTotal = e.price || 0;
+              rowText = `Account Balance: ${rowTotal.toFixed(2)} BT`;
+            } else if (e.bundleSize && e.isFullyCustom) {
+              rowTotal = (e.qty / e.bundleSize) * e.price;
+              rowText = `${e.qty} × ${e.name} (${e.price} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
+            } else if (e.bundleSize) {
+              rowTotal = e.qty * e.price;
+              rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`;
+            } else {
+              rowTotal = e.qty * e.price;
+              rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`;
+            }
+
+            if (e.isPayWith) {
+              li.classList.add("payment-item");
+              rowText += " [Pay With]";
+            }
+
+            total += rowTotal;
+
+            // show the selected-currency equivalent using the SELL rate (column G)
+            if (curr && curr !== BASE_CURRENCY) {
+              rowText += " " + formatValue(total, curr, false); // false -> use G row
+            }
+
+            li.textContent = rowText;
+            const removeBtn = document.createElement("button");
+            removeBtn.textContent = "❌";
+            removeBtn.onclick = () => removeSellItemById(e._rowId);
+            li.appendChild(removeBtn);
+            list.appendChild(li);
+          });
+
+          // Sell receipt total uses SELL conversion (G row)
+          document.getElementById("sellTotal").textContent = formatValue(total, curr, false);
+          // calculateNet will update the combined net only; don't overwrite sellTotal here afterwards
+          calculateNet();
         }
+
+
 
         // --- Net calculation ---
         function calculateNet() {
-            // buyTotal: account balances are shown positive in buyTotal (receipt)
-            let buyTotal = buyCart.reduce((s, e) => {
-                if (e.isBalance) return s + (e.price || 0);
-                if (e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
-                if (e.bundleSize) return s + (e.qty * e.price);
-                return s + (e.qty * e.price);
-            }, 0);
+          // buyTotal: account balances are shown positive in buyTotal (receipt)
+          let buyTotal = buyCart.reduce((s, e) => {
+            if (e.isBalance) return s + (e.price || 0);
+            if (e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
+            if (e.bundleSize) return s + (e.qty * e.price);
+            return s + (e.qty * e.price);
+          }, 0);
 
-            let sellTotal = sellCart.reduce((s, e) => {
-                if (e.isBalance) return s + (e.price || 0);
-                if (e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
-                if (e.bundleSize) return s + (e.qty * e.price);
-                return s + (e.qty * e.price);
-            }, 0);
+          let sellTotal = sellCart.reduce((s, e) => {
+            if (e.isBalance) return s + (e.price || 0);
+            if (e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
+            if (e.bundleSize) return s + (e.qty * e.price);
+            return s + (e.qty * e.price);
+          }, 0);
 
-            // Net = sellTotal - buyTotal (Pay With items are already added to sellCart when calculated)
-            const net = sellTotal - buyTotal;
-            document.getElementById("netTotal").textContent = net.toFixed(2);
-            // color the net display
-            const netSpan = document.getElementById("netTotal");
-            netSpan.className = net >= 0 ? "positive" : "negative";
-            // ensure sell total displayed too
-            document.getElementById("sellTotal").textContent = sellTotal.toFixed(2);
+          // Net = sellTotal - buyTotal (Pay With items are already added to sellCart when calculated)
+          const net = sellTotal - buyTotal;
+          const curr = document.getElementById("currencySelect").value;
+          const netSpan = document.getElementById("netTotal");
+
+          // store raw numeric net so other functions can read it without parsing formatted text
+          netSpan.dataset.raw = String(net);
+
+          // If net < 0 use BUY/F-row conversion (forBuySection = true).
+          // If net >= 0 use SELL/G-row conversion (forBuySection = false).
+          const forBuySection = net < 0;
+          netSpan.textContent = formatValue(net, curr, forBuySection);
+          netSpan.className = net >= 0 ? "positive" : "negative";
         }
 
         // --- Pay With section ---
@@ -649,66 +841,131 @@
 
         // calculate which items to use to cover owed amount, add them to sellCart as isPayWith
         function calculatePayment() {
-            const payListEl = document.getElementById("payList");
-            payListEl.innerHTML = "";
-            const totalNet = parseFloat(document.getElementById("netTotal").textContent) || 0;
+  const payListEl = document.getElementById("payList");
+  payListEl.innerHTML = "";
 
-            if (totalNet >= 0) {
-                document.getElementById("paymentResult").textContent = `✅ Net Balance is ${totalNet.toFixed(2)} BT. No payment needed.`;
-                return;
-            }
+  // Prefer raw numeric net saved by calculateNet; fallback to parsing displayed text
+  const netSpan = document.getElementById("netTotal");
+  const netRaw = parseFloat(netSpan.dataset.raw);
+  const totalNet = !isNaN(netRaw)
+    ? netRaw
+    : parseFloat((netSpan.textContent || "0").replace(/[^\d.-]/g, "")) || 0;
 
-            const owed = -totalNet;
-            let usedPercent = 0;
+  if (totalNet >= 0) {
+    document.getElementById("paymentResult").textContent =
+      `✅ Net Balance is ${totalNet.toFixed(2)} BT. No payment needed.`;
+    // Also remove any previous pay-with items from sellCart to keep state clean
+    sellCart = sellCart.filter(e => !e.isPayWith);
+    renderSellList();
+    calculateNet();
+    return;
+  }
 
-            // remove previous pay-with items from sellCart
-            sellCart = sellCart.filter(e => !e.isPayWith);
+  const owed = -totalNet;
+  let usedPercent = 0;
 
-            const rows = document.querySelectorAll(".payRow");
-            rows.forEach(row => {
-                const name = row.querySelector('input[list="payDatalist"]').value;
-                const percent = parseFloat(row.querySelector('input[type="number"]').value) || 0;
-                const item = payItems.find(i => i.name === name);
-                if (!item || percent <= 0) return;
-                usedPercent += percent;
+  // remove previous pay-with items from sellCart
+  sellCart = sellCart.filter(e => !e.isPayWith);
 
-                const portion = (percent / 100) * owed;
-                let qtyNeeded = 0;
-                if (item.buyEach) qtyNeeded = Math.round(portion / item.buyEach);
-                else qtyNeeded = 0;
+  const curr = document.getElementById("currencySelect").value;
+  // Only consider rows created inside payOptions
+  const rows = document.querySelectorAll("#payOptions .payRow");
 
-                // create a pay-list li with remove button and a unique id
-                const payId = 'pay_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-                const li = document.createElement("li");
-                li.dataset.payid = payId;
-                li.textContent = `${percent}% = ${qtyNeeded} × ${name}`;
-                const removeBtn = document.createElement("button");
-                removeBtn.textContent = "❌";
-                removeBtn.onclick = () => {
-                    // remove the corresponding sellCart pay-with item(s)
-                    sellCart = sellCart.filter(it => !(it.isPayWith && it._payId === payId));
-                    li.remove();
-                    renderSellList();
-                    calculateNet();
-                };
-                li.appendChild(removeBtn);
-                payListEl.appendChild(li);
+  rows.forEach(row => {
+    const inputEl = row.querySelector('input[list="payDatalist"]');
+    const percentEl = row.querySelector('input[type="number"]');
+    if (!inputEl || !percentEl) return;
 
-                // add to sellCart as pay-with item so it affects net + appears in receipt
-                const pricePerEach = item.buyEach || 0;
-                const payEntry = { name, qty: qtyNeeded, price: pricePerEach, isPayWith: true, _payId: payId };
-                sellCart.push(payEntry);
-            });
+    const rawName = (inputEl.value || "").trim();
+    const percent = parseFloat(percentEl.value) || 0;
+    if (percent <= 0) return;
 
-            if (usedPercent !== 100) {
-                document.getElementById("paymentResult").textContent = `⚠️ Warning: payment percentages total ${usedPercent}%, not 100%.`;
-            } else {
-                document.getElementById("paymentResult").textContent = `To pay ${owed.toFixed(2)} BT, bring the items listed above.`;
-            }
+    // Find matching item robustly:
+    // 1) exact name match
+    // 2) case-insensitive contains on name
+    // 3) fallback: try match by the datalist option value (some browsers copy label)
+    let item = payItems.find(i => i.name.toLowerCase() === rawName.toLowerCase());
+    if (!item) {
+      item = payItems.find(i => i.name.toLowerCase().includes(rawName.toLowerCase()));
+    }
+    if (!item) return; // skip if no matching item
 
-            renderSellList(); // show pay-with items in sell receipt
-            calculateNet();
-        }
+    usedPercent += percent;
+    const portion = (percent / 100) * owed;
+
+    // Resolve BUY rates for pay-with (prefer stack/each appropriately)
+    let stackPrice = item.buyStack || (item.buyEach && item.bundleSize ? item.buyEach * item.bundleSize : 0);
+    let indivPrice = item.buyEach || (item.buyStack && item.bundleSize ? item.buyStack / item.bundleSize : 0);
+
+    if ((!stackPrice || stackPrice <= 0) && (!indivPrice || indivPrice <= 0)) {
+      // no usable price info, skip this row
+      return;
+    }
+
+    let stacks = 0, individuals = 0, leftover = portion;
+    if (stackPrice > 0) {
+      stacks = Math.floor(portion / stackPrice);
+      leftover -= stacks * stackPrice;
+    }
+    if (indivPrice > 0 && leftover > 0) {
+      const addIndividuals = Math.floor(leftover / indivPrice);
+      individuals += addIndividuals;
+      leftover -= addIndividuals * indivPrice;
+    }
+
+    // Create unique id for this pay allocation
+    const payId = 'pay_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+
+    // Build list entry shown under Pay With
+    const li = document.createElement("li");
+    li.dataset.payid = payId;
+    let payText = `${percent}% = `;
+    if (stacks > 0) payText += `${stacks} stack(s) × ${item.bundleSize} ${item.name} (${stackPrice.toFixed(2)} BT stack)`;
+    if (individuals > 0) {
+      if (stacks > 0) payText += " + ";
+      payText += `${individuals} × ${item.name} (${indivPrice.toFixed(2)} BT each)`;
+    }
+    const totalBT = stacks * stackPrice + individuals * indivPrice;
+    payText += ` (${totalBT.toFixed(2)} BT)`;
+    if (curr && curr !== BASE_CURRENCY) {
+      payText += " " + formatValue(totalBT, curr, false);
+    }
+    li.textContent = payText;
+
+    const removeBtn = document.createElement("button");
+    removeBtn.textContent = "❌";
+    removeBtn.onclick = () => {
+      // Remove pay-with items with this payId from sellCart and update UI
+      sellCart = sellCart.filter(it => !(it.isPayWith && it._payId === payId));
+      li.remove();
+      renderSellList();
+      calculateNet();
+    };
+    li.appendChild(removeBtn);
+    payListEl.appendChild(li);
+
+    // Add computed items to sellCart so they appear in Sell receipt
+    if (stacks > 0) {
+      sellCart.push({ name: item.name, qty: stacks, price: stackPrice, bundleSize: item.bundleSize, isPayWith: true, _payId: payId });
+    }
+    if (individuals > 0) {
+      sellCart.push({ name: item.name, qty: individuals, price: indivPrice, isPayWith: true, _payId: payId });
+    }
+  });
+
+  // Show a useful message
+  if (usedPercent !== 100) {
+    document.getElementById("paymentResult").textContent =
+      `⚠️ Warning: payment percentages total ${usedPercent}%, not 100%.`;
+  } else {
+    document.getElementById("paymentResult").textContent =
+      `To pay ${owed.toFixed(2)} BT, bring the items listed above.`;
+  }
+
+  // Ensure Sell receipt and totals reflect the newly added pay-with items
+  renderSellList();
+  calculateNet();
+}
 
         // --- Toggle info boxes ---
         function toggleInfo(id) {
@@ -717,184 +974,194 @@
 
         }
 
-        // --- Populate Item Converter list ---
         // --- Populate Item Converter list (with stock info) ---
-function populateConverterList() {
-    const datalist = document.getElementById("converterDatalist") || document.createElement("datalist");
-    datalist.id = "converterDatalist";
-    datalist.innerHTML = "";
-    items.forEach(item => {
-        if (item.sellEach || item.sellStack) {
-            let label = `${item.name}`;
-            if (item.sellStack) label += ` | Stack: ${item.stackStock} in stock`;
-            if (item.sellEach) label += ` | Each: ${item.indivStock} in stock`;
-            label += ` | Availability: ${item.availPercent}%`;
-            datalist.appendChild(new Option(label, item.name));
-        }
-    });
-    if (!document.getElementById("converterDatalist")) {
-        document.body.appendChild(datalist);
-    }
-}
-
-// --- Add a new converter row ---
-function addConverterRow() {
-    const div = document.createElement("div");
-    div.className = "payRow";
-
-    const select = document.createElement("input");
-    select.setAttribute("list", "converterDatalist");
-
-    const percent = document.createElement("input");
-    percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
-
-    const removeRowBtn = document.createElement("button");
-    removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
-    removeRowBtn.onclick = () => { div.remove(); calculateConversion(); };
-
-    div.appendChild(select);
-    div.appendChild(document.createTextNode(" % of Net Balance: "));
-    div.appendChild(percent);
-    div.appendChild(removeRowBtn);
-
-    document.getElementById("converterOptions").appendChild(div);
-}
-
-// --- Calculate conversion allocations ---
-function calculateConversion() {
-    const converterList = document.getElementById("converterListDisplay");
-    converterList.innerHTML = "";
-
-    const netBT = parseFloat(document.getElementById("netTotal").textContent) || 0;
-    if (netBT <= 0) {
-        document.getElementById("converterResult").textContent = "⚠️ Net Balance is not positive.";
-        return;
-    }
-
-    // remove old converter-added items
-    buyCart = buyCart.filter(e => !e.isConverter);
-
-    const rows = document.querySelectorAll("#converterOptions .payRow");
-    let usedPercent = 0;
-
-    rows.forEach(row => {
-        const name = row.querySelector('input[list="converterDatalist"]').value;
-        const percent = parseFloat(row.querySelector('input[type="number"]').value) || 0;
-        const item = items.find(i => i.name === name);
-        if (!item || percent <= 0) return;
-        usedPercent += percent;
-
-        const portion = (percent / 100) * netBT;
-
-        // resolve prices
-        let stackPrice = item.sellStack || (item.sellEach && item.bundleSize ? item.sellEach * item.bundleSize : 0);
-        let indivPrice = item.sellEach || (item.sellStack && item.bundleSize ? item.sellStack / item.bundleSize : 0);
-
-        if (!stackPrice && !indivPrice) return;
-
-        let stacks = 0, individuals = 0, leftover = portion;
-        if (stackPrice > 0) {
-            stacks = Math.floor(portion / stackPrice);
-            leftover -= stacks * stackPrice;
-        }
-        if (indivPrice > 0) {
-            const addIndividuals = Math.floor(leftover / indivPrice);
-            individuals += addIndividuals;
-            leftover -= addIndividuals * indivPrice;
-        }
-
-        // add to Buy Cart
-        if (stacks > 0) buyCart.push({ name: item.name, qty: stacks, price: stackPrice, bundleSize: item.bundleSize, isConverter: true });
-        if (individuals > 0) buyCart.push({ name: item.name, qty: individuals, price: indivPrice, isConverter: true });
-
-        // show in converter list UI
-        const li = document.createElement("li");
-        li.textContent = `${percent}% = ${stacks} stack(s) + ${individuals} individual(s) of ${item.name}`;
-        converterList.appendChild(li);
-    });
-
-    renderBuyList();
-    if (usedPercent === 0) {
-        document.getElementById("converterResult").textContent = "⚠️ No allocations set.";
-    } else {
-        document.getElementById("converterResult").textContent = `✅ Conversion done. Allocated ${usedPercent}% of Net Balance.`;
-    }
-}
-
-        // --- Converter logic (adds to Buy Cart + deducts BT) ---
-        function convertNetBalance() {
-            const name = document.getElementById("converterSelect").value;
-            const item = items.find(i => i.name === name);
-            if (!item) return;
-
-            const resultBox = document.getElementById("converterResult");
-
-            // get current net balance (from system calculation)
-            const netBT = parseFloat(document.getElementById("netTotal").textContent) || 0;
-            if (netBT <= 0) {
-                resultBox.textContent = "⚠️ Net Balance is not positive.";
-                return;
-            }
-
-            // prices
-            let stackPrice = item.sellStack || 0;
-            let indivPrice = item.sellEach || 0;
-
-            // fallback conversions if only one price exists
-            if ((!stackPrice || stackPrice <= 0) && item.bundleSize && indivPrice > 0) {
-                stackPrice = indivPrice * item.bundleSize;
-            }
-            if ((!indivPrice || indivPrice <= 0) && item.bundleSize && stackPrice > 0) {
-                indivPrice = stackPrice / item.bundleSize;
-            }
-
-            if ((!stackPrice || stackPrice <= 0) && (!indivPrice || indivPrice <= 0)) {
-                resultBox.textContent = `⚠️ No valid price info for ${name}.`;
-                return;
-            }
-
-            // conversion math
-            let stacks = 0, individuals = 0, leftover = 0, totalSpent = 0;
-            if (stackPrice > 0) {
-                stacks = Math.floor(netBT / stackPrice);
-                let remainingBT = netBT - stacks * stackPrice;
-                if (indivPrice > 0) {
-                    individuals = Math.floor(remainingBT / indivPrice);
-                    leftover = remainingBT - individuals * indivPrice;
-                } else {
-                    leftover = remainingBT;
+        function populateConverterList() {
+            const datalist = document.getElementById("converterDatalist") || document.createElement("datalist");
+            datalist.id = "converterDatalist";
+            datalist.innerHTML = "";
+            items.forEach(item => {
+                if (item.sellEach || item.sellStack) {
+                    let label = `${item.name}`;
+                    if (item.sellStack) label += ` | Stack: ${item.stackStock} in stock`;
+                    if (item.sellEach) label += ` | Each: ${item.indivStock} in stock`;
+                    label += ` | Availability: ${item.availPercent}%`;
+                    datalist.appendChild(new Option(label, item.name));
                 }
-                totalSpent = stacks * stackPrice + individuals * indivPrice;
-            } else if (indivPrice > 0) {
-                individuals = Math.floor(netBT / indivPrice);
-                totalSpent = individuals * indivPrice;
-                leftover = netBT - totalSpent;
+            });
+            if (!document.getElementById("converterDatalist")) {
+                document.body.appendChild(datalist);
             }
-            // add to Buy Cart
-            if (stacks > 0) {
-                buyCart.push({ name: item.name, qty: stacks, price: stackPrice, bundleSize: item.bundleSize });
-            }
-            if (individuals > 0) {
-                buyCart.push({ name: item.name, qty: individuals, price: indivPrice });
-            }
-            renderBuyList();
+        }
 
-            // confirmation text
-            resultBox.innerHTML = `
-              ✅ Converted ${netBT.toFixed(2)} BT into:<br>
-              • ${stacks} stack(s) of ${item.bundleSize} ${item.name}<br>
-              • ${individuals} individual(s)<br>
-              • Leftover: ${leftover.toFixed(2)} BT<br>
-              <b>Items added to Buy receipt ✅</b>
-            `;
+        // --- Add a new converter row ---
+        function addConverterRow() {
+            const div = document.createElement("div");
+            div.className = "payRow";
+
+            const select = document.createElement("input");
+            select.setAttribute("list", "converterDatalist");
+
+            const percent = document.createElement("input");
+            percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
+
+            const removeRowBtn = document.createElement("button");
+            removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
+            removeRowBtn.onclick = () => { div.remove(); calculateConversion(); };
+
+            div.appendChild(select);
+            div.appendChild(document.createTextNode(" % of Net Balance: "));
+            div.appendChild(percent);
+            div.appendChild(removeRowBtn);
+
+            document.getElementById("converterOptions").appendChild(div);
+        }
+
+        // --- Calculate conversion allocations ---
+        function calculateConversion() {
+          const converterList = document.getElementById("converterListDisplay");
+          converterList.innerHTML = "";
+
+          // use raw net stored by calculateNet
+          const netBT = parseFloat(document.getElementById("netTotal").dataset.raw) || 0;
+
+          if (netBT <= 0) {
+            document.getElementById("converterResult").textContent = "⚠️ Net Balance is not positive.";
+            return;
+          }
+
+          // remove old converter-added items
+          buyCart = buyCart.filter(e => !e.isConverter);
+
+          const rows = document.querySelectorAll("#converterOptions .payRow");
+          let usedPercent = 0;
+
+          rows.forEach(row => {
+            const name = row.querySelector('input[list="converterDatalist"]').value;
+            const percent = parseFloat(row.querySelector('input[type="number"]').value) || 0;
+            const item = items.find(i => i.name === name);
+            if (!item || percent <= 0) return;
+            usedPercent += percent;
+
+            const portion = (percent / 100) * netBT;
+
+            // Use SELL prices for items added to the Buy receipt (consistent with addStack/addIndividual which use sellStack/sellEach)
+            let stackPrice = item.sellStack || (item.sellEach && item.bundleSize ? item.sellEach * item.bundleSize : 0);
+            let indivPrice = item.sellEach || (item.sellStack && item.bundleSize ? item.sellStack / item.bundleSize : 0);
+
+            if (!stackPrice && !indivPrice) return;
+
+            let stacks = 0, individuals = 0, leftover = portion;
+            if (stackPrice > 0) {
+              stacks = Math.floor(portion / stackPrice);
+              leftover -= stacks * stackPrice;
+            }
+            if (indivPrice > 0) {
+              const addIndividuals = Math.floor(leftover / indivPrice);
+              individuals += addIndividuals;
+              leftover -= addIndividuals * indivPrice;
+            }
+
+            const rowId = 'conv_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+
+            if (stacks > 0) buyCart.push({ name: item.name, qty: stacks, price: stackPrice, bundleSize: item.bundleSize, isConverter: true, _rowId: rowId });
+            if (individuals > 0) buyCart.push({ name: item.name, qty: individuals, price: indivPrice, isConverter: true, _rowId: rowId });
+
+            const li = document.createElement("li");
+            li.dataset.rowid = rowId;
+            let txt = `${percent}% = `;
+            if (stacks > 0) txt += `${stacks} stack(s) × ${item.bundleSize} ${item.name} (${stackPrice.toFixed(2)} BT stack)`;
+            if (individuals > 0) {
+              if (stacks > 0) txt += " + ";
+              txt += `${individuals} × ${item.name} (${indivPrice.toFixed(2)} BT each)`;
+            }
+            let totalBT = stacks * stackPrice + individuals * indivPrice;
+            txt += ` (${totalBT.toFixed(2)} BT)`;
+            const curr = document.getElementById("currencySelect").value;
+            if (curr && curr !== BASE_CURRENCY) {
+              // converter display uses BUY conversion for the currency label (as before)
+              txt += " " + formatValue(totalBT, curr, true);
+            }
+            li.textContent = txt;
+            const removeBtn = document.createElement("button");
+            removeBtn.textContent = "❌";
+            removeBtn.onclick = () => removeConverterAllocation(rowId);
+            li.appendChild(removeBtn);
+            converterList.appendChild(li);
+          });
+
+          renderBuyList();
+          if (usedPercent === 0) {
+            document.getElementById("converterResult").textContent = "⚠️ No allocations set.";
+          } else {
+            document.getElementById("converterResult").textContent = `✅ Conversion done. Allocated ${usedPercent}% of Net Balance.`;
+          }
+        }
+
+        function convertNetBalance() {
+          // use raw net stored in dataset to avoid parsing formatted display
+          const netBT = parseFloat(document.getElementById("netTotal").dataset.raw) || 0;
+          if (netBT <= 0) {
+            document.getElementById("converterResult").textContent = "⚠️ Net Balance is not positive.";
+            return;
+          }
+
+          const name = document.getElementById("converterSelect").value;
+          const item = items.find(i => i.name === name);
+          if (!item) return;
+
+          // prices (use sell prices like other buyCart additions)
+          let stackPrice = item.sellStack || 0;
+          let indivPrice = item.sellEach || 0;
+
+          if ((!stackPrice || stackPrice <= 0) && item.bundleSize && indivPrice > 0) {
+            stackPrice = indivPrice * item.bundleSize;
+          }
+          if ((!indivPrice || indivPrice <= 0) && item.bundleSize && stackPrice > 0) {
+            indivPrice = stackPrice / item.bundleSize;
+          }
+
+          if ((!stackPrice || stackPrice <= 0) && (!indivPrice || indivPrice <= 0)) {
+            document.getElementById("converterResult").textContent = `⚠️ No valid price info for ${name}.`;
+            return;
+          }
+
+          // conversion math...
+          let stacks = 0, individuals = 0, leftover = 0, totalSpent = 0;
+          if (stackPrice > 0) {
+            stacks = Math.floor(netBT / stackPrice);
+            let remainingBT = netBT - stacks * stackPrice;
+            if (indivPrice > 0) {
+              individuals = Math.floor(remainingBT / indivPrice);
+              leftover = remainingBT - individuals * indivPrice;
+            } else {
+              leftover = remainingBT;
+            }
+            totalSpent = stacks * stackPrice + individuals * indivPrice;
+          } else if (indivPrice > 0) {
+            individuals = Math.floor(netBT / indivPrice);
+            totalSpent = individuals * indivPrice;
+            leftover = netBT - totalSpent;
+          }
+
+          if (stacks > 0) buyCart.push({ name: item.name, qty: stacks, price: stackPrice, bundleSize: item.bundleSize });
+          if (individuals > 0) buyCart.push({ name: item.name, qty: individuals, price: indivPrice });
+
+          renderBuyList();
+
+          document.getElementById("converterResult").innerHTML = `
+            ✅ Converted ${netBT.toFixed(2)} BT into:<br>
+            • ${stacks} stack(s) of ${item.bundleSize} ${item.name}<br>
+            • ${individuals} individual(s)<br>
+            • Leftover: ${leftover.toFixed(2)} BT<br>
+            <b>Items added to Buy receipt ✅</b>
+          `;
         }
 
         // --- Initialize everything on page load ---
         window.onload = () => {
             loadData();
-            populateConverterList();
-            addPayRow(); // Add this so the Pay With section is initialized!
-};
+            addPayRow(); // keep Pay With initialized
+        };
     </script>
 </body>
 </html>
