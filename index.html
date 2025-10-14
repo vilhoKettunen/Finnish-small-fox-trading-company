@@ -752,7 +752,7 @@
 
             // show the selected-currency equivalent using the SELL rate (column G)
             if (curr && curr !== BASE_CURRENCY) {
-              rowText += " " + formatValue(total, curr, false); // false -> use G row
+              rowText += " " + formatValue(rowTotal, curr, false);// false -> use G row
             }
 
             li.textContent = rowText;
