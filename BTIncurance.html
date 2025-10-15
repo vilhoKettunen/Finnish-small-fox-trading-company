@@ -18,18 +18,15 @@
   table{width:100%;border-collapse:collapse;margin-top:10px}
   th,td{padding:8px;border:1px solid #eee;text-align:left}
   th{background:#fafafa}
-  .mapping{display:flex;gap:8px;align-items:center}
-  .positive{color:green}
-  .negative{color:red}
-  .hint{font-size:0.9rem;color:#555;margin-top:6px}
-  .notice{padding:8px;background:#f7f9ff;border-radius:6px;border:1px solid #e6eefc;color:#173a7a}
   .mono{font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:0.95rem}
+  .warn{color:#d97706;font-weight:600}
+  .error{color:#dc2626;font-weight:600}
   @media (max-width:720px){ .row{flex-direction:column;align-items:stretch} }
 </style>
 </head>
 <body>
   <h1>🔒 BT Insurer — Metals Calculator</h1>
-  <p class="lead">Enter a player, set BT amount to insure and the site will use your Price Sheet + Allocation sheet to calculate how many ingots & nuggets are needed per resource.</p>
+  <p class="lead">Enter a player, set BT amount to insure and the site will use your Price Sheet + Allocation sheet to calculate how many ingots & nuggets are needed per resource and compare against stock.</p>
 
   <div class="box">
     <div class="row">
@@ -56,20 +53,19 @@
     </div>
 
     <div id="status" class="small"></div>
-    <div class="hint">If names don't appear, make sure the allocation sheet is shared for viewing or you are logged in with access. Allocation headers expected in row 3, names in column A starting row 4.</div>
+    <div class="small">If names don't appear, make sure the allocation sheet is published as CSV and public.</div>
   </div>
 
   <div id="resultsWrap" class="box" style="display:none;">
     <div class="row">
-      <div id="summary" class="notice mono"></div>
-      <div style="flex:1"></div>
-      <div class="small">Mappings saved in browser</div>
+      <div id="summary" class="mono"></div>
     </div>
 
     <table id="resultsTable">
       <thead>
         <tr>
           <th>Resource</th>
+          <th>Stock</th>
           <th>%</th>
           <th>BT allocated</th>
           <th>Ingot price (BT)</th>
@@ -78,7 +74,7 @@
           <th>Nuggets</th>
           <th>Insured (BT)</th>
           <th>Uninsured (BT)</th>
-          <th>Remap</th>
+          <th>Warnings</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -86,380 +82,198 @@
   </div>
 
 <script>
-/*
-  Single-file BT Insurer
-  - Loads two Google Sheets via gviz JSON
-  - Price sheet ID and Allocation sheet ID are set below (your provided sheets)
-  - Parses price items (same column mapping as your original)
-  - Parses allocation sheet: row 3 headers, names from row 4 (col A)
-  - Fuzzy datalist search and calculation
-  - Remapping support with localStorage persistence
-*/
-
-const PRICE_SHEET_ID = "1ObWed3580CeI9m5sN3qPVTgU67WH8Qkg-cot6etPOr4"; // your price sheet
-const ALLOC_SHEET_ID = "1ofv8iwPpRCov_95FkowtFj1tUU27fnE4XPm7xZlDgtM"; // allocation (insurance) sheet
-
+const PRICE_SHEET_ID = "1ObWed3580CeI9m5sN3qPVTgU67WH8Qkg-cot6etPOr4";
+const ALLOC_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSSCXCJIVrWOitr-0NxUJQ4f9T3mN3GtIXE4Zp5AC9pBPI_ndMBlRGl2-PFi46pQcHMegmYR_bXCUiq/pub?gid=0&single=true&output=csv";
 const priceURL = `https://docs.google.com/spreadsheets/d/${PRICE_SHEET_ID}/gviz/tq?tqx=out:json`;
-const allocURL = `https://docs.google.com/spreadsheets/d/${ALLOC_SHEET_ID}/gviz/tq?tqx=out:json`;
 
-let priceItems = [];   // parsed price rows
-let allocations = { header: [], players: [] }; // header = resource names, players = [{name, percents:{}}]
-let mappingStore = JSON.parse(localStorage.getItem('bt_insurer_mappings') || '{}');
+let priceItems = [];
+let allocations = { header: [], players: [] };
 
 const el = {
-  status: document.getElementById('status'),
   playerInput: document.getElementById('playerInput'),
   playersList: document.getElementById('playersList'),
   btInput: document.getElementById('btInput'),
   priceMode: document.getElementById('priceMode'),
   calcBtn: document.getElementById('calcBtn'),
   reloadBtn: document.getElementById('reloadBtn'),
+  status: document.getElementById('status'),
   resultsWrap: document.getElementById('resultsWrap'),
-  resultsTableBody: document.querySelector('#resultsTable tbody'),
-  summary: document.getElementById('summary')
+  summary: document.getElementById('summary'),
+  tableBody: document.querySelector('#resultsTable tbody')
 };
 
-function parseGviz(text) {
-  // google visualization returns: google.visualization.Query.setResponse(...);
-  const start = text.indexOf('(');
-  const json = JSON.parse(text.substring(start + 1, text.length - 2));
+// ---- HELPERS ----
+function parseGviz(text){
+  const start=text.indexOf('('); 
+  const json=JSON.parse(text.substring(start+1,text.length-2)); 
   return json;
 }
 
-function parsePriceSheet(json) {
-  const rows = json.table.rows || [];
-  priceItems = rows.map(r => {
-    const c = idx => (r.c[idx] && r.c[idx].v !== undefined) ? r.c[idx].v : null;
-    const name = c(0) ? String(c(0)).trim() : null;
-    if (!name) return null;
-    const buyStack = c(1); const sellStack = c(2);
-    const bundleSize = c(4) || 1;
-    const buyEach = c(5); const sellEach = c(6);
-    return {
+function parsePriceSheet(json){
+  const rows=json.table.rows||[];
+  priceItems=rows.map(r=>{
+    const c=i=>(r.c[i]&&r.c[i].v!==undefined)?r.c[i].v:null;
+    const name=c(0)?String(c(0)).trim():null;
+    if(!name)return null;
+    return{
       name,
-      buyStack: buyStack !== null && buyStack !== "X" ? parseFloat(buyStack) : null,
-      sellStack: sellStack !== null && sellStack !== "X" ? parseFloat(sellStack) : null,
-      bundleSize: bundleSize ? parseInt(bundleSize) : 1,
-      buyEach: buyEach !== null && buyEach !== "X" ? parseFloat(buyEach) : null,
-      sellEach: sellEach !== null && sellEach !== "X" ? parseFloat(sellEach) : null
+      buyEach:parseFloat(c(5))||null,
+      sellEach:parseFloat(c(6))||null,
+      bundleSize:parseInt(c(4))||1,
+      stock:parseFloat(c(7))||0   // Column H = index 7
     };
   }).filter(Boolean);
 }
 
-function parseAllocSheet(json) {
-  const rows = json.table.rows || [];
-  const headerRow = rows[2] || { c: [] }; // row 3
-  const headerCells = headerRow.c || [];
-  const headerNames = headerCells.map(c => c && c.v ? String(c.v).trim() : "");
-  // players start at row index 3 (row 4)
-  const players = [];
-  for (let i = 3; i < rows.length; i++) {
-    const r = rows[i];
-    if (!r) continue;
-    const cells = r.c || [];
-    const playerName = cells[0] && cells[0].v ? String(cells[0].v).trim() : null;
-    if (!playerName) continue;
-    const percents = {};
-    for (let col = 1; col < headerNames.length; col++) {
-      const resource = headerNames[col] || `col${col}`;
-      const val = cells[col] && cells[col].v !== undefined && cells[col].v !== null ? parseFloat(cells[col].v) : 0;
-      percents[resource] = isNaN(val) ? 0 : val;
+function parseAllocCSV(text){
+  const lines=text.trim().split(/\r?\n/);
+  const header=lines[2].split(',').map(x=>x.trim());
+  const players=[];
+  for(let i=3;i<lines.length;i++){
+    const parts=lines[i].split(',');
+    const name=parts[0].trim();
+    if(!name)continue;
+    const percents={};
+    for(let j=1;j<header.length;j++){
+      percents[header[j]]=parseFloat(parts[j])||0;
     }
-    players.push({ name: playerName, percents });
+    players.push({name,percents});
   }
-  allocations.header = headerNames;
-  allocations.players = players;
+  allocations={header,players};
 }
 
-function simpleFuzzyFind(q) {
-  if (!q) return null;
-  q = q.trim().toLowerCase();
-  let best = null, bestScore = -1;
-  for (const p of allocations.players) {
-    const n = p.name.toLowerCase();
-    let score = 0;
-    if (n === q) score = 200;
-    else if (n.startsWith(q)) score = 150;
-    else if (n.includes(q)) score = 120;
-    else {
-      const tokens = q.split(/\s+/);
-      let matches = 0;
-      for (const t of tokens) if (n.includes(t)) matches++;
-      score = 50 + matches * 10;
-    }
-    if (score > bestScore) { bestScore = score; best = p; }
-  }
-  return bestScore <= 40 ? null : best;
+function formatMoney(v){return (isNaN(v)?0:v).toFixed(2)+" BT";}
+function stackFormat(count, stackSize, label) {
+  if (!count || count <= 0) return "0 " + label;
+  const stacks = Math.floor(count / stackSize);
+  const remainder = count % stackSize;
+  let text = "";
+  if (stacks === 0) text = `${remainder} ${label}`;
+  else if (remainder === 0) text = `${stacks}×${stackSize} ${label}`;
+  else text = `${stacks}×${stackSize}+${remainder} ${label}`;
+  text += ` (${count})`;
+  return text;
 }
 
-function buildPlayersDatalist() {
-  el.playersList.innerHTML = '';
-  for (const p of allocations.players) {
-    el.playersList.appendChild(new Option(p.name, p.name));
-  }
-  // attach filtering behavior on input
-  el.playerInput.addEventListener('input', () => {
-    const q = el.playerInput.value.trim().toLowerCase();
-    el.playersList.innerHTML = '';
-    if (!q) {
-      allocations.players.slice(0, 100).forEach(p => el.playersList.appendChild(new Option(p.name, p.name)));
-      return;
-    }
-    const matches = allocations.players.filter(p => p.name.toLowerCase().includes(q));
-    matches.slice(0, 100).forEach(p => el.playersList.appendChild(new Option(p.name, p.name)));
-  });
+function findPrice(resource){
+  const lower=resource.toLowerCase();
+  const ingot=priceItems.find(it=>it.name.toLowerCase().includes("ingot")&&it.name.toLowerCase().includes(lower));
+  const nugget=priceItems.find(it=>it.name.toLowerCase().includes("nugget")&&it.name.toLowerCase().includes(lower));
+  const any=priceItems.find(it=>it.name.toLowerCase().includes(lower));
+  return{ingot,nugget,any};
 }
 
-// price matching heuristics: try ingot/nugget names first, then fallback
-function findPriceItemsForResource(resourceName, preferMode) {
-  const r = resourceName.toLowerCase();
-  const ingotLabels = ["ingot","bar","block"];
-  const nuggetLabels = ["nugget","nug","piece"];
-  const contains = (it, text) => it.name.toLowerCase().includes(text);
-  let ingot = null, nugget = null;
+// ---- MAIN RENDER ----
+function renderResults(player,bt){
+  el.resultsWrap.style.display='block';
+  el.tableBody.innerHTML='';
+  el.summary.textContent=`Player: ${player.name} — ${bt} BT insured`;
+  let total=0;
 
-  // try exact "<resource> ingot" or contains resource & ingot labels
-  ingot = priceItems.find(it => it.name.toLowerCase() === `${resourceName.toLowerCase()} ingot`);
-  if (!ingot) {
-    for (const lab of ingotLabels) {
-      ingot = priceItems.find(it => contains(it, r) && contains(it, lab));
-      if (ingot) break;
-    }
-  }
-  // fallback any item containing resource
-  if (!ingot) ingot = priceItems.find(it => contains(it, r));
+  for(const [res,pct] of Object.entries(player.percents)){
+    if(pct<=0)continue;
+    const allocBT=(pct/100)*bt;
+    const found=findPrice(res);
+    const mode=el.priceMode.value;
+    const ingotP=found.ingot?found.ingot[mode+"Each"]:null;
+    const nuggetP=found.nugget?found.nugget[mode+"Each"]:null;
+    const anyP=found.any?found.any[mode+"Each"]:null;
+    const stock=found.ingot?found.ingot.stock:(found.any?found.any.stock:0);
 
-  // nugget: try explicit match
-  nugget = priceItems.find(it => it.name.toLowerCase() === `${resourceName.toLowerCase()} nugget`);
-  if (!nugget) {
-    for (const lab of nuggetLabels) {
-      nugget = priceItems.find(it => contains(it, r) && contains(it, lab));
-      if (nugget) break;
-    }
-  }
-  // no strict nugget? try any item containing resource & 'nugget'
-  if (!nugget) nugget = priceItems.find(it => contains(it, r) && it.name.toLowerCase().includes("nugget"));
+    let ingots=0,nuggets=0,insured=0,leftover=allocBT;
+    let displayIngots="",displayNuggets="",warning="";
+    let ingotStack=16,nuggetStack=res.toLowerCase().includes("meteoric")?64:128;
 
-  function unitPriceFrom(item) {
-    if (!item) return null;
-    const mode = preferMode === 'buy' ? 'buy' : 'sell';
-    if (mode === 'sell') {
-      if (item.sellEach) return item.sellEach;
-      if (item.sellStack && item.bundleSize) return item.sellStack / item.bundleSize;
-    } else {
-      if (item.buyEach) return item.buyEach;
-      if (item.buyStack && item.bundleSize) return item.buyStack / item.bundleSize;
-    }
-    // fallback
-    if (item.sellEach) return item.sellEach;
-    if (item.buyEach) return item.buyEach;
-    if (item.sellStack && item.bundleSize) return item.sellStack / item.bundleSize;
-    if (item.buyStack && item.bundleSize) return item.buyStack / item.bundleSize;
-    return null;
-  }
-
-  return {
-    ingotItem: ingot || null,
-    nuggetItem: nugget || null,
-    ingotUnitPrice: unitPriceFrom(ingot),
-    nuggetUnitPrice: unitPriceFrom(nugget)
-  };
-}
-
-function formatMoney(v){ return (isNaN(v) ? 0 : v).toFixed(2) + " BT"; }
-
-function clearResults(){ el.resultsTableBody.innerHTML = ''; el.resultsWrap.style.display = 'none'; el.summary.textContent = ''; }
-
-function renderResultsForPlayer(player, btAmount) {
-  clearResults();
-  el.resultsWrap.style.display = 'block';
-  el.summary.textContent = `Player: ${player.name} — Insuring ${formatMoney(btAmount)}`;
-  const resources = Object.keys(player.percents || player.percents === undefined ? player.percents : player.percents).filter(k => player.percents[k] && player.percents[k] > 0);
-  // ensure resources from allocations if structure differs
-  let keys = Object.keys(player.percents || {});
-  if (keys.length === 0) {
-    // maybe allocations stored under 'allocations' or 'percents' — try both safe accesses
-    keys = Object.keys(player.percents || {});
-  }
-  const resourceList = keys.filter(k => player.percents[k] && player.percents[k] > 0);
-
-  let totalInsured = 0;
-  for (const resource of resourceList) {
-    const pct = player.percents[resource] || 0;
-    const allocBT = (pct/100) * btAmount;
-    const preferMode = el.priceMode.value;
-    let found = findPriceItemsForResource(resource, preferMode);
-
-    // apply mapping override if exists
-    if (mappingStore[resource]) {
-      const map = mappingStore[resource];
-      if (map.ingotName) {
-        const it = priceItems.find(pi => pi.name === map.ingotName);
-        if (it) {
-          found.ingotItem = it;
-          // recalc unit price for preferMode
-          found.ingotUnitPrice = (preferMode === 'sell' ? (it.sellEach || (it.sellStack && it.bundleSize ? it.sellStack/it.bundleSize : null)) : (it.buyEach || (it.buyStack && it.bundleSize ? it.buyStack/it.bundleSize : null)))
-                                 || it.sellEach || it.buyEach || (it.sellStack && it.bundleSize ? it.sellStack/it.bundleSize : null) || (it.buyStack && it.bundleSize ? it.buyStack/it.bundleSize : null);
-        }
+    if(ingotP){
+      ingots=Math.floor(allocBT/ingotP);
+      insured+=ingots*ingotP;
+      leftover=allocBT-insured;
+      displayIngots=stackFormat(ingots,ingotStack,"ingots");
+      if(nuggetP){
+        nuggets=Math.floor(leftover/nuggetP);
+        insured+=nuggets*nuggetP;
+        leftover=allocBT-insured;
+        displayNuggets=stackFormat(nuggets,nuggetStack,"nuggets");
       }
-      if (map.nuggetName) {
-        const it2 = priceItems.find(pi => pi.name === map.nuggetName);
-        if (it2) {
-          found.nuggetItem = it2;
-          found.nuggetUnitPrice = (preferMode === 'sell' ? (it2.sellEach || (it2.sellStack && it2.bundleSize ? it2.sellStack/it2.bundleSize : null)) : (it2.buyEach || (it2.buyStack && it2.bundleSize ? it2.buyStack/it2.bundleSize : null)))
-                                 || it2.sellEach || it2.buyEach || (it2.sellStack && it2.bundleSize ? it2.sellStack/it2.bundleSize : null) || (it2.buyStack && it2.bundleSize ? it2.buyStack/it2.bundleSize : null);
-        }
+    }else if(nuggetP){
+      nuggets=Math.floor(allocBT/nuggetP);
+      insured+=nuggets*nuggetP;
+      leftover=allocBT-insured;
+      displayNuggets=stackFormat(nuggets,nuggetStack,"nuggets");
+    }else if(anyP){
+      // Non-metal fallback (like RGs)
+      const pieces=Math.floor(allocBT/anyP);
+      insured=pieces*anyP;
+      leftover=allocBT-insured;
+      displayIngots=`${pieces} items (${pieces})`;
+      displayNuggets="—";
+    }
+
+    // --- Stock comparison ---
+    const totalRequired = ingots + nuggets; // approximate total items used
+    if(stock > 0){
+      if(totalRequired > stock){
+        warning=`<span class="error">Don't have stock that meets ${res}'s insuring</span>`;
+      }else if(totalRequired > stock/2){
+        warning=`<span class="warn">Might not be able to insure ${res}</span>`;
+      }else{
+        warning="";
       }
     }
 
-    // if nugget price missing but ingot has a bundle size, compute nugget as ingotPrice / bundle
-    let ingotPrice = found.ingotUnitPrice;
-    let nuggetPrice = found.nuggetUnitPrice;
-    if ((!nuggetPrice || nuggetPrice <= 0) && found.ingotItem && found.ingotItem.bundleSize && found.ingotItem.bundleSize > 1 && ingotPrice) {
-      nuggetPrice = ingotPrice / (found.ingotItem.bundleSize || 1);
-    }
+    total+=insured;
 
-    let ingots = 0, nuggets = 0, insured = 0, leftover = allocBT;
-    if (ingotPrice && ingotPrice > 0) {
-      ingots = Math.floor(allocBT / ingotPrice);
-      insured += ingots * ingotPrice;
-      leftover = allocBT - insured;
-      if (nuggetPrice && nuggetPrice > 0) {
-        nuggets = Math.floor(leftover / nuggetPrice);
-        insured += nuggets * nuggetPrice;
-        leftover = allocBT - insured;
-      }
-    } else if (nuggetPrice && nuggetPrice > 0) {
-      nuggets = Math.floor(allocBT / nuggetPrice);
-      insured += nuggets * nuggetPrice;
-      leftover = allocBT - insured;
-    } else {
-      // can't insure this resource automatically
-      ingots = 0; nuggets = 0; insured = 0; leftover = allocBT;
-    }
-
-    totalInsured += insured;
-
-    const tr = document.createElement('tr');
-    tr.dataset.resource = resource;
-
-    tr.innerHTML = `
-      <td>${resource}</td>
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${res}</td>
+      <td>${stock || "0"}</td>
       <td>${pct.toFixed(2)}%</td>
       <td>${formatMoney(allocBT)}</td>
-      <td>${ingotPrice ? formatMoney(ingotPrice) : '<i>not found</i>'}</td>
-      <td>${ingots}</td>
-      <td>${nuggetPrice ? formatMoney(nuggetPrice) : '<i>not found</i>'}</td>
-      <td>${nuggets}</td>
+      <td>${ingotP?formatMoney(ingotP):'—'}</td>
+      <td>${displayIngots||'—'}</td>
+      <td>${nuggetP?formatMoney(nuggetP):'—'}</td>
+      <td>${displayNuggets||'—'}</td>
       <td>${formatMoney(insured)}</td>
       <td>${formatMoney(leftover)}</td>
-      <td class="mapping"></td>
+      <td>${warning}</td>
     `;
-
-    // mapping UI
-    const mapCell = tr.querySelector('.mapping');
-    const remapBtn = document.createElement('button'); remapBtn.textContent = 'Remap';
-    remapBtn.style.padding = '6px';
-    const remapBox = document.createElement('div'); remapBox.style.display='none'; remapBox.style.marginTop='6px';
-    const selectIngot = document.createElement('select');
-    const selectNugget = document.createElement('select');
-    const optEmpty = document.createElement('option'); optEmpty.value=''; optEmpty.text='(auto)';
-    selectIngot.appendChild(optEmpty.cloneNode(true));
-    selectNugget.appendChild(optEmpty.cloneNode(true));
-    for (const it of priceItems) {
-      const o1 = document.createElement('option'); o1.value = it.name; o1.text = it.name;
-      const o2 = o1.cloneNode(true);
-      selectIngot.appendChild(o1); selectNugget.appendChild(o2);
-    }
-    // preselect if mapping exists
-    const map = mappingStore[resource] || {};
-    if (map.ingotName) selectIngot.value = map.ingotName;
-    if (map.nuggetName) selectNugget.value = map.nuggetName;
-
-    const applyBtn = document.createElement('button'); applyBtn.textContent='Apply'; applyBtn.style.padding='6px';
-    applyBtn.onclick = () => {
-      const ingName = selectIngot.value || null;
-      const nugName = selectNugget.value || null;
-      if (!ingName && !nugName) delete mappingStore[resource];
-      else mappingStore[resource] = { ingotName: ingName, nuggetName: nugName };
-      localStorage.setItem('bt_insurer_mappings', JSON.stringify(mappingStore));
-      // re-run calculation for currently displayed player and amount
-      const playerName = el.playerInput.value.trim();
-      const p = allocations.players.find(pp => pp.name === playerName) || simpleFuzzyFind(playerName);
-      if (p) renderResultsForPlayer(p, parseFloat(el.btInput.value || 0));
-    };
-
-    remapBox.appendChild(selectIngot);
-    remapBox.appendChild(selectNugget);
-    remapBox.appendChild(applyBtn);
-
-    remapBtn.onclick = () => remapBox.style.display = remapBox.style.display === 'none' ? 'block' : 'none';
-
-    mapCell.appendChild(remapBtn);
-    mapCell.appendChild(remapBox);
-
-    el.resultsTableBody.appendChild(tr);
+    el.tableBody.appendChild(tr);
   }
 
-  // total footer row
-  const footer = document.createElement('tr');
-  footer.innerHTML = `
-    <td style="font-weight:700">TOTAL</td>
-    <td></td>
-    <td style="font-weight:700">${formatMoney(btAmount)}</td>
-    <td colspan="4"></td>
-    <td style="font-weight:700">${formatMoney(totalInsured)}</td>
-    <td style="font-weight:700">${formatMoney(btAmount - totalInsured)}</td>
-    <td></td>
-  `;
-  el.resultsTableBody.appendChild(footer);
+  const foot=document.createElement('tr');
+  foot.innerHTML=`<td><b>Total</b></td><td></td><td></td><td><b>${formatMoney(bt)}</b></td><td colspan="4"></td><td><b>${formatMoney(total)}</b></td><td><b>${formatMoney(bt-total)}</b></td><td></td>`;
+  el.tableBody.appendChild(foot);
 }
 
-// main calculate button
-el.calcBtn.addEventListener('click', () => {
-  const name = el.playerInput.value.trim();
-  if (!name) { alert('Type a player name (or pick from suggestions).'); return; }
-  const player = allocations.players.find(p => p.name.toLowerCase() === name.toLowerCase()) || simpleFuzzyFind(name);
-  if (!player) { alert('Player not found. Try a different spelling or pick from suggestions.'); return; }
-  const bt = parseFloat(el.btInput.value || 0);
-  if (isNaN(bt) || bt <= 0) { alert('Enter a BT amount > 0'); return; }
-  renderResultsForPlayer(player, bt);
-});
+// ---- EVENTS ----
+el.calcBtn.onclick=()=>{
+  const name=el.playerInput.value.trim().toLowerCase();
+  const p=allocations.players.find(x=>x.name.toLowerCase()===name);
+  if(!p){alert("Player not found");return;}
+  const bt=parseFloat(el.btInput.value||0);
+  if(!bt){alert("Enter BT amount");return;}
+  renderResults(p,bt);
+};
+el.reloadBtn.onclick=loadSheets;
 
-// reload button
-el.reloadBtn.addEventListener('click', () => {
-  loadAllSheets();
-});
-
-// load both sheets
-async function loadAllSheets() {
-  el.status.textContent = 'Loading sheets...';
-  el.resultsWrap.style.display = 'none';
-  try {
-    const [pRes, aRes] = await Promise.all([fetch(priceURL), fetch(allocURL)]);
-    if (!pRes.ok || !aRes.ok) {
-      el.status.textContent = 'Failed to fetch sheets. Ensure sheets are published / viewable by this browser.';
-      console.error('priceStatus', pRes.status, 'allocStatus', aRes.status);
-      return;
-    }
-    const [pText, aText] = await Promise.all([pRes.text(), aRes.text()]);
-    const pJson = parseGviz(pText);
-    const aJson = parseGviz(aText);
+// ---- LOAD SHEETS ----
+async function loadSheets(){
+  el.status.textContent="Loading...";
+  try{
+    const [p,a]=await Promise.all([fetch(priceURL),fetch(ALLOC_CSV_URL)]);
+    const pText=await p.text(); const aText=await a.text();
+    const pJson=parseGviz(pText);
     parsePriceSheet(pJson);
-    parseAllocSheet(aJson);
-    buildPlayersDatalist();
-    el.status.textContent = `Loaded ${priceItems.length} price items and ${allocations.players.length} players.`;
-    // seed input with first player if empty
-    if (allocations.players.length && !el.playerInput.value) el.playerInput.value = allocations.players[0].name;
-  } catch (err) {
-    console.error(err);
-    el.status.textContent = 'Error loading sheets (see console).';
+    parseAllocCSV(aText);
+    el.playersList.innerHTML="";
+    allocations.players.forEach(p=>el.playersList.appendChild(new Option(p.name,p.name)));
+    el.status.textContent=`Loaded ${priceItems.length} prices & ${allocations.players.length} players.`;
+  }catch(e){
+    console.error(e);
+    el.status.textContent="Error loading sheets.";
   }
 }
-
-// initial load
-loadAllSheets();
-
+loadSheets();
 </script>
 </body>
 </html>
