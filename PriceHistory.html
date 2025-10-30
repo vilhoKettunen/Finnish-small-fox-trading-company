@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Item Buy/Sell History</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            padding: 1rem;
+            background: #fafafa;
+        }
+
+        h1 {
+            margin-bottom: 1rem;
+        }
+
+        #controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        select, input[list] {
+            padding: .4rem .6rem;
+        }
+
+        #itemImage {
+            height: 120px;
+            border-radius: 12px;
+            box-shadow: 0 0 4px rgba(0,0,0,.2);
+        }
+
+        canvas {
+            max-width: 100%;
+            margin-top: 1rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 0 6px rgba(0,0,0,.1);
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Item Buy/Sell Price History</h1>
+
+    <div id="controls">
+        <label>
+            Type:
+            <select id="typeSelect">
+                <!-- swapped values so selecting the visible label maps to the correct sheet -->
+                <option value="SellHistory" selected>Buy</option>
+                <option value="BuyHistory">Sell</option>
+            </select>
+        </label>
+
+        <label>
+            Item:
+            <input id="itemInput" list="itemDatalist" placeholder="Type to search items..." />
+            <datalist id="itemDatalist"></datalist>
+        </label>
+
+        <label>
+            Range:
+            <select id="rangeSelect">
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+                <option value="180">Last 6 months</option>
+                <option value="365">Last year</option>
+                <option value="all" selected>All history</option>
+            </select>
+        </label>
+
+        <img id="itemImage" src="" alt="" />
+    </div>
+
+    <canvas id="priceChart" width="900" height="450"></canvas>
+
+    <script>
+        const SPREADSHEET_ID = "1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo";
+
+        // Build CSV URL for a sheet
+        function csvUrl(sheet) {
+            return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet)}`;
+        }
+
+        // Robust CSV line parser (handles quoted fields with commas)
+        function parseCSVLine(line) {
+            const res = [];
+            let cur = '';
+            let inQ = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') {
+                    if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+                    else inQ = !inQ;
+                } else if (ch === ',' && !inQ) {
+                    res.push(cur);
+                    cur = '';
+                } else {
+                    cur += ch;
+                }
+            }
+            res.push(cur);
+            return res.map(s => s.trim().replace(/^"|"$/g, ''));
+        }
+
+        // Parse date with multiple fallbacks (ISO, dd/mm/yyyy, serial)
+        function parseDateValue(v) {
+            if (v == null) return null;
+            if (typeof v === 'number' && !isNaN(v)) {
+                const serial = v;
+                const ms = Math.round(serial * 86400000);
+                return new Date(Date.UTC(1899, 11, 30) + ms);
+            }
+            const s = String(v).trim();
+            if (s === '') return null;
+            const d1 = new Date(s);
+            if (!isNaN(d1.getTime())) return d1;
+            const dm = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+            if (dm) {
+                let day = parseInt(dm[1], 10);
+                let month = parseInt(dm[2], 10);
+                let year = parseInt(dm[3], 10);
+                if (year < 100) year += 2000;
+                return new Date(year, month - 1, day);
+            }
+            const usMatch = s.match(/^([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})$/);
+            if (usMatch) {
+                const dd = usMatch[2].padStart(2, '0');
+                const iso = `${usMatch[3]}-${("0" + (new Date(Date.parse(usMatch[1] + " 1")).getMonth() + 1)).slice(-2)}-${dd}`;
+                const d2 = new Date(iso);
+                if (!isNaN(d2.getTime())) return d2;
+            }
+            const n = Number(s);
+            if (!isNaN(n)) {
+                const ms = Math.round(n * 86400000);
+                return new Date(Date.UTC(1899, 11, 30) + ms);
+            }
+            return null;
+        }
+
+        // Parse price strings robustly (allow currency symbols, comma decimals, thousands)
+        function parsePriceValue(v) {
+            if (v == null) return null;
+            let s = String(v).trim();
+            if (s === '') return null;
+            s = s.replace(/[^\d\.,-]/g, '');
+            if (s === '') return null;
+            if (s.indexOf(',') > -1 && s.indexOf('.') === -1) {
+                s = s.replace(/,/g, '.');
+            } else if (s.indexOf(',') > -1 && s.indexOf('.') > -1) {
+                if (s.lastIndexOf('.') > s.lastIndexOf(',')) {
+                    s = s.replace(/,/g, '');
+                } else {
+                    s = s.replace(/\./g, '').replace(/,/g, '.');
+                }
+            }
+            const n = parseFloat(s);
+            return isNaN(n) ? null : n;
+        }
+
+        // Fetch CSV and parse with the robust helpers; log first parsed rows for debugging
+        async function fetchCSV(sheetName) {
+            const res = await fetch(csvUrl(sheetName));
+            if (!res.ok) {
+                console.error('Failed fetching CSV', res.status, res.statusText);
+                return [];
+            }
+            const text = await res.text();
+            const lines = text.replace(/\r/g, '').split('\n').filter(l => l.trim() !== '');
+            if (lines.length <= 1) return [];
+
+            const data = [];
+            for (let i = 1; i < lines.length; i++) {
+                const parts = parseCSVLine(lines[i]);
+                if (!parts || parts.length < 2) continue;
+                const tsRaw = parts[0] ?? '';
+                const item = (parts[1] ?? '').trim();
+                const priceRaw = parts[2] ?? '';
+                if (!item) continue;
+                const ts = parseDateValue(tsRaw);
+                const price = parsePriceValue(priceRaw);
+                data.push({ ts, item, price });
+            }
+            console.log(`fetchCSV(${sheetName}) parsed ${data.length} rows. sample:`, data.slice(0, 6));
+            return data;
+        }
+
+        // Filter data by item and range
+        function filterData(data, item, rangeDays) {
+            const now = new Date();
+            return data.filter(r => {
+                if (r.item !== item) return false;
+                if (rangeDays !== "all" && r.ts) {
+                    const cutoff = new Date(now - rangeDays * 24 * 60 * 60 * 1000);
+                    return r.ts >= cutoff;
+                }
+                return true;
+            }).sort((a, b) => {
+                if (!a.ts && !b.ts) return 0;
+                if (!a.ts) return 1;
+                if (!b.ts) return -1;
+                return a.ts - b.ts;
+            });
+        }
+
+        // Update image for selected item
+        function updateImage(item) {
+            const img = document.getElementById("itemImage");
+            img.src = `images/${item}.png`;
+            img.alt = item;
+        }
+
+        // Draw chart with gaps for missing values
+        let chart;
+        function drawChart(rows, label) {
+            const labels = rows.map(r => r.ts ? r.ts.toLocaleDateString() : "");
+            const values = rows.map(r => (r.price == null || isNaN(r.price)) ? null : r.price);
+            const ctx = document.getElementById("priceChart").getContext("2d");
+            if (chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels,
+                    datasets: [{
+                        label,
+                        data: values,
+                        borderWidth: 2,
+                        tension: 0.2,
+                        spanGaps: false,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0,123,255,0.1)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: { beginAtZero: false }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // Fuzzy-ish resolver: exact match, then contains, else first
+        function resolveItem(inputValue, items) {
+            const v = (inputValue || "").trim();
+            if (!items || items.length === 0) return null;
+            if (!v) return items[0];
+            const lower = v.toLowerCase();
+            const exact = items.find(n => n.toLowerCase() === lower);
+            if (exact) return exact;
+            const contains = items.find(n => n.toLowerCase().includes(lower));
+            return contains || items[0];
+        }
+
+        function populateItemsDatalist(uniqueItems) {
+            const dl = document.getElementById("itemDatalist");
+            dl.innerHTML = "";
+            uniqueItems.forEach(name => dl.appendChild(new Option(name, name)));
+        }
+
+        // Initialize page
+        async function init() {
+            const typeSel = document.getElementById("typeSelect");
+            const itemInput = document.getElementById("itemInput");
+            const rangeSel = document.getElementById("rangeSelect");
+
+            itemInput.readOnly = false;
+            itemInput.removeAttribute("disabled");
+
+            let allData = await fetchCSV(typeSel.value);
+            let uniqueItems = [];
+
+            function rebuildItems() {
+                uniqueItems = [...new Set(allData.map(r => r.item))].sort();
+                populateItemsDatalist(uniqueItems);
+            }
+
+            rebuildItems();
+
+            // refresh: if commit=true we will set the input to resolved value
+            async function refresh(commit = false) {
+                const sheet = typeSel.value;
+                const range = rangeSel.value === "all" ? "all" : Number(rangeSel.value);
+
+                const candidate = resolveItem(itemInput.value, uniqueItems);
+                if (!candidate) {
+                    if (chart) chart.destroy();
+                    return;
+                }
+
+                if (commit && itemInput.value !== candidate) {
+                    itemInput.value = candidate;
+                }
+
+                const filtered = filterData(allData, candidate, range);
+                updateImage(candidate);
+
+                // Use the visible label for chart title so label stays correct after we swapped values
+                const visibleLabel = typeSel.options[typeSel.selectedIndex].text;
+                drawChart(filtered, `${visibleLabel} Price`);
+            }
+
+            // Events
+            typeSel.addEventListener("change", async () => {
+                allData = await fetchCSV(typeSel.value);
+                rebuildItems();
+                refresh(false);
+            });
+
+            itemInput.addEventListener("input", () => refresh(false));
+            itemInput.addEventListener("change", () => refresh(true));
+            itemInput.addEventListener("blur", () => refresh(true));
+            itemInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    refresh(true);
+                    itemInput.blur();
+                }
+            });
+
+            rangeSel.addEventListener("change", () => refresh(false));
+
+            // initial render (preview)
+            refresh(false);
+        }
+
+        init();
+    </script>
+</body>
+</html>
