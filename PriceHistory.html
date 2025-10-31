@@ -1,3 +1,4 @@
+vintage story\Finnish-small-fox-trading-company\PriceHistory.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -185,7 +186,8 @@
                 if (!item) continue;
                 const ts = parseDateValue(tsRaw);
                 const price = parsePriceValue(priceRaw);
-                data.push({ ts, item, price });
+                // keep original raw timestamp alongside parsed Date so we can show exact time text
+                data.push({ ts, tsRaw: tsRaw, item, price });
             }
             console.log(`fetchCSV(${sheetName}) parsed ${data.length} rows. sample:`, data.slice(0, 6));
             return data;
@@ -216,17 +218,164 @@
             img.alt = item;
         }
 
-        // Draw chart with gaps for missing values
+        // Draw chart with gaps for missing values and a tooltip attached to the price indicator
         let chart;
         function drawChart(rows, label) {
-            const labels = rows.map(r => r.ts ? r.ts.toLocaleDateString() : "");
-            const values = rows.map(r => (r.price == null || isNaN(r.price)) ? null : r.price);
+            // Build label sets
+            const tickLabels = rows.map(r => r.ts ? r.ts.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : "");
+            const tooltipDates = rows.map(r => r.ts ? r.ts.toLocaleString() : "");
+            const timeTexts = rows.map(r => {
+                if (r.tsRaw && String(r.tsRaw).trim() !== '') {
+                    const m = String(r.tsRaw).match(/(\d{1,2}:\d{2}(?::\d{2})?)/);
+                    if (m) return m[1];
+                    if (r.ts) return r.ts.toLocaleTimeString();
+                    return String(r.tsRaw);
+                }
+                return (r.ts ? r.ts.toLocaleTimeString() : '');
+            });
+            const prices = rows.map(r => (r.price == null || isNaN(r.price)) ? null : r.price);
+            const values = prices;
+
             const ctx = document.getElementById("priceChart").getContext("2d");
             if (chart) chart.destroy();
+
+            // Custom plugin that draws a tooltip box anchored to the hovered data point (attached to the price indicator).
+            const attachedTooltipPlugin = {
+                id: 'attachedTooltip',
+                afterDraw(chartInstance, args, pluginOptions) {
+                    // Chart.js keeps an internal array of active elements on hover
+                    const active = (chartInstance._active && chartInstance._active.length) ? chartInstance._active[0] : null;
+                    if (!active) return;
+
+                    const dsIndex = active.datasetIndex;
+                    const idx = active.index;
+                    const meta = chartInstance.getDatasetMeta(dsIndex);
+                    const point = meta && meta.data ? meta.data[idx] : null;
+                    if (!point) return;
+
+                    const chartArea = chartInstance.chartArea;
+                    const x = point.x;
+                    const y = point.y;
+                    const ctx = chartInstance.ctx;
+
+                    // prepare text lines: date, price, time
+                    const dateLine = (pluginOptions.dates && pluginOptions.dates[idx]) || '';
+                    const priceVal = (pluginOptions.prices && typeof pluginOptions.prices[idx] !== 'undefined') ? pluginOptions.prices[idx] : null;
+                    const priceLine = priceVal == null ? 'Price: N/A' : 'Price: ' + Number(priceVal).toLocaleString();
+                    const timeLine = (pluginOptions.times && pluginOptions.times[idx]) || '';
+
+                    const lines = [dateLine, priceLine];
+                    if (timeLine) lines.push(timeLine);
+
+                    // styling and metrics
+                    const font = pluginOptions.font || '12px system-ui';
+                    ctx.save();
+                    ctx.font = font;
+                    ctx.textBaseline = 'top';
+                    ctx.fillStyle = pluginOptions.textColor || '#111';
+
+                    const padding = pluginOptions.padding || 6;
+                    const lineHeight = (pluginOptions.lineHeight || 16);
+                    let maxWidth = 0;
+                    for (let i = 0; i < lines.length; i++) {
+                        const w = ctx.measureText(lines[i]).width;
+                        if (w > maxWidth) maxWidth = w;
+                    }
+                    const boxW = Math.round(maxWidth + padding * 2);
+                    const boxH = Math.round(lines.length * lineHeight + padding * 2);
+
+                    // Determine point radius (fall back to plugin option)
+                    const pointRadius = (meta.data && meta.data[idx] && meta.data[idx].options && meta.data[idx].options.radius) ?
+                        meta.data[idx].options.radius :
+                        (pluginOptions.pointRadius || 5);
+                    const gap = pluginOptions.gap || 6;
+
+                    // Prefer to place the box above the point; if there's not enough room put it below.
+                    let boxX = x - boxW / 2;
+                    let boxY = y - (pointRadius + gap + boxH);
+
+                    // keep inside horizontal bounds
+                    if (boxX < chartArea.left + 4) boxX = chartArea.left + 4;
+                    if (boxX + boxW > chartArea.right - 4) boxX = chartArea.right - boxW - 4;
+
+                    // if not enough space above, place below
+                    if (boxY < chartArea.top + 4) {
+                        boxY = y + pointRadius + gap;
+                    }
+
+                    // draw connector triangle pointing from box to point
+                    ctx.beginPath();
+                    ctx.fillStyle = pluginOptions.boxColor || 'rgba(255,255,255,0.98)';
+                    ctx.strokeStyle = pluginOptions.boxBorder || 'rgba(0,0,0,0.08)';
+                    ctx.lineWidth = pluginOptions.boxBorderWidth || 1;
+
+                    // rounded rect background
+                    roundRect(ctx, boxX, boxY, boxW, boxH, pluginOptions.radius || 6);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.closePath();
+
+                    // triangle pointer
+                    const triW = 10;
+                    const triH = 6;
+                    // pointer base x (clamped inside box)
+                    const pointerX = Math.max(boxX + 8, Math.min(boxX + boxW - 8, x));
+                    ctx.beginPath();
+                    if (boxY < y) {
+                        // box above point -> triangle pointing down
+                        ctx.moveTo(pointerX - triW / 2, boxY + boxH);
+                        ctx.lineTo(pointerX + triW / 2, boxY + boxH);
+                        ctx.lineTo(x, y - pointRadius / 2);
+                    } else {
+                        // box below point -> triangle pointing up
+                        ctx.moveTo(pointerX - triW / 2, boxY);
+                        ctx.lineTo(pointerX + triW / 2, boxY);
+                        ctx.lineTo(x, y + pointRadius / 2);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // draw circle on the data point (price indicator) - slightly larger + border so it visually connects
+                    ctx.beginPath();
+                    const bubbleR = pluginOptions.bubbleRadius || Math.max(4, pointRadius);
+                    ctx.fillStyle = pluginOptions.bubbleColor || '#007bff';
+                    ctx.strokeStyle = pluginOptions.bubbleBorder || '#fff';
+                    ctx.lineWidth = pluginOptions.bubbleBorderWidth || 2;
+                    ctx.arc(x, y, bubbleR, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.closePath();
+
+                    // draw text lines inside box
+                    ctx.fillStyle = pluginOptions.textColor || '#111';
+                    for (let i = 0; i < lines.length; i++) {
+                        const tx = boxX + padding;
+                        const ty = boxY + padding + i * lineHeight;
+                        ctx.fillText(lines[i], tx, ty);
+                    }
+
+                    ctx.restore();
+
+                    // helper: rounded rect
+                    function roundRect(ctx, x, y, width, height, radius) {
+                        if (radius === undefined) radius = 6;
+                        const r = Math.min(radius, width / 2, height / 2);
+                        ctx.beginPath();
+                        ctx.moveTo(x + r, y);
+                        ctx.arcTo(x + width, y, x + width, y + height, r);
+                        ctx.arcTo(x + width, y + height, x, y + height, r);
+                        ctx.arcTo(x, y + height, x, y, r);
+                        ctx.arcTo(x, y, x + width, y, r);
+                        ctx.closePath();
+                    }
+                }
+            };
+
             chart = new Chart(ctx, {
                 type: "line",
                 data: {
-                    labels,
+                    labels: tickLabels,
                     datasets: [{
                         label,
                         data: values,
@@ -234,14 +383,55 @@
                         tension: 0.2,
                         spanGaps: false,
                         borderColor: '#007bff',
-                        backgroundColor: 'rgba(0,123,255,0.1)'
+                        backgroundColor: 'rgba(0,123,255,0.1)',
+                        pointRadius: 5,
+                        pointHoverRadius: 9,
+                        showLine: true
                     }]
                 },
+                plugins: [attachedTooltipPlugin],
                 options: {
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false
+                    },
                     scales: {
+                        x: {
+                            display: true,
+                            title: { display: false },
+                            ticks: {
+                                maxRotation: 0,
+                                autoSkip: true,
+                                callback: function (value, index, ticks) {
+                                    return tickLabels[index] || '';
+                                }
+                            }
+                        },
                         y: { beginAtZero: false }
                     },
-                    plugins: { legend: { display: false } }
+                    plugins: {
+                        legend: { display: false },
+                        // disable built-in tooltip so our attached box is the single source of hover info
+                        tooltip: { enabled: false },
+                        // configure plugin options (dates/prices/times passed so plugin can render full lines)
+                        attachedTooltip: {
+                            dates: tooltipDates,
+                            times: timeTexts,
+                            prices: prices,
+                            boxColor: 'rgba(255,255,255,0.98)',
+                            boxBorder: 'rgba(0,0,0,0.08)',
+                            bubbleColor: '#007bff',
+                            bubbleBorder: '#ffffff',
+                            bubbleRadius: 6,
+                            bubbleBorderWidth: 2,
+                            textColor: '#111',
+                            font: '12px system-ui',
+                            padding: 8,
+                            lineHeight: 16,
+                            gap: 8,
+                            radius: 6
+                        }
+                    }
                 }
             });
         }
