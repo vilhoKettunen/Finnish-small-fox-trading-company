@@ -35,12 +35,120 @@
             box-shadow: 0 0 4px rgba(0,0,0,.2);
         }
 
+        /* sheet info strip above charts */
+        #sheetsInfo {
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+            margin-top: 1rem;
+        }
+
+        .sheetItem {
+            background: white;
+            border-radius: 8px;
+            padding: .5rem .75rem;
+            box-shadow: 0 0 6px rgba(0,0,0,.04);
+        }
+
+        .sheetHeader {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .75rem;
+        }
+
+        .sheetName {
+            font-weight: 600;
+        }
+
+        .moreInfoBtn {
+            background: transparent;
+            border: 1px solid rgba(0,0,0,.08);
+            padding: .25rem .5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: .9rem;
+        }
+
+            .moreInfoBtn[aria-expanded="true"] {
+                background: rgba(0,0,0,.03);
+            }
+
+        .sheetInfo {
+            margin-top: .5rem;
+            color: #222;
+            font-size: .95rem;
+            line-height: 1.35;
+            display: none;
+        }
+
+            .sheetInfo.visible {
+                display: block;
+            }
+
+        .sheetItem.active {
+            outline: 2px solid rgba(0,123,255,0.08);
+        }
+
+        /* container for two charts stacked vertically */
+        #charts {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+            #charts canvas {
+                width: 100%;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 0 6px rgba(0,0,0,.1);
+            }
+
+        /* label placed between the two charts */
+        .chartLabel {
+            background: #fff;
+            border-radius: 10px;
+            padding: .45rem .65rem;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: .5rem;
+            box-shadow: 0 0 6px rgba(0,0,0,.06);
+        }
+
+        .chartLabelHeader {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .chartLabelInfo {
+            margin-top: .45rem;
+            font-size: .95rem;
+            color: #333;
+            display: none;
+            line-height: 1.35;
+        }
+
+            .chartLabelInfo.visible {
+                display: block;
+            }
+
+        .chartLabelBtn {
+            background: transparent;
+            border: 1px solid rgba(0,0,0,.08);
+            padding: .25rem .5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: .9rem;
+            height: fit-content;
+            align-self: center;
+        }
+
+        /* keep responsive height */
         canvas {
             max-width: 100%;
-            margin-top: 1rem;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 0 6px rgba(0,0,0,.1);
+            height: 420px;
         }
     </style>
 </head>
@@ -78,7 +186,49 @@
         <img id="itemImage" src="" alt="" />
     </div>
 
-    <canvas id="priceChart" width="900" height="450"></canvas>
+    <!-- Sheet names + more info buttons -->
+    <div id="sheetsInfo" aria-hidden="false">
+        <div class="sheetItem" data-sheet="SellHistory" id="sheet-SellHistory">
+            <div class="sheetHeader">
+                <div class="sheetName">Buy sheet — <small style="font-weight:400">SellHistory</small></div>
+                <button class="moreInfoBtn" aria-expanded="false" data-target="info-SellHistory">More info</button>
+            </div>
+            <div id="info-SellHistory" class="sheetInfo" role="region" aria-hidden="true">
+                This sheet (SellHistory) records the "Buy" visible feed. Each row holds:
+                Column A = timestamp (date/time), Column B = item name, Column C = price recorded,
+                Column D = stock amount (used for the Stock chart). Use this sheet to inspect recorded buy prices and available stock over time.
+            </div>
+        </div>
+
+        <div class="sheetItem" data-sheet="BuyHistory" id="sheet-BuyHistory">
+            <div class="sheetHeader">
+                <div class="sheetName">Sell sheet — <small style="font-weight:400">BuyHistory</small></div>
+                <button class="moreInfoBtn" aria-expanded="false" data-target="info-BuyHistory">More info</button>
+            </div>
+            <div id="info-BuyHistory" class="sheetInfo" role="region" aria-hidden="true">
+                This sheet (BuyHistory) records the "Sell" visible feed. Each row holds:
+                Column A = timestamp (date/time), Column B = item name, Column C = price recorded,
+                Column D = stock amount (used for the Stock chart). Use this sheet to inspect recorded sell prices and available stock over time.
+            </div>
+        </div>
+    </div>
+
+    <div id="charts">
+        <canvas id="priceChart" width="900" height="450"></canvas>
+
+        <!-- label that belongs to the sell/stock chart underneath -->
+        <div id="sellChartLabel" class="chartLabel" aria-hidden="false">
+            <div>
+                <div id="sellChartTitle" class="chartLabelHeader">Sell — Stock chart</div>
+                <div id="sellChartInfo" class="chartLabelInfo" aria-hidden="true">
+                    The stock chart shows the recorded stock/amount (column D) for the selected item over the same timestamps as the price chart above.
+                </div>
+            </div>
+            <button id="sellChartMoreBtn" class="chartLabelBtn" aria-expanded="false" aria-controls="sellChartInfo">More info</button>
+        </div>
+
+        <canvas id="stockChart" width="900" height="450"></canvas>
+    </div>
 
     <script>
         // Use browser locale explicitly for formatting.
@@ -205,7 +355,33 @@
             return isNaN(n) ? null : n;
         }
 
-        // Fetch CSV and parse rows
+        // Parse stock/amount values (integers) robustly (allow thousand separators)
+        function parseStockValue(v) {
+            if (v == null) return null;
+            let s = String(v).trim();
+            if (s === '') return null;
+
+            s = s.replace(/\u00A0/g, '');
+            // keep digits, comma, dot, minus
+            s = s.replace(/[^\d\.,\-]/g, '');
+
+            if (s.indexOf(',') > -1 && s.indexOf('.') === -1) {
+                s = s.replace(/,/g, '.');
+            } else if (s.indexOf(',') > -1 && s.indexOf('.') > -1) {
+                // if ambiguous, remove thousands separators
+                if (s.lastIndexOf('.') > s.lastIndexOf(',')) {
+                    s = s.replace(/,/g, '');
+                } else {
+                    s = s.replace(/\./g, '').replace(/,/g, '.');
+                }
+            }
+
+            const n = parseFloat(s);
+            if (isNaN(n)) return null;
+            return Math.round(n);
+        }
+
+        // Fetch CSV and parse rows (now includes column D as stock amounts)
         async function fetchCSV(sheetName) {
             const res = await fetch(csvUrl(sheetName));
             if (!res.ok) {
@@ -219,14 +395,16 @@
             const data = [];
             for (let i = 1; i < lines.length; i++) {
                 const parts = parseCSVLine(lines[i]);
-                if (!parts || parts.length < 3) continue;
+                if (!parts || parts.length < 2) continue;
                 const tsRaw = parts[0] ?? '';
                 const item = (parts[1] ?? '').trim();
                 const priceRaw = parts[2] ?? '';
+                const stockRaw = parts[3] ?? '';
                 if (!item) continue;
                 const ts = parseDateValue(tsRaw);
                 const price = parsePriceValue(priceRaw);
-                data.push({ ts, tsRaw, item, price });
+                const stock = parseStockValue(stockRaw);
+                data.push({ ts, tsRaw, item, price, priceRaw, stock, stockRaw });
             }
             console.log(`fetchCSV(${sheetName}) parsed ${data.length} rows. sample:`, data.slice(0, 8));
             return data;
@@ -259,10 +437,11 @@
             img.alt = item;
         }
 
-        // Draw chart. ensure rows are chronological, format dates with USER_LOCALE.
-        let chart;
-        function drawChart(rows, label) {
-            // defensive copy & ensure chronological order (earliest -> latest)
+        // Draw two charts: top = price, bottom = stock amounts
+        let priceChart = null;
+        let stockChart = null;
+
+        function drawCharts(rows, priceLabel, stockLabel) {
             const sorted = rows.slice().sort((a, b) => {
                 if (!a.ts && !b.ts) return 0;
                 if (!a.ts) return 1;
@@ -270,10 +449,8 @@
                 return a.ts.getTime() - b.ts.getTime();
             });
 
-            // decide whether to include year in tick labels (include if multiple years present)
             const years = new Set(sorted.map(r => r.ts ? r.ts.getFullYear() : null));
             const includeYear = years.size > 1;
-
             const tickFormatOpts = includeYear
                 ? { day: 'numeric', month: 'short', year: 'numeric' }
                 : { day: 'numeric', month: 'short' };
@@ -289,19 +466,24 @@
                 }
                 return (r.ts ? r.ts.toLocaleTimeString(USER_LOCALE) : '');
             });
+
             const prices = sorted.map(r => (r.price == null || isNaN(r.price)) ? null : r.price);
+            const stocks = sorted.map(r => (r.stock == null || isNaN(r.stock)) ? null : r.stock);
 
-            const ctx = document.getElementById("priceChart").getContext("2d");
-            if (chart) chart.destroy();
+            const priceCtx = document.getElementById("priceChart").getContext("2d");
+            const stockCtx = document.getElementById("stockChart").getContext("2d");
 
-            // A compact attached tooltip anchored to the point (replaces built-in tooltip)
+            if (priceChart) priceChart.destroy();
+            if (stockChart) stockChart.destroy();
+
+            // plugin that draws an attached tooltip; now shows date, price, stock (in that order)
             const attachedTooltipPlugin = {
                 id: 'attachedTooltip',
                 afterDraw(chartInstance, args, pluginOptions) {
                     const active = (chartInstance._active && chartInstance._active.length) ? chartInstance._active[0] : null;
                     if (!active) return;
-                    const dsIndex = active.datasetIndex;
                     const idx = active.index;
+                    const dsIndex = active.datasetIndex;
                     const meta = chartInstance.getDatasetMeta(dsIndex);
                     const point = meta && meta.data ? meta.data[idx] : null;
                     if (!point) return;
@@ -312,11 +494,16 @@
                     const ctx = chartInstance.ctx;
 
                     const dateLine = (pluginOptions.dates && pluginOptions.dates[idx]) || '';
-                    const priceVal = (pluginOptions.prices && typeof pluginOptions.prices[idx] !== 'undefined') ? pluginOptions.prices[idx] : null;
-                    const priceLine = priceVal == null ? 'Price: N/A' : 'Price: ' + Number(priceVal).toLocaleString(USER_LOCALE);
                     const timeLine = (pluginOptions.times && pluginOptions.times[idx]) || '';
 
-                    const lines = [dateLine, priceLine];
+                    const priceVal = (pluginOptions.prices && typeof pluginOptions.prices[idx] !== 'undefined') ? pluginOptions.prices[idx] : null;
+                    const stockVal = (pluginOptions.stocks && typeof pluginOptions.stocks[idx] !== 'undefined') ? pluginOptions.stocks[idx] : null;
+
+                    const priceLine = priceVal == null ? 'Price: N/A' : 'Price: ' + Number(priceVal).toLocaleString(USER_LOCALE);
+                    const stockLine = stockVal == null ? 'Stock: N/A' : 'Stock: ' + Number(stockVal).toLocaleString(USER_LOCALE);
+
+                    // required order: date, price, stock, (then optional time)
+                    const lines = [dateLine, priceLine, stockLine];
                     if (timeLine) lines.push(timeLine);
 
                     const font = pluginOptions.font || '12px system-ui';
@@ -409,18 +596,19 @@
                 }
             };
 
-            chart = new Chart(ctx, {
+            // Price chart (top) — pass both prices and stocks so tooltip shows date, price, stock
+            priceChart = new Chart(priceCtx, {
                 type: "line",
                 data: {
                     labels: tickLabels,
                     datasets: [{
-                        label,
+                        label: priceLabel,
                         data: prices,
                         borderWidth: 2,
                         tension: 0.2,
                         spanGaps: false,
                         borderColor: '#007bff',
-                        backgroundColor: 'rgba(0,123,255,0.1)',
+                        backgroundColor: 'rgba(0,123,255,0.08)',
                         pointRadius: 5,
                         pointHoverRadius: 9,
                         showLine: true
@@ -453,9 +641,73 @@
                             dates: tooltipDates,
                             times: timeTexts,
                             prices: prices,
+                            stocks: stocks,
                             boxColor: 'rgba(255,255,255,0.98)',
                             boxBorder: 'rgba(0,0,0,0.08)',
                             bubbleColor: '#007bff',
+                            bubbleBorder: '#ffffff',
+                            bubbleRadius: 6,
+                            bubbleBorderWidth: 2,
+                            textColor: '#111',
+                            font: '12px system-ui',
+                            padding: 8,
+                            lineHeight: 16,
+                            gap: 8,
+                            radius: 6
+                        }
+                    }
+                }
+            });
+
+            // Stock chart (bottom) — also pass both prices and stocks
+            stockChart = new Chart(stockCtx, {
+                type: "line",
+                data: {
+                    labels: tickLabels,
+                    datasets: [{
+                        label: stockLabel,
+                        data: stocks,
+                        borderWidth: 2,
+                        tension: 0.2,
+                        spanGaps: false,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40,167,69,0.08)',
+                        pointRadius: 5,
+                        pointHoverRadius: 9,
+                        showLine: true
+                    }]
+                },
+                plugins: [attachedTooltipPlugin],
+                options: {
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: { display: false },
+                            ticks: {
+                                maxRotation: 0,
+                                autoSkip: true,
+                                callback: function (value, index, ticks) {
+                                    return tickLabels[index] || '';
+                                }
+                            }
+                        },
+                        y: { beginAtZero: true }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false },
+                        attachedTooltip: {
+                            dates: tooltipDates,
+                            times: timeTexts,
+                            prices: prices,
+                            stocks: stocks,
+                            boxColor: 'rgba(255,255,255,0.98)',
+                            boxBorder: 'rgba(0,0,0,0.08)',
+                            bubbleColor: '#28a745',
                             bubbleBorder: '#ffffff',
                             bubbleRadius: 6,
                             bubbleBorderWidth: 2,
@@ -489,11 +741,66 @@
             uniqueItems.forEach(name => dl.appendChild(new Option(name, name)));
         }
 
+        // Toggle sheet info visibility
+        function toggleSheetInfo(targetId, btn) {
+            const el = document.getElementById(targetId);
+            if (!el) return;
+            const isVisible = el.classList.toggle('visible');
+            btn.setAttribute('aria-expanded', String(isVisible));
+            el.setAttribute('aria-hidden', String(!isVisible));
+        }
+
+        // Toggle sell chart label info visibility
+        function toggleSellChartInfo() {
+            const info = document.getElementById('sellChartInfo');
+            const btn = document.getElementById('sellChartMoreBtn');
+            if (!info || !btn) return;
+            const isVisible = info.classList.toggle('visible');
+            info.setAttribute('aria-hidden', String(!isVisible));
+            btn.setAttribute('aria-expanded', String(isVisible));
+        }
+
+        // mark active sheet visually
+        function updateSheetActive(selectedSheet) {
+            const items = document.querySelectorAll('#sheetsInfo .sheetItem');
+            items.forEach(it => {
+                if (it.dataset.sheet === selectedSheet) it.classList.add('active');
+                else it.classList.remove('active');
+            });
+        }
+
+        // update the label text above sell/stock chart
+        function updateSellChartLabel(visibleLabel) {
+            const title = document.getElementById('sellChartTitle');
+            if (!title) return;
+            // visibleLabel is "Buy" or "Sell" depending on the Type select visible text
+            title.textContent = `${visibleLabel} — Stock chart`;
+            // update small description to reference the label
+            const info = document.getElementById('sellChartInfo');
+            if (info) {
+                info.textContent = `The ${visibleLabel.toLowerCase()} stock chart shows recorded stock/amount (column D) for the selected item, aligned to the timestamps used by the ${visibleLabel.toLowerCase()} price chart above.`;
+                // hide info by default when label changes
+                info.classList.remove('visible');
+                info.setAttribute('aria-hidden', 'true');
+                const btn = document.getElementById('sellChartMoreBtn');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
+            }
+        }
+
         // Initialize page
         async function init() {
             const typeSel = document.getElementById("typeSelect");
             const itemInput = document.getElementById("itemInput");
             const rangeSel = document.getElementById("rangeSelect");
+
+            // wire up more info buttons
+            document.querySelectorAll('.moreInfoBtn').forEach(btn => {
+                const target = btn.dataset.target;
+                btn.addEventListener('click', () => toggleSheetInfo(target, btn));
+            });
+            // wire up sell-chart label button
+            const sellBtn = document.getElementById('sellChartMoreBtn');
+            if (sellBtn) sellBtn.addEventListener('click', toggleSellChartInfo);
 
             itemInput.readOnly = false;
             itemInput.removeAttribute("disabled");
@@ -513,9 +820,12 @@
                 const sheet = typeSel.value;
                 const range = rangeSel.value === "all" ? "all" : Number(rangeSel.value);
 
+                updateSheetActive(sheet);
+
                 const candidate = resolveItem(itemInput.value, uniqueItems);
                 if (!candidate) {
-                    if (chart) chart.destroy();
+                    if (priceChart) priceChart.destroy();
+                    if (stockChart) stockChart.destroy();
                     return;
                 }
 
@@ -527,7 +837,8 @@
                 updateImage(candidate);
 
                 const visibleLabel = typeSel.options[typeSel.selectedIndex].text;
-                drawChart(filtered, `${visibleLabel} Price`);
+                updateSellChartLabel(visibleLabel);
+                drawCharts(filtered, `${visibleLabel} Price`, `${visibleLabel} Stock`);
             }
 
             typeSel.addEventListener("change", async () => {
@@ -548,6 +859,12 @@
             });
 
             rangeSel.addEventListener("change", () => refresh(false));
+
+            // initial active marker
+            updateSheetActive(typeSel.value);
+
+            // initial label
+            updateSellChartLabel(typeSel.options[typeSel.selectedIndex].text);
 
             // initial render (preview)
             refresh(false);
