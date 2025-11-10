@@ -1,3 +1,4 @@
+html vintage story\Finnish-small-fox-trading-company\index.html
 <!DOCTYPE html>
 <html>
 <head>
@@ -47,7 +48,8 @@
             gap: 10px;
         }
 
-            .payRow input {
+            /* limit only numeric inputs inside payRow — dropdown text inputs keep their normal width */
+            .payRow input[type="number"] {
                 width: 60px;
             }
 
@@ -165,6 +167,11 @@
 
             .dropdown-item:hover {
                 background: #f0f6ff;
+            }
+
+            /* keyboard-highlighted item */
+            .dropdown-item.active {
+                background: #dff0ff;
             }
 
         .stock-circle {
@@ -368,14 +375,20 @@
         <h3>Custom Inputs (Store)</h3>
         <div>
             <strong>From Spreadsheet — Stack</strong><br>
-            <input id="customBuyStackSelect" placeholder="Item name">
+            <div class="dropdown-wrap">
+                <input id="customBuyStackSelect" class="dropdown-input" placeholder="Item name">
+                <div id="customBuyStackSelectList" class="dropdown-list" style="display:none;"></div>
+            </div>
             <input type="number" id="customBuyStackQty" placeholder="Quantity" min="1">
             <input type="number" id="customBuyStackPrice" placeholder="Price per Stack" step="0.01">
             <button onclick="addCustomBuyStack()">Add Custom Stack</button>
         </div>
         <div>
             <strong>From Spreadsheet — Individual</strong><br>
-            <input id="customBuyIndivSelect" placeholder="Item name">
+            <div class="dropdown-wrap">
+                <input id="customBuyIndivSelect" class="dropdown-input" placeholder="Item name">
+                <div id="customBuyIndivSelectList" class="dropdown-list" style="display:none;"></div>
+            </div>
             <input type="number" id="customBuyIndivQty" placeholder="Quantity" min="1">
             <input type="number" id="customBuyIndivPrice" placeholder="Price per Each" step="0.01">
             <button onclick="addCustomBuyIndividual()">Add Custom Individual</button>
@@ -439,14 +452,20 @@
         <h3>Custom Inputs (Store)</h3>
         <div>
             <strong>From Spreadsheet — Stack</strong><br>
-            <input id="customSellStackSelect" placeholder="Item name">
+            <div class="dropdown-wrap">
+                <input id="customSellStackSelect" class="dropdown-input" placeholder="Item name">
+                <div id="customSellStackSelectList" class="dropdown-list" style="display:none;"></div>
+            </div>
             <input type="number" id="customSellStackQty" placeholder="Quantity" min="1">
             <input type="number" id="customSellStackPrice" placeholder="Price per Stack" step="0.01">
             <button onclick="addCustomSellStack()">Add Custom Stack</button>
         </div>
         <div>
             <strong>From Spreadsheet — Individual</strong><br>
-            <input id="customSellIndivSelect" placeholder="Item name">
+            <div class="dropdown-wrap">
+                <input id="customSellIndivSelect" class="dropdown-input" placeholder="Item name">
+                <div id="customSellIndivSelectList" class="dropdown-list" style="display:none;"></div>
+            </div>
             <input type="number" id="customSellIndivQty" placeholder="Quantity" min="1">
             <input type="number" id="customSellIndivPrice" placeholder="Price per Each" step="0.01">
             <button onclick="addCustomSellIndividual()">Add Custom Individual</button>
@@ -538,12 +557,16 @@
         const OAUTH_CLIENT_ID = '1052887487165-endmh7ktojtd2eehnjt2bf3shcd4abf4.apps.googleusercontent.com';
 
         const sheetURL = "https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/gviz/tq?tqx=out:json&gid=0";
+        // Editor-friendly sheet link for reference: https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/edit?gid=0#gid=0
 
         let items = [], payItems = [], buyCart = [], sellCart = [];
         let stockProgressCache = []; // {name, currentEach, targetEach, pct}
         let currentUser = null;
         let googleIdToken = null;
         const BASE_CURRENCY = "BT";
+
+        // Global dropdown data used by all searchable inputs (kept up-to-date by setupDropdowns)
+        let dropdownData = [];
 
         /* ===== Google Login ===== */
         function onGoogleSignIn(resp) {
@@ -634,44 +657,87 @@
             });
         }
 
-        /* ===== Load stock progress (public) ===== */
-        function loadStockProgress() {
-            return fetch(`${WEB_APP_URL}?action=stockProgress`)
-                .then(r => r.json())
-                .then(j => {
-                    if (!j.ok) throw new Error(j.error);
-                    stockProgressCache = j.data || [];
-                })
-                .catch(e => {
-                    console.warn('stockProgress failed', e);
-                    stockProgressCache = [];
-                });
-        }
-
-        /* ===== Custom dropdown rendering ===== */
+        /* ===== Custom dropdown rendering + keyboard nav ===== */
         function attachDropdown(inputId, listId, filterFn, selectCallback) {
             const input = document.getElementById(inputId);
             const list = document.getElementById(listId);
-            input.addEventListener('input', () => {
-                const q = input.value.toLowerCase();
+            if (!input || !list) return;
+
+            // helper to set active index
+            function setActiveIndex(idx) {
+                const items = Array.from(list.querySelectorAll('.dropdown-item'));
+                items.forEach(it => it.classList.remove('active'));
+                if (idx >= 0 && idx < items.length) {
+                    items[idx].classList.add('active');
+                    items[idx].scrollIntoView({ block: 'nearest' });
+                    input._dropIndex = idx;
+                } else {
+                    input._dropIndex = -1;
+                }
+            }
+
+            function renderAndShow() {
+                const q = (input.value || "").toLowerCase();
                 const filtered = filterFn(q);
                 renderDropdownList(list, filtered, (val) => {
                     input.value = val;
                     list.style.display = 'none';
-                    selectCallback(val);
+                    input._dropIndex = -1;
+                    if (selectCallback) selectCallback(val);
                 });
-                list.style.display = filtered.length ? 'block' : 'none';
+                // reset index
+                input._dropIndex = -1;
+                const items = list.querySelectorAll('.dropdown-item');
+                if (items.length) {
+                    list.style.display = 'block';
+                } else {
+                    list.style.display = 'none';
+                }
+            }
+
+            input.addEventListener('input', renderAndShow);
+            input.addEventListener('focus', renderAndShow);
+
+            input.addEventListener('keydown', (ev) => {
+                const itemsEls = Array.from(list.querySelectorAll('.dropdown-item'));
+                if (!itemsEls.length) return;
+                if (ev.key === 'ArrowDown') {
+                    ev.preventDefault();
+                    const idx = Math.min((input._dropIndex || -1) + 1, itemsEls.length - 1);
+                    setActiveIndex(idx);
+                } else if (ev.key === 'ArrowUp') {
+                    ev.preventDefault();
+                    const idx = Math.max((input._dropIndex || -1) - 1, 0);
+                    setActiveIndex(idx);
+                } else if (ev.key === 'Enter') {
+                    if (typeof input._dropIndex === 'number' && input._dropIndex >= 0) {
+                        ev.preventDefault();
+                        itemsEls[input._dropIndex].click();
+                    } else {
+                        // let Enter behave normally (e.g. submit) if nothing selected
+                    }
+                } else if (ev.key === 'Escape') {
+                    list.style.display = 'none';
+                    input._dropIndex = -1;
+                }
             });
+
             input.addEventListener('blur', () => {
-                setTimeout(() => list.style.display = 'none', 200);
+                // small delay so click handlers can run
+                setTimeout(() => {
+                    list.style.display = 'none';
+                    input._dropIndex = -1;
+                }, 200);
             });
         }
 
         function renderDropdownList(container, arr, onSelect) {
             container.innerHTML = '';
-            arr.forEach(item => {
+            arr.forEach((item, idx) => {
                 const div = document.createElement('div');
                 div.className = 'dropdown-item';
+                div.dataset.index = String(idx);
+
                 // stock circle:
                 const prog = stockProgressCache.find(sp => sp.name === item.name);
                 const pct = prog ? prog.pct : 0;
@@ -693,6 +759,14 @@
 
                 div.appendChild(circle);
                 div.appendChild(label);
+
+                div.addEventListener('mouseover', () => {
+                    // highlight when hovering
+                    const siblings = Array.from(container.querySelectorAll('.dropdown-item'));
+                    siblings.forEach(s => s.classList.remove('active'));
+                    div.classList.add('active');
+                });
+
                 div.onclick = () => onSelect(item.name);
                 container.appendChild(div);
             });
@@ -713,6 +787,9 @@
                     const json = JSON.parse(payloadText);
                     const rows = json?.table?.rows || [];
 
+                    // parse items with expected columns:
+                    // A: name (0), B: buyStack (1), C: sellStack (2), D: stackStock (3),
+                    // E: bundleSize (4), F: buyEach (5), G: sellEach (6), H: indivStock (7), I: availPercent (8), J: targetEach (9)
                     items = rows.map(row => {
                         const c = row.c || [];
                         const name = c[0]?.v ?? "";
@@ -724,6 +801,7 @@
                         const sellEach = c[6]?.v ?? "";
                         const indivStock = Number(c[7]?.v ?? 0);
                         const availPercent = Number(c[8]?.v ?? 0);
+                        const targetEach = Number(c[9]?.v ?? 0); // J column = targetEach
                         if (!name) return null;
                         if ((buyStack === "X" && sellStack === "X") && (buyEach === "X" && sellEach === "X")) return null;
                         const parseNumOrNull = (v) => {
@@ -736,12 +814,21 @@
                             stackStock,
                             indivStock,
                             availPercent,
+                            targetEach: targetEach || 0,
                             buyStack: parseNumOrNull(buyStack),
                             sellStack: parseNumOrNull(sellStack),
                             buyEach: parseNumOrNull(buyEach),
                             sellEach: parseNumOrNull(sellEach)
                         };
                     }).filter(Boolean);
+
+                    // Build stock progress cache from the same sheet (D = stackStock, H = indivStock, E = bundleSize, J = targetEach)
+                    stockProgressCache = items.map(i => {
+                        const currentEach = (Number(i.stackStock || 0) * Number(i.bundleSize || 1)) + Number(i.indivStock || 0);
+                        const targetEach = Number(i.targetEach || 0);
+                        const pct = targetEach > 0 ? Math.round((currentEach / targetEach) * 100) : 0;
+                        return { name: i.name, currentEach, targetEach, pct };
+                    });
 
                     payItems = items.slice();
                     populateCurrencyDatalist();
@@ -751,6 +838,7 @@
                     console.error('Failed to load sheet:', err);
                     items = [];
                     payItems = [];
+                    stockProgressCache = [];
                     populateCurrencyDatalist();
                     setupDropdowns();
                 });
@@ -787,26 +875,30 @@
 
         /* ===== Dropdown Setup ===== */
         function setupDropdowns() {
-            // Build arrays with .extra for display
-            function toDropdownData(filterSellStack, filterSellEach, filterBuyStack, filterBuyEach) {
-                return items.map(i => {
-                    let extra = `stkStock:${i.stackStock} eachStock:${i.indivStock} avail:${i.availPercent}%`;
-                    return { name: i.name, extra };
-                });
-            }
-            const allData = toDropdownData();
+            // Build dropdownData used by all searchable inputs
+            dropdownData = items.map(i => {
+                let extra = `stkStock:${i.stackStock} eachStock:${i.indivStock} avail:${i.availPercent}%`;
+                return { name: i.name, extra };
+            });
 
-            function filterBy(q, predicate) {
-                return allData.filter(d => d.name.toLowerCase().includes(q));
+            function filterBy(q) {
+                if (!q) return dropdownData.slice(0, 200); // show some results
+                return dropdownData.filter(d => d.name.toLowerCase().includes(q));
             }
 
-            // Quick stack
-            attachDropdown('quickStackSelect', 'quickStackSelectList', (q) => filterBy(q, () => true), (v) => { });
-            attachDropdown('quickIndivSelect', 'quickIndivSelectList', (q) => filterBy(q, () => true), (v) => { });
-            attachDropdown('stackSelect', 'stackSelectList', (q) => filterBy(q, () => true), (v) => { });
-            attachDropdown('indivSelect', 'indivSelectList', (q) => filterBy(q, () => true), (v) => { });
-            attachDropdown('sellStackSelect', 'sellStackSelectList', (q) => filterBy(q, () => true), (v) => { });
-            attachDropdown('sellIndivSelect', 'sellIndivSelectList', (q) => filterBy(q, () => true), (v) => { });
+            // Attach to static inputs
+            attachDropdown('quickStackSelect', 'quickStackSelectList', (q) => filterBy(q), (v) => { });
+            attachDropdown('quickIndivSelect', 'quickIndivSelectList', (q) => filterBy(q), (v) => { });
+            attachDropdown('stackSelect', 'stackSelectList', (q) => filterBy(q), (v) => { });
+            attachDropdown('indivSelect', 'indivSelectList', (q) => filterBy(q), (v) => { });
+            attachDropdown('sellStackSelect', 'sellStackSelectList', (q) => filterBy(q), (v) => { });
+            attachDropdown('sellIndivSelect', 'sellIndivSelectList', (q) => filterBy(q), (v) => { });
+
+            // Attach to custom (spreadsheet) static inputs
+            attachDropdown('customBuyStackSelect', 'customBuyStackSelectList', (q) => filterBy(q), (v) => { });
+            attachDropdown('customBuyIndivSelect', 'customBuyIndivSelectList', (q) => filterBy(q), (v) => { });
+            attachDropdown('customSellStackSelect', 'customSellStackSelectList', (q) => filterBy(q), (v) => { });
+            attachDropdown('customSellIndivSelect', 'customSellIndivSelectList', (q) => filterBy(q), (v) => { });
         }
 
         /* ===== OCM (basic read & cart add stubs) ===== */
@@ -888,13 +980,15 @@
 
         /* ===== Row coloring against stock & target ===== */
         function evaluateRowColorBuy(entry) {
-            // If source store, compare qty wanted vs current stock
+            // Compare qty wanted vs current stock (use sheet-derived currentEach)
+            const prog = stockProgressCache.find(sp => sp.name === entry.name);
             const item = items.find(i => i.name === entry.name);
-            if (!item || entry.source === 'OCM') return null;
+            if (!prog && !item) return null;
+            if (entry.source === 'OCM') return null;
+            const currentEach = prog ? prog.currentEach : ((item.stackStock || 0) * (item.bundleSize || 1) + (item.indivStock || 0));
             const eachRequested = entry.bundleSize ? entry.qty * entry.bundleSize : entry.qty;
-            const currentStock = item.stackStock || item.indivStock || 0;
-            if (currentStock <= 0) return 'row-warning-red';
-            const ratio = eachRequested / currentStock;
+            if (currentEach <= 0) return 'row-warning-red';
+            const ratio = eachRequested / currentEach;
             if (ratio > 1) return 'row-warning-red';
             if (ratio > 0.5) return 'row-warning-yellow';
             return null;
@@ -1136,22 +1230,49 @@
                 });
         }
 
-        /* ===== Pay With / Converter (unchanged core, adjusted selection datalist removed) ===== */
+        /* ===== Pay With / Converter (improved dynamic searchable inputs) ===== */
         function addPayRow() {
             const div = document.createElement("div");
             div.className = "payRow";
-            const select = document.createElement("input");
-            select.placeholder = 'Item name';
+
+            // create searchable input + dropdown list inside a proper .dropdown-wrap
+            const unique = 'paySelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            const input = document.createElement("input");
+            input.id = unique;
+            input.className = 'dropdown-input';
+            input.placeholder = 'Item name';
+
+            const list = document.createElement("div");
+            list.id = unique + 'List';
+            list.className = 'dropdown-list';
+            list.style.display = 'none';
+
+            // wrapper matching other dropdowns so absolute list positioning works
+            const wrap = document.createElement('div');
+            wrap.className = 'dropdown-wrap';
+            wrap.style.position = 'relative';
+            wrap.appendChild(input);
+            wrap.appendChild(list);
+
             const percent = document.createElement("input");
             percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
+
             const removeRowBtn = document.createElement("button");
             removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
             removeRowBtn.onclick = () => { div.remove(); calculatePayment(); };
-            div.appendChild(select);
+
+            div.appendChild(wrap);
             div.appendChild(document.createTextNode(" % of total: "));
             div.appendChild(percent);
             div.appendChild(removeRowBtn);
             document.getElementById("payOptions").appendChild(div);
+
+            // attach the dropdown behavior to the dynamic pair
+            attachDropdown(input.id, list.id, (q) => {
+                const ql = (q || "").toLowerCase();
+                if (!ql) return dropdownData.slice(0, 200);
+                return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
+            }, (val) => { /* no-op callback */ });
         }
 
         function calculatePayment() {
@@ -1176,7 +1297,7 @@
             const curr = document.getElementById("currencySelect").value;
             const rows = document.querySelectorAll("#payOptions .payRow");
             rows.forEach(row => {
-                const inputEl = row.querySelector('input[type="text"], input:not([type="number"])');
+                const inputEl = row.querySelector('input.dropdown-input');
                 const percentEl = row.querySelector('input[type="number"]');
                 const rawName = (inputEl?.value || "").trim();
                 const percent = parseFloat(percentEl?.value) || 0;
@@ -1230,22 +1351,46 @@
             renderSellList(); calculateNet();
         }
 
-        /* Converter (unchanged logic from your earlier code but simplified datalist removal) */
+        /* Converter (improved dynamic searchable inputs) */
         function addConverterRow() {
             const div = document.createElement("div");
             div.className = "payRow";
-            const select = document.createElement("input");
-            select.placeholder = 'Item name';
+
+            const unique = 'convSelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            const input = document.createElement("input");
+            input.id = unique;
+            input.className = 'dropdown-input';
+            input.placeholder = 'Item name';
+
+            const list = document.createElement("div");
+            list.id = unique + 'List';
+            list.className = 'dropdown-list';
+            list.style.display = 'none';
+
+            const wrap = document.createElement('div');
+            wrap.className = 'dropdown-wrap';
+            wrap.style.position = 'relative';
+            wrap.appendChild(input);
+            wrap.appendChild(list);
+
             const percent = document.createElement("input");
             percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
+
             const removeRowBtn = document.createElement("button");
             removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
             removeRowBtn.onclick = () => { div.remove(); calculateConversion(); };
-            div.appendChild(select);
+
+            div.appendChild(wrap);
             div.appendChild(document.createTextNode(" % of Net Balance: "));
             div.appendChild(percent);
             div.appendChild(removeRowBtn);
             document.getElementById("converterOptions").appendChild(div);
+
+            attachDropdown(input.id, list.id, (q) => {
+                const ql = (q || "").toLowerCase();
+                if (!ql) return dropdownData.slice(0, 200);
+                return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
+            }, (val) => { /* no-op */ });
         }
         function calculateConversion() {
             const converterList = document.getElementById("converterListDisplay");
@@ -1259,7 +1404,8 @@
             const rows = document.querySelectorAll("#converterOptions .payRow");
             let usedPercent = 0;
             rows.forEach(row => {
-                const name = row.querySelector('input[placeholder="Item name"]').value.trim();
+                const inputEl = row.querySelector('input.dropdown-input');
+                const name = inputEl?.value.trim() || '';
                 const percent = parseFloat(row.querySelector('input[type="number"]').value) || 0;
                 const item = items.find(i => i.name === name);
                 if (!item || percent <= 0) return;
@@ -1441,10 +1587,9 @@
 
         /* ===== Init ===== */
         window.onload = () => {
-            Promise.all([loadStockProgress()]).then(() => {
-                loadData();
-            });
-            addPayRow(); // initialize Pay With
+            // loadData constructs stockProgressCache from the same sheet (D/J columns)
+            loadData();
+            addPayRow(); // initialize Pay With (search attaches when dropdownData gets populated)
         };
     </script>
 </body>
