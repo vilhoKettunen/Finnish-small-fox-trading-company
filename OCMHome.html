@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>OCM Home</title>
+<script src="app-config.js"></script>
+</head><body>
+<h1>OCM Listings</h1>
+<input id="q" placeholder="Search item"><button onclick="load()">Search</button>
+<ul id="list"></ul>
+<script>
+function load(){
+  const q=document.getElementById('q').value.trim();
+  fetch(`${WEB_APP_URL}?action=listings&q=${encodeURIComponent(q)}`)
+    .then(r=>r.json()).then(j=>{
+      if(!j.ok) throw new Error(j.error);
+      const ul=document.getElementById('list'); ul.innerHTML='';
+      j.data.forEach(l=>{
+        const li=document.createElement('li');
+        li.textContent=`${l.itemName} | ${l.type} | ${l.unit} | price:${l.priceBT} | qty:${l.qtyAvailable||'∞'} | ${l.playerName}`;
+        ul.appendChild(li);
+      });
+    }).catch(e=>alert(e.message));
+}
+load();
+</script>
+</body></html>

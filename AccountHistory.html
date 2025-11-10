@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Account History</title>
+<script src="app-config.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head><body>
+<h1>Account History</h1>
+<div id="loginStatus"></div>
+<ul id="historyList"></ul>
+<script>
+let googleIdToken=null;
+function onGoogleSignIn(r){
+  googleIdToken=r.credential;
+  document.getElementById('loginStatus').textContent='Loading history...';
+  fetch(`${WEB_APP_URL}?action=myHistory&idToken=${encodeURIComponent(googleIdToken)}`)
+    .then(r=>r.json()).then(j=>{
+      if(!j.ok) throw new Error(j.error);
+      const ul=document.getElementById('historyList'); ul.innerHTML='';
+      j.data.forEach(h=>{
+        const li=document.createElement('li');
+        li.textContent=`${h.createdAt} | net:${h.netBT} | balance:${h.balanceAfterBT}`;
+        ul.appendChild(li);
+      });
+      document.getElementById('loginStatus').textContent='Loaded.';
+    }).catch(e=>{
+      document.getElementById('loginStatus').textContent='Error: '+e.message;
+    });
+}
+</script>
+<div id="g_id_onload" data-client_id="1052887487165-endmh7ktojtd2eehnjt2bf3shcd4abf4.apps.googleusercontent.com" data-callback="onGoogleSignIn"></div>
+<div class="g_id_signin" data-type="standard"></div>
+</body></html>

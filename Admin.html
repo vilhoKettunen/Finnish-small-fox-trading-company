@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Admin Dashboard</title>
+<script src="app-config.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</head><body>
+<h1>Admin Pending Requests</h1>
+<div id="loginStatus"></div>
+<ul id="pendingList"></ul>
+<script>
+let googleIdToken=null;
+function onGoogleSignIn(r){
+  googleIdToken=r.credential;
+  loadPending();
+}
+function loadPending(){
+  fetch(`${WEB_APP_URL}?action=pending&idToken=${encodeURIComponent(googleIdToken)}`)
+    .then(r=>r.json()).then(j=>{
+      if(!j.ok) throw new Error(j.error);
+      const ul=document.getElementById('pendingList'); ul.innerHTML='';
+      j.data.forEach(p=>{
+        const li=document.createElement('li');
+        li.textContent=`${p.requestId} | ${p.playerName} | ${p.status}`;
+        const appr=document.createElement('button'); appr.textContent='Approve'; appr.onclick=()=>approve(p.requestId,false);
+        const apprAdmin=document.createElement('button'); apprAdmin.textContent='Approve (Admin Sale)'; apprAdmin.onclick=()=>approve(p.requestId,true);
+        const rej=document.createElement('button'); rej.textContent='Reject'; rej.onclick=()=>rejectReq(p.requestId);
+        li.appendChild(appr); li.appendChild(apprAdmin); li.appendChild(rej);
+        ul.appendChild(li);
+      });
+    }).catch(e=> document.getElementById('loginStatus').textContent='Error: '+e.message);
+}
+function recaptchaWrap(){ return new Promise((res,rej)=>{ grecaptcha.ready(()=>grecaptcha.execute(RECAPTCHA_SITE_KEY,{action:'submit'}).then(res).catch(rej)); }); }
+function approve(requestId,executedByAdmin){
+  recaptchaWrap().then(token=>{
+    return fetch(WEB_APP_URL,{method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ action:'approveRequest', idToken:googleIdToken, recaptchaToken:token, payload:{requestId, executedByAdmin} })
+    });
+  }).then(r=>r.json()).then(j=>{
+    if(!j.ok) throw new Error(j.error);
+    alert('Approved: net='+j.result.netBT+' fee='+j.result.feeBT);
+    loadPending();
+  }).catch(e=> alert(e.message));
+}
+function rejectReq(requestId){
+  recaptchaWrap().then(token=>{
+    return fetch(WEB_APP_URL,{method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ action:'rejectRequest', idToken:googleIdToken, recaptchaToken:token, payload:{requestId, note:'Rejected by admin'} })
+    });
+  }).then(r=>r.json()).then(j=>{
+    if(!j.ok) throw new Error(j.error);
+    alert('Rejected'); loadPending();
+  }).catch(e=> alert(e.message));
+}
+</script>
+<div id="g_id_onload" data-client_id="1052887487165-endmh7ktojtd2eehnjt2bf3shcd4abf4.apps.googleusercontent.com" data-callback="onGoogleSignIn"></div>
+<div class="g_id_signin" data-type="standard"></div>
+<script src="https://www.google.com/recaptcha/api.js?render=6LdjcAgsAAAAABWoHl5dmFjbJQL61kOu7ddvkUZF"></script>
+</body></html>
