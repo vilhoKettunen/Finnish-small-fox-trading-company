@@ -712,17 +712,27 @@
         /* ===== Utility ===== */
         function cryptoRandomId() { return (crypto.getRandomValues(new Uint32Array(4))).join('-'); }
 
-        /* ===== Dropdown / Data / Cart logic (unchanged from previous version) ===== */
+        /* ===== Custom dropdown / circular stock indicator implementation (integrated) ===== */
+
+        // Interpret possible target values robustly: prefer candidate closest to currentStacks and >= when possible
+        function computeEffectiveTargetStacks(item, prog) {
+            // Always treat column J as target expressed in stacks.
+            // `loadData` already stored that value in prog.targetStacks.
+            if (!prog) return 0;
+            const t = Number(prog.targetStacks || 0);
+            return isFinite(t) && t > 0 ? t : 0;
+        }
+
         function attachDropdown(inputId, listId, filterFn, selectCallback) {
             const input = document.getElementById(inputId);
             const list = document.getElementById(listId);
             if (!input || !list) return;
             function setActiveIndex(idx) {
-                const items = Array.from(list.querySelectorAll('.dropdown-item'));
-                items.forEach(it => it.classList.remove('active'));
-                if (idx >= 0 && idx < items.length) {
-                    items[idx].classList.add('active');
-                    items[idx].scrollIntoView({ block: 'nearest' });
+                const itemsEls = Array.from(list.querySelectorAll('.dropdown-item'));
+                itemsEls.forEach(it => it.classList.remove('active'));
+                if (idx >= 0 && idx < itemsEls.length) {
+                    itemsEls[idx].classList.add('active');
+                    itemsEls[idx].scrollIntoView({ block: 'nearest' });
                     input._dropIndex = idx;
                 } else input._dropIndex = -1;
             }
@@ -750,28 +760,54 @@
             input.addEventListener('blur', () => setTimeout(() => { list.style.display = 'none'; input._dropIndex = -1; }, 200));
         }
 
+        // renderDropdownList now draws the circular graph per-item using stack-target interpretation
         function renderDropdownList(container, arr, onSelect) {
             container.innerHTML = '';
             arr.forEach((item, idx) => {
                 const div = document.createElement('div');
                 div.className = 'dropdown-item';
                 div.dataset.index = String(idx);
+
+                // get item object and its progress entry
+                const itemObj = items.find(it => it.name === item.name);
                 const prog = stockProgressCache.find(sp => sp.name === item.name);
-                const pct = prog ? prog.pct : 0;
+
+                // pct = (indivStock / bundleSize) / targetStacks  -> currentStacks / targetStacks
+                let pct = 0;
+                if (prog) {
+                    const target = computeEffectiveTargetStacks(itemObj, prog); // uses prog.targetStacks
+                    if (target > 0) {
+                        pct = Math.round((Number(prog.currentStacks || 0) / target) * 100);
+                    } else {
+                        pct = 0;
+                    }
+                }
+                pct = Math.max(0, Math.min(100, pct));
+
                 const circle = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                circle.setAttribute('class', 'stock-circle'); circle.setAttribute('viewBox', '0 0 36 36');
+                circle.setAttribute('class', 'stock-circle');
+                circle.setAttribute('viewBox', '0 0 36 36');
+
                 const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 bg.setAttribute('cx', '18'); bg.setAttribute('cy', '18'); bg.setAttribute('r', '16');
                 bg.setAttribute('stroke', '#eee'); bg.setAttribute('stroke-width', '4'); bg.setAttribute('fill', 'none');
+
                 const fg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 fg.setAttribute('cx', '18'); fg.setAttribute('cy', '18'); fg.setAttribute('r', '16');
-                fg.setAttribute('stroke', pct >= 100 ? '#3cb371' : '#2196f3'); fg.setAttribute('stroke-width', '4'); fg.setAttribute('fill', 'none');
+                fg.setAttribute('stroke', pct >= 100 ? '#3cb371' : '#2196f3');
+                fg.setAttribute('stroke-width', '4'); fg.setAttribute('fill', 'none');
                 fg.setAttribute('stroke-dasharray', Math.round((pct / 100) * 2 * Math.PI * 16) + ',1000');
                 fg.setAttribute('transform', 'rotate(-90 18 18)');
-                circle.appendChild(bg); circle.appendChild(fg);
+
+                circle.appendChild(bg);
+                circle.appendChild(fg);
+
                 const label = document.createElement('div');
                 label.innerHTML = `<strong>${item.name}</strong><br><small>${item.extra}</small>`;
-                div.appendChild(circle); div.appendChild(label);
+
+                div.appendChild(circle);
+                div.appendChild(label);
+
                 div.addEventListener('mouseover', () => {
                     Array.from(container.querySelectorAll('.dropdown-item')).forEach(s => s.classList.remove('active'));
                     div.classList.add('active');
@@ -781,6 +817,7 @@
             });
         }
 
+        /* ===== Data loading (adapted to support stacks-target interpretation) ===== */
         function loadData() {
             fetch(sheetURL)
                 .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
@@ -819,12 +856,14 @@
                         };
                     }).filter(Boolean);
 
+                    // Build stockProgressCache using indiv-derived stacks as currentStacks and J as targetStacks
                     stockProgressCache = items.map(i => {
-                        const currentEach = (Number(i.stackStock || 0) * Number(i.bundleSize || 1)) + Number(i.indivStock || 0);
-                        const targetEach = Number(i.targetEach || 0);
-                        const pct = targetEach > 0 ? Math.round((currentEach / targetEach) * 100) : 0;
-                        return { name: i.name, currentEach, targetEach, pct };
+                        const bundleSize = Number(i.bundleSize || 1) || 1;
+                        const currentStacks = (Number(i.indivStock || 0) / bundleSize); // H / E
+                        const targetStacks = Number(i.targetEach || 0); // J (assumed stacks)
+                        return { name: i.name, currentStacks, targetStacks };
                     });
+
                     payItems = items.slice();
                     populateCurrencyDatalist();
                     setupDropdowns();
@@ -841,6 +880,7 @@
             currencyDatalist.innerHTML = "";
             currencyDatalist.appendChild(new Option(BASE_CURRENCY, BASE_CURRENCY));
             items.forEach(i => {
+                // keep original display information for datalist
                 currencyDatalist.appendChild(new Option(`${i.name} — stack:${i.stackStock} each:${i.indivStock} avail:${i.availPercent}%`, i.name));
             });
             const input = document.getElementById("currencyInput");
