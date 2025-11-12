@@ -552,7 +552,7 @@ html vintage story\Finnish-small-fox-trading-company\index.html
 
     <script>
         /* ===== CONFIG ===== */
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyfo5xrsvQf6dtc9I3tzn1UgW7VVJ_LwR4JY19sRV1MdObkXquZcAhIuBReER10T6xpNw/exec';
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbygL-uqAGe0HSBDVdnF_HlszWQcCJQ_TyikxqvYrgnRsY7SFXcqd6mI3DhMfp3sLZIBXQ/exec';
         const RECAPTCHA_SITE_KEY = '6LdjcAgsAAAAABWoHl5dmFjbJQL61kOu7ddvkUZF';
         const OAUTH_CLIENT_ID = '1052887487165-endmh7ktojtd2eehnjt2bf3shcd4abf4.apps.googleusercontent.com';
 
@@ -570,12 +570,45 @@ html vintage story\Finnish-small-fox-trading-company\index.html
 
         /* ===== Google Login ===== */
         function onGoogleSignIn(resp) {
-            googleIdToken = resp.credential;
-            document.getElementById('loginStatus').textContent = 'Logged in. Fetching profile...';
-            fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`)
-                .then(r => r.json())
-                .then(j => {
-                    if (!j.ok) throw new Error(j.error);
+            googleIdToken = resp && resp.credential;
+            const statusEl = document.getElementById('loginStatus');
+
+            if (!googleIdToken) {
+                statusEl.textContent = 'Login error: no credential returned';
+                console.error('onGoogleSignIn: no credential in resp', resp);
+                return;
+            }
+
+            statusEl.textContent = 'Logged in. Validating token...';
+
+            (async () => {
+                try {
+                    const tokenInfoUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`;
+                    console.log('Fetching tokeninfo:', tokenInfoUrl);
+                    const tResp = await fetch(tokenInfoUrl);
+                    if (!tResp.ok) {
+                        const body = await tResp.text().catch(() => '<no body>');
+                        throw new Error(`tokeninfo fetch failed: status=${tResp.status} body=${body}`);
+                    }
+                    const info = await tResp.json();
+                    console.log('tokeninfo:', info);
+
+                    if (info.aud !== OAUTH_CLIENT_ID) {
+                        throw new Error(`Invalid audience (got: ${info.aud}). Expected: ${OAUTH_CLIENT_ID}`);
+                    }
+
+                    statusEl.textContent = 'Token audience OK. Fetching profile from backend...';
+
+                    const backendUrl = `${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`;
+                    console.log('Fetching backend:', backendUrl);
+                    const bResp = await fetch(backendUrl);
+                    if (!bResp.ok) {
+                        const body = await bResp.text().catch(() => '<no body>');
+                        throw new Error(`backend fetch failed: status=${bResp.status} body=${body}`);
+                    }
+                    const j = await bResp.json();
+                    if (!j.ok) throw new Error('Backend returned error: ' + (j.error || JSON.stringify(j)));
+
                     currentUser = j.data.user;
                     if (!currentUser || !currentUser.playerName) {
                         document.getElementById('setupForm').style.display = 'block';
@@ -584,10 +617,14 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                         enableAppUI();
                     }
                     showTopBar();
-                })
-                .catch(e => {
-                    document.getElementById('loginStatus').textContent = 'Login error: ' + e.message;
-                });
+                    statusEl.textContent = 'Logged in.';
+                } catch (err) {
+                    // Differentiate network vs other
+                    const msg = err && err.message ? err.message : String(err);
+                    statusEl.textContent = 'Login error: ' + msg;
+                    console.error('onGoogleSignIn error detail:', err);
+                }
+            })();
         }
 
         function logout() {
