@@ -1,4 +1,3 @@
-html vintage story\Finnish-small-fox-trading-company\index.html
 <!DOCTYPE html>
 <html>
 <head>
@@ -48,7 +47,6 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             gap: 10px;
         }
 
-            /* limit only numeric inputs inside payRow — dropdown text inputs keep their normal width */
             .payRow input[type="number"] {
                 width: 60px;
             }
@@ -85,10 +83,6 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             cursor: pointer;
         }
 
-        li.payment-item {
-            font-style: italic;
-        }
-
         .section ul li a {
             color: #0066cc;
             text-decoration: none;
@@ -98,7 +92,6 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                 text-decoration: underline;
             }
 
-        /* Top bar */
         #topBar {
             position: fixed;
             top: 0;
@@ -133,7 +126,6 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             padding-top: 70px;
         }
 
-        /* Custom dropdown list */
         .dropdown-wrap {
             position: relative;
             display: inline-block;
@@ -169,7 +161,6 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                 background: #f0f6ff;
             }
 
-            /* keyboard-highlighted item */
             .dropdown-item.active {
                 background: #dff0ff;
             }
@@ -194,7 +185,6 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             margin-left: 8px;
         }
 
-        /* OCM subsection styling */
         .ocm-box {
             border: 1px dashed #999;
             padding: 10px;
@@ -230,21 +220,25 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             margin-top: 20px;
         }
 
-        .inline {
-            display: inline-block;
-        }
-
-        @media (max-width: 700px) {
+        @media (max-width:700px) {
             .dropdown-input {
                 width: 180px;
             }
         }
+
+        .login-hint {
+            font-size: 12px;
+            color: #555;
+            margin-top: 4px;
+        }
+
+        .fallback-login {
+            margin-top: 8px;
+        }
     </style>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://www.google.com/recaptcha/api.js?render=6LdjcAgsAAAAABWoHl5dmFjbJQL61kOu7ddvkUZF"></script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
-
     <div id="topBar">
         <div><strong>Vak Store</strong></div>
         <a id="historyLink" href="#" onclick="openHistory()">Account History</a>
@@ -255,33 +249,24 @@ html vintage story\Finnish-small-fox-trading-company\index.html
     </div>
 
     <div id="authPanel">
-        <div id="g_id_onload"
-             data-client_id="1052887487165-endmh7ktojtd2eehnjt2bf3shcd4abf4.apps.googleusercontent.com"
-             data-context="signin"
-             data-callback="onGoogleSignIn"
-             data-auto_select="false"
-             data-itp_support="true"></div>
+        <div id="googleLoginArea">
+            <div id="googleBtn"></div>
+            <div class="login-hint">
+                If the Google button does not appear or fails (FedCM / third‑party blocked), use fallback:
+            </div>
+            <div class="fallback-login">
+                <button id="fallbackBtn" type="button" onclick="startFallbackLogin()">Fallback Google Login</button>
+            </div>
+            <div id="loginStatus"></div>
+        </div>
 
-        <div class="g_id_signin"
-             data-type="standard"
-             data-size="large"
-             data-theme="outline"
-             data-text="sign_in_with"
-             data-shape="rectangular"
-             data-logo_alignment="left"></div>
-
-        <div id="loginStatus"></div>
+        <!-- reCAPTCHA v2 visible checkbox container -->
+        <div id="recaptchaContainer" style="margin-top:10px;"></div>
 
         <div id="setupForm">
             <h3>Account Setup</h3>
-            <label>
-                Player Name:
-                <input type="text" id="setupPlayerName">
-            </label><br>
-            <label>
-                Mailbox (e.g. 1A / 2B / F1):
-                <input type="text" id="setupMailbox" placeholder="Format: RowSegment / DepthSegment / FloorSegment">
-            </label><br>
+            <label>Player Name: <input type="text" id="setupPlayerName"></label><br>
+            <label>Mailbox (e.g. 1A / 2B / F1): <input type="text" id="setupMailbox" placeholder="Format: RowSegment / DepthSegment / FloorSegment"></label><br>
             <button onclick="submitSetup()">Save Setup</button>
             <div id="setupMsg"></div>
         </div>
@@ -289,16 +274,15 @@ html vintage story\Finnish-small-fox-trading-company\index.html
 
     <h1>🛒 Vak Store Trading Calculator</h1>
 
-    <!-- Existing sections retained below -->
-
+    <!-- Display Currency -->
     <div class="section">
         <label for="currencyInput"><b>Display Currency:</b></label>
-        <input id="currencyInput" list="currencyDatalist" placeholder="Search currency / item (type part of name)" />
-        <input id="currencySelect" type="hidden" value="BT" />
+        <input id="currencyInput" list="currencyDatalist" placeholder="Search currency / item">
+        <input id="currencySelect" type="hidden" value="BT">
         <datalist id="currencyDatalist"></datalist>
     </div>
 
-    <!-- Quick calculators (unchanged) -->
+    <!-- Quick calculators -->
     <div class="section">
         <h2>🔹 Quick Individual Item Calculator</h2>
         <button class="more-info-btn" onclick="toggleInfo('quickInfo')">More Info</button>
@@ -336,7 +320,6 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             <p>Add stacks/individuals you want to buy. Includes OCM listings if desired.</p>
             <button onclick="toggleInfo('buyInfo')">❌ Close</button>
         </div>
-
         <h3>Full Stacks (Store)</h3>
         <div class="dropdown-wrap">
             <input id="stackSelect" class="dropdown-input" placeholder="Search stack item">
@@ -358,18 +341,12 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             <input type="text" id="ocmBuyQuery" placeholder="Search OCM items">
             <button onclick="refreshOCMBuy()">Search</button>
             <div id="ocmBuyListings"></div>
-            <label>
-                Quantity:
-                <input type="number" id="ocmBuyQty" value="1" min="1">
-            </label>
+            <label>Quantity: <input type="number" id="ocmBuyQty" value="1" min="1"></label>
             <button onclick="addOCMBuy()">Add OCM Item</button>
         </div>
 
         <h3>Account Balance</h3>
-        <label>
-            Enter Balance (BT):
-            <input type="number" id="buyAccountBalanceInput" value="0">
-        </label>
+        <label>Enter Balance (BT): <input type="number" id="buyAccountBalanceInput" value="0"></label>
         <button onclick="addBuyAccountBalance()">➕ Add Balance</button>
 
         <h3>Custom Inputs (Store)</h3>
@@ -397,12 +374,12 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             <strong>Fully Custom</strong><br>
             <input type="text" id="customBuyName" placeholder="Name">
             <input type="number" id="customBuyQty" placeholder="Quantity (pieces)" min="1">
-            <input type="number" id="customBuyStackSize" placeholder="Stack size (pieces per stack)" min="1">
+            <input type="number" id="customBuyStackSize" placeholder="Stack size" min="1">
             <input type="number" id="customBuyPrice" placeholder="Price per Stack" step="0.01">
             <button onclick="addFullyCustomBuy()">Add Fully Custom</button>
         </div>
         <ul id="buyList"></ul>
-        <div id="buyTotalBox" class="negative">Buy Total: <span id="buyTotal">0.00</span> </div>
+        <div id="buyTotalBox" class="negative">Buy Total: <span id="buyTotal">0.00</span></div>
     </div>
 
     <!-- Sell Multiple Items -->
@@ -413,7 +390,6 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             <p>Add items you sell. Includes OCM interaction and Pay With.</p>
             <button onclick="toggleInfo('sellInfo')">❌ Close</button>
         </div>
-
         <h3>Full Stacks (Store)</h3>
         <div class="dropdown-wrap">
             <input id="sellStackSelect" class="dropdown-input" placeholder="Search stack item">
@@ -435,18 +411,12 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             <input type="text" id="ocmSellQuery" placeholder="Search OCM items">
             <button onclick="refreshOCMSell()">Search</button>
             <div id="ocmSellListings"></div>
-            <label>
-                Quantity:
-                <input type="number" id="ocmSellQty" value="1" min="1">
-            </label>
+            <label>Quantity: <input type="number" id="ocmSellQty" value="1" min="1"></label>
             <button onclick="addOCMSell()">Add OCM Item</button>
         </div>
 
         <h3>Account Balance</h3>
-        <label>
-            Enter Balance (BT):
-            <input type="number" id="accountBalanceInput" value="0">
-        </label>
+        <label>Enter Balance (BT): <input type="number" id="accountBalanceInput" value="0"></label>
         <button onclick="addAccountBalance()">➕ Add Balance</button>
 
         <h3>Custom Inputs (Store)</h3>
@@ -474,12 +444,12 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             <strong>Fully Custom</strong><br>
             <input type="text" id="customSellName" placeholder="Name">
             <input type="number" id="customSellQty" placeholder="Quantity (pieces)" min="1">
-            <input type="number" id="customSellStackSize" placeholder="Stack size (pieces per stack)" min="1">
+            <input type="number" id="customSellStackSize" placeholder="Stack size" min="1">
             <input type="number" id="customSellPrice" placeholder="Price per Stack" step="0.01">
             <button onclick="addFullyCustomSell()">Add Fully Custom</button>
         </div>
         <ul id="sellList"></ul>
-        <div id="sellTotalBox" class="positive">Sell Total: <span id="sellTotal">0.00</span> </div>
+        <div id="sellTotalBox" class="positive">Sell Total: <span id="sellTotal">0.00</span></div>
     </div>
 
     <!-- Combined Totals -->
@@ -487,10 +457,10 @@ html vintage story\Finnish-small-fox-trading-company\index.html
         <h2>🔹 Combined Totals</h2>
         <button class="more-info-btn" onclick="toggleInfo('combinedInfo')">More Info</button>
         <div id="combinedInfo" class="info-box">
-            <p>Net Balance: sell - buy (fees applied at approval if admin executes sale).</p>
+            <p>Net Balance: sell - buy.</p>
             <button onclick="toggleInfo('combinedInfo')">❌ Close</button>
         </div>
-        <div id="combinedTotalBox">Net Balance: <span id="netTotal">0.00</span> </div>
+        <div id="combinedTotalBox">Net Balance: <span id="netTotal">0.00</span></div>
     </div>
 
     <!-- Pay With -->
@@ -498,10 +468,9 @@ html vintage story\Finnish-small-fox-trading-company\index.html
         <h2>🔹 Pay With</h2>
         <button class="more-info-btn" onclick="toggleInfo('payInfo')">More Info</button>
         <div id="payInfo" class="info-box">
-            <p>Select items to cover negative net. Items added to Sell receipt.</p>
+            <p>Cover a negative net with item payments.</p>
             <button onclick="toggleInfo('payInfo')">❌ Close</button>
         </div>
-
         <div id="payOptions"></div>
         <button onclick="addPayRow()">➕ Add Item</button>
         <ul id="payList"></ul>
@@ -514,10 +483,9 @@ html vintage story\Finnish-small-fox-trading-company\index.html
         <h2>🔹 Item Converter</h2>
         <button class="more-info-btn" onclick="toggleInfo('converterInfo')">More Info</button>
         <div id="converterInfo" class="info-box">
-            <p>Allocate % of positive Net Balance into items (added to Buy receipt).</p>
+            <p>Allocate % of positive Net Balance into items.</p>
             <button onclick="toggleInfo('converterInfo')">❌ Close</button>
         </div>
-
         <div id="converterOptions"></div>
         <button onclick="addConverterRow()">➕ Add Item</button>
         <ul id="converterListDisplay"></ul>
@@ -533,7 +501,7 @@ html vintage story\Finnish-small-fox-trading-company\index.html
         <div id="requestMsg"></div>
     </div>
 
-    <!-- Links Section -->
+    <!-- Links -->
     <div class="section">
         <h2>🔗 Useful Links</h2>
         <ul>
@@ -543,7 +511,7 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             <li><a href="https://docs.google.com/spreadsheets/d/1W9ByTiwX3lPakqoYXTHgnOiMNNzwSVnkgmTPqvMrSUc/edit?gid=0#gid=0" target="_blank">Mailbox names</a></li>
             <li><a href="https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/edit?gid=0#gid=0" target="_blank">PRICE SHEET</a></li>
             <li><a href="https://www.vintagestory.at/" target="_blank">Vintage Story official website</a></li>
-            <li><a href="https://mods.vintagestory.at/" target="_blank">Vintage Story official mods page</a></li>
+            <li><a href="https://mods.vintagestory.at/" target="_blank">Official mods page</a></li>
             <li><a href="BTIncurance.html" target="_blank">BT Insurance</a></li>
             <li><a href="PriceHistory.html" target="_blank">Price History</a></li>
             <li><a href="VintageStoryEconomics.html" target="_blank">Vintage Story Economics</a></li>
@@ -557,58 +525,90 @@ html vintage story\Finnish-small-fox-trading-company\index.html
         const OAUTH_CLIENT_ID = '1052887487165-endmh7ktojtd2eehnjt2bf3shcd4abf4.apps.googleusercontent.com';
 
         const sheetURL = "https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/gviz/tq?tqx=out:json&gid=0";
-        // Editor-friendly sheet link for reference: https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/edit?gid=0#gid=0
 
         let items = [], payItems = [], buyCart = [], sellCart = [];
-        let stockProgressCache = []; // {name, currentEach, targetEach, pct}
+        let stockProgressCache = [];
         let currentUser = null;
         let googleIdToken = null;
         const BASE_CURRENCY = "BT";
-
-        // Global dropdown data used by all searchable inputs (kept up-to-date by setupDropdowns)
         let dropdownData = [];
 
-        /* ===== Google Login ===== */
+        // reCAPTCHA v2
+        let recaptchaWidgetId = null;
+        let lastRecaptchaToken = null;
+
+        /* ===== Google Login (GSI primary + fallback) ===== */
+        function initGoogleIdentity() {
+            if (!window.google || !google.accounts || !google.accounts.id) {
+                console.warn('GSI script not loaded yet');
+                return;
+            }
+            google.accounts.id.initialize({
+                client_id: OAUTH_CLIENT_ID,
+                callback: handleCredentialResponse,
+                ux_mode: 'popup',
+                auto_select: false,
+                use_fedcm_for_prompt: false // reduce FedCM dependency
+            });
+            google.accounts.id.renderButton(
+                document.getElementById('googleBtn'),
+                { theme: 'outline', size: 'large', type: 'standard', shape: 'rectangular', logo_alignment: 'left' }
+            );
+        }
+
+        function handleCredentialResponse(resp) {
+            onGoogleSignIn(resp);
+        }
+
+        function startFallbackLogin() {
+            const nonce = cryptoRandomId();
+            const redirectUri = location.origin + location.pathname; // same page
+            const authUrl =
+                'https://accounts.google.com/o/oauth2/v2/auth' +
+                '?client_id=' + encodeURIComponent(OAUTH_CLIENT_ID) +
+                '&redirect_uri=' + encodeURIComponent(redirectUri) +
+                '&response_type=id_token' +
+                '&scope=' + encodeURIComponent('openid email profile') +
+                '&nonce=' + encodeURIComponent(nonce) +
+                '&prompt=select_account';
+            window.location.href = authUrl;
+        }
+
+        function checkHashForIdToken() {
+            if (location.hash) {
+                const params = new URLSearchParams(location.hash.slice(1));
+                const idt = params.get('id_token');
+                if (idt) {
+                    handleCredentialResponse({ credential: idt });
+                    // Clean hash to avoid re-parsing on refresh
+                    history.replaceState({}, document.title, location.pathname + location.search);
+                }
+            }
+        }
+
+        /* ===== Google Sign-in callback ===== */
         function onGoogleSignIn(resp) {
             googleIdToken = resp && resp.credential;
             const statusEl = document.getElementById('loginStatus');
-
             if (!googleIdToken) {
-                statusEl.textContent = 'Login error: no credential returned';
-                console.error('onGoogleSignIn: no credential in resp', resp);
+                statusEl.textContent = 'Login error: no credential';
+                console.error('onGoogleSignIn: no credential', resp);
                 return;
             }
-
-            statusEl.textContent = 'Logged in. Validating token...';
-
+            statusEl.textContent = 'Verifying token...';
             (async () => {
                 try {
                     const tokenInfoUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`;
-                    console.log('Fetching tokeninfo:', tokenInfoUrl);
                     const tResp = await fetch(tokenInfoUrl);
-                    if (!tResp.ok) {
-                        const body = await tResp.text().catch(() => '<no body>');
-                        throw new Error(`tokeninfo fetch failed: status=${tResp.status} body=${body}`);
-                    }
+                    if (!tResp.ok) throw new Error('tokeninfo fetch failed ' + tResp.status);
                     const info = await tResp.json();
-                    console.log('tokeninfo:', info);
-
-                    if (info.aud !== OAUTH_CLIENT_ID) {
-                        throw new Error(`Invalid audience (got: ${info.aud}). Expected: ${OAUTH_CLIENT_ID}`);
-                    }
-
-                    statusEl.textContent = 'Token audience OK. Fetching profile from backend...';
-
+                    if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
+                    statusEl.textContent = 'Fetching user profile...';
                     const backendUrl = `${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`;
-                    console.log('Fetching backend:', backendUrl);
                     const bResp = await fetch(backendUrl);
-                    if (!bResp.ok) {
-                        const body = await bResp.text().catch(() => '<no body>');
-                        throw new Error(`backend fetch failed: status=${bResp.status} body=${body}`);
-                    }
+                    if (!bResp.ok) throw new Error('backend fetch failed ' + bResp.status);
                     const j = await bResp.json();
-                    if (!j.ok) throw new Error('Backend returned error: ' + (j.error || JSON.stringify(j)));
-
+                    if (!j.ok) throw new Error(j.error || 'Backend error');
                     currentUser = j.data.user;
                     if (!currentUser || !currentUser.playerName) {
                         document.getElementById('setupForm').style.display = 'block';
@@ -619,10 +619,8 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                     showTopBar();
                     statusEl.textContent = 'Logged in.';
                 } catch (err) {
-                    // Differentiate network vs other
-                    const msg = err && err.message ? err.message : String(err);
-                    statusEl.textContent = 'Login error: ' + msg;
-                    console.error('onGoogleSignIn error detail:', err);
+                    statusEl.textContent = 'Login error: ' + err.message;
+                    console.error('onGoogleSignIn error:', err);
                 }
             })();
         }
@@ -643,23 +641,20 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                 document.getElementById('setupMsg').textContent = 'Player name and mailbox required';
                 return;
             }
-            recaptchaWrap().then(token => {
-                return fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'linkPlayer',
-                        idToken: googleIdToken,
-                        recaptchaToken: token,
-                        payload: { playerName, mailbox }
-                    })
-                });
-            })
+            recaptchaWrap().then(token => fetch(WEB_APP_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'linkPlayer',
+                    idToken: googleIdToken,
+                    recaptchaToken: token,
+                    payload: { playerName, mailbox }
+                })
+            }))
                 .then(r => r.json())
                 .then(j => {
                     if (!j.ok) throw new Error(j.error);
                     document.getElementById('setupMsg').textContent = 'Setup complete.';
-                    // re-fetch me:
                     return fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
                 })
                 .then(r => r.json())
@@ -674,10 +669,7 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                 });
         }
 
-        function enableAppUI() {
-            document.getElementById('requestControls').style.display = 'block';
-        }
-
+        function enableAppUI() { document.getElementById('requestControls').style.display = 'block'; }
         function showTopBar() {
             if (googleIdToken && currentUser) {
                 document.getElementById('topBar').style.display = 'flex';
@@ -685,22 +677,46 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             }
         }
 
-        /* ===== reCAPTCHA helper ===== */
+        /* ===== reCAPTCHA v2 ===== */
+        function initRecaptcha() {
+            const tryRender = () => {
+                if (window.grecaptcha && recaptchaWidgetId === null) {
+                    recaptchaWidgetId = grecaptcha.render('recaptchaContainer', {
+                        sitekey: RECAPTCHA_SITE_KEY,
+                        callback: t => { lastRecaptchaToken = t; },
+                        'expired-callback': () => { lastRecaptchaToken = null; }
+                    });
+                }
+            };
+            if (window.grecaptcha) tryRender();
+            else {
+                let tries = 0;
+                const iv = setInterval(() => {
+                    tries++;
+                    if (window.grecaptcha) { tryRender(); clearInterval(iv); }
+                    if (tries > 20) clearInterval(iv);
+                }, 250);
+            }
+        }
         function recaptchaWrap() {
             return new Promise((resolve, reject) => {
-                grecaptcha.ready(() => {
-                    grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'submit' }).then(resolve).catch(reject);
-                });
+                if (lastRecaptchaToken) return resolve(lastRecaptchaToken);
+                if (window.grecaptcha) {
+                    document.getElementById('recaptchaContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    return reject(new Error('Complete reCAPTCHA checkbox first.'));
+                }
+                reject(new Error('reCAPTCHA not loaded.'));
             });
         }
 
-        /* ===== Custom dropdown rendering + keyboard nav ===== */
+        /* ===== Utility ===== */
+        function cryptoRandomId() { return (crypto.getRandomValues(new Uint32Array(4))).join('-'); }
+
+        /* ===== Dropdown / Data / Cart logic (unchanged from previous version) ===== */
         function attachDropdown(inputId, listId, filterFn, selectCallback) {
             const input = document.getElementById(inputId);
             const list = document.getElementById(listId);
             if (!input || !list) return;
-
-            // helper to set active index
             function setActiveIndex(idx) {
                 const items = Array.from(list.querySelectorAll('.dropdown-item'));
                 items.forEach(it => it.classList.remove('active'));
@@ -708,64 +724,30 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                     items[idx].classList.add('active');
                     items[idx].scrollIntoView({ block: 'nearest' });
                     input._dropIndex = idx;
-                } else {
-                    input._dropIndex = -1;
-                }
+                } else input._dropIndex = -1;
             }
-
             function renderAndShow() {
                 const q = (input.value || "").toLowerCase();
                 const filtered = filterFn(q);
                 renderDropdownList(list, filtered, (val) => {
-                    input.value = val;
-                    list.style.display = 'none';
-                    input._dropIndex = -1;
+                    input.value = val; list.style.display = 'none'; input._dropIndex = -1;
                     if (selectCallback) selectCallback(val);
                 });
-                // reset index
                 input._dropIndex = -1;
-                const items = list.querySelectorAll('.dropdown-item');
-                if (items.length) {
-                    list.style.display = 'block';
-                } else {
-                    list.style.display = 'none';
-                }
+                list.style.display = list.querySelectorAll('.dropdown-item').length ? 'block' : 'none';
             }
-
             input.addEventListener('input', renderAndShow);
             input.addEventListener('focus', renderAndShow);
-
-            input.addEventListener('keydown', (ev) => {
+            input.addEventListener('keydown', ev => {
                 const itemsEls = Array.from(list.querySelectorAll('.dropdown-item'));
                 if (!itemsEls.length) return;
-                if (ev.key === 'ArrowDown') {
-                    ev.preventDefault();
-                    const idx = Math.min((input._dropIndex || -1) + 1, itemsEls.length - 1);
-                    setActiveIndex(idx);
-                } else if (ev.key === 'ArrowUp') {
-                    ev.preventDefault();
-                    const idx = Math.max((input._dropIndex || -1) - 1, 0);
-                    setActiveIndex(idx);
-                } else if (ev.key === 'Enter') {
-                    if (typeof input._dropIndex === 'number' && input._dropIndex >= 0) {
-                        ev.preventDefault();
-                        itemsEls[input._dropIndex].click();
-                    } else {
-                        // let Enter behave normally (e.g. submit) if nothing selected
-                    }
-                } else if (ev.key === 'Escape') {
-                    list.style.display = 'none';
-                    input._dropIndex = -1;
-                }
+                if (ev.key === 'ArrowDown') { ev.preventDefault(); setActiveIndex(Math.min((input._dropIndex || -1) + 1, itemsEls.length - 1)); }
+                else if (ev.key === 'ArrowUp') { ev.preventDefault(); setActiveIndex(Math.max((input._dropIndex || -1) - 1, 0)); }
+                else if (ev.key === 'Enter') {
+                    if (typeof input._dropIndex === 'number' && input._dropIndex >= 0) { ev.preventDefault(); itemsEls[input._dropIndex].click(); }
+                } else if (ev.key === 'Escape') { list.style.display = 'none'; input._dropIndex = -1; }
             });
-
-            input.addEventListener('blur', () => {
-                // small delay so click handlers can run
-                setTimeout(() => {
-                    list.style.display = 'none';
-                    input._dropIndex = -1;
-                }, 200);
-            });
+            input.addEventListener('blur', () => setTimeout(() => { list.style.display = 'none'; input._dropIndex = -1; }, 200));
         }
 
         function renderDropdownList(container, arr, onSelect) {
@@ -774,13 +756,10 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                 const div = document.createElement('div');
                 div.className = 'dropdown-item';
                 div.dataset.index = String(idx);
-
-                // stock circle:
                 const prog = stockProgressCache.find(sp => sp.name === item.name);
                 const pct = prog ? prog.pct : 0;
                 const circle = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                circle.setAttribute('class', 'stock-circle');
-                circle.setAttribute('viewBox', '0 0 36 36');
+                circle.setAttribute('class', 'stock-circle'); circle.setAttribute('viewBox', '0 0 36 36');
                 const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 bg.setAttribute('cx', '18'); bg.setAttribute('cy', '18'); bg.setAttribute('r', '16');
                 bg.setAttribute('stroke', '#eee'); bg.setAttribute('stroke-width', '4'); bg.setAttribute('fill', 'none');
@@ -790,43 +769,27 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                 fg.setAttribute('stroke-dasharray', Math.round((pct / 100) * 2 * Math.PI * 16) + ',1000');
                 fg.setAttribute('transform', 'rotate(-90 18 18)');
                 circle.appendChild(bg); circle.appendChild(fg);
-
                 const label = document.createElement('div');
                 label.innerHTML = `<strong>${item.name}</strong><br><small>${item.extra}</small>`;
-
-                div.appendChild(circle);
-                div.appendChild(label);
-
+                div.appendChild(circle); div.appendChild(label);
                 div.addEventListener('mouseover', () => {
-                    // highlight when hovering
-                    const siblings = Array.from(container.querySelectorAll('.dropdown-item'));
-                    siblings.forEach(s => s.classList.remove('active'));
+                    Array.from(container.querySelectorAll('.dropdown-item')).forEach(s => s.classList.remove('active'));
                     div.classList.add('active');
                 });
-
                 div.onclick = () => onSelect(item.name);
                 container.appendChild(div);
             });
         }
 
-        /* ===== Existing loadData (adapted) ===== */
         function loadData() {
             fetch(sheetURL)
-                .then(r => {
-                    if (!r.ok) throw new Error(`Fetch failed: ${r.status}`);
-                    return r.text();
-                })
-                .then(t => {
-                    let payloadText = t;
-                    const start = payloadText.indexOf('(');
-                    const end = payloadText.lastIndexOf(')');
+                .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+                .then(txt => {
+                    let payloadText = txt;
+                    const start = payloadText.indexOf('('), end = payloadText.lastIndexOf(')');
                     if (start > -1 && end > start) payloadText = payloadText.slice(start + 1, end);
                     const json = JSON.parse(payloadText);
                     const rows = json?.table?.rows || [];
-
-                    // parse items with expected columns:
-                    // A: name (0), B: buyStack (1), C: sellStack (2), D: stackStock (3),
-                    // E: bundleSize (4), F: buyEach (5), G: sellEach (6), H: indivStock (7), I: availPercent (8), J: targetEach (9)
                     items = rows.map(row => {
                         const c = row.c || [];
                         const name = c[0]?.v ?? "";
@@ -838,20 +801,17 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                         const sellEach = c[6]?.v ?? "";
                         const indivStock = Number(c[7]?.v ?? 0);
                         const availPercent = Number(c[8]?.v ?? 0);
-                        const targetEach = Number(c[9]?.v ?? 0); // J column = targetEach
+                        const targetEach = Number(c[9]?.v ?? 0);
                         if (!name) return null;
                         if ((buyStack === "X" && sellStack === "X") && (buyEach === "X" && sellEach === "X")) return null;
-                        const parseNumOrNull = (v) => {
+                        const parseNumOrNull = v => {
                             if (v === null || v === "" || v === undefined) return null;
                             const n = Number(v); return isNaN(n) ? null : n;
                         };
                         return {
                             name: String(name),
                             bundleSize: bundleSize || 1,
-                            stackStock,
-                            indivStock,
-                            availPercent,
-                            targetEach: targetEach || 0,
+                            stackStock, indivStock, availPercent, targetEach: targetEach || 0,
                             buyStack: parseNumOrNull(buyStack),
                             sellStack: parseNumOrNull(sellStack),
                             buyEach: parseNumOrNull(buyEach),
@@ -859,25 +819,20 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                         };
                     }).filter(Boolean);
 
-                    // Build stock progress cache from the same sheet (D = stackStock, H = indivStock, E = bundleSize, J = targetEach)
                     stockProgressCache = items.map(i => {
                         const currentEach = (Number(i.stackStock || 0) * Number(i.bundleSize || 1)) + Number(i.indivStock || 0);
                         const targetEach = Number(i.targetEach || 0);
                         const pct = targetEach > 0 ? Math.round((currentEach / targetEach) * 100) : 0;
                         return { name: i.name, currentEach, targetEach, pct };
                     });
-
                     payItems = items.slice();
                     populateCurrencyDatalist();
                     setupDropdowns();
                 })
                 .catch(err => {
                     console.error('Failed to load sheet:', err);
-                    items = [];
-                    payItems = [];
-                    stockProgressCache = [];
-                    populateCurrencyDatalist();
-                    setupDropdowns();
+                    items = []; payItems = []; stockProgressCache = [];
+                    populateCurrencyDatalist(); setupDropdowns();
                 });
         }
 
@@ -886,101 +841,65 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             currencyDatalist.innerHTML = "";
             currencyDatalist.appendChild(new Option(BASE_CURRENCY, BASE_CURRENCY));
             items.forEach(i => {
-                const currencyLabel = `${i.name} — stack:${i.stackStock} each:${i.indivStock} avail:${i.availPercent}%`;
-                currencyDatalist.appendChild(new Option(currencyLabel, i.name));
+                currencyDatalist.appendChild(new Option(`${i.name} — stack:${i.stackStock} each:${i.indivStock} avail:${i.availPercent}%`, i.name));
             });
             const input = document.getElementById("currencyInput");
             const hidden = document.getElementById("currencySelect");
             input.onchange = () => {
                 const val = input.value.trim();
-                if (!val) hidden.value = BASE_CURRENCY;
-                else {
-                    const exact = items.find(it => it.name.toLowerCase() === val.toLowerCase());
-                    hidden.value = exact ? exact.name : BASE_CURRENCY;
-                }
+                const exact = items.find(it => it.name.toLowerCase() === val.toLowerCase());
+                hidden.value = exact ? exact.name : BASE_CURRENCY;
                 updateAllDisplays();
             };
             input.oninput = () => {
                 const v = input.value.trim();
                 const exact = items.find(it => it.name.toLowerCase() === v.toLowerCase());
-                if (exact) {
-                    hidden.value = exact.name;
-                    updateAllDisplays();
-                }
+                if (exact) { hidden.value = exact.name; updateAllDisplays(); }
             };
         }
 
-        /* ===== Dropdown Setup ===== */
         function setupDropdowns() {
-            // Build dropdownData used by all searchable inputs
-            dropdownData = items.map(i => {
-                let extra = `stkStock:${i.stackStock} eachStock:${i.indivStock} avail:${i.availPercent}%`;
-                return { name: i.name, extra };
-            });
-
-            function filterBy(q) {
-                if (!q) return dropdownData.slice(0, 200); // show some results
-                return dropdownData.filter(d => d.name.toLowerCase().includes(q));
-            }
-
-            // Attach to static inputs
-            attachDropdown('quickStackSelect', 'quickStackSelectList', (q) => filterBy(q), (v) => { });
-            attachDropdown('quickIndivSelect', 'quickIndivSelectList', (q) => filterBy(q), (v) => { });
-            attachDropdown('stackSelect', 'stackSelectList', (q) => filterBy(q), (v) => { });
-            attachDropdown('indivSelect', 'indivSelectList', (q) => filterBy(q), (v) => { });
-            attachDropdown('sellStackSelect', 'sellStackSelectList', (q) => filterBy(q), (v) => { });
-            attachDropdown('sellIndivSelect', 'sellIndivSelectList', (q) => filterBy(q), (v) => { });
-
-            // Attach to custom (spreadsheet) static inputs
-            attachDropdown('customBuyStackSelect', 'customBuyStackSelectList', (q) => filterBy(q), (v) => { });
-            attachDropdown('customBuyIndivSelect', 'customBuyIndivSelectList', (q) => filterBy(q), (v) => { });
-            attachDropdown('customSellStackSelect', 'customSellStackSelectList', (q) => filterBy(q), (v) => { });
-            attachDropdown('customSellIndivSelect', 'customSellIndivSelectList', (q) => filterBy(q), (v) => { });
+            dropdownData = items.map(i => ({ name: i.name, extra: `stkStock:${i.stackStock} eachStock:${i.indivStock} avail:${i.availPercent}%` }));
+            function filterBy(q) { if (!q) return dropdownData.slice(0, 200); return dropdownData.filter(d => d.name.toLowerCase().includes(q)); }
+            attachDropdown('quickStackSelect', 'quickStackSelectList', filterBy, () => { });
+            attachDropdown('quickIndivSelect', 'quickIndivSelectList', filterBy, () => { });
+            attachDropdown('stackSelect', 'stackSelectList', filterBy, () => { });
+            attachDropdown('indivSelect', 'indivSelectList', filterBy, () => { });
+            attachDropdown('sellStackSelect', 'sellStackSelectList', filterBy, () => { });
+            attachDropdown('sellIndivSelect', 'sellIndivSelectList', filterBy, () => { });
+            attachDropdown('customBuyStackSelect', 'customBuyStackSelectList', filterBy, () => { });
+            attachDropdown('customBuyIndivSelect', 'customBuyIndivSelectList', filterBy, () => { });
+            attachDropdown('customSellStackSelect', 'customSellStackSelectList', filterBy, () => { });
+            attachDropdown('customSellIndivSelect', 'customSellIndivSelectList', filterBy, () => { });
         }
 
-        /* ===== OCM (basic read & cart add stubs) ===== */
-        let ocmListingsCacheBuy = [];
-        let ocmListingsCacheSell = [];
-
+        let ocmListingsCacheBuy = [], ocmListingsCacheSell = [];
         function refreshOCMBuy() {
             const q = document.getElementById('ocmBuyQuery').value.trim();
             fetch(`${WEB_APP_URL}?action=listings&q=${encodeURIComponent(q)}`)
-                .then(r => r.json())
-                .then(j => {
+                .then(r => r.json()).then(j => {
                     if (!j.ok) throw new Error(j.error);
                     ocmListingsCacheBuy = j.data.filter(l => l.type === 'SELL');
                     renderOCMListings('ocmBuyListings', ocmListingsCacheBuy);
-                })
-                .catch(e => {
-                    document.getElementById('ocmBuyListings').textContent = 'Error: ' + e.message;
-                });
+                }).catch(e => { document.getElementById('ocmBuyListings').textContent = 'Error: ' + e.message; });
         }
-
         function refreshOCMSell() {
             const q = document.getElementById('ocmSellQuery').value.trim();
             fetch(`${WEB_APP_URL}?action=listings&q=${encodeURIComponent(q)}`)
-                .then(r => r.json())
-                .then(j => {
+                .then(r => r.json()).then(j => {
                     if (!j.ok) throw new Error(j.error);
                     ocmListingsCacheSell = j.data.filter(l => l.type === 'BUY');
                     renderOCMListings('ocmSellListings', ocmListingsCacheSell);
-                })
-                .catch(e => {
-                    document.getElementById('ocmSellListings').textContent = 'Error: ' + e.message;
-                });
+                }).catch(e => { document.getElementById('ocmSellListings').textContent = 'Error: ' + e.message; });
         }
-
         function renderOCMListings(containerId, arr) {
-            const el = document.getElementById(containerId);
-            el.innerHTML = '';
+            const el = document.getElementById(containerId); el.innerHTML = '';
             if (!arr.length) { el.textContent = 'No listings'; return; }
             arr.forEach(l => {
-                const div = document.createElement('div');
-                div.className = 'ocm-listing';
+                const div = document.createElement('div'); div.className = 'ocm-listing';
                 div.textContent = `${l.itemName} | ${l.type} | ${l.unit} | price:${l.priceBT} | qty:${l.qtyAvailable || '∞'} | by ${l.playerName}`;
                 div.dataset.listingId = l.listingId;
                 div.onclick = () => {
-                    // mark selection
                     Array.from(el.children).forEach(c => c.classList.remove('highlight-action'));
                     div.classList.add('highlight-action');
                     el.dataset.selectedListingId = l.listingId;
@@ -988,36 +907,26 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                 el.appendChild(div);
             });
         }
-
         function addOCMBuy() {
-            const container = document.getElementById('ocmBuyListings');
-            const id = container.dataset.selectedListingId;
-            if (!id) { alert('Select an OCM SELL listing first'); return; }
+            const id = document.getElementById('ocmBuyListings').dataset.selectedListingId;
+            if (!id) return alert('Select an OCM SELL listing first');
             const listing = ocmListingsCacheBuy.find(l => l.listingId === id);
-            if (!listing) return;
             const qty = parseInt(document.getElementById('ocmBuyQty').value) || 0;
-            if (qty <= 0) return;
-            // Treat as store purchase source OCM
+            if (!listing || qty <= 0) return;
             buyCart.push({ name: listing.itemName, qty, price: Number(listing.priceBT), source: 'OCM', listingId: id });
             renderBuyList();
         }
-
         function addOCMSell() {
-            const container = document.getElementById('ocmSellListings');
-            const id = container.dataset.selectedListingId;
-            if (!id) { alert('Select an OCM BUY listing first'); return; }
+            const id = document.getElementById('ocmSellListings').dataset.selectedListingId;
+            if (!id) return alert('Select an OCM BUY listing first');
             const listing = ocmListingsCacheSell.find(l => l.listingId === id);
-            if (!listing) return;
             const qty = parseInt(document.getElementById('ocmSellQty').value) || 0;
-            if (qty <= 0) return;
-            // Treat as selling to OCM buyer
+            if (!listing || qty <= 0) return;
             sellCart.push({ name: listing.itemName, qty, price: Number(listing.priceBT), source: 'OCM', listingId: id });
             renderSellList();
         }
 
-        /* ===== Row coloring against stock & target ===== */
         function evaluateRowColorBuy(entry) {
-            // Compare qty wanted vs current stock (use sheet-derived currentEach)
             const prog = stockProgressCache.find(sp => sp.name === entry.name);
             const item = items.find(i => i.name === entry.name);
             if (!prog && !item) return null;
@@ -1030,9 +939,7 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             if (ratio > 0.5) return 'row-warning-yellow';
             return null;
         }
-
         function evaluateRowColorSell(entry) {
-            // Over target check: (sell qty + current stock D) > target J
             const prog = stockProgressCache.find(sp => sp.name === entry.name);
             if (!prog || entry.source === 'OCM') return null;
             const eachSelling = entry.bundleSize ? entry.qty * entry.bundleSize : entry.qty;
@@ -1041,24 +948,14 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             return null;
         }
 
-        /* ===== Currency conversion helpers ===== */
-        function convertValue(btValue, currencyName, forBuySection) {
-            if (!currencyName || currencyName === BASE_CURRENCY) return { bt: btValue, converted: null };
-            const currency = items.find(i => i.name.toLowerCase() === currencyName.toLowerCase());
-            if (!currency) return { bt: btValue, converted: null };
-            const rate = forBuySection
-                ? (currency.buyEach || currency.buyStack || 0)
-                : (currency.sellEach || currency.sellStack || 0);
-            if (!rate || rate <= 0) return { bt: btValue, converted: null };
-            return { bt: btValue, converted: btValue / rate };
-        }
-        function formatValue(btValue, currencyName, forBuySection) {
+        function formatValue(btValue, currencyName, forBuy) {
             if (isNaN(btValue)) btValue = 0;
             let txt = `${btValue.toFixed(2)} ${BASE_CURRENCY}`;
             if (currencyName && currencyName !== BASE_CURRENCY) {
-                const { converted } = convertValue(btValue, currencyName, !!forBuySection);
-                if (converted != null && !isNaN(converted)) {
-                    txt += ` (≈ ${converted.toFixed(2)} ${currencyName})`;
+                const currency = items.find(i => i.name.toLowerCase() === currencyName.toLowerCase());
+                if (currency) {
+                    const rate = forBuy ? (currency.buyEach || currency.buyStack || 0) : (currency.sellEach || currency.sellStack || 0);
+                    if (rate > 0) { txt += ` (≈ ${(btValue / rate).toFixed(2)} ${currencyName})`; }
                 }
             }
             return txt;
@@ -1069,48 +966,25 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             calculateNet();
         }
 
-        /* ===== Existing rendering logic (extended with row coloring & source tags) ===== */
         function renderBuyList() {
-            const list = document.getElementById("buyList");
-            list.innerHTML = "";
-            let total = 0;
-            const curr = document.getElementById("currencySelect").value;
-
-            buyCart.forEach((e) => {
+            const list = document.getElementById("buyList"); list.innerHTML = "";
+            let total = 0; const curr = document.getElementById("currencySelect").value;
+            buyCart.forEach(e => {
                 const li = document.createElement("li");
-                let rowTotal = 0;
-                let rowText = "";
-                if (e.isBalance) {
-                    rowTotal = e.price || 0;
-                    rowText = `Account Balance: ${rowTotal.toFixed(2)} BT`;
-                } else if (e.bundleSize && e.isFullyCustom) {
-                    rowTotal = (e.qty / e.bundleSize) * e.price;
-                    rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
-                } else if (e.bundleSize) {
-                    rowTotal = e.qty * e.price;
-                    rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`;
-                } else {
-                    rowTotal = e.qty * e.price;
-                    rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`;
-                }
+                let rowTotal = 0, rowText = "";
+                if (e.isBalance) { rowTotal = e.price || 0; rowText = `Account Balance: ${rowTotal.toFixed(2)} BT`; }
+                else if (e.bundleSize && e.isFullyCustom) { rowTotal = (e.qty / e.bundleSize) * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`; }
+                else if (e.bundleSize) { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`; }
+                else { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`; }
                 total += rowTotal;
-
-                if (e.isConverter) rowText += " [Converted]";
-                if (e.source === 'OCM') rowText += " [OCM]";
+                if (e.isConverter) rowText += ' [Converted]';
+                if (e.source === 'OCM') rowText += ' [OCM]';
                 const colorClass = evaluateRowColorBuy(e);
                 if (colorClass) li.classList.add(colorClass);
-
-                if (curr && curr !== BASE_CURRENCY) {
-                    rowText += " " + formatValue(rowTotal, curr, true);
-                }
+                if (curr && curr !== BASE_CURRENCY) rowText += ' ' + formatValue(rowTotal, curr, true);
                 li.textContent = rowText;
                 const removeBtn = document.createElement("button");
-                removeBtn.textContent = "❌";
-                removeBtn.onclick = () => {
-                    buyCart = buyCart.filter(x => x !== e);
-                    renderBuyList();
-                    calculateNet();
-                };
+                removeBtn.textContent = "❌"; removeBtn.onclick = () => { buyCart = buyCart.filter(x => x !== e); renderBuyList(); calculateNet(); };
                 li.appendChild(removeBtn);
                 list.appendChild(li);
             });
@@ -1119,56 +993,31 @@ html vintage story\Finnish-small-fox-trading-company\index.html
         }
 
         function renderSellList() {
-            const list = document.getElementById("sellList");
-            list.innerHTML = "";
-            let total = 0;
-            const curr = document.getElementById("currencySelect").value;
-
-            sellCart.forEach((e) => {
+            const list = document.getElementById("sellList"); list.innerHTML = "";
+            let total = 0; const curr = document.getElementById("currencySelect").value;
+            sellCart.forEach(e => {
                 const li = document.createElement("li");
-                let rowTotal = 0;
-                let rowText = "";
-                if (e.isBalance) {
-                    rowTotal = e.price || 0;
-                    rowText = `Account Balance: ${rowTotal.toFixed(2)} BT`;
-                } else if (e.bundleSize && e.isFullyCustom) {
-                    rowTotal = (e.qty / e.bundleSize) * e.price;
-                    rowText = `${e.qty} × ${e.name} (${e.price} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
-                } else if (e.bundleSize) {
-                    rowTotal = e.qty * e.price;
-                    rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`;
-                } else {
-                    rowTotal = e.qty * e.price;
-                    rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`;
-                }
-                if (e.isPayWith) rowText += " [Pay With]";
-                if (e.source === 'OCM') rowText += " [OCM]";
-
+                let rowTotal = 0, rowText = "";
+                if (e.isBalance) { rowTotal = e.price || 0; rowText = `Account Balance: ${rowTotal.toFixed(2)} BT`; }
+                else if (e.bundleSize && e.isFullyCustom) { rowTotal = (e.qty / e.bundleSize) * e.price; rowText = `${e.qty} × ${e.name} (${e.price} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`; }
+                else if (e.bundleSize) { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`; }
+                else { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`; }
+                if (e.isPayWith) rowText += ' [Pay With]';
+                if (e.source === 'OCM') rowText += ' [OCM]';
                 total += rowTotal;
-
                 const colorClass = evaluateRowColorSell(e);
                 if (colorClass) {
                     li.classList.add(colorClass);
                     if (colorClass === 'row-warning-red') {
-                        const warn = document.createElement('span');
-                        warn.className = 'small-note';
-                        warn.textContent = 'over target stock — forced recalculation of payment';
+                        const warn = document.createElement('span'); warn.className = 'small-note';
+                        warn.textContent = 'over target stock — forced recalculation';
                         li.appendChild(warn);
                     }
                 }
-
-                if (curr && curr !== BASE_CURRENCY) {
-                    rowText += " " + formatValue(rowTotal, curr, false);
-                }
-
+                if (curr && curr !== BASE_CURRENCY) rowText += ' ' + formatValue(rowTotal, curr, false);
                 li.textContent = rowText;
                 const removeBtn = document.createElement("button");
-                removeBtn.textContent = "❌";
-                removeBtn.onclick = () => {
-                    sellCart = sellCart.filter(x => x !== e);
-                    renderSellList();
-                    calculateNet();
-                };
+                removeBtn.textContent = "❌"; removeBtn.onclick = () => { sellCart = sellCart.filter(x => x !== e); renderSellList(); calculateNet(); };
                 li.appendChild(removeBtn);
                 list.appendChild(li);
             });
@@ -1177,13 +1026,13 @@ html vintage story\Finnish-small-fox-trading-company\index.html
         }
 
         function calculateNet() {
-            let buyTotal = buyCart.reduce((s, e) => {
+            const buyTotal = buyCart.reduce((s, e) => {
                 if (e.isBalance) return s + (e.price || 0);
                 if (e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
                 if (e.bundleSize) return s + (e.qty * e.price);
                 return s + (e.qty * e.price);
             }, 0);
-            let sellTotal = sellCart.reduce((s, e) => {
+            const sellTotal = sellCart.reduce((s, e) => {
                 if (e.isBalance) return s + (e.price || 0);
                 if (e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
                 if (e.bundleSize) return s + (e.qty * e.price);
@@ -1193,20 +1042,13 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             const curr = document.getElementById("currencySelect").value;
             const netSpan = document.getElementById("netTotal");
             netSpan.dataset.raw = String(net);
-            const forBuySection = net < 0;
-            netSpan.textContent = formatValue(net, curr, forBuySection);
-            netSpan.className = net >= 0 ? "positive" : "negative";
+            netSpan.textContent = formatValue(net, curr, net < 0);
+            netSpan.className = net >= 0 ? 'positive' : 'negative';
         }
 
-        /* ===== Purchase Request Submission ===== */
         function buildRequestPayload() {
-            // Standard schema
-            const buyItems = buyCart.map(b => ({
-                name: b.name, qty: b.qty, priceBT: b.price, bundleSize: b.bundleSize || null, source: b.source || 'STORE'
-            }));
-            const sellItems = sellCart.map(s => ({
-                name: s.name, qty: s.qty, priceBT: s.price, bundleSize: s.bundleSize || null, source: s.source || 'STORE'
-            }));
+            const buyItems = buyCart.map(b => ({ name: b.name, qty: b.qty, priceBT: b.price, bundleSize: b.bundleSize || null, source: b.source || 'STORE' }));
+            const sellItems = sellCart.map(s => ({ name: s.name, qty: s.qty, priceBT: s.price, bundleSize: s.bundleSize || null, source: s.source || 'STORE' }));
             const totals = {
                 buyBT: buyItems.reduce((s, i) => s + (i.priceBT * (i.bundleSize ? i.qty : i.qty)), 0),
                 sellBT: sellItems.reduce((s, i) => s + (i.priceBT * (i.bundleSize ? i.qty : i.qty)), 0)
@@ -1226,25 +1068,21 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                 priceSource: { sheetId: 'PRICE_SHEET', asOf: new Date().toISOString() }
             };
         }
-        function cryptoRandomId() {
-            return (crypto.getRandomValues(new Uint32Array(4))).join('-');
-        }
+
         function submitPurchaseRequest() {
-            if (!googleIdToken) { alert('Login first'); return; }
+            if (!googleIdToken) return alert('Login first');
             const payload = buildRequestPayload();
             recaptchaWrap()
-                .then(token => {
-                    return fetch(WEB_APP_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            action: 'createRequest',
-                            idToken: googleIdToken,
-                            recaptchaToken: token,
-                            payload
-                        })
-                    });
-                })
+                .then(token => fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'createRequest',
+                        idToken: googleIdToken,
+                        recaptchaToken: token,
+                        payload
+                    })
+                }))
                 .then(r => r.json())
                 .then(j => {
                     if (!j.ok) throw new Error(j.error);
@@ -1257,79 +1095,40 @@ html vintage story\Finnish-small-fox-trading-company\index.html
 
         function copyTransactionData() {
             const payload = buildRequestPayload();
-            const txt = JSON.stringify(payload, null, 2);
-            navigator.clipboard.writeText(txt)
-                .then(() => {
-                    document.getElementById('requestMsg').textContent = 'Transaction data copied.';
-                })
-                .catch(e => {
-                    document.getElementById('requestMsg').textContent = 'Copy failed: ' + e.message;
-                });
+            navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
+                .then(() => document.getElementById('requestMsg').textContent = 'Transaction data copied.')
+                .catch(e => document.getElementById('requestMsg').textContent = 'Copy failed: ' + e.message);
         }
 
-        /* ===== Pay With / Converter (improved dynamic searchable inputs) ===== */
+        /* Pay With */
         function addPayRow() {
-            const div = document.createElement("div");
-            div.className = "payRow";
-
-            // create searchable input + dropdown list inside a proper .dropdown-wrap
+            const div = document.createElement("div"); div.className = "payRow";
             const unique = 'paySelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-            const input = document.createElement("input");
-            input.id = unique;
-            input.className = 'dropdown-input';
-            input.placeholder = 'Item name';
-
-            const list = document.createElement("div");
-            list.id = unique + 'List';
-            list.className = 'dropdown-list';
-            list.style.display = 'none';
-
-            // wrapper matching other dropdowns so absolute list positioning works
-            const wrap = document.createElement('div');
-            wrap.className = 'dropdown-wrap';
-            wrap.style.position = 'relative';
-            wrap.appendChild(input);
-            wrap.appendChild(list);
-
-            const percent = document.createElement("input");
-            percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
-
-            const removeRowBtn = document.createElement("button");
-            removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
-            removeRowBtn.onclick = () => { div.remove(); calculatePayment(); };
-
-            div.appendChild(wrap);
-            div.appendChild(document.createTextNode(" % of total: "));
-            div.appendChild(percent);
-            div.appendChild(removeRowBtn);
+            const input = document.createElement("input"); input.id = unique; input.className = 'dropdown-input'; input.placeholder = 'Item name';
+            const list = document.createElement("div"); list.id = unique + 'List'; list.className = 'dropdown-list'; list.style.display = 'none';
+            const wrap = document.createElement('div'); wrap.className = 'dropdown-wrap'; wrap.appendChild(input); wrap.appendChild(list);
+            const percent = document.createElement("input"); percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
+            const removeRowBtn = document.createElement("button"); removeRowBtn.type = "button"; removeRowBtn.textContent = "❌"; removeRowBtn.onclick = () => { div.remove(); calculatePayment(); };
+            div.appendChild(wrap); div.appendChild(document.createTextNode(" % of total: ")); div.appendChild(percent); div.appendChild(removeRowBtn);
             document.getElementById("payOptions").appendChild(div);
-
-            // attach the dropdown behavior to the dynamic pair
             attachDropdown(input.id, list.id, (q) => {
                 const ql = (q || "").toLowerCase();
                 if (!ql) return dropdownData.slice(0, 200);
                 return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
-            }, (val) => { /* no-op callback */ });
+            }, () => { });
         }
 
         function calculatePayment() {
-            const payListEl = document.getElementById("payList");
-            payListEl.innerHTML = "";
+            const payListEl = document.getElementById("payList"); payListEl.innerHTML = "";
             const netSpan = document.getElementById("netTotal");
             const netRaw = parseFloat(netSpan.dataset.raw);
-            const totalNet = !isNaN(netRaw)
-                ? netRaw
-                : parseFloat((netSpan.textContent || "0").replace(/[^\d.-]/g, "")) || 0;
+            const totalNet = !isNaN(netRaw) ? netRaw : parseFloat((netSpan.textContent || "0").replace(/[^\d.-]/g, "")) || 0;
             if (totalNet >= 0) {
-                document.getElementById("paymentResult").textContent =
-                    `✅ Net Balance is ${totalNet.toFixed(2)} BT. No payment needed.`;
+                document.getElementById("paymentResult").textContent = `✅ Net Balance is ${totalNet.toFixed(2)} BT. No payment needed.`;
                 sellCart = sellCart.filter(e => !e.isPayWith);
-                renderSellList();
-                calculateNet();
-                return;
+                renderSellList(); calculateNet(); return;
             }
-            const owed = -totalNet;
-            let usedPercent = 0;
+            const owed = -totalNet; let usedPercent = 0;
             sellCart = sellCart.filter(e => !e.isPayWith);
             const curr = document.getElementById("currencySelect").value;
             const rows = document.querySelectorAll("#payOptions .payRow");
@@ -1339,8 +1138,8 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                 const rawName = (inputEl?.value || "").trim();
                 const percent = parseFloat(percentEl?.value) || 0;
                 if (!rawName || percent <= 0) return;
-                let item = payItems.find(i => i.name.toLowerCase() === rawName.toLowerCase());
-                if (!item) item = payItems.find(i => i.name.toLowerCase().includes(rawName.toLowerCase()));
+                let item = payItems.find(i => i.name.toLowerCase() === rawName.toLowerCase()) ||
+                    payItems.find(i => i.name.toLowerCase().includes(rawName.toLowerCase()));
                 if (!item) return;
                 usedPercent += percent;
                 const portion = (percent / 100) * owed;
@@ -1349,94 +1148,52 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                 if ((!stackPrice || stackPrice <= 0) && (!indivPrice || indivPrice <= 0)) return;
                 let stacks = 0, individuals = 0, leftover = portion;
                 if (stackPrice > 0) { stacks = Math.floor(portion / stackPrice); leftover -= stacks * stackPrice; }
-                if (indivPrice > 0 && leftover > 0) {
-                    const addIndividuals = Math.floor(leftover / indivPrice);
-                    individuals += addIndividuals;
-                    leftover -= addIndividuals * indivPrice;
-                }
+                if (indivPrice > 0 && leftover > 0) { const addIndividuals = Math.floor(leftover / indivPrice); individuals += addIndividuals; leftover -= addIndividuals * indivPrice; }
                 const payId = 'pay_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-                const li = document.createElement("li");
-                li.dataset.payid = payId;
+                const li = document.createElement("li"); li.dataset.payid = payId;
                 let payText = `${percent}% = `;
                 if (stacks > 0) payText += `${stacks} stack(s) × ${item.bundleSize} ${item.name} (${stackPrice.toFixed(2)} BT stack)`;
-                if (individuals > 0) {
-                    if (stacks > 0) payText += " + ";
-                    payText += `${individuals} × ${item.name} (${indivPrice.toFixed(2)} BT each)`;
-                }
+                if (individuals > 0) { if (stacks > 0) payText += ' + '; payText += `${individuals} × ${item.name} (${indivPrice.toFixed(2)} BT each)`; }
                 const totalBT = stacks * stackPrice + individuals * indivPrice;
                 payText += ` (${totalBT.toFixed(2)} BT)`;
-                if (curr && curr !== BASE_CURRENCY) payText += " " + formatValue(totalBT, curr, false);
+                if (curr && curr !== BASE_CURRENCY) payText += ' ' + formatValue(totalBT, curr, false);
                 li.textContent = payText;
-                const removeBtn = document.createElement("button");
-                removeBtn.textContent = "❌";
-                removeBtn.onclick = () => {
-                    sellCart = sellCart.filter(it => !(it.isPayWith && it._payId === payId));
-                    li.remove(); renderSellList(); calculateNet();
-                };
+                const removeBtn = document.createElement("button"); removeBtn.textContent = "❌";
+                removeBtn.onclick = () => { sellCart = sellCart.filter(it => !(it.isPayWith && it._payId === payId)); li.remove(); renderSellList(); calculateNet(); };
                 li.appendChild(removeBtn);
                 payListEl.appendChild(li);
                 if (stacks > 0) sellCart.push({ name: item.name, qty: stacks, price: stackPrice, bundleSize: item.bundleSize, isPayWith: true, _payId: payId });
                 if (individuals > 0) sellCart.push({ name: item.name, qty: individuals, price: indivPrice, isPayWith: true, _payId: payId });
             });
-            if (usedPercent !== 100) {
-                document.getElementById("paymentResult").textContent =
-                    `⚠️ Warning: payment percentages total ${usedPercent}%, not 100%.`;
-            } else {
-                document.getElementById("paymentResult").textContent =
-                    `To pay ${owed.toFixed(2)} BT, bring the items listed above.`;
-            }
+            document.getElementById("paymentResult").textContent = usedPercent !== 100
+                ? `⚠️ Warning: payment percentages total ${usedPercent}%, not 100%.`
+                : `To pay ${owed.toFixed(2)} BT, bring the items listed above.`;
             renderSellList(); calculateNet();
         }
 
-        /* Converter (improved dynamic searchable inputs) */
         function addConverterRow() {
-            const div = document.createElement("div");
-            div.className = "payRow";
-
+            const div = document.createElement("div"); div.className = "payRow";
             const unique = 'convSelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-            const input = document.createElement("input");
-            input.id = unique;
-            input.className = 'dropdown-input';
-            input.placeholder = 'Item name';
-
-            const list = document.createElement("div");
-            list.id = unique + 'List';
-            list.className = 'dropdown-list';
-            list.style.display = 'none';
-
-            const wrap = document.createElement('div');
-            wrap.className = 'dropdown-wrap';
-            wrap.style.position = 'relative';
-            wrap.appendChild(input);
-            wrap.appendChild(list);
-
-            const percent = document.createElement("input");
-            percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
-
-            const removeRowBtn = document.createElement("button");
-            removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
+            const input = document.createElement("input"); input.id = unique; input.className = 'dropdown-input'; input.placeholder = 'Item name';
+            const list = document.createElement("div"); list.id = unique + 'List'; list.className = 'dropdown-list'; list.style.display = 'none';
+            const wrap = document.createElement('div'); wrap.className = 'dropdown-wrap'; wrap.appendChild(input); wrap.appendChild(list);
+            const percent = document.createElement("input"); percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
+            const removeRowBtn = document.createElement("button"); removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
             removeRowBtn.onclick = () => { div.remove(); calculateConversion(); };
-
-            div.appendChild(wrap);
-            div.appendChild(document.createTextNode(" % of Net Balance: "));
-            div.appendChild(percent);
-            div.appendChild(removeRowBtn);
+            div.appendChild(wrap); div.appendChild(document.createTextNode(" % of Net Balance: ")); div.appendChild(percent); div.appendChild(removeRowBtn);
             document.getElementById("converterOptions").appendChild(div);
-
             attachDropdown(input.id, list.id, (q) => {
                 const ql = (q || "").toLowerCase();
                 if (!ql) return dropdownData.slice(0, 200);
                 return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
-            }, (val) => { /* no-op */ });
+            }, () => { });
         }
+
         function calculateConversion() {
             const converterList = document.getElementById("converterListDisplay");
             converterList.innerHTML = '';
             const netBT = parseFloat(document.getElementById("netTotal").dataset.raw) || 0;
-            if (netBT <= 0) {
-                document.getElementById("converterResult").textContent = '⚠️ Net Balance is not positive.';
-                return;
-            }
+            if (netBT <= 0) { document.getElementById("converterResult").textContent = '⚠️ Net Balance is not positive.'; return; }
             buyCart = buyCart.filter(e => !e.isConverter);
             const rows = document.querySelectorAll("#converterOptions .payRow");
             let usedPercent = 0;
@@ -1453,49 +1210,34 @@ html vintage story\Finnish-small-fox-trading-company\index.html
                 if (!stackPrice && !indivPrice) return;
                 let stacks = 0, individuals = 0, leftover = portion;
                 if (stackPrice > 0) { stacks = Math.floor(portion / stackPrice); leftover -= stacks * stackPrice; }
-                if (indivPrice > 0) {
-                    const addIndividuals = Math.floor(leftover / indivPrice);
-                    individuals += addIndividuals;
-                    leftover -= addIndividuals * indivPrice;
-                }
+                if (indivPrice > 0) { const addIndividuals = Math.floor(leftover / indivPrice); individuals += addIndividuals; leftover -= addIndividuals * indivPrice; }
                 const rowId = 'conv_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
                 if (stacks > 0) buyCart.push({ name: item.name, qty: stacks, price: stackPrice, bundleSize: item.bundleSize, isConverter: true, _rowId: rowId });
                 if (individuals > 0) buyCart.push({ name: item.name, qty: individuals, price: indivPrice, isConverter: true, _rowId: rowId });
                 const li = document.createElement('li');
                 let txt = `${percent}% = `;
                 if (stacks > 0) txt += `${stacks} stack(s) × ${item.bundleSize} ${item.name} (${stackPrice.toFixed(2)} BT stack)`;
-                if (individuals > 0) {
-                    if (stacks > 0) txt += ' + ';
-                    txt += `${individuals} × ${item.name} (${indivPrice.toFixed(2)} BT each)`;
-                }
+                if (individuals > 0) { if (stacks > 0) txt += ' + '; txt += `${individuals} × ${item.name} (${indivPrice.toFixed(2)} BT each)`; }
                 const totalBT = stacks * stackPrice + individuals * indivPrice;
                 txt += ` (${totalBT.toFixed(2)} BT)`;
                 const curr = document.getElementById("currencySelect").value;
-                if (curr && curr !== BASE_CURRENCY) txt += " " + formatValue(totalBT, curr, true);
+                if (curr && curr !== BASE_CURRENCY) txt += ' ' + formatValue(totalBT, curr, true);
                 li.textContent = txt;
-                const removeBtn = document.createElement('button');
-                removeBtn.textContent = '❌';
-                removeBtn.onclick = () => {
-                    buyCart = buyCart.filter(e => !(e.isConverter && e._rowId === rowId));
-                    li.remove(); renderBuyList(); calculateNet();
-                };
+                const removeBtn = document.createElement('button'); removeBtn.textContent = '❌';
+                removeBtn.onclick = () => { buyCart = buyCart.filter(e => !(e.isConverter && e._rowId === rowId)); li.remove(); renderBuyList(); calculateNet(); };
                 li.appendChild(removeBtn);
                 converterList.appendChild(li);
             });
             renderBuyList();
-            if (usedPercent === 0) {
-                document.getElementById("converterResult").textContent = '⚠️ No allocations set.';
-            } else {
-                document.getElementById("converterResult").textContent = `✅ Conversion done. Allocated ${usedPercent}% of Net Balance.`;
-            }
+            document.getElementById("converterResult").textContent = usedPercent === 0
+                ? '⚠️ No allocations set.'
+                : `✅ Conversion done. Allocated ${usedPercent}% of Net Balance.`;
         }
 
-        /* ===== Quick calculators ===== */
         function quickStackCalc() {
             const name = document.getElementById("quickStackSelect").value;
             const qty = parseInt(document.getElementById("quickStackQty").value) || 0;
-            const item = items.find(i => i.name === name);
-            if (!item) return;
+            const item = items.find(i => i.name === name); if (!item) return;
             const buyText = item.buyStack ? `${qty} × ${item.bundleSize} ${item.name} buys for ${(qty * item.buyStack).toFixed(2)} BT` : "";
             const sellText = item.sellStack ? `${qty} × ${item.bundleSize} ${item.name} sells for ${(qty * item.sellStack).toFixed(2)} BT` : "";
             document.getElementById("quickStackResult").textContent = [buyText, sellText].filter(Boolean).join(" | ");
@@ -1503,35 +1245,29 @@ html vintage story\Finnish-small-fox-trading-company\index.html
         function quickIndivCalc() {
             const name = document.getElementById("quickIndivSelect").value;
             const qty = parseInt(document.getElementById("quickIndivQty").value) || 0;
-            const item = items.find(i => i.name === name);
-            if (!item) return;
+            const item = items.find(i => i.name === name); if (!item) return;
             const buyText = item.buyEach ? `${qty} × ${item.name} buys for ${(qty * item.buyEach).toFixed(2)} BT` : "";
             const sellText = item.sellEach ? `${qty} × ${item.name} sells for ${(qty * item.sellEach).toFixed(2)} BT` : "";
             document.getElementById("quickIndivResult").textContent = [buyText, sellText].filter(Boolean).join(" | ");
         }
 
-        /* ===== Add core store items (existing logic kept) ===== */
         function addStack() {
             const name = document.getElementById("stackSelect").value;
             const qty = parseInt(document.getElementById("stackQty").value) || 0;
-            const item = items.find(i => i.name === name);
-            if (!item || !item.sellStack) return;
+            const item = items.find(i => i.name === name); if (!item || !item.sellStack) return;
             buyCart.push({ name: item.name, qty, price: item.sellStack, bundleSize: item.bundleSize, source: 'STORE' });
             renderBuyList();
         }
         function addIndividual() {
             const name = document.getElementById("indivSelect").value;
             const qty = parseInt(document.getElementById("indivQty").value) || 0;
-            const item = items.find(i => i.name === name);
-            if (!item || !item.sellEach) return;
-            buyCart.push({ name: item.name, qty, price: item.sellEach, source: 'STORE' });
-            renderBuyList();
+            const item = items.find(i => i.name === name); if (!item || !item.sellEach) return;
+            buyCart.push({ name: item.name, qty, price: item.sellEach, source: 'STORE' }); renderBuyList();
         }
         function addBuyAccountBalance() {
             const balance = parseFloat(document.getElementById("buyAccountBalanceInput").value) || 0;
             if (balance <= 0) return;
-            buyCart.push({ name: "Account Balance", qty: 1, price: balance, isBalance: true, source: 'BALANCE' });
-            renderBuyList();
+            buyCart.push({ name: "Account Balance", qty: 1, price: balance, isBalance: true, source: 'BALANCE' }); renderBuyList();
         }
         function addCustomBuyStack() {
             const name = document.getElementById("customBuyStackSelect").value;
@@ -1539,8 +1275,7 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             const price = parseFloat(document.getElementById("customBuyStackPrice").value) || 0;
             const item = items.find(i => i.name === name);
             if (!item || qty <= 0 || price <= 0) return;
-            buyCart.push({ name: item.name, qty, price, bundleSize: item.bundleSize, isCustom: true, source: 'STORE' });
-            renderBuyList();
+            buyCart.push({ name: item.name, qty, price, bundleSize: item.bundleSize, isCustom: true, source: 'STORE' }); renderBuyList();
         }
         function addCustomBuyIndividual() {
             const name = document.getElementById("customBuyIndivSelect").value;
@@ -1548,8 +1283,7 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             const price = parseFloat(document.getElementById("customBuyIndivPrice").value) || 0;
             const item = items.find(i => i.name === name);
             if (!item || qty <= 0 || price <= 0) return;
-            buyCart.push({ name: item.name, qty, price, isCustom: true, source: 'STORE' });
-            renderBuyList();
+            buyCart.push({ name: item.name, qty, price, isCustom: true, source: 'STORE' }); renderBuyList();
         }
         function addFullyCustomBuy() {
             const name = document.getElementById("customBuyName").value.trim();
@@ -1557,32 +1291,25 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             const stackSize = parseInt(document.getElementById("customBuyStackSize").value) || 1;
             const price = parseFloat(document.getElementById("customBuyPrice").value) || 0;
             if (!name || qty <= 0 || price <= 0 || stackSize <= 0) return;
-            buyCart.push({ name, qty, bundleSize: stackSize, price, isFullyCustom: true, source: 'CUSTOM' });
-            renderBuyList();
+            buyCart.push({ name, qty, bundleSize: stackSize, price, isFullyCustom: true, source: 'CUSTOM' }); renderBuyList();
         }
 
-        /* Sell side core additions */
         function addSellStack() {
             const name = document.getElementById("sellStackSelect").value;
             const qty = parseInt(document.getElementById("sellStackQty").value) || 0;
-            const item = items.find(i => i.name === name);
-            if (!item || !item.buyStack) return;
-            sellCart.push({ name: item.name, qty, price: item.buyStack, bundleSize: item.bundleSize, source: 'STORE' });
-            renderSellList();
+            const item = items.find(i => i.name === name); if (!item || !item.buyStack) return;
+            sellCart.push({ name: item.name, qty, price: item.buyStack, bundleSize: item.bundleSize, source: 'STORE' }); renderSellList();
         }
         function addSellIndividual() {
             const name = document.getElementById("sellIndivSelect").value;
             const qty = parseInt(document.getElementById("sellIndivQty").value) || 0;
-            const item = items.find(i => i.name === name);
-            if (!item || !item.buyEach) return;
-            sellCart.push({ name: item.name, qty, price: item.buyEach, source: 'STORE' });
-            renderSellList();
+            const item = items.find(i => i.name === name); if (!item || !item.buyEach) return;
+            sellCart.push({ name: item.name, qty, price: item.buyEach, source: 'STORE' }); renderSellList();
         }
         function addAccountBalance() {
             const balance = parseFloat(document.getElementById("accountBalanceInput").value) || 0;
             if (balance <= 0) return;
-            sellCart.push({ name: "Account Balance", qty: 1, price: balance, isBalance: true, source: 'BALANCE' });
-            renderSellList();
+            sellCart.push({ name: "Account Balance", qty: 1, price: balance, isBalance: true, source: 'BALANCE' }); renderSellList();
         }
         function addCustomSellStack() {
             const name = document.getElementById("customSellStackSelect").value;
@@ -1590,8 +1317,7 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             const price = parseFloat(document.getElementById("customSellStackPrice").value) || 0;
             const item = items.find(i => i.name === name);
             if (!item || qty <= 0 || price <= 0) return;
-            sellCart.push({ name: item.name, qty, price, bundleSize: item.bundleSize, isCustom: true, source: 'STORE' });
-            renderSellList();
+            sellCart.push({ name: item.name, qty, price, bundleSize: item.bundleSize, isCustom: true, source: 'STORE' }); renderSellList();
         }
         function addCustomSellIndividual() {
             const name = document.getElementById("customSellIndivSelect").value;
@@ -1599,8 +1325,7 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             const price = parseFloat(document.getElementById("customSellIndivPrice").value) || 0;
             const item = items.find(i => i.name === name);
             if (!item || qty <= 0 || price <= 0) return;
-            sellCart.push({ name: item.name, qty, price, isCustom: true, source: 'STORE' });
-            renderSellList();
+            sellCart.push({ name: item.name, qty, price, isCustom: true, source: 'STORE' }); renderSellList();
         }
         function addFullyCustomSell() {
             const name = document.getElementById("customSellName").value.trim();
@@ -1608,26 +1333,29 @@ html vintage story\Finnish-small-fox-trading-company\index.html
             const stackSize = parseInt(document.getElementById("customSellStackSize").value) || 1;
             const price = parseFloat(document.getElementById("customSellPrice").value) || 0;
             if (!name || qty <= 0 || price <= 0 || stackSize <= 0) return;
-            sellCart.push({ name, qty, bundleSize: stackSize, price, isFullyCustom: true, source: 'CUSTOM' });
-            renderSellList();
+            sellCart.push({ name, qty, bundleSize: stackSize, price, isFullyCustom: true, source: 'CUSTOM' }); renderSellList();
         }
 
-        /* ===== Info boxes toggle ===== */
-        function toggleInfo(id) {
-            const el = document.getElementById(id);
-            el.style.display = el.style.display === "block" ? "none" : "block";
-        }
+        function toggleInfo(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
+        function openHistory() { alert('History page coming soon.'); }
+        function openOCM() { alert('OCM main page coming soon.'); }
 
-        /* ===== Placeholder handlers for future pages ===== */
-        function openHistory() { alert('History page will be implemented separately.'); }
-        function openOCM() { alert('OCM main page will be implemented separately.'); }
-
-        /* ===== Init ===== */
         window.onload = () => {
-            // loadData constructs stockProgressCache from the same sheet (D/J columns)
+            checkHashForIdToken();    // fallback redirect token
             loadData();
-            addPayRow(); // initialize Pay With (search attaches when dropdownData gets populated)
+            addPayRow();
+            initRecaptcha();
+            // Defer GSI initialization slightly to ensure script is loaded
+            const gsiWait = setInterval(() => {
+                if (window.google && google.accounts && google.accounts.id) {
+                    initGoogleIdentity(); clearInterval(gsiWait);
+                }
+            }, 200);
+            setTimeout(() => clearInterval(gsiWait), 4000);
         };
     </script>
+
+    <!-- Load GSI last -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>
