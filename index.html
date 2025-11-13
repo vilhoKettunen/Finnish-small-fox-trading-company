@@ -716,10 +716,10 @@
 
         /* ===== Custom dropdown / circular stock indicator implementation (integrated) ===== */
 
-        // Interpret possible target values robustly: prefer candidate closest to currentStacks and >= when possible
+        // Column J is the target per item in pieces. Convert to stacks where needed.
         function computeEffectiveTargetStacks(item, prog) {
-            // Always treat column J as target expressed in stacks.
-            // `loadData` already stored that value in prog.targetStacks.
+            // prog.targetStacks is now already in stacks (column J),
+            // so return it directly (guarded).
             if (!prog) return 0;
             const t = Number(prog.targetStacks || 0);
             return isFinite(t) && t > 0 ? t : 0;
@@ -762,7 +762,7 @@
             input.addEventListener('blur', () => setTimeout(() => { list.style.display = 'none'; input._dropIndex = -1; }, 200));
         }
 
-        // renderDropdownList now draws the circular graph per-item using stack-target interpretation
+        // renderDropdownList — compute pct from individual pieces (H) vs targetPieces (J * E)
         function renderDropdownList(container, arr, onSelect) {
             container.innerHTML = '';
             arr.forEach((item, idx) => {
@@ -774,15 +774,14 @@
                 const itemObj = items.find(it => it.name === item.name);
                 const prog = stockProgressCache.find(sp => sp.name === item.name);
 
-                // pct = (indivStock / bundleSize) / targetStacks  -> currentStacks / targetStacks
+                // pct = currentPieces / targetPieces  (both in individual pieces)
                 let pct = 0;
                 if (prog) {
-                    const target = computeEffectiveTargetStacks(itemObj, prog); // uses prog.targetStacks
+                    const current = Number(prog.currentPieces || 0);
+                    const target = Number(prog.targetPieces || 0);
                     if (target > 0) {
-                        pct = Math.round((Number(prog.currentStacks || 0) / target) * 100);
-                    } else {
-                        pct = 0;
-                    }
+                        pct = Math.round((current / target) * 100);
+                    } else pct = 0;
                 }
                 pct = Math.max(0, Math.min(100, pct));
 
@@ -834,13 +833,13 @@
                         const name = c[0]?.v ?? "";
                         const buyStack = c[1]?.v ?? "";
                         const sellStack = c[2]?.v ?? "";
-                        const stackStock = Number(c[3]?.v ?? 0);
-                        const bundleSize = Number(c[4]?.v ?? 1);
+                        const stackStock = Number(c[3]?.v ?? 0);       // D (kept for display only)
+                        const bundleSize = Number(c[4]?.v ?? 1);       // E
                         const buyEach = c[5]?.v ?? "";
                         const sellEach = c[6]?.v ?? "";
-                        const indivStock = Number(c[7]?.v ?? 0);
-                        const availPercent = Number(c[8]?.v ?? 0);
-                        const targetEach = Number(c[9]?.v ?? 0);
+                        const indivStock = Number(c[7]?.v ?? 0);       // H (individual pieces)
+                        const availPercent = Number(c[8]?.v ?? 0);     // I (0-100)
+                        const targetEach = Number(c[9]?.v ?? 0);       // J (target expressed in stacks)
                         if (!name) return null;
                         if ((buyStack === "X" && sellStack === "X") && (buyEach === "X" && sellEach === "X")) return null;
                         const parseNumOrNull = v => {
@@ -850,7 +849,10 @@
                         return {
                             name: String(name),
                             bundleSize: bundleSize || 1,
-                            stackStock, indivStock, availPercent, targetEach: targetEach || 0,
+                            stackStock,         // kept for UI, not used in checks
+                            indivStock,         // H — single pieces (used)
+                            availPercent,
+                            targetEach: targetEach || 0, // J (stacks)
                             buyStack: parseNumOrNull(buyStack),
                             sellStack: parseNumOrNull(sellStack),
                             buyEach: parseNumOrNull(buyEach),
@@ -858,12 +860,13 @@
                         };
                     }).filter(Boolean);
 
-                    // Build stockProgressCache using indiv-derived stacks as currentStacks and J as targetStacks
+                    // Build stockProgressCache using INDIVIDUAL pieces only (H)
+                    // targetPieces = J (stacks) * bundleSize (E)
                     stockProgressCache = items.map(i => {
-                        const bundleSize = Number(i.bundleSize || 1) || 1;
-                        const currentStacks = (Number(i.indivStock || 0) / bundleSize); // H / E
-                        const targetStacks = Number(i.targetEach || 0); // J (assumed stacks)
-                        return { name: i.name, currentStacks, targetStacks };
+                        const b = Number(i.bundleSize || 1) || 1;
+                        const currentPieces = Number(i.indivStock || 0);          // use H only
+                        const targetPieces = (Number(i.targetEach || 0) > 0) ? (Number(i.targetEach) * b) : 0; // J * E
+                        return { name: i.name, currentPieces, targetPieces };
                     });
 
                     payItems = items.slice();
@@ -968,28 +971,60 @@
             renderSellList();
         }
 
+        // ===== Row coloring rules =====
+        // Buy:
+        // - Yellow when requested > (available % of stock) [stacks use D*I%, individuals use H*I%]
+        // - Red when requested > stock [stacks use D, individuals use H]
+        // Buy: use INDIVIDUAL pieces only (H) for availability/stock checks.
+        // Convert requested stacks to pieces before comparing.
         function evaluateRowColorBuy(entry) {
-            const prog = stockProgressCache.find(sp => sp.name === entry.name);
+            if (entry.source === 'OCM' || entry.isFullyCustom || entry.isBalance) return null;
             const item = items.find(i => i.name === entry.name);
-            if (!prog && !item) return null;
-            if (entry.source === 'OCM') return null;
-            const currentEach = prog ? prog.currentEach : ((item.stackStock || 0) * (item.bundleSize || 1) + (item.indivStock || 0));
-            const eachRequested = entry.bundleSize ? entry.qty * entry.bundleSize : entry.qty;
-            if (currentEach <= 0) return 'row-warning-red';
-            const ratio = eachRequested / currentEach;
-            if (ratio > 1) return 'row-warning-red';
-            if (ratio > 0.5) return 'row-warning-yellow';
-            return null;
-        }
-        function evaluateRowColorSell(entry) {
-            const prog = stockProgressCache.find(sp => sp.name === entry.name);
-            if (!prog || entry.source === 'OCM') return null;
-            const eachSelling = entry.bundleSize ? entry.qty * entry.bundleSize : entry.qty;
-            const projected = prog.currentEach + eachSelling;
-            if (prog.targetEach > 0 && projected > prog.targetEach) return 'row-warning-red';
+            if (!item) return null;
+
+            const avail = Math.max(0, Math.min(100, Number(item.availPercent || 0)));
+            const b = Number(item.bundleSize || 1) || 1;
+
+            // requested pieces (convert stacks -> pieces when entry.bundleSize present)
+            const requestedPieces = entry.bundleSize ? (Number(entry.qty || 0) * b) : Number(entry.qty || 0);
+
+            // only use individual stock H
+            const stockPieces = Number(item.indivStock || 0);
+            const availablePieces = stockPieces * (avail / 100);
+
+            if (requestedPieces > stockPieces) return { className: 'row-warning-red', note: 'exceeds stock' };
+            if (requestedPieces > availablePieces) return { className: 'row-warning-yellow', note: `over availability ${avail}% (trade negotiable)` };
             return null;
         }
 
+        
+        // Sell: compare in pieces (individual units).
+        // targetPieces = J (stacks) * bundleSize
+        // currentPieces = D * bundleSize + H
+        // sellingPieces = entry.qty * (entry.bundleSize ? bundleSize : 1)
+        // Sell: compare projected INDIVIDUAL pieces (H + added pieces) against targetPieces (J * E)
+        function evaluateRowColorSell(entry) {
+            if (entry.source === 'OCM' || entry.isFullyCustom || entry.isBalance) return null;
+            const item = items.find(i => i.name === entry.name);
+            if (!item) return null;
+
+            const b = Number(item.bundleSize || 1) || 1;
+            const targetStacks = Number(item.targetEach || 0); // J (stacks)
+            const targetPieces = targetStacks * b;              // J * E
+
+            // current pieces — use INDIVIDUAL stock H only
+            const currentPieces = Number(item.indivStock || 0);
+
+            // additional pieces from this sell entry (convert stacks -> pieces if needed)
+            const additionalPieces = entry.bundleSize ? (Number(entry.qty || 0) * b) : Number(entry.qty || 0);
+
+            const projectedPieces = currentPieces + additionalPieces;
+
+            if (targetPieces > 0 && projectedPieces > targetPieces) {
+                return { className: 'row-warning-red', note: 'over target stock' };
+            }
+            return null;
+        }
         function formatValue(btValue, currencyName, forBuy) {
             if (isNaN(btValue)) btValue = 0;
             let txt = `${btValue.toFixed(2)} ${BASE_CURRENCY}`;
@@ -1021,10 +1056,18 @@
                 total += rowTotal;
                 if (e.isConverter) rowText += ' [Converted]';
                 if (e.source === 'OCM') rowText += ' [OCM]';
-                const colorClass = evaluateRowColorBuy(e);
-                if (colorClass) li.classList.add(colorClass);
+
+                const warn = evaluateRowColorBuy(e);
+                if (warn) li.classList.add(warn.className);
                 if (curr && curr !== BASE_CURRENCY) rowText += ' ' + formatValue(rowTotal, curr, true);
+
                 li.textContent = rowText;
+
+                if (warn && warn.note) {
+                    const note = document.createElement('span'); note.className = 'small-note'; note.textContent = warn.note;
+                    li.appendChild(note);
+                }
+
                 const removeBtn = document.createElement("button");
                 removeBtn.textContent = "❌"; removeBtn.onclick = () => { buyCart = buyCart.filter(x => x !== e); renderBuyList(); calculateNet(); };
                 li.appendChild(removeBtn);
@@ -1047,17 +1090,21 @@
                 if (e.isPayWith) rowText += ' [Pay With]';
                 if (e.source === 'OCM') rowText += ' [OCM]';
                 total += rowTotal;
-                const colorClass = evaluateRowColorSell(e);
-                if (colorClass) {
-                    li.classList.add(colorClass);
-                    if (colorClass === 'row-warning-red') {
-                        const warn = document.createElement('span'); warn.className = 'small-note';
-                        warn.textContent = 'over target stock — forced recalculation';
-                        li.appendChild(warn);
-                    }
+
+                const warn = evaluateRowColorSell(e);
+                if (warn) {
+                    li.classList.add(warn.className);
                 }
                 if (curr && curr !== BASE_CURRENCY) rowText += ' ' + formatValue(rowTotal, curr, false);
+
                 li.textContent = rowText;
+
+                if (warn && warn.note) {
+                    const note = document.createElement('span'); note.className = 'small-note';
+                    note.textContent = warn.note;
+                    li.appendChild(note);
+                }
+
                 const removeBtn = document.createElement("button");
                 removeBtn.textContent = "❌"; removeBtn.onclick = () => { sellCart = sellCart.filter(x => x !== e); renderSellList(); calculateNet(); };
                 li.appendChild(removeBtn);
