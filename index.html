@@ -527,7 +527,9 @@
         const sheetURL = "https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/gviz/tq?tqx=out:json&gid=0";
 
         let items = [], payItems = [], buyCart = [], sellCart = [];
-        let stockProgressCache = [];
+        // stockProgressCache items now store stacks-based values and raw target
+        // Note: currentStacks is now defined as indivStock / bundleSize (H/E) per your request.
+        let stockProgressCache = []; // {name, currentStacks, indivStacks, targetRaw}
         let currentUser = null;
         let googleIdToken = null;
         const BASE_CURRENCY = "BT";
@@ -966,15 +968,24 @@
             renderSellList();
         }
 
+        /* ===== Row coloring against stock & target ===== */
         function evaluateRowColorBuy(entry) {
+            // Compare qty wanted vs current stock (use sheet-derived currentEach)
             const prog = stockProgressCache.find(sp => sp.name === entry.name);
             const item = items.find(i => i.name === entry.name);
-            if (!prog && !item) return null;
+            const prog = stockProgressCache.find(sp => sp.name === entry.name);
+            if (!item && !prog) return null;
             if (entry.source === 'OCM') return null;
-            const currentEach = prog ? prog.currentEach : ((item.stackStock || 0) * (item.bundleSize || 1) + (item.indivStock || 0));
-            const eachRequested = entry.bundleSize ? entry.qty * entry.bundleSize : entry.qty;
-            if (currentEach <= 0) return 'row-warning-red';
-            const ratio = eachRequested / currentEach;
+
+            const bundleSize = item ? (item.bundleSize || 1) : 1;
+            // requested stacks:
+            const requestedStacks = entry.bundleSize ? Number(entry.qty || 0) : (Number(entry.qty || 0) / bundleSize);
+
+            const availableStacks = (item ? (Number(item.stackStock || 0) + (Number(item.indivStock || 0) / bundleSize)) : (prog ? prog.currentStacks : 0));
+
+            if (availableStacks <= 0) return 'row-warning-red';
+
+            const ratio = requestedStacks / availableStacks;
             if (ratio > 1) return 'row-warning-red';
             if (ratio > 0.5) return 'row-warning-yellow';
             return null;
@@ -982,9 +993,13 @@
         function evaluateRowColorSell(entry) {
             const prog = stockProgressCache.find(sp => sp.name === entry.name);
             if (!prog || entry.source === 'OCM') return null;
-            const eachSelling = entry.bundleSize ? entry.qty * entry.bundleSize : entry.qty;
-            const projected = prog.currentEach + eachSelling;
-            if (prog.targetEach > 0 && projected > prog.targetEach) return 'row-warning-red';
+            const bundleSize = item ? (Number(item.bundleSize || 1) || 1) : 1;
+            const sellingStacks = entry.bundleSize ? Number(entry.qty || 0) : (Number(entry.qty || 0) / bundleSize);
+            const currentStacks = Number(prog.currentStacks || 0);
+            const projected = currentStacks + sellingStacks;
+
+            const effectiveTarget = computeEffectiveTargetStacks(item, prog);
+            if (effectiveTarget > 0 && projected > effectiveTarget) return 'row-warning-red';
             return null;
         }
 
