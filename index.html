@@ -128,7 +128,7 @@
 
         .dropdown-wrap {
             position: relative;
-            display: inline-block;
+            display: inline-block.
         }
 
         .dropdown-input {
@@ -520,16 +520,20 @@
 
     <script>
         /* ===== CONFIG ===== */
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbygL-uqAGe0HSBDVdnF_HlszWQcCJQ_TyikxqvYrgnRsY7SFXcqd6mI3DhMfp3sLZIBXQ/exec';
+        // IMPORTANT: Apps Script blocks cross-origin POSTs due to CORS.
+        // To avoid "Failed to fetch" on POST, point this to an HTTPS proxy you control (see instructions below).
+        // Example for direct Apps Script (GETs OK, POSTs blocked by CORS):
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzAmduSpdIAkcEDhQD8b-uf6OSkQpII7VfSRUPcYK5z4dMXpM5E0aZiE5cvTwG-WJ_5Rg/exec';
+        // After deploying a proxy over HTTPS, set:
+        // const WEB_APP_URL = 'https://YOUR-PROXY-DOMAIN/exec';
+
         const RECAPTCHA_SITE_KEY = '6LdjcAgsAAAAABWoHl5dmFjbJQL61kOu7ddvkUZF';
-        const OAUTH_CLIENT_ID = '1052887487165-endmh7ktojtd2eehnjt2bf3shcd4abf4.apps.googleusercontent.com';
+        const OAUTH_CLIENT_ID = '857098772457-kuvq861sa844esf2jc4b7av1pnlmnn1c.apps.googleusercontent.com';
 
         const sheetURL = "https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/gviz/tq?tqx=out:json&gid=0";
 
         let items = [], payItems = [], buyCart = [], sellCart = [];
-        // stockProgressCache items now store stacks-based values and raw target
-        // Note: currentStacks is now defined as indivStock / bundleSize (H/E) per your request.
-        let stockProgressCache = []; // {name, currentStacks, indivStacks, targetRaw}
+        let stockProgressCache = []; // {name, currentStacks, targetStacks}
         let currentUser = null;
         let googleIdToken = null;
         const BASE_CURRENCY = "BT";
@@ -550,7 +554,7 @@
                 callback: handleCredentialResponse,
                 ux_mode: 'popup',
                 auto_select: false,
-                use_fedcm_for_prompt: false // reduce FedCM dependency
+                use_fedcm_for_prompt: false
             });
             google.accounts.id.renderButton(
                 document.getElementById('googleBtn'),
@@ -582,7 +586,6 @@
                 const idt = params.get('id_token');
                 if (idt) {
                     handleCredentialResponse({ credential: idt });
-                    // Clean hash to avoid re-parsing on refresh
                     history.replaceState({}, document.title, location.pathname + location.search);
                 }
             }
@@ -634,6 +637,7 @@
             document.getElementById('topBar').style.display = 'none';
             document.body.classList.remove('withTopBar');
             document.getElementById('requestControls').style.display = 'none';
+            // Keep local captcha flag so user isn't prompted again on next visit
         }
 
         function submitSetup() {
@@ -643,24 +647,40 @@
                 document.getElementById('setupMsg').textContent = 'Player name and mailbox required';
                 return;
             }
-            recaptchaWrap().then(token => fetch(WEB_APP_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+
+            // If previously passed captcha (client-side flag), skip asking again
+            const skipCaptcha = localStorage.getItem('vak_captcha_ok') === '1';
+            const doPost = (tokenOrNull) => {
+                const body = {
                     action: 'linkPlayer',
                     idToken: googleIdToken,
-                    recaptchaToken: token,
                     payload: { playerName, mailbox }
-                })
-            }))
+                };
+                if (tokenOrNull) body.recaptchaToken = tokenOrNull; // include only when provided
+                return fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+            };
+
+            const statusEl = document.getElementById('setupMsg');
+            statusEl.textContent = 'Saving...';
+
+            (skipCaptcha ? Promise.resolve(null) : recaptchaWrap())
+                .then(token => doPost(token))
                 .then(r => r.json())
                 .then(j => {
                     if (!j.ok) throw new Error(j.error);
-                    document.getElementById('setupMsg').textContent = 'Setup complete.';
+                    // Mark client flag so we no longer prompt for captcha
+                    localStorage.setItem('vak_captcha_ok', '1');
+                    const c = document.getElementById('recaptchaContainer'); if (c) c.style.display = 'none';
+                    statusEl.textContent = 'Setup complete.';
                     return fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
                 })
                 .then(r => r.json())
                 .then(j => {
+                    if (!j.ok) throw new Error(j.error || 'me fetch failed');
                     currentUser = j.data.user;
                     enableAppUI();
                     showTopBar();
@@ -679,8 +699,15 @@
             }
         }
 
-        /* ===== reCAPTCHA v2 ===== */
+        /* ===== reCAPTCHA v2 (prompt only once) ===== */
         function initRecaptcha() {
+            // If user already passed captcha (client-side flag), hide the widget and skip
+            if (localStorage.getItem('vak_captcha_ok') === '1') {
+                const c = document.getElementById('recaptchaContainer');
+                if (c) c.style.display = 'none';
+                lastRecaptchaToken = null;
+                return;
+            }
             const tryRender = () => {
                 if (window.grecaptcha && recaptchaWidgetId === null) {
                     recaptchaWidgetId = grecaptcha.render('recaptchaContainer', {
@@ -700,8 +727,11 @@
                 }, 250);
             }
         }
+
         function recaptchaWrap() {
             return new Promise((resolve, reject) => {
+                // Skip if client-side flag is set (server will enforce its own "once" rule)
+                if (localStorage.getItem('vak_captcha_ok') === '1') return resolve(null);
                 if (lastRecaptchaToken) return resolve(lastRecaptchaToken);
                 if (window.grecaptcha) {
                     document.getElementById('recaptchaContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -714,12 +744,8 @@
         /* ===== Utility ===== */
         function cryptoRandomId() { return (crypto.getRandomValues(new Uint32Array(4))).join('-'); }
 
-        /* ===== Custom dropdown / circular stock indicator implementation (integrated) ===== */
-
-        // Interpret possible target values robustly: prefer candidate closest to currentStacks and >= when possible
+        /* ===== Custom dropdown / circular stock indicator implementation ===== */
         function computeEffectiveTargetStacks(item, prog) {
-            // Always treat column J as target expressed in stacks.
-            // `loadData` already stored that value in prog.targetStacks.
             if (!prog) return 0;
             const t = Number(prog.targetStacks || 0);
             return isFinite(t) && t > 0 ? t : 0;
@@ -762,7 +788,6 @@
             input.addEventListener('blur', () => setTimeout(() => { list.style.display = 'none'; input._dropIndex = -1; }, 200));
         }
 
-        // renderDropdownList now draws the circular graph per-item using stack-target interpretation
         function renderDropdownList(container, arr, onSelect) {
             container.innerHTML = '';
             arr.forEach((item, idx) => {
@@ -770,19 +795,13 @@
                 div.className = 'dropdown-item';
                 div.dataset.index = String(idx);
 
-                // get item object and its progress entry
                 const itemObj = items.find(it => it.name === item.name);
                 const prog = stockProgressCache.find(sp => sp.name === item.name);
 
-                // pct = (indivStock / bundleSize) / targetStacks  -> currentStacks / targetStacks
                 let pct = 0;
                 if (prog) {
-                    const target = computeEffectiveTargetStacks(itemObj, prog); // uses prog.targetStacks
-                    if (target > 0) {
-                        pct = Math.round((Number(prog.currentStacks || 0) / target) * 100);
-                    } else {
-                        pct = 0;
-                    }
+                    const target = computeEffectiveTargetStacks(itemObj, prog);
+                    if (target > 0) pct = Math.round((Number(prog.currentStacks || 0) / target) * 100);
                 }
                 pct = Math.max(0, Math.min(100, pct));
 
@@ -819,7 +838,7 @@
             });
         }
 
-        /* ===== Data loading (adapted to support stacks-target interpretation) ===== */
+        /* ===== Data loading ===== */
         function loadData() {
             fetch(sheetURL)
                 .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
@@ -858,11 +877,10 @@
                         };
                     }).filter(Boolean);
 
-                    // Build stockProgressCache using indiv-derived stacks as currentStacks and J as targetStacks
                     stockProgressCache = items.map(i => {
                         const bundleSize = Number(i.bundleSize || 1) || 1;
-                        const currentStacks = (Number(i.indivStock || 0) / bundleSize); // H / E
-                        const targetStacks = Number(i.targetEach || 0); // J (assumed stacks)
+                        const currentStacks = (Number(i.indivStock || 0) / bundleSize);
+                        const targetStacks = Number(i.targetEach || 0);
                         return { name: i.name, currentStacks, targetStacks };
                     });
 
@@ -882,7 +900,6 @@
             currencyDatalist.innerHTML = "";
             currencyDatalist.appendChild(new Option(BASE_CURRENCY, BASE_CURRENCY));
             items.forEach(i => {
-                // keep original display information for datalist
                 currencyDatalist.appendChild(new Option(`${i.name} — stack:${i.stackStock} each:${i.indivStock} avail:${i.availPercent}%`, i.name));
             });
             const input = document.getElementById("currencyInput");
@@ -970,17 +987,13 @@
 
         /* ===== Row coloring against stock & target ===== */
         function evaluateRowColorBuy(entry) {
-            // Compare qty wanted vs current stock (use sheet-derived currentEach)
-            const prog = stockProgressCache.find(sp => sp.name === entry.name);
             const item = items.find(i => i.name === entry.name);
             const prog = stockProgressCache.find(sp => sp.name === entry.name);
             if (!item && !prog) return null;
             if (entry.source === 'OCM') return null;
 
             const bundleSize = item ? (item.bundleSize || 1) : 1;
-            // requested stacks:
             const requestedStacks = entry.bundleSize ? Number(entry.qty || 0) : (Number(entry.qty || 0) / bundleSize);
-
             const availableStacks = (item ? (Number(item.stackStock || 0) + (Number(item.indivStock || 0) / bundleSize)) : (prog ? prog.currentStacks : 0));
 
             if (availableStacks <= 0) return 'row-warning-red';
@@ -992,6 +1005,7 @@
         }
         function evaluateRowColorSell(entry) {
             const prog = stockProgressCache.find(sp => sp.name === entry.name);
+            const item = items.find(i => i.name === entry.name);
             if (!prog || entry.source === 'OCM') return null;
             const bundleSize = item ? (Number(item.bundleSize || 1) || 1) : 1;
             const sellingStacks = entry.bundleSize ? Number(entry.qty || 0) : (Number(entry.qty || 0) / bundleSize);
@@ -1127,17 +1141,25 @@
         function submitPurchaseRequest() {
             if (!googleIdToken) return alert('Login first');
             const payload = buildRequestPayload();
-            recaptchaWrap()
-                .then(token => fetch(WEB_APP_URL, {
+
+            // If local flag is set, we skip getting a token. Server will accept when the user already passed once.
+            const skipCaptcha = localStorage.getItem('vak_captcha_ok') === '1';
+            const doPost = (tokenOrNull) => {
+                const body = {
+                    action: 'createRequest',
+                    idToken: googleIdToken,
+                    payload
+                };
+                if (tokenOrNull) body.recaptchaToken = tokenOrNull; // include only when available
+                return fetch(WEB_APP_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'createRequest',
-                        idToken: googleIdToken,
-                        recaptchaToken: token,
-                        payload
-                    })
-                }))
+                    body: JSON.stringify(body)
+                });
+            };
+
+            (skipCaptcha ? Promise.resolve(null) : recaptchaWrap())
+                .then(token => doPost(token))
                 .then(r => r.json())
                 .then(j => {
                     if (!j.ok) throw new Error(j.error);
@@ -1396,11 +1418,10 @@
         function openOCM() { alert('OCM main page coming soon.'); }
 
         window.onload = () => {
-            checkHashForIdToken();    // fallback redirect token
+            checkHashForIdToken();
             loadData();
             addPayRow();
             initRecaptcha();
-            // Defer GSI initialization slightly to ensure script is loaded
             const gsiWait = setInterval(() => {
                 if (window.google && google.accounts && google.accounts.id) {
                     initGoogleIdentity(); clearInterval(gsiWait);
