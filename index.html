@@ -523,7 +523,7 @@
         // IMPORTANT: Apps Script blocks cross-origin POSTs due to CORS.
         // To avoid "Failed to fetch" on POST, point this to an HTTPS proxy you control (see instructions below).
         // Example for direct Apps Script (GETs OK, POSTs blocked by CORS):
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzAmduSpdIAkcEDhQD8b-uf6OSkQpII7VfSRUPcYK5z4dMXpM5E0aZiE5cvTwG-WJ_5Rg/exec';
+        const WEB_APP_URL = 'https://yellow-king-52c6.vilhokettu1.workers.dev/exec';
         // After deploying a proxy over HTTPS, set:
         // const WEB_APP_URL = 'https://YOUR-PROXY-DOMAIN/exec';
 
@@ -590,45 +590,176 @@
                 }
             }
         }
-
+        // --- insert near top of your script, after variable declarations ---
+        function normalizeUser(u) {
+            if (!u) return u;
+            // Accept common alternate keys and trim whitespace
+            const candidate =
+                (u.playerName && String(u.playerName).trim()) ||
+                (u.player && String(u.player).trim()) ||
+                (u.name && String(u.name).trim()) ||
+                (u.displayName && String(u.displayName).trim()) ||
+                null;
+            // Ensure playerName property exists when possible
+            u.playerName = candidate || null;
+            return u;
+        }
         /* ===== Google Sign-in callback ===== */
-        function onGoogleSignIn(resp) {
-            googleIdToken = resp && resp.credential;
+       
+// === REPLACE EXISTING onGoogleSignIn WITH THIS ===
+            async function onGoogleSignIn(resp) {
+                googleIdToken = resp && resp.credential;
             const statusEl = document.getElementById('loginStatus');
             if (!googleIdToken) {
                 statusEl.textContent = 'Login error: no credential';
-                console.error('onGoogleSignIn: no credential', resp);
-                return;
-            }
-            statusEl.textContent = 'Verifying token...';
-            (async () => {
-                try {
-                    const tokenInfoUrl = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`;
-                    const tResp = await fetch(tokenInfoUrl);
-                    if (!tResp.ok) throw new Error('tokeninfo fetch failed ' + tResp.status);
-                    const info = await tResp.json();
-                    if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
-                    statusEl.textContent = 'Fetching user profile...';
-                    const backendUrl = `${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`;
-                    const bResp = await fetch(backendUrl);
-                    if (!bResp.ok) throw new Error('backend fetch failed ' + bResp.status);
-                    const j = await bResp.json();
-                    if (!j.ok) throw new Error(j.error || 'Backend error');
-                    currentUser = j.data.user;
-                    if (!currentUser || !currentUser.playerName) {
-                        document.getElementById('setupForm').style.display = 'block';
-                    } else {
-                        document.getElementById('setupForm').style.display = 'none';
-                        enableAppUI();
-                    }
-                    showTopBar();
-                    statusEl.textContent = 'Logged in.';
-                } catch (err) {
-                    statusEl.textContent = 'Login error: ' + err.message;
-                    console.error('onGoogleSignIn error:', err);
-                }
-            })();
+            console.error('onGoogleSignIn: no credential', resp);
+            return;
         }
+            statusEl.textContent = 'Verifying token...';
+            try {
+            const tResp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`);
+            if (!tResp.ok) throw new Error('tokeninfo failed ' + tResp.status);
+            const info = await tResp.json();
+            if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
+            window.googleTokenInfo = info;
+
+            // Fetch server user
+            statusEl.textContent = 'Loading profile...';
+            const meResp = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
+            const meJson = await meResp.json();
+            console.log('onGoogleSignIn /me', meJson);
+
+            if (!meJson.ok) throw new Error(meJson.error || 'Backend error');
+
+            const serverUser = normalizeUser(meJson.data.user || null);
+            currentUser = serverUser;
+
+            const hasSetup = serverUser && serverUser.playerName;
+            const passedCaptcha = serverUser && serverUser.captchaPassed;
+
+            if (hasSetup && passedCaptcha) {
+                // Solid completed setup
+                localStorage.setItem('vak_captcha_ok', '1');
+            hideRecaptchaWidget();
+            hideSetupShowApp();
+            } else {
+                // Incomplete – reset local flag & show captcha
+                localStorage.removeItem('vak_captcha_ok');
+            showSetupOnly();
+            showRecaptchaWidget();
+            }
+
+            showTopBar();
+            statusEl.textContent = 'Logged in.';
+        } catch (e) {
+                statusEl.textContent = 'Login error: ' + e.message;
+            console.error('onGoogleSignIn error:', e);
+        }
+}
+
+            // Helper to show captcha container
+            function showRecaptchaWidget() {
+        const c = document.getElementById('recaptchaContainer');
+            if (c) c.style.display = 'block';
+}
+            function hideRecaptchaWidget() {
+        const c = document.getElementById('recaptchaContainer');
+            if (c) c.style.display = 'none';
+}
+
+            // === ADD / REPLACE refreshUserStateAfterSetup ===
+            async function refreshUserStateAfterSetup() {
+        const meResp = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
+            const meJson = await meResp.json();
+            console.log('refreshUserStateAfterSetup /me', meJson);
+            if (!meJson.ok) throw new Error(meJson.error || 'me failed');
+            const serverUser = normalizeUser(meJson.data.user || null);
+            currentUser = serverUser;
+            const hasSetup = serverUser && serverUser.playerName;
+            const passedCaptcha = serverUser && serverUser.captchaPassed;
+            return {hasSetup, passedCaptcha};
+}
+
+            // === REPLACE EXISTING submitSetup WITH THIS ===
+            async function submitSetup() {
+        const playerName = document.getElementById('setupPlayerName').value.trim();
+            const mailbox = document.getElementById('setupMailbox').value.trim();
+            const statusEl = document.getElementById('setupMsg');
+
+            if (!googleIdToken) {statusEl.textContent = 'Login first'; return; }
+            if (!playerName || !mailbox) {statusEl.textContent = 'Player name and mailbox required'; return; }
+
+            // Decide if we must still collect captcha (server did not confirm pass yet)
+            const needCaptcha = !localStorage.getItem('vak_captcha_ok');
+            let recaptchaToken = null;
+            if (needCaptcha) {
+            try {
+                recaptchaToken = await recaptchaWrap(); // will throw if not completed
+            } catch (e) {
+                statusEl.textContent = e.message;
+            return;
+            }
+        }
+
+            statusEl.textContent = 'Saving...';
+
+            try {
+            const body = {
+                action: 'linkPlayer',
+            idToken: googleIdToken,
+            payload: {playerName, mailbox}
+            };
+            if (recaptchaToken) body.recaptchaToken = recaptchaToken;
+
+            const resp = await fetch(WEB_APP_URL, {
+                method: 'POST',
+            headers: {'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+            });
+            const j = await resp.json();
+            console.log('submitSetup linkPlayer', j);
+            if (!j.ok) throw new Error(j.error || 'linkPlayer failed');
+
+            // Re-fetch user state to confirm persistence & captcha
+            statusEl.textContent = 'Verifying saved data...';
+            const {hasSetup, passedCaptcha} = await refreshUserStateAfterSetup();
+
+            if (hasSetup && passedCaptcha) {
+                localStorage.setItem('vak_captcha_ok', '1');
+            hideRecaptchaWidget();
+            hideSetupShowApp();
+            showTopBar();
+            statusEl.textContent = 'Setup complete.';
+            } else {
+                // Do NOT set local flag – requires another captcha attempt
+                localStorage.removeItem('vak_captcha_ok');
+            showRecaptchaWidget();
+            statusEl.textContent = 'Server did not confirm setup yet. Retry (captcha still required).';
+            }
+        } catch (e) {
+                statusEl.textContent = 'Error: ' + e.message;
+            console.error('submitSetup error', e);
+        }
+}
+
+            // === REPLACE EXISTING recaptchaWrap WITH THIS ===
+            function recaptchaWrap() {
+        return new Promise((resolve, reject) => {
+            // Only skip if local flag is set AND we already have a server-confirmed captchaPassed user
+            const canSkip = localStorage.getItem('vak_captcha_ok') === '1' &&
+            currentUser && currentUser.playerName && currentUser.captchaPassed;
+            if (canSkip) return resolve(null);
+
+            if (lastRecaptchaToken) return resolve(lastRecaptchaToken);
+
+            if (window.grecaptcha) {
+                document.getElementById('recaptchaContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return reject(new Error('Complete reCAPTCHA checkbox first.'));
+            }
+            reject(new Error('reCAPTCHA not loaded yet.'));
+        });
+}
+    
 
         function logout() {
             googleIdToken = null;
@@ -640,23 +771,26 @@
             // Keep local captcha flag so user isn't prompted again on next visit
         }
 
-        function submitSetup() {
+        async function submitSetup() {
             const playerName = document.getElementById('setupPlayerName').value.trim();
             const mailbox = document.getElementById('setupMailbox').value.trim();
+            const statusEl = document.getElementById('setupMsg');
+
             if (!playerName || !mailbox) {
-                document.getElementById('setupMsg').textContent = 'Player name and mailbox required';
+                statusEl.textContent = 'Player name and mailbox required';
                 return;
             }
 
             // If previously passed captcha (client-side flag), skip asking again
             const skipCaptcha = localStorage.getItem('vak_captcha_ok') === '1';
+
             const doPost = (tokenOrNull) => {
                 const body = {
                     action: 'linkPlayer',
                     idToken: googleIdToken,
                     payload: { playerName, mailbox }
                 };
-                if (tokenOrNull) body.recaptchaToken = tokenOrNull; // include only when provided
+                if (tokenOrNull) body.recaptchaToken = tokenOrNull;
                 return fetch(WEB_APP_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -664,33 +798,77 @@
                 });
             };
 
-            const statusEl = document.getElementById('setupMsg');
             statusEl.textContent = 'Saving...';
 
-            (skipCaptcha ? Promise.resolve(null) : recaptchaWrap())
-                .then(token => doPost(token))
-                .then(r => r.json())
-                .then(j => {
-                    if (!j.ok) throw new Error(j.error);
-                    // Mark client flag so we no longer prompt for captcha
-                    localStorage.setItem('vak_captcha_ok', '1');
-                    const c = document.getElementById('recaptchaContainer'); if (c) c.style.display = 'none';
-                    statusEl.textContent = 'Setup complete.';
-                    return fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-                })
-                .then(r => r.json())
-                .then(j => {
-                    if (!j.ok) throw new Error(j.error || 'me fetch failed');
-                    currentUser = j.data.user;
-                    enableAppUI();
-                    showTopBar();
-                    document.getElementById('setupForm').style.display = 'none';
-                })
-                .catch(e => {
-                    document.getElementById('setupMsg').textContent = 'Error: ' + e.message;
-                });
+            try {
+                const token = skipCaptcha ? null : await recaptchaWrap();
+                const postResp = await doPost(token);
+                const postJson = await postResp.json();
+                console.log('submitSetup: linkPlayer response', postJson);
+                if (!postJson.ok) throw new Error(postJson.error || 'linkPlayer failed');
+
+                // Mark client flag so we no longer prompt for captcha
+                localStorage.setItem('vak_captcha_ok', '1');
+                const c = document.getElementById('recaptchaContainer'); if (c) c.style.display = 'none';
+                statusEl.textContent = 'Setup saved. Verifying...';
+
+                // Re-fetch user record from server
+                const meResp = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
+                if (!meResp.ok) throw new Error('me fetch failed ' + meResp.status);
+                const meJson = await meResp.json();
+                console.log('submitSetup: /me response', meJson);
+                if (!meJson.ok) throw new Error(meJson.error || 'me returned not ok');
+
+                const serverUser = normalizeUser(meJson.data?.user || null);
+                if (serverUser && serverUser.playerName) {
+                    currentUser = Object.assign({}, currentUser || {}, serverUser);
+                } else {
+                    // Server did not return user data — make optimistic local user using token info
+                    const tokenInfo = window.googleTokenInfo || {};
+                    currentUser = {
+                        userId: tokenInfo.sub || (currentUser && currentUser.userId),
+                        email: tokenInfo.email || (currentUser && currentUser.email),
+                        playerName,
+                        mailbox
+                    };
+                    console.warn('submitSetup: server did not return user; using optimistic local user', currentUser);
+                    // still advise to check server logs; but enable UI so user can continue
+                    statusEl.textContent = 'Setup saved locally; server did not return user. If this persists check server logs.';
+                }
+
+                enableAppUI();
+                showTopBar();
+                document.getElementById('setupForm').style.display = 'none';
+                statusEl.textContent = 'Setup complete.';
+            } catch (e) {
+                console.error('submitSetup error:', e);
+                statusEl.textContent = 'Error: ' + (e && e.message ? e.message : String(e));
+            }
+        }
+        function showSetupOnly() {
+            // Show the setup form, hide request controls and ensure reCAPTCHA is visible
+            const setup = document.getElementById('setupForm');
+            const req = document.getElementById('requestControls');
+            if (setup) setup.style.display = 'block';
+            if (req) req.style.display = 'none';
+            // If you have a recaptcha helper, show it; otherwise un-hide container
+            if (typeof showRecaptchaWidget === 'function') showRecaptchaWidget();
+            else {
+                const c = document.getElementById('recaptchaContainer'); if (c) c.style.display = 'block';
+            }
         }
 
+        function hideSetupShowApp() {
+            // Hide the setup form and enable the app UI (request controls + top bar)
+            const setup = document.getElementById('setupForm');
+            if (setup) setup.style.display = 'none';
+            if (typeof enableAppUI === 'function') enableAppUI();
+            if (typeof hideRecaptchaWidget === 'function') hideRecaptchaWidget();
+            else {
+                const c = document.getElementById('recaptchaContainer'); if (c) c.style.display = 'none';
+            }
+            if (typeof showTopBar === 'function') showTopBar();
+        }
         function enableAppUI() { document.getElementById('requestControls').style.display = 'block'; }
         function showTopBar() {
             if (googleIdToken && currentUser) {
