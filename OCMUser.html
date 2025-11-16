@@ -1,48 +1,427 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>OCM User</title>
-<script src="app-config.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-</head><body>
-<h1>Create OCM Listing</h1>
-<div id="loginStatus"></div>
-<form onsubmit="createListing(event)">
-  <select id="type">
-    <option value="BUY">BUY</option>
-    <option value="SELL">SELL</option>
-  </select>
-  <input id="itemName" placeholder="Item name">
-  <select id="unit"><option value="EACH">EACH</option><option value="STACK">STACK</option></select>
-  <input id="bundleSize" type="number" placeholder="Stack size (if STACK)" min="1">
-  <input id="priceBT" type="number" step="0.01" placeholder="Price BT">
-  <input id="qtyAvailable" type="number" placeholder="Qty (optional)" min="1">
-  <button type="submit">Create</button>
-</form>
-<div id="msg"></div>
-<script>
-let googleIdToken=null;
-function onGoogleSignIn(r){ googleIdToken=r.credential; document.getElementById('loginStatus').textContent='Logged in.'; }
-function recaptchaWrap(){ return new Promise((res,rej)=>{ grecaptcha.ready(()=>grecaptcha.execute(RECAPTCHA_SITE_KEY,{action:'submit'}).then(res).catch(rej)); }); }
-function createListing(e){
-  e.preventDefault();
-  if(!googleIdToken){ alert('Login first'); return; }
-  const payload={
-    type:document.getElementById('type').value,
-    itemName:document.getElementById('itemName').value.trim(),
-    unit:document.getElementById('unit').value,
-    bundleSize:parseInt(document.getElementById('bundleSize').value)||null,
-    priceBT:parseFloat(document.getElementById('priceBT').value)||0,
-    qtyAvailable:document.getElementById('qtyAvailable').value||''
-  };
-  recaptchaWrap().then(token=>{
-    return fetch(WEB_APP_URL,{ method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ action:'createListing', idToken:googleIdToken, recaptchaToken:token, payload }) });
-  }).then(r=>r.json()).then(j=>{
-    if(!j.ok) throw new Error(j.error);
-    document.getElementById('msg').textContent='Listing created: '+j.result.listingId;
-  }).catch(e=> document.getElementById('msg').textContent='Error: '+e.message);
-}
-</script>
-<div id="g_id_onload" data-client_id="1052887487165-endmh7ktojtd2eehnjt2bf3shcd4abf4.apps.googleusercontent.com" data-callback="onGoogleSignIn"></div>
-<div class="g_id_signin" data-type="standard"></div>
-<script src="https://www.google.com/recaptcha/api.js?render=6LdjcAgsAAAAABWoHl5dmFjbJQL61kOu7ddvkUZF"></script>
-</body></html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>OCM Merchant</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <script src="app-config.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        #topBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: #222;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
+            font-size: 14px;
+        }
+
+            #topBar a, #topBar button {
+                color: #fff;
+                text-decoration: none;
+                margin-right: 18px;
+                background: none;
+                border: none;
+                cursor: pointer;
+            }
+
+            #topBar .right {
+                margin-left: auto;
+                display: flex;
+                gap: 12px;
+            }
+
+        body.withTopBar {
+            padding-top: 70px;
+        }
+
+        .section {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+            background: #fff;
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 6px 0;
+        }
+
+        label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+            .tabs button {
+                padding: 6px 10px;
+            }
+
+        .muted {
+            color: #888;
+        }
+
+        #btnLogin {
+            padding: 6px 10px;
+            background: #1a73e8;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+        }
+
+        #btnLogout {
+            padding: 6px 10px;
+            background: #444;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+        }
+    </style>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+    <div id="topBar">
+        <div><strong>Vak Store</strong></div>
+        <a href="index.html">Store</a>
+        <a href="AccountHistory.html">Account History</a>
+        <a href="OCMHome.html">OCM</a>
+        <a href="OCMUser.html">OCM Merchant</a>
+        <a id="adminLink" href="Admin.html" style="display:none;">Admin Panel</a>
+        <div class="right">
+            <button id="btnLogin" onclick="startLogin()">Login</button>
+            <span id="topUser" class="small"></span>
+            <button id="btnLogout" onclick="logout()" style="display:none;">Logout</button>
+        </div>
+    </div>
+
+    <h1>OCM Merchant</h1>
+    <div id="loginStatus" class="small">Not signed in</div>
+
+    <div class="tabs">
+        <button id="tabMerchant">Merchant</button>
+        <button id="tabAdmin" class="hidden">Admin Merchant</button>
+    </div>
+
+    <div id="merchantView" class="section">
+        <h3>Create Listing</h3>
+        <div class="row">
+            <label>
+                Type:
+                <select id="mType">
+                    <option value="SELL">SELL (you sell items)</option>
+                    <option value="BUY">BUY (you buy items)</option>
+                </select>
+            </label>
+            <label>Item: <input id="mItem" placeholder="Item name"></label>
+            <label>Price (BT): <input id="mPrice" type="number" step="0.01"></label>
+            <label>Quantity: <input id="mQty" type="number" step="1" min="1"></label>
+            <label><input id="mInPerson" type="checkbox"> In-person trade (0% fee)</label>
+            <button onclick="createListing()">Create</button>
+        </div>
+        <div id="mMsg" class="small"></div>
+        <div class="small muted">Note: Listings require admin approval before becoming active.</div>
+    </div>
+
+    <div id="adminView" class="section hidden">
+        <h3>Admin Merchant</h3>
+
+        <div class="section">
+            <h4>Listings Pending Approval</h4>
+            <button onclick="loadAdminListings()">Refresh</button>
+            <div id="adminListings"></div>
+        </div>
+
+        <div class="section">
+            <h4>OCM Trades Pending</h4>
+            <button onclick="loadAdminTrades()">Refresh</button>
+            <div id="adminTrades"></div>
+        </div>
+
+        <div class="section">
+            <h4>Create Listing On Behalf</h4>
+            <div class="row">
+                <label>Target userId: <input id="aTargetUserId" placeholder="Paste userId from Users sheet"></label>
+                <label>
+                    Type:
+                    <select id="aType"><option value="SELL">SELL</option><option value="BUY">BUY</option></select>
+                </label>
+                <label>Item: <input id="aItem"></label>
+                <label>Price (BT): <input id="aPrice" type="number" step="0.01"></label>
+                <label>Quantity: <input id="aQty" type="number" step="1" min="1"></label>
+                <label><input id="aInPerson" type="checkbox"> In-person</label>
+                <button onclick="adminCreateOnBehalf()">Create</button>
+            </div>
+            <div class="small muted">Tip: Use exact userId for now.</div>
+            <div id="aMsg" class="small"></div>
+        </div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = window.WEB_APP_URL;
+        const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID;
+
+        let googleIdToken = null;
+        let isAdmin = false;
+        let currentUser = null;
+
+        // UI helpers and tabs
+        function updateAuthUI() {
+            document.body.classList.add('withTopBar');
+            document.getElementById('btnLogin').style.display = googleIdToken ? 'none' : 'inline-block';
+            document.getElementById('btnLogout').style.display = googleIdToken ? 'inline-block' : 'none';
+            document.getElementById('topUser').textContent = googleIdToken ? (currentUser?.email || '') : '';
+            document.getElementById('adminLink').style.display = isAdmin ? 'inline' : 'none';
+            document.getElementById('tabAdmin').classList.toggle('hidden', !isAdmin);
+            document.getElementById('loginStatus').textContent = googleIdToken ? `Logged in${isAdmin ? ' (admin)' : ''}.` : 'Not signed in';
+        }
+
+        function selectTab(which) {
+            if (which === 'admin' && isAdmin) {
+                document.getElementById('merchantView').classList.add('hidden');
+                document.getElementById('adminView').classList.remove('hidden');
+                loadAdminListings(); loadAdminTrades();
+            } else {
+                document.getElementById('merchantView').classList.remove('hidden');
+                document.getElementById('adminView').classList.add('hidden');
+            }
+        }
+        document.getElementById('tabMerchant').addEventListener('click', () => selectTab('merchant'));
+        document.getElementById('tabAdmin').addEventListener('click', () => selectTab('admin'));
+
+        function requireAuthOrWarn() {
+            if (!googleIdToken) { alert('You need to login for this tool'); return false; }
+            return true;
+        }
+
+        // Login
+        function startLogin() {
+            if (window.google?.accounts?.id) {
+                try {
+                    google.accounts.id.initialize({ client_id: OAUTH_CLIENT_ID, callback: onGoogleSignIn, ux_mode: 'popup' });
+                    google.accounts.id.prompt();
+                } catch { }
+            } else { alert('Google Sign-In not loaded yet. Try again in a moment.'); }
+        }
+        function logout() {
+            googleIdToken = null; currentUser = null; isAdmin = false;
+            window.clearSavedIdToken();
+            updateAuthUI();
+            selectTab('merchant');
+        }
+        async function onGoogleSignIn(resp) {
+            const statusEl = document.getElementById('loginStatus');
+            googleIdToken = resp && resp.credential;
+            if (!googleIdToken) { statusEl.textContent = 'Login error: no credential'; updateAuthUI(); return; }
+            statusEl.textContent = 'Verifying...';
+            try {
+                const ti = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`);
+                if (!ti.ok) throw new Error('tokeninfo failed ' + ti.status);
+                const info = await ti.json();
+                if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
+                window.saveIdToken(googleIdToken);
+                const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
+                const meJ = await meR.json();
+                if (!meJ.ok) throw new Error(meJ.error || '/me failed');
+                currentUser = meJ.data.user || null;
+                isAdmin = !!meJ.data.isAdmin;
+                updateAuthUI();
+            } catch (e) {
+                statusEl.textContent = 'Login error: ' + e.message;
+                updateAuthUI();
+            }
+        }
+
+        // Restore saved login
+        (async function init() {
+            document.body.classList.add('withTopBar');
+            const res = await window.initAuthFromStorage();
+            if (res.ok) {
+                googleIdToken = res.idToken;
+                try {
+                    const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
+                    const meJ = await meR.json();
+                    if (meJ.ok) { currentUser = meJ.data.user || null; isAdmin = !!meJ.data.isAdmin; }
+                    else { window.clearSavedIdToken(); googleIdToken = null; }
+                } catch { }
+            }
+            updateAuthUI();
+            // Optional render button
+            if (window.google?.accounts?.id) {
+                google.accounts.id.initialize({ client_id: OAUTH_CLIENT_ID, callback: onGoogleSignIn, ux_mode: 'popup' });
+                // no auto prompt; user can click Login
+            }
+        })();
+
+        // Merchant actions
+        function createListing() {
+            if (!requireAuthOrWarn()) return;
+            const type = (document.getElementById('mType').value || '').toUpperCase();
+            const itemName = document.getElementById('mItem').value.trim();
+            const price = Number(document.getElementById('mPrice').value || 0);
+            const quantity = Number(document.getElementById('mQty').value || 0);
+            const inPerson = !!document.getElementById('mInPerson').checked;
+            const msg = document.getElementById('mMsg');
+            if (!itemName || price <= 0 || quantity <= 0) { msg.textContent = 'Fill all fields'; return; }
+            fetch(WEB_APP_URL, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'createListing', idToken: googleIdToken, payload: { type, itemName, price, quantity, inPerson } })
+            }).then(r => r.json()).then(j => {
+                if (!j.ok) throw new Error(j.error);
+                msg.textContent = `Listing created. ID: ${j.result.listingId}. Awaiting approval.`;
+            }).catch(e => msg.textContent = 'Error: ' + e.message);
+        }
+
+        // Admin Merchant
+        function loadAdminListings() {
+            const el = document.getElementById('adminListings');
+            if (!googleIdToken || !isAdmin) { el.textContent = 'Login as admin.'; return; }
+            el.textContent = 'Loading...';
+            fetch(`${WEB_APP_URL}?action=adminListingsPending&idToken=${encodeURIComponent(googleIdToken)}`)
+                .then(r => r.json()).then(j => {
+                    if (!j.ok) throw new Error(j.error);
+                    const arr = j.data || [];
+                    if (!arr.length) { el.textContent = 'No listings pending.'; return; }
+                    const table = document.createElement('table');
+                    table.innerHTML = '<thead><tr><th>ID</th><th>Type</th><th>Item</th><th>Price</th><th>Remain</th><th>Seller</th><th>Actions</th></tr></thead>';
+                    const tb = document.createElement('tbody');
+                    arr.forEach(l => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML =
+                            `<td>${l.listingId}</td><td>${l.type}</td><td>${l.itemName}</td>` +
+                            `<td><input type="number" step="0.01" value="${Number(l.price || 0)}" style="width:90px"></td>` +
+                            `<td><input type="number" step="1" value="${Number(l.remainingQuantity || 0)}" style="width:80px"></td>` +
+                            `<td>${l.sellerPlayerName}</td>` +
+                            `<td><button>Approve</button></td>`;
+                        tr.querySelector('button').onclick = () => {
+                            const newPrice = Number(tr.querySelectorAll('input')[0].value || 0);
+                            const newRemain = Number(tr.querySelectorAll('input')[1].value || 0);
+                            adminApproveListing(l.listingId, { price: newPrice, remainingQuantity: newRemain });
+                        };
+                        tb.appendChild(tr);
+                    });
+                    table.appendChild(tb);
+                    el.innerHTML = ''; el.appendChild(table);
+                }).catch(e => el.textContent = 'Error: ' + e.message);
+        }
+
+        function adminApproveListing(listingId, updates) {
+            fetch(WEB_APP_URL, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'adminApproveListing', idToken: googleIdToken, payload: { listingId, updates } })
+            }).then(r => r.json()).then(j => {
+                if (!j.ok) throw new Error(j.error);
+                loadAdminListings();
+                alert('Listing approved.');
+            }).catch(e => alert('Error: ' + e.message));
+        }
+
+        function loadAdminTrades() {
+            const el = document.getElementById('adminTrades');
+            if (!googleIdToken || !isAdmin) { el.textContent = 'Login as admin.'; return; }
+            el.textContent = 'Loading...';
+            fetch(`${WEB_APP_URL}?action=adminTradesPending&idToken=${encodeURIComponent(googleIdToken)}`)
+                .then(r => r.json()).then(j => {
+                    if (!j.ok) throw new Error(j.error);
+                    const arr = j.data || [];
+                    if (!arr.length) { el.textContent = 'No trades pending.'; return; }
+                    const table = document.createElement('table');
+                    table.innerHTML = '<thead><tr><th>TradeId</th><th>ListingId</th><th>Qty</th><th>Price</th><th>Buyer</th><th>Seller</th><th>Actions</th></tr></thead>';
+                    const tb = document.createElement('tbody');
+                    arr.forEach(t => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML =
+                            `<td>${t.tradeId}</td><td>${t.listingId}</td><td>${t.quantity}</td><td>${t.price}</td>` +
+                            `<td>${t.buyerUserId}</td><td>${t.sellerUserId}</td>` +
+                            `<td><button data-a="approve">Approve</button> <button data-a="reject">Reject</button></td>`;
+                        tr.querySelector('[data-a="approve"]').onclick = () => adminApproveTrade(t.tradeId);
+                        tr.querySelector('[data-a="reject"]').onclick = () => adminRejectTrade(t.tradeId);
+                        tb.appendChild(tr);
+                    });
+                    table.appendChild(tb); el.innerHTML = ''; el.appendChild(table);
+                }).catch(e => el.textContent = 'Error: ' + e.message);
+        }
+
+        function adminApproveTrade(tradeId) {
+            fetch(WEB_APP_URL, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'adminApproveTrade', idToken: googleIdToken, payload: { tradeId } })
+            }).then(r => r.json()).then(j => {
+                if (!j.ok) throw new Error(j.error);
+                alert(`Trade approved. Fee: ${j.result.feeBT}, Net: ${j.result.netBT}`);
+                loadAdminTrades();
+            }).catch(e => alert('Error: ' + e.message));
+        }
+        function adminRejectTrade(tradeId) {
+            const note = prompt('Rejection note:', 'Rejected by admin');
+            fetch(WEB_APP_URL, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'adminRejectTrade', idToken: googleIdToken, payload: { tradeId, note: note || '' } })
+            }).then(r => r.json()).then(j => {
+                if (!j.ok) throw new Error(j.error);
+                alert('Trade rejected.');
+                loadAdminTrades();
+            }).catch(e => alert('Error: ' + e.message));
+        }
+
+        function adminCreateOnBehalf() {
+            if (!requireAuthOrWarn() || !isAdmin) { alert('Admin only'); return; }
+            const targetUserId = document.getElementById('aTargetUserId').value.trim();
+            const type = (document.getElementById('aType').value || '').toUpperCase();
+            const itemName = document.getElementById('aItem').value.trim();
+            const price = Number(document.getElementById('aPrice').value || 0);
+            const quantity = Number(document.getElementById('aQty').value || 0);
+            const inPerson = !!document.getElementById('aInPerson').checked;
+            const msg = document.getElementById('aMsg');
+            if (!targetUserId || !itemName || price <= 0 || quantity <= 0) { msg.textContent = 'Fill all fields'; return; }
+            fetch(WEB_APP_URL, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'adminUpsertListingOnBehalf', idToken: googleIdToken, payload: { targetUserId, listing: { type, itemName, price, quantity, inPerson } } })
+            }).then(r => r.json()).then(j => {
+                if (!j.ok) throw new Error(j.error);
+                msg.textContent = 'Listing created on behalf. ID: ' + j.result.listingId;
+            }).catch(e => msg.textContent = 'Error: ' + e.message);
+        }
+    </script>
+</body>
+</html>

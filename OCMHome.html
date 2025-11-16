@@ -1,24 +1,167 @@
 ﻿<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>OCM Home</title>
-<script src="app-config.js"></script>
-</head><body>
-<h1>OCM Listings</h1>
-<input id="q" placeholder="Search item"><button onclick="load()">Search</button>
-<ul id="list"></ul>
-<script>
-function load(){
-  const q=document.getElementById('q').value.trim();
-  fetch(`${WEB_APP_URL}?action=listings&q=${encodeURIComponent(q)}`)
-    .then(r=>r.json()).then(j=>{
-      if(!j.ok) throw new Error(j.error);
-      const ul=document.getElementById('list'); ul.innerHTML='';
-      j.data.forEach(l=>{
-        const li=document.createElement('li');
-        li.textContent=`${l.itemName} | ${l.type} | ${l.unit} | price:${l.priceBT} | qty:${l.qtyAvailable||'∞'} | ${l.playerName}`;
-        ul.appendChild(li);
-      });
-    }).catch(e=>alert(e.message));
-}
-load();
-</script>
-</body></html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>OCM Home</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <script src="app-config.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        #topBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: #222;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
+            font-size: 14px;
+        }
+
+            #topBar a, #topBar button {
+                color: #fff;
+                text-decoration: none;
+                margin-right: 18px;
+                background: none;
+                border: none;
+                cursor: pointer;
+            }
+
+            #topBar .right {
+                margin-left: auto;
+                display: flex;
+                gap: 12px;
+                align-items: center;
+            }
+
+        body.withTopBar {
+            padding-top: 70px;
+        }
+
+        ul {
+            padding-left: 18px;
+        }
+
+        #btnLogin {
+            padding: 6px 10px;
+            background: #1a73e8;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+        }
+
+        #btnLogout {
+            padding: 6px 10px;
+            background: #444;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+        }
+    </style>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+    <div id="topBar">
+        <div><strong>Vak Store</strong></div>
+        <a href="index.html">Store</a>
+        <a href="AccountHistory.html">Account History</a>
+        <a href="OCMHome.html">OCM</a>
+        <a href="OCMUser.html">OCM Merchant</a>
+        <a id="adminLink" href="Admin.html" style="display:none;">Admin Panel</a>
+        <div class="right">
+            <button id="btnLogin" onclick="startLogin()">Login</button>
+            <span id="topUser" style="font-size:12px;color:#ddd;"></span>
+            <button id="btnLogout" onclick="logout()" style="display:none;">Logout</button>
+        </div>
+    </div>
+
+    <h1>OCM Listings</h1>
+    <input id="q" placeholder="Search item">
+    <button onclick="load()">Search</button>
+    <ul id="list"></ul>
+
+    <script>
+        const WEB_APP_URL = window.WEB_APP_URL;
+        const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID;
+
+        let googleIdToken = null; let currentUser = null; let isAdmin = false;
+
+        function updateAuthUI() {
+            document.body.classList.add('withTopBar');
+            document.getElementById('btnLogin').style.display = googleIdToken ? 'none' : 'inline-block';
+            document.getElementById('btnLogout').style.display = googleIdToken ? 'inline-block' : 'none';
+            document.getElementById('topUser').textContent = googleIdToken ? (currentUser?.email || '') : '';
+            document.getElementById('adminLink').style.display = isAdmin ? 'inline' : 'none';
+        }
+
+        function startLogin() {
+            if (window.google?.accounts?.id) {
+                try { google.accounts.id.initialize({ client_id: OAUTH_CLIENT_ID, callback: onGoogleSignIn, ux_mode: 'popup' }); google.accounts.id.prompt(); } catch { }
+            } else alert('Google Sign-In not loaded yet.');
+        }
+        function logout() {
+            googleIdToken = null; currentUser = null; isAdmin = false;
+            window.clearSavedIdToken && window.clearSavedIdToken();
+            updateAuthUI();
+        }
+
+        async function onGoogleSignIn(resp) {
+            googleIdToken = resp && resp.credential;
+            if (!googleIdToken) { updateAuthUI(); return; }
+            try {
+                const ti = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`);
+                if (!ti.ok) throw new Error('tokeninfo failed');
+                const info = await ti.json();
+                if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
+                window.saveIdToken && window.saveIdToken(googleIdToken);
+                const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
+                const meJ = await meR.json();
+                if (meJ.ok) { currentUser = meJ.data.user || null; isAdmin = !!meJ.data.isAdmin; }
+            } catch (e) { console.warn('signin failed', e); }
+            updateAuthUI();
+        }
+
+        (async function tryRestoreAuthOnLoad() {
+            document.body.classList.add('withTopBar');
+            if (!window.initAuthFromStorage) { updateAuthUI(); return; }
+            try {
+                const res = await window.initAuthFromStorage();
+                if (!res.ok) { updateAuthUI(); return; }
+                googleIdToken = res.idToken;
+                try {
+                    const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
+                    const meJ = await meR.json();
+                    if (meJ.ok) { currentUser = meJ.data.user || null; isAdmin = !!meJ.data.isAdmin; }
+                    else { window.clearSavedIdToken && window.clearSavedIdToken(); googleIdToken = null; }
+                } catch (e) { console.warn('restore /me failed', e); }
+            } catch (_) { /* ignore */ }
+            updateAuthUI();
+            load();
+        })();
+
+        function load() {
+            const q = document.getElementById('q').value.trim();
+            fetch(`${WEB_APP_URL}?action=listings&q=${encodeURIComponent(q)}`)
+                .then(r => r.json()).then(j => {
+                    if (!j.ok) throw new Error(j.error);
+                    const ul = document.getElementById('list'); ul.innerHTML = '';
+                    j.data.forEach(l => {
+                        const li = document.createElement('li');
+                        li.textContent = `${l.itemName} | ${l.type} | ${l.unit} | price:${l.priceBT} | qty:${l.qtyAvailable || '∞'} | ${l.playerName}`;
+                        ul.appendChild(li);
+                    });
+                }).catch(e => { alert(e.message); });
+        }
+    </script>
+</body>
+</html>

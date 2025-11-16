@@ -97,10 +97,10 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 48px;
+            height: 52px;
             background: #222;
             color: #fff;
-            display: none;
+            display: flex;
             align-items: center;
             padding: 0 20px;
             z-index: 1000;
@@ -110,7 +110,7 @@
             #topBar a, #topBar button {
                 color: #fff;
                 text-decoration: none;
-                margin-right: 18px;
+                margin-right: 16px;
                 background: none;
                 border: none;
                 cursor: pointer;
@@ -120,15 +120,16 @@
                 margin-left: auto;
                 display: flex;
                 gap: 12px;
+                align-items: center;
             }
 
         body.withTopBar {
-            padding-top: 70px;
+            padding-top: 72px;
         }
 
         .dropdown-wrap {
             position: relative;
-            display: inline-block.
+            display: inline-block;
         }
 
         .dropdown-input {
@@ -196,6 +197,7 @@
         .ocm-listing {
             font-size: 13px;
             margin: 2px 0;
+            cursor: pointer;
         }
 
         .highlight-action {
@@ -235,40 +237,108 @@
         .fallback-login {
             margin-top: 8px;
         }
+        /* Status ball + popup */
+        #orderStatusBall {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #777;
+            cursor: pointer;
+        }
+
+        .status-pending {
+            background: #f0c200 !important;
+        }
+
+        .status-error {
+            background: #e74c3c !important;
+        }
+
+        .status-none {
+            background: #777 !important;
+        }
+
+        .order-link {
+            color: #66c;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        #orderPopup {
+            position: absolute;
+            top: 52px;
+            right: 100px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 8px;
+            display: none;
+            min-width: 260px;
+            z-index: 1100;
+        }
+        /* Login button style */
+        #btnLogin {
+            padding: 6px 10px;
+            background: #1a73e8;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+        }
+
+        #btnLogout {
+            padding: 6px 10px;
+            background: #444;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+        }
+
+        .guard-msg {
+            font-size: 12px;
+            color: #c00;
+            margin-left: 8px;
+        }
     </style>
+    <script src="app-config.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
     <div id="topBar">
         <div><strong>Vak Store</strong></div>
-        <a id="historyLink" href="#" onclick="openHistory()">Account History</a>
-        <a id="ocmHomeLink" href="#" onclick="openOCM()">OCM</a>
+        <button onclick="navigateStore()">Store</button>
+        <button onclick="navigateHistory()">Account History</button>
+        <button onclick="navigateOCM()">OCM</button>
+        <button onclick="navigateMerchant()">OCM Merchant</button>
+        <button id="adminPanelBtn" style="display:none;" onclick="navigateAdmin()">Admin Panel</button>
         <div class="right">
-            <button onclick="logout()">Logout</button>
+            <button id="btnLogin" onclick="startLogin()">Login</button>
+            <div id="orderStatusBall" title="Orders status"></div>
+            <div id="orderPopup">
+                <div style="font-weight:bold;margin-bottom:6px;">Your open orders</div>
+                <div id="orderPopupBody" class="small"></div>
+            </div>
+            <span id="topUser" class="small"></span>
+            <button id="btnLogout" style="display:none;" onclick="logout()">Logout</button>
         </div>
     </div>
 
     <div id="authPanel">
         <div id="googleLoginArea">
             <div id="googleBtn"></div>
-            <div class="login-hint">
-                If the Google button does not appear or fails (FedCM / third‑party blocked), use fallback:
-            </div>
+            <div class="login-hint">If the Google button does not appear, use fallback:</div>
             <div class="fallback-login">
                 <button id="fallbackBtn" type="button" onclick="startFallbackLogin()">Fallback Google Login</button>
             </div>
-            <div id="loginStatus"></div>
+            <div id="loginStatus" class="small"></div>
         </div>
-
-        <!-- reCAPTCHA v2 visible checkbox container -->
         <div id="recaptchaContainer" style="margin-top:10px;"></div>
-
         <div id="setupForm">
             <h3>Account Setup</h3>
             <label>Player Name: <input type="text" id="setupPlayerName"></label><br>
-            <label>Mailbox (e.g. 1A / 2B / F1): <input type="text" id="setupMailbox" placeholder="Format: RowSegment / DepthSegment / FloorSegment"></label><br>
+            <label>Mailbox (e.g. 1A / 2B / F1): <input type="text" id="setupMailbox"></label><br>
             <button onclick="submitSetup()">Save Setup</button>
-            <div id="setupMsg"></div>
+            <div id="setupMsg" class="small"></div>
         </div>
     </div>
 
@@ -494,11 +564,12 @@
     </div>
 
     <!-- Request Controls -->
-    <div id="requestControls" class="section" style="display:none;">
+    <div id="requestControls" class="section">
         <h2>🔹 Transaction Request</h2>
-        <button onclick="submitPurchaseRequest()">Submit Purchase Request</button>
-        <button class="copy-btn" onclick="copyTransactionData()">Copy Transaction Data</button>
-        <div id="requestMsg"></div>
+        <div id="requestGuard" class="guard-msg" style="display:none;">You need to login for this tool.</div>
+        <button onclick="guardedSubmitPurchaseRequest()">Submit Purchase Request</button>
+        <button class="copy-btn" onclick="guardedCopyTransactionData()">Copy Transaction Data</button>
+        <div id="requestMsg" class="small"></div>
     </div>
 
     <!-- Links -->
@@ -519,36 +590,48 @@
     </div>
 
     <script>
-        /* ===== CONFIG ===== */
-        // IMPORTANT: Apps Script blocks cross-origin POSTs due to CORS.
-        // To avoid "Failed to fetch" on POST, point this to an HTTPS proxy you control (see instructions below).
-        // Example for direct Apps Script (GETs OK, POSTs blocked by CORS):
-        const WEB_APP_URL = 'https://yellow-king-52c6.vilhokettu1.workers.dev/exec';
-        // After deploying a proxy over HTTPS, set:
-        // const WEB_APP_URL = 'https://YOUR-PROXY-DOMAIN/exec';
-
-        const RECAPTCHA_SITE_KEY = '6LdjcAgsAAAAABWoHl5dmFjbJQL61kOu7ddvkUZF';
-        const OAUTH_CLIENT_ID = '857098772457-kuvq861sa844esf2jc4b7av1pnlmnn1c.apps.googleusercontent.com';
-
+        /* ===== CONFIG / CONSTANTS ===== */
+        const WEB_APP_URL = window.WEB_APP_URL || 'https://yellow-king-52c6.vilhokettu1.workers.dev/exec';
+        const RECAPTCHA_SITE_KEY = window.RECAPTCHA_SITE_KEY || '6LdjcAgsAAAAABWoHl5dmFjbJQL61kOu7ddvkUZF';
+        const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '857098772457-kuvq861sa844esf2jc4b7av1pnlmnn1c.apps.googleusercontent.com';
         const sheetURL = "https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/gviz/tq?tqx=out:json&gid=0";
+        const BASE_CURRENCY = "BT";
 
         let items = [], payItems = [], buyCart = [], sellCart = [];
-        let stockProgressCache = []; // {name, currentStacks, targetStacks}
+        let stockProgressCache = [];
+        let dropdownData = [];
         let currentUser = null;
         let googleIdToken = null;
-        const BASE_CURRENCY = "BT";
-        let dropdownData = [];
-
-        // reCAPTCHA v2
         let recaptchaWidgetId = null;
         let lastRecaptchaToken = null;
+        let ocmListingsCacheBuy = [], ocmListingsCacheSell = [];
+        window.editedFromRequestId = null;
 
-        /* ===== Google Login (GSI primary + fallback) ===== */
+        
+        /* ===== Navigation gating ===== */
+        function navigateStore() { /* always allowed */ scrollIntoViewSmooth('buySection'); }
+        function navigateHistory() {
+            if (!googleIdToken) { alert('You need to login for this tool'); return; }
+            window.location.href = 'AccountHistory.html';
+        }
+        function navigateOCM() { window.location.href = 'OCMHome.html'; }
+        function navigateMerchant() {
+            if (!googleIdToken) { alert('You need to login for this tool'); return; }
+            window.location.href = 'OCMUser.html';
+        }
+        function navigateAdmin() {
+            if (!googleIdToken || !currentUser?.isAdmin) { alert('Admin only'); return; }
+            window.location.href = 'Admin.html';
+        }
+
+        function scrollIntoViewSmooth(id) {
+            const el = document.getElementById(id);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        /* ===== Google Identity ===== */
         function initGoogleIdentity() {
-            if (!window.google || !google.accounts || !google.accounts.id) {
-                console.warn('GSI script not loaded yet');
-                return;
-            }
+            if (!window.google || !google.accounts || !google.accounts.id) return;
             google.accounts.id.initialize({
                 client_id: OAUTH_CLIENT_ID,
                 callback: handleCredentialResponse,
@@ -561,14 +644,11 @@
                 { theme: 'outline', size: 'large', type: 'standard', shape: 'rectangular', logo_alignment: 'left' }
             );
         }
-
-        function handleCredentialResponse(resp) {
-            onGoogleSignIn(resp);
-        }
+        function handleCredentialResponse(resp) { onGoogleSignIn(resp); }
 
         function startFallbackLogin() {
             const nonce = cryptoRandomId();
-            const redirectUri = location.origin + location.pathname; // same page
+            const redirectUri = location.origin + location.pathname;
             const authUrl =
                 'https://accounts.google.com/o/oauth2/v2/auth' +
                 '?client_id=' + encodeURIComponent(OAUTH_CLIENT_ID) +
@@ -578,6 +658,14 @@
                 '&nonce=' + encodeURIComponent(nonce) +
                 '&prompt=select_account';
             window.location.href = authUrl;
+        }
+
+        function startLogin() {
+            if (window.google && google.accounts && google.accounts.id) {
+                try { google.accounts.id.prompt(); } catch { startFallbackLogin(); }
+            } else {
+                startFallbackLogin();
+            }
         }
 
         function checkHashForIdToken() {
@@ -590,296 +678,78 @@
                 }
             }
         }
-        // --- insert near top of your script, after variable declarations ---
+
         function normalizeUser(u) {
             if (!u) return u;
-            // Accept common alternate keys and trim whitespace
             const candidate =
                 (u.playerName && String(u.playerName).trim()) ||
                 (u.player && String(u.player).trim()) ||
                 (u.name && String(u.name).trim()) ||
                 (u.displayName && String(u.displayName).trim()) ||
                 null;
-            // Ensure playerName property exists when possible
             u.playerName = candidate || null;
             return u;
         }
-        /* ===== Google Sign-in callback ===== */
-       
-// === REPLACE EXISTING onGoogleSignIn WITH THIS ===
-            async function onGoogleSignIn(resp) {
-                googleIdToken = resp && resp.credential;
+
+        async function onGoogleSignIn(resp) {
             const statusEl = document.getElementById('loginStatus');
-            if (!googleIdToken) {
-                statusEl.textContent = 'Login error: no credential';
-            console.error('onGoogleSignIn: no credential', resp);
-            return;
-        }
+            googleIdToken = resp && resp.credential;
+            if (!googleIdToken) { statusEl.textContent = 'Login error: no credential'; return; }
             statusEl.textContent = 'Verifying token...';
             try {
-            const tResp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`);
-            if (!tResp.ok) throw new Error('tokeninfo failed ' + tResp.status);
-            const info = await tResp.json();
-            if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
-            window.googleTokenInfo = info;
+                const tResp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`);
+                if (!tResp.ok) throw new Error('tokeninfo failed ' + tResp.status);
+                const info = await tResp.json();
+                if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
 
-            // Fetch server user
-            statusEl.textContent = 'Loading profile...';
-            const meResp = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-            const meJson = await meResp.json();
-            console.log('onGoogleSignIn /me', meJson);
+                // persist token so other pages can restore it
+                window.saveIdToken && window.saveIdToken(googleIdToken);
 
-            if (!meJson.ok) throw new Error(meJson.error || 'Backend error');
-
-            const serverUser = normalizeUser(meJson.data.user || null);
-            currentUser = serverUser;
-
-            const hasSetup = serverUser && serverUser.playerName;
-            const passedCaptcha = serverUser && serverUser.captchaPassed;
-
-            if (hasSetup && passedCaptcha) {
-                // Solid completed setup
-                localStorage.setItem('vak_captcha_ok', '1');
-            hideRecaptchaWidget();
-            hideSetupShowApp();
-            } else {
-                // Incomplete – reset local flag & show captcha
-                localStorage.removeItem('vak_captcha_ok');
-            showSetupOnly();
-            showRecaptchaWidget();
-            }
-
-            showTopBar();
-            statusEl.textContent = 'Logged in.';
-        } catch (e) {
-                statusEl.textContent = 'Login error: ' + e.message;
-            console.error('onGoogleSignIn error:', e);
-        }
-}
-
-            // Helper to show captcha container
-            function showRecaptchaWidget() {
-        const c = document.getElementById('recaptchaContainer');
-            if (c) c.style.display = 'block';
-}
-            function hideRecaptchaWidget() {
-        const c = document.getElementById('recaptchaContainer');
-            if (c) c.style.display = 'none';
-}
-
-            // === ADD / REPLACE refreshUserStateAfterSetup ===
-            async function refreshUserStateAfterSetup() {
-        const meResp = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-            const meJson = await meResp.json();
-            console.log('refreshUserStateAfterSetup /me', meJson);
-            if (!meJson.ok) throw new Error(meJson.error || 'me failed');
-            const serverUser = normalizeUser(meJson.data.user || null);
-            currentUser = serverUser;
-            const hasSetup = serverUser && serverUser.playerName;
-            const passedCaptcha = serverUser && serverUser.captchaPassed;
-            return {hasSetup, passedCaptcha};
-}
-
-            // === REPLACE EXISTING submitSetup WITH THIS ===
-            async function submitSetup() {
-        const playerName = document.getElementById('setupPlayerName').value.trim();
-            const mailbox = document.getElementById('setupMailbox').value.trim();
-            const statusEl = document.getElementById('setupMsg');
-
-            if (!googleIdToken) {statusEl.textContent = 'Login first'; return; }
-            if (!playerName || !mailbox) {statusEl.textContent = 'Player name and mailbox required'; return; }
-
-            // Decide if we must still collect captcha (server did not confirm pass yet)
-            const needCaptcha = !localStorage.getItem('vak_captcha_ok');
-            let recaptchaToken = null;
-            if (needCaptcha) {
-            try {
-                recaptchaToken = await recaptchaWrap(); // will throw if not completed
-            } catch (e) {
-                statusEl.textContent = e.message;
-            return;
-            }
-        }
-
-            statusEl.textContent = 'Saving...';
-
-            try {
-            const body = {
-                action: 'linkPlayer',
-            idToken: googleIdToken,
-            payload: {playerName, mailbox}
-            };
-            if (recaptchaToken) body.recaptchaToken = recaptchaToken;
-
-            const resp = await fetch(WEB_APP_URL, {
-                method: 'POST',
-            headers: {'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-            });
-            const j = await resp.json();
-            console.log('submitSetup linkPlayer', j);
-            if (!j.ok) throw new Error(j.error || 'linkPlayer failed');
-
-            // Re-fetch user state to confirm persistence & captcha
-            statusEl.textContent = 'Verifying saved data...';
-            const {hasSetup, passedCaptcha} = await refreshUserStateAfterSetup();
-
-            if (hasSetup && passedCaptcha) {
-                localStorage.setItem('vak_captcha_ok', '1');
-            hideRecaptchaWidget();
-            hideSetupShowApp();
-            showTopBar();
-            statusEl.textContent = 'Setup complete.';
-            } else {
-                // Do NOT set local flag – requires another captcha attempt
-                localStorage.removeItem('vak_captcha_ok');
-            showRecaptchaWidget();
-            statusEl.textContent = 'Server did not confirm setup yet. Retry (captcha still required).';
-            }
-        } catch (e) {
-                statusEl.textContent = 'Error: ' + e.message;
-            console.error('submitSetup error', e);
-        }
-}
-
-            // === REPLACE EXISTING recaptchaWrap WITH THIS ===
-            function recaptchaWrap() {
-        return new Promise((resolve, reject) => {
-            // Only skip if local flag is set AND we already have a server-confirmed captchaPassed user
-            const canSkip = localStorage.getItem('vak_captcha_ok') === '1' &&
-            currentUser && currentUser.playerName && currentUser.captchaPassed;
-            if (canSkip) return resolve(null);
-
-            if (lastRecaptchaToken) return resolve(lastRecaptchaToken);
-
-            if (window.grecaptcha) {
-                document.getElementById('recaptchaContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return reject(new Error('Complete reCAPTCHA checkbox first.'));
-            }
-            reject(new Error('reCAPTCHA not loaded yet.'));
-        });
-}
-    
-
-        function logout() {
-            googleIdToken = null;
-            currentUser = null;
-            document.getElementById('loginStatus').textContent = 'Logged out.';
-            document.getElementById('topBar').style.display = 'none';
-            document.body.classList.remove('withTopBar');
-            document.getElementById('requestControls').style.display = 'none';
-            // Keep local captcha flag so user isn't prompted again on next visit
-        }
-
-        async function submitSetup() {
-            const playerName = document.getElementById('setupPlayerName').value.trim();
-            const mailbox = document.getElementById('setupMailbox').value.trim();
-            const statusEl = document.getElementById('setupMsg');
-
-            if (!playerName || !mailbox) {
-                statusEl.textContent = 'Player name and mailbox required';
-                return;
-            }
-
-            // If previously passed captcha (client-side flag), skip asking again
-            const skipCaptcha = localStorage.getItem('vak_captcha_ok') === '1';
-
-            const doPost = (tokenOrNull) => {
-                const body = {
-                    action: 'linkPlayer',
-                    idToken: googleIdToken,
-                    payload: { playerName, mailbox }
-                };
-                if (tokenOrNull) body.recaptchaToken = tokenOrNull;
-                return fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-            };
-
-            statusEl.textContent = 'Saving...';
-
-            try {
-                const token = skipCaptcha ? null : await recaptchaWrap();
-                const postResp = await doPost(token);
-                const postJson = await postResp.json();
-                console.log('submitSetup: linkPlayer response', postJson);
-                if (!postJson.ok) throw new Error(postJson.error || 'linkPlayer failed');
-
-                // Mark client flag so we no longer prompt for captcha
-                localStorage.setItem('vak_captcha_ok', '1');
-                const c = document.getElementById('recaptchaContainer'); if (c) c.style.display = 'none';
-                statusEl.textContent = 'Setup saved. Verifying...';
-
-                // Re-fetch user record from server
+                // existing server /me call
+                statusEl.textContent = 'Loading profile...';
                 const meResp = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-                if (!meResp.ok) throw new Error('me fetch failed ' + meResp.status);
                 const meJson = await meResp.json();
-                console.log('submitSetup: /me response', meJson);
-                if (!meJson.ok) throw new Error(meJson.error || 'me returned not ok');
+                if (!meJson.ok) throw new Error(meJson.error || 'Backend error');
 
-                const serverUser = normalizeUser(meJson.data?.user || null);
-                if (serverUser && serverUser.playerName) {
-                    currentUser = Object.assign({}, currentUser || {}, serverUser);
+                const serverUser = normalizeUser(meJson.data.user || null);
+                currentUser = serverUser;
+                currentUser.isAdmin = !!meJson.data.isAdmin;
+
+                updateTopBarAuth();
+                if (currentUser.isAdmin) document.getElementById('adminPanelBtn').style.display = 'inline';
+                else document.getElementById('adminPanelBtn').style.display = 'none';
+
+                const hasSetup = serverUser && serverUser.playerName;
+                const passedCaptcha = serverUser && serverUser.captchaPassed;
+
+                if (hasSetup && passedCaptcha) {
+                    localStorage.setItem('vak_captcha_ok', '1');
+                    hideRecaptchaWidget();
+                    hideSetupShowApp();
                 } else {
-                    // Server did not return user data — make optimistic local user using token info
-                    const tokenInfo = window.googleTokenInfo || {};
-                    currentUser = {
-                        userId: tokenInfo.sub || (currentUser && currentUser.userId),
-                        email: tokenInfo.email || (currentUser && currentUser.email),
-                        playerName,
-                        mailbox
-                    };
-                    console.warn('submitSetup: server did not return user; using optimistic local user', currentUser);
-                    // still advise to check server logs; but enable UI so user can continue
-                    statusEl.textContent = 'Setup saved locally; server did not return user. If this persists check server logs.';
+                    localStorage.removeItem('vak_captcha_ok');
+                    showSetupOnly();
+                    showRecaptchaWidget();
                 }
 
-                enableAppUI();
-                showTopBar();
-                document.getElementById('setupForm').style.display = 'none';
-                statusEl.textContent = 'Setup complete.';
+                statusEl.textContent = 'Logged in.';
+                refreshOpenOrders();
             } catch (e) {
-                console.error('submitSetup error:', e);
-                statusEl.textContent = 'Error: ' + (e && e.message ? e.message : String(e));
-            }
-        }
-        function showSetupOnly() {
-            // Show the setup form, hide request controls and ensure reCAPTCHA is visible
-            const setup = document.getElementById('setupForm');
-            const req = document.getElementById('requestControls');
-            if (setup) setup.style.display = 'block';
-            if (req) req.style.display = 'none';
-            // If you have a recaptcha helper, show it; otherwise un-hide container
-            if (typeof showRecaptchaWidget === 'function') showRecaptchaWidget();
-            else {
-                const c = document.getElementById('recaptchaContainer'); if (c) c.style.display = 'block';
+                statusEl.textContent = 'Login error: ' + e.message;
             }
         }
 
-        function hideSetupShowApp() {
-            // Hide the setup form and enable the app UI (request controls + top bar)
-            const setup = document.getElementById('setupForm');
-            if (setup) setup.style.display = 'none';
-            if (typeof enableAppUI === 'function') enableAppUI();
-            if (typeof hideRecaptchaWidget === 'function') hideRecaptchaWidget();
-            else {
-                const c = document.getElementById('recaptchaContainer'); if (c) c.style.display = 'none';
-            }
-            if (typeof showTopBar === 'function') showTopBar();
-        }
-        function enableAppUI() { document.getElementById('requestControls').style.display = 'block'; }
-        function showTopBar() {
-            if (googleIdToken && currentUser) {
-                document.getElementById('topBar').style.display = 'flex';
-                document.body.classList.add('withTopBar');
-            }
+        function updateTopBarAuth() {
+            document.getElementById('topUser').textContent = googleIdToken ? (currentUser?.email || '') : '';
+            document.getElementById('btnLogin').style.display = googleIdToken ? 'none' : 'inline-block';
+            document.getElementById('btnLogout').style.display = googleIdToken ? 'inline-block' : 'none';
         }
 
-        /* ===== reCAPTCHA v2 (prompt only once) ===== */
+        /* ===== reCAPTCHA ===== */
+        function showRecaptchaWidget() { const c = document.getElementById('recaptchaContainer'); if (c) c.style.display = 'block'; }
+        function hideRecaptchaWidget() { const c = document.getElementById('recaptchaContainer'); if (c) c.style.display = 'none'; }
+
         function initRecaptcha() {
-            // If user already passed captcha (client-side flag), hide the widget and skip
             if (localStorage.getItem('vak_captcha_ok') === '1') {
                 const c = document.getElementById('recaptchaContainer');
                 if (c) c.style.display = 'none';
@@ -908,25 +778,182 @@
 
         function recaptchaWrap() {
             return new Promise((resolve, reject) => {
-                // Skip if client-side flag is set (server will enforce its own "once" rule)
                 if (localStorage.getItem('vak_captcha_ok') === '1') return resolve(null);
                 if (lastRecaptchaToken) return resolve(lastRecaptchaToken);
                 if (window.grecaptcha) {
                     document.getElementById('recaptchaContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
                     return reject(new Error('Complete reCAPTCHA checkbox first.'));
                 }
-                reject(new Error('reCAPTCHA not loaded.'));
+                reject(new Error('reCAPTCHA not loaded yet.'));
             });
         }
 
-        /* ===== Utility ===== */
-        function cryptoRandomId() { return (crypto.getRandomValues(new Uint32Array(4))).join('-'); }
+        /* ===== Setup gating ===== */
+        function showSetupOnly() {
+            const setup = document.getElementById('setupForm');
+            const req = document.getElementById('requestControls');
+            if (setup) setup.style.display = 'block';
+            if (req) req.style.display = 'block'; // still visible, but guarded
+            showRecaptchaWidget();
+            document.getElementById('requestGuard').style.display = googleIdToken ? 'none' : 'block';
+        }
+        function hideSetupShowApp() {
+            const setup = document.getElementById('setupForm');
+            if (setup) setup.style.display = 'none';
+            hideRecaptchaWidget();
+            document.getElementById('requestGuard').style.display = 'none';
+        }
 
-        /* ===== Custom dropdown / circular stock indicator implementation ===== */
-        function computeEffectiveTargetStacks(item, prog) {
-            if (!prog) return 0;
-            const t = Number(prog.targetStacks || 0);
-            return isFinite(t) && t > 0 ? t : 0;
+        async function submitSetup() {
+            const playerName = document.getElementById('setupPlayerName').value.trim();
+            const mailbox = document.getElementById('setupMailbox').value.trim();
+            const statusEl = document.getElementById('setupMsg');
+
+            if (!googleIdToken) { statusEl.textContent = 'Login first'; return; }
+            if (!playerName || !mailbox) { statusEl.textContent = 'Player name and mailbox required'; return; }
+
+            const needCaptcha = !localStorage.getItem('vak_captcha_ok');
+            let recaptchaToken = null;
+            if (needCaptcha) {
+                try { recaptchaToken = await recaptchaWrap(); } catch (e) { statusEl.textContent = e.message; return; }
+            }
+
+            statusEl.textContent = 'Saving...';
+
+            try {
+                const body = {
+                    action: 'linkPlayer',
+                    idToken: googleIdToken,
+                    payload: { playerName, mailbox }
+                };
+                if (recaptchaToken) body.recaptchaToken = recaptchaToken;
+
+                const resp = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const j = await resp.json();
+                if (!j.ok) throw new Error(j.error || 'linkPlayer failed');
+
+                const meResp = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
+                const meJson = await meResp.json();
+                if (!meJson.ok) throw new Error(meJson.error || 'me failed');
+                currentUser = normalizeUser(meJson.data.user || null);
+                currentUser.isAdmin = !!meJson.data.isAdmin;
+
+                if (currentUser.playerName && currentUser.captchaPassed) {
+                    localStorage.setItem('vak_captcha_ok', '1');
+                    hideSetupShowApp();
+                } else {
+                    localStorage.removeItem('vak_captcha_ok');
+                    showSetupOnly();
+                }
+                updateTopBarAuth();
+                statusEl.textContent = 'Setup complete.';
+            } catch (e) {
+                statusEl.textContent = 'Error: ' + e.message;
+            }
+        }
+
+        /* ===== Logout ===== */
+        function logout() {
+            googleIdToken = null;
+            currentUser = null;
+            isAdmin = false;
+            // clear persisted token so other pages don't restore it
+            window.clearSavedIdToken && window.clearSavedIdToken();
+            document.getElementById('loginStatus').textContent = 'Logged out.';
+            document.getElementById('adminPanelBtn').style.display = 'none';
+            updateTopBarAuth();
+            document.getElementById('requestGuard').style.display = 'block';
+        }
+
+        /* ===== Data loading ===== */
+        function loadData() {
+            fetch(sheetURL)
+                .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+                .then(txt => {
+                    let payloadText = txt;
+                    const start = payloadText.indexOf('('), end = payloadText.lastIndexOf(')');
+                    if (start > -1 && end > start) payloadText = payloadText.slice(start + 1, end);
+                    const json = JSON.parse(payloadText);
+                    const rows = json?.table?.rows || [];
+                    items = rows.map(row => {
+                        const c = row.c || [];
+                        const name = c[0]?.v ?? "";
+                        const buyStack = c[1]?.v ?? "";
+                        const sellStack = c[2]?.v ?? "";
+                        const stackStock = Number(c[3]?.v ?? 0);
+                        const bundleSize = Number(c[4]?.v ?? 1);
+                        const buyEach = c[5]?.v ?? "";
+                        const sellEach = c[6]?.v ?? "";
+                        const indivStock = Number(c[7]?.v ?? 0);
+                        const availPercent = Number(c[8]?.v ?? 0);
+                        const targetEach = Number(c[9]?.v ?? 0);
+                        if (!name) return null;
+                        if ((buyStack === "X" && sellStack === "X") && (buyEach === "X" && sellEach === "X")) return null;
+                        const parseNumOrNull = v => {
+                            if (v === null || v === "" || v === undefined) return null;
+                            const n = Number(v); return isNaN(n) ? null : n;
+                        };
+                        return {
+                            name: String(name),
+                            bundleSize: bundleSize || 1,
+                            stackStock, indivStock, availPercent, targetEach: targetEach || 0,
+                            buyStack: parseNumOrNull(buyStack),
+                            sellStack: parseNumOrNull(sellStack),
+                            buyEach: parseNumOrNull(buyEach),
+                            sellEach: parseNumOrNull(sellEach)
+                        };
+                    }).filter(Boolean);
+
+                    stockProgressCache = items.map(i => {
+                        const bs = Number(i.bundleSize || 1) || 1;
+                        const currentStacks = (Number(i.indivStock || 0) / bs);
+                        const targetStacks = Number(i.targetEach || 0);
+                        return { name: i.name, currentStacks, targetStacks };
+                    });
+
+                    payItems = items.slice();
+                    populateCurrencyDatalist();
+                    setupDropdowns();
+                })
+                .catch(err => {
+                    console.error('Failed to load sheet:', err);
+                    items = []; payItems = []; stockProgressCache = [];
+                    populateCurrencyDatalist(); setupDropdowns();
+                });
+        }
+
+        function populateCurrencyDatalist() {
+            const currencyDatalist = document.getElementById("currencyDatalist");
+            currencyDatalist.innerHTML = "";
+            currencyDatalist.appendChild(new Option(BASE_CURRENCY, BASE_CURRENCY));
+            items.forEach(i => {
+                currencyDatalist.appendChild(new Option(`${i.name} — stack:${i.stackStock} each:${i.indivStock} avail:${i.availPercent}%`, i.name));
+            });
+            const input = document.getElementById("currencyInput");
+            const hidden = document.getElementById("currencySelect");
+            input.onchange = () => {
+                const val = input.value.trim();
+                const exact = items.find(it => it.name.toLowerCase() === val.toLowerCase());
+                hidden.value = exact ? exact.name : BASE_CURRENCY;
+                updateAllDisplays();
+            };
+            input.oninput = () => {
+                const v = input.value.trim();
+                const exact = items.find(it => it.name.toLowerCase() === v.toLowerCase());
+                if (exact) { hidden.value = exact.name; updateAllDisplays(); }
+            };
+        }
+
+        function setupDropdowns() {
+            dropdownData = items.map(i => ({ name: i.name, extra: `stk:${i.stackStock} each:${i.indivStock} avail:${i.availPercent}%` }));
+            function filterBy(q) { if (!q) return dropdownData.slice(0, 200); return dropdownData.filter(d => d.name.toLowerCase().includes(q)); }
+            ['quickStackSelect', 'quickIndivSelect', 'stackSelect', 'indivSelect', 'sellStackSelect', 'sellIndivSelect',
+                'customBuyStackSelect', 'customBuyIndivSelect', 'customSellStackSelect', 'customSellIndivSelect']
+                .forEach(id => attachDropdown(id, id + 'List', filterBy, () => { }));
         }
 
         function attachDropdown(inputId, listId, filterFn, selectCallback) {
@@ -972,41 +999,29 @@
                 const div = document.createElement('div');
                 div.className = 'dropdown-item';
                 div.dataset.index = String(idx);
-
-                const itemObj = items.find(it => it.name === item.name);
-                const prog = stockProgressCache.find(sp => sp.name === item.name);
-
                 let pct = 0;
-                if (prog) {
-                    const target = computeEffectiveTargetStacks(itemObj, prog);
-                    if (target > 0) pct = Math.round((Number(prog.currentStacks || 0) / target) * 100);
+                const prog = stockProgressCache.find(sp => sp.name === item.name);
+                const itemObj = items.find(it => it.name === item.name);
+                if (prog && itemObj) {
+                    const target = Number(itemObj.targetEach || 0);
+                    if (target > 0) pct = Math.round((prog.currentStacks / target) * 100);
                 }
                 pct = Math.max(0, Math.min(100, pct));
-
                 const circle = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                circle.setAttribute('class', 'stock-circle');
-                circle.setAttribute('viewBox', '0 0 36 36');
-
+                circle.setAttribute('class', 'stock-circle'); circle.setAttribute('viewBox', '0 0 36 36');
                 const bg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 bg.setAttribute('cx', '18'); bg.setAttribute('cy', '18'); bg.setAttribute('r', '16');
                 bg.setAttribute('stroke', '#eee'); bg.setAttribute('stroke-width', '4'); bg.setAttribute('fill', 'none');
-
                 const fg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 fg.setAttribute('cx', '18'); fg.setAttribute('cy', '18'); fg.setAttribute('r', '16');
                 fg.setAttribute('stroke', pct >= 100 ? '#3cb371' : '#2196f3');
                 fg.setAttribute('stroke-width', '4'); fg.setAttribute('fill', 'none');
                 fg.setAttribute('stroke-dasharray', Math.round((pct / 100) * 2 * Math.PI * 16) + ',1000');
                 fg.setAttribute('transform', 'rotate(-90 18 18)');
-
-                circle.appendChild(bg);
-                circle.appendChild(fg);
-
+                circle.appendChild(bg); circle.appendChild(fg);
                 const label = document.createElement('div');
                 label.innerHTML = `<strong>${item.name}</strong><br><small>${item.extra}</small>`;
-
-                div.appendChild(circle);
-                div.appendChild(label);
-
+                div.appendChild(circle); div.appendChild(label);
                 div.addEventListener('mouseover', () => {
                     Array.from(container.querySelectorAll('.dropdown-item')).forEach(s => s.classList.remove('active'));
                     div.classList.add('active');
@@ -1016,479 +1031,7 @@
             });
         }
 
-        /* ===== Data loading ===== */
-        function loadData() {
-            fetch(sheetURL)
-                .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
-                .then(txt => {
-                    let payloadText = txt;
-                    const start = payloadText.indexOf('('), end = payloadText.lastIndexOf(')');
-                    if (start > -1 && end > start) payloadText = payloadText.slice(start + 1, end);
-                    const json = JSON.parse(payloadText);
-                    const rows = json?.table?.rows || [];
-                    items = rows.map(row => {
-                        const c = row.c || [];
-                        const name = c[0]?.v ?? "";
-                        const buyStack = c[1]?.v ?? "";
-                        const sellStack = c[2]?.v ?? "";
-                        const stackStock = Number(c[3]?.v ?? 0);
-                        const bundleSize = Number(c[4]?.v ?? 1);
-                        const buyEach = c[5]?.v ?? "";
-                        const sellEach = c[6]?.v ?? "";
-                        const indivStock = Number(c[7]?.v ?? 0);
-                        const availPercent = Number(c[8]?.v ?? 0);
-                        const targetEach = Number(c[9]?.v ?? 0);
-                        if (!name) return null;
-                        if ((buyStack === "X" && sellStack === "X") && (buyEach === "X" && sellEach === "X")) return null;
-                        const parseNumOrNull = v => {
-                            if (v === null || v === "" || v === undefined) return null;
-                            const n = Number(v); return isNaN(n) ? null : n;
-                        };
-                        return {
-                            name: String(name),
-                            bundleSize: bundleSize || 1,
-                            stackStock, indivStock, availPercent, targetEach: targetEach || 0,
-                            buyStack: parseNumOrNull(buyStack),
-                            sellStack: parseNumOrNull(sellStack),
-                            buyEach: parseNumOrNull(buyEach),
-                            sellEach: parseNumOrNull(sellEach)
-                        };
-                    }).filter(Boolean);
-
-                    stockProgressCache = items.map(i => {
-                        const bundleSize = Number(i.bundleSize || 1) || 1;
-                        const currentStacks = (Number(i.indivStock || 0) / bundleSize);
-                        const targetStacks = Number(i.targetEach || 0);
-                        return { name: i.name, currentStacks, targetStacks };
-                    });
-
-                    payItems = items.slice();
-                    populateCurrencyDatalist();
-                    setupDropdowns();
-                })
-                .catch(err => {
-                    console.error('Failed to load sheet:', err);
-                    items = []; payItems = []; stockProgressCache = [];
-                    populateCurrencyDatalist(); setupDropdowns();
-                });
-        }
-
-        function populateCurrencyDatalist() {
-            const currencyDatalist = document.getElementById("currencyDatalist");
-            currencyDatalist.innerHTML = "";
-            currencyDatalist.appendChild(new Option(BASE_CURRENCY, BASE_CURRENCY));
-            items.forEach(i => {
-                currencyDatalist.appendChild(new Option(`${i.name} — stack:${i.stackStock} each:${i.indivStock} avail:${i.availPercent}%`, i.name));
-            });
-            const input = document.getElementById("currencyInput");
-            const hidden = document.getElementById("currencySelect");
-            input.onchange = () => {
-                const val = input.value.trim();
-                const exact = items.find(it => it.name.toLowerCase() === val.toLowerCase());
-                hidden.value = exact ? exact.name : BASE_CURRENCY;
-                updateAllDisplays();
-            };
-            input.oninput = () => {
-                const v = input.value.trim();
-                const exact = items.find(it => it.name.toLowerCase() === v.toLowerCase());
-                if (exact) { hidden.value = exact.name; updateAllDisplays(); }
-            };
-        }
-
-        function setupDropdowns() {
-            dropdownData = items.map(i => ({ name: i.name, extra: `stkStock:${i.stackStock} eachStock:${i.indivStock} avail:${i.availPercent}%` }));
-            function filterBy(q) { if (!q) return dropdownData.slice(0, 200); return dropdownData.filter(d => d.name.toLowerCase().includes(q)); }
-            attachDropdown('quickStackSelect', 'quickStackSelectList', filterBy, () => { });
-            attachDropdown('quickIndivSelect', 'quickIndivSelectList', filterBy, () => { });
-            attachDropdown('stackSelect', 'stackSelectList', filterBy, () => { });
-            attachDropdown('indivSelect', 'indivSelectList', filterBy, () => { });
-            attachDropdown('sellStackSelect', 'sellStackSelectList', filterBy, () => { });
-            attachDropdown('sellIndivSelect', 'sellIndivSelectList', filterBy, () => { });
-            attachDropdown('customBuyStackSelect', 'customBuyStackSelectList', filterBy, () => { });
-            attachDropdown('customBuyIndivSelect', 'customBuyIndivSelectList', filterBy, () => { });
-            attachDropdown('customSellStackSelect', 'customSellStackSelectList', filterBy, () => { });
-            attachDropdown('customSellIndivSelect', 'customSellIndivSelectList', filterBy, () => { });
-        }
-
-        let ocmListingsCacheBuy = [], ocmListingsCacheSell = [];
-        function refreshOCMBuy() {
-            const q = document.getElementById('ocmBuyQuery').value.trim();
-            fetch(`${WEB_APP_URL}?action=listings&q=${encodeURIComponent(q)}`)
-                .then(r => r.json()).then(j => {
-                    if (!j.ok) throw new Error(j.error);
-                    ocmListingsCacheBuy = j.data.filter(l => l.type === 'SELL');
-                    renderOCMListings('ocmBuyListings', ocmListingsCacheBuy);
-                }).catch(e => { document.getElementById('ocmBuyListings').textContent = 'Error: ' + e.message; });
-        }
-        function refreshOCMSell() {
-            const q = document.getElementById('ocmSellQuery').value.trim();
-            fetch(`${WEB_APP_URL}?action=listings&q=${encodeURIComponent(q)}`)
-                .then(r => r.json()).then(j => {
-                    if (!j.ok) throw new Error(j.error);
-                    ocmListingsCacheSell = j.data.filter(l => l.type === 'BUY');
-                    renderOCMListings('ocmSellListings', ocmListingsCacheSell);
-                }).catch(e => { document.getElementById('ocmSellListings').textContent = 'Error: ' + e.message; });
-        }
-        function renderOCMListings(containerId, arr) {
-            const el = document.getElementById(containerId); el.innerHTML = '';
-            if (!arr.length) { el.textContent = 'No listings'; return; }
-            arr.forEach(l => {
-                const div = document.createElement('div'); div.className = 'ocm-listing';
-                div.textContent = `${l.itemName} | ${l.type} | ${l.unit} | price:${l.priceBT} | qty:${l.qtyAvailable || '∞'} | by ${l.playerName}`;
-                div.dataset.listingId = l.listingId;
-                div.onclick = () => {
-                    Array.from(el.children).forEach(c => c.classList.remove('highlight-action'));
-                    div.classList.add('highlight-action');
-                    el.dataset.selectedListingId = l.listingId;
-                };
-                el.appendChild(div);
-            });
-        }
-        function addOCMBuy() {
-            const id = document.getElementById('ocmBuyListings').dataset.selectedListingId;
-            if (!id) return alert('Select an OCM SELL listing first');
-            const listing = ocmListingsCacheBuy.find(l => l.listingId === id);
-            const qty = parseInt(document.getElementById('ocmBuyQty').value) || 0;
-            if (!listing || qty <= 0) return;
-            buyCart.push({ name: listing.itemName, qty, price: Number(listing.priceBT), source: 'OCM', listingId: id });
-            renderBuyList();
-        }
-        function addOCMSell() {
-            const id = document.getElementById('ocmSellListings').dataset.selectedListingId;
-            if (!id) return alert('Select an OCM BUY listing first');
-            const listing = ocmListingsCacheSell.find(l => l.listingId === id);
-            const qty = parseInt(document.getElementById('ocmSellQty').value) || 0;
-            if (!listing || qty <= 0) return;
-            sellCart.push({ name: listing.itemName, qty, price: Number(listing.priceBT), source: 'OCM', listingId: id });
-            renderSellList();
-        }
-
-        /* ===== Row coloring against stock & target ===== */
-        function evaluateRowColorBuy(entry) {
-            const item = items.find(i => i.name === entry.name);
-            const prog = stockProgressCache.find(sp => sp.name === entry.name);
-            if (!item && !prog) return null;
-            if (entry.source === 'OCM') return null;
-
-            const bundleSize = item ? (item.bundleSize || 1) : 1;
-            const requestedStacks = entry.bundleSize ? Number(entry.qty || 0) : (Number(entry.qty || 0) / bundleSize);
-            const availableStacks = (item ? (Number(item.stackStock || 0) + (Number(item.indivStock || 0) / bundleSize)) : (prog ? prog.currentStacks : 0));
-
-            if (availableStacks <= 0) return 'row-warning-red';
-
-            const ratio = requestedStacks / availableStacks;
-            if (ratio > 1) return 'row-warning-red';
-            if (ratio > 0.5) return 'row-warning-yellow';
-            return null;
-        }
-        function evaluateRowColorSell(entry) {
-            const prog = stockProgressCache.find(sp => sp.name === entry.name);
-            const item = items.find(i => i.name === entry.name);
-            if (!prog || entry.source === 'OCM') return null;
-            const bundleSize = item ? (Number(item.bundleSize || 1) || 1) : 1;
-            const sellingStacks = entry.bundleSize ? Number(entry.qty || 0) : (Number(entry.qty || 0) / bundleSize);
-            const currentStacks = Number(prog.currentStacks || 0);
-            const projected = currentStacks + sellingStacks;
-
-            const effectiveTarget = computeEffectiveTargetStacks(item, prog);
-            if (effectiveTarget > 0 && projected > effectiveTarget) return 'row-warning-red';
-            return null;
-        }
-
-        function formatValue(btValue, currencyName, forBuy) {
-            if (isNaN(btValue)) btValue = 0;
-            let txt = `${btValue.toFixed(2)} ${BASE_CURRENCY}`;
-            if (currencyName && currencyName !== BASE_CURRENCY) {
-                const currency = items.find(i => i.name.toLowerCase() === currencyName.toLowerCase());
-                if (currency) {
-                    const rate = forBuy ? (currency.buyEach || currency.buyStack || 0) : (currency.sellEach || currency.sellStack || 0);
-                    if (rate > 0) { txt += ` (≈ ${(btValue / rate).toFixed(2)} ${currencyName})`; }
-                }
-            }
-            return txt;
-        }
-        function updateAllDisplays() {
-            renderBuyList();
-            renderSellList();
-            calculateNet();
-        }
-
-        function renderBuyList() {
-            const list = document.getElementById("buyList"); list.innerHTML = "";
-            let total = 0; const curr = document.getElementById("currencySelect").value;
-            buyCart.forEach(e => {
-                const li = document.createElement("li");
-                let rowTotal = 0, rowText = "";
-                if (e.isBalance) { rowTotal = e.price || 0; rowText = `Account Balance: ${rowTotal.toFixed(2)} BT`; }
-                else if (e.bundleSize && e.isFullyCustom) { rowTotal = (e.qty / e.bundleSize) * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`; }
-                else if (e.bundleSize) { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`; }
-                else { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`; }
-                total += rowTotal;
-                if (e.isConverter) rowText += ' [Converted]';
-                if (e.source === 'OCM') rowText += ' [OCM]';
-                const colorClass = evaluateRowColorBuy(e);
-                if (colorClass) li.classList.add(colorClass);
-                if (curr && curr !== BASE_CURRENCY) rowText += ' ' + formatValue(rowTotal, curr, true);
-                li.textContent = rowText;
-                const removeBtn = document.createElement("button");
-                removeBtn.textContent = "❌"; removeBtn.onclick = () => { buyCart = buyCart.filter(x => x !== e); renderBuyList(); calculateNet(); };
-                li.appendChild(removeBtn);
-                list.appendChild(li);
-            });
-            document.getElementById("buyTotal").textContent = formatValue(total, curr, true);
-            calculateNet();
-        }
-
-        function renderSellList() {
-            const list = document.getElementById("sellList"); list.innerHTML = "";
-            let total = 0; const curr = document.getElementById("currencySelect").value;
-            sellCart.forEach(e => {
-                const li = document.createElement("li");
-                let rowTotal = 0, rowText = "";
-                if (e.isBalance) { rowTotal = e.price || 0; rowText = `Account Balance: ${rowTotal.toFixed(2)} BT`; }
-                else if (e.bundleSize && e.isFullyCustom) { rowTotal = (e.qty / e.bundleSize) * e.price; rowText = `${e.qty} × ${e.name} (${e.price} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`; }
-                else if (e.bundleSize) { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`; }
-                else { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`; }
-                if (e.isPayWith) rowText += ' [Pay With]';
-                if (e.source === 'OCM') rowText += ' [OCM]';
-                total += rowTotal;
-                const colorClass = evaluateRowColorSell(e);
-                if (colorClass) {
-                    li.classList.add(colorClass);
-                    if (colorClass === 'row-warning-red') {
-                        const warn = document.createElement('span'); warn.className = 'small-note';
-                        warn.textContent = 'over target stock — forced recalculation';
-                        li.appendChild(warn);
-                    }
-                }
-                if (curr && curr !== BASE_CURRENCY) rowText += ' ' + formatValue(rowTotal, curr, false);
-                li.textContent = rowText;
-                const removeBtn = document.createElement("button");
-                removeBtn.textContent = "❌"; removeBtn.onclick = () => { sellCart = sellCart.filter(x => x !== e); renderSellList(); calculateNet(); };
-                li.appendChild(removeBtn);
-                list.appendChild(li);
-            });
-            document.getElementById("sellTotal").textContent = formatValue(total, curr, false);
-            calculateNet();
-        }
-
-        function calculateNet() {
-            const buyTotal = buyCart.reduce((s, e) => {
-                if (e.isBalance) return s + (e.price || 0);
-                if (e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
-                if (e.bundleSize) return s + (e.qty * e.price);
-                return s + (e.qty * e.price);
-            }, 0);
-            const sellTotal = sellCart.reduce((s, e) => {
-                if (e.isBalance) return s + (e.price || 0);
-                if (e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
-                if (e.bundleSize) return s + (e.qty * e.price);
-                return s + (e.qty * e.price);
-            }, 0);
-            const net = sellTotal - buyTotal;
-            const curr = document.getElementById("currencySelect").value;
-            const netSpan = document.getElementById("netTotal");
-            netSpan.dataset.raw = String(net);
-            netSpan.textContent = formatValue(net, curr, net < 0);
-            netSpan.className = net >= 0 ? 'positive' : 'negative';
-        }
-
-        function buildRequestPayload() {
-            const buyItems = buyCart.map(b => ({ name: b.name, qty: b.qty, priceBT: b.price, bundleSize: b.bundleSize || null, source: b.source || 'STORE' }));
-            const sellItems = sellCart.map(s => ({ name: s.name, qty: s.qty, priceBT: s.price, bundleSize: s.bundleSize || null, source: s.source || 'STORE' }));
-            const totals = {
-                buyBT: buyItems.reduce((s, i) => s + (i.priceBT * (i.bundleSize ? i.qty : i.qty)), 0),
-                sellBT: sellItems.reduce((s, i) => s + (i.priceBT * (i.bundleSize ? i.qty : i.qty)), 0)
-            };
-            totals.netBT = totals.sellBT - totals.buyBT;
-            return {
-                requestId: cryptoRandomId(),
-                createdAt: new Date().toISOString(),
-                user: {
-                    userId: currentUser?.userId,
-                    email: currentUser?.email,
-                    playerName: currentUser?.playerName,
-                    mailbox: currentUser?.mailbox
-                },
-                carts: { buy: buyItems, sell: sellItems },
-                totals,
-                priceSource: { sheetId: 'PRICE_SHEET', asOf: new Date().toISOString() }
-            };
-        }
-
-        function submitPurchaseRequest() {
-            if (!googleIdToken) return alert('Login first');
-            const payload = buildRequestPayload();
-
-            // If local flag is set, we skip getting a token. Server will accept when the user already passed once.
-            const skipCaptcha = localStorage.getItem('vak_captcha_ok') === '1';
-            const doPost = (tokenOrNull) => {
-                const body = {
-                    action: 'createRequest',
-                    idToken: googleIdToken,
-                    payload
-                };
-                if (tokenOrNull) body.recaptchaToken = tokenOrNull; // include only when available
-                return fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-            };
-
-            (skipCaptcha ? Promise.resolve(null) : recaptchaWrap())
-                .then(token => doPost(token))
-                .then(r => r.json())
-                .then(j => {
-                    if (!j.ok) throw new Error(j.error);
-                    document.getElementById('requestMsg').textContent = 'Request submitted. ID: ' + j.result.requestId;
-                })
-                .catch(e => {
-                    document.getElementById('requestMsg').textContent = 'Error: ' + e.message;
-                });
-        }
-
-        function copyTransactionData() {
-            const payload = buildRequestPayload();
-            navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
-                .then(() => document.getElementById('requestMsg').textContent = 'Transaction data copied.')
-                .catch(e => document.getElementById('requestMsg').textContent = 'Copy failed: ' + e.message);
-        }
-
-        /* Pay With */
-        function addPayRow() {
-            const div = document.createElement("div"); div.className = "payRow";
-            const unique = 'paySelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-            const input = document.createElement("input"); input.id = unique; input.className = 'dropdown-input'; input.placeholder = 'Item name';
-            const list = document.createElement("div"); list.id = unique + 'List'; list.className = 'dropdown-list'; list.style.display = 'none';
-            const wrap = document.createElement('div'); wrap.className = 'dropdown-wrap'; wrap.appendChild(input); wrap.appendChild(list);
-            const percent = document.createElement("input"); percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
-            const removeRowBtn = document.createElement("button"); removeRowBtn.type = "button"; removeRowBtn.textContent = "❌"; removeRowBtn.onclick = () => { div.remove(); calculatePayment(); };
-            div.appendChild(wrap); div.appendChild(document.createTextNode(" % of total: ")); div.appendChild(percent); div.appendChild(removeRowBtn);
-            document.getElementById("payOptions").appendChild(div);
-            attachDropdown(input.id, list.id, (q) => {
-                const ql = (q || "").toLowerCase();
-                if (!ql) return dropdownData.slice(0, 200);
-                return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
-            }, () => { });
-        }
-
-        function calculatePayment() {
-            const payListEl = document.getElementById("payList"); payListEl.innerHTML = "";
-            const netSpan = document.getElementById("netTotal");
-            const netRaw = parseFloat(netSpan.dataset.raw);
-            const totalNet = !isNaN(netRaw) ? netRaw : parseFloat((netSpan.textContent || "0").replace(/[^\d.-]/g, "")) || 0;
-            if (totalNet >= 0) {
-                document.getElementById("paymentResult").textContent = `✅ Net Balance is ${totalNet.toFixed(2)} BT. No payment needed.`;
-                sellCart = sellCart.filter(e => !e.isPayWith);
-                renderSellList(); calculateNet(); return;
-            }
-            const owed = -totalNet; let usedPercent = 0;
-            sellCart = sellCart.filter(e => !e.isPayWith);
-            const curr = document.getElementById("currencySelect").value;
-            const rows = document.querySelectorAll("#payOptions .payRow");
-            rows.forEach(row => {
-                const inputEl = row.querySelector('input.dropdown-input');
-                const percentEl = row.querySelector('input[type="number"]');
-                const rawName = (inputEl?.value || "").trim();
-                const percent = parseFloat(percentEl?.value) || 0;
-                if (!rawName || percent <= 0) return;
-                let item = payItems.find(i => i.name.toLowerCase() === rawName.toLowerCase()) ||
-                    payItems.find(i => i.name.toLowerCase().includes(rawName.toLowerCase()));
-                if (!item) return;
-                usedPercent += percent;
-                const portion = (percent / 100) * owed;
-                let stackPrice = item.buyStack || (item.buyEach && item.bundleSize ? item.buyEach * item.bundleSize : 0);
-                let indivPrice = item.buyEach || (item.buyStack && item.bundleSize ? item.buyStack / item.bundleSize : 0);
-                if ((!stackPrice || stackPrice <= 0) && (!indivPrice || indivPrice <= 0)) return;
-                let stacks = 0, individuals = 0, leftover = portion;
-                if (stackPrice > 0) { stacks = Math.floor(portion / stackPrice); leftover -= stacks * stackPrice; }
-                if (indivPrice > 0 && leftover > 0) { const addIndividuals = Math.floor(leftover / indivPrice); individuals += addIndividuals; leftover -= addIndividuals * indivPrice; }
-                const payId = 'pay_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-                const li = document.createElement("li"); li.dataset.payid = payId;
-                let payText = `${percent}% = `;
-                if (stacks > 0) payText += `${stacks} stack(s) × ${item.bundleSize} ${item.name} (${stackPrice.toFixed(2)} BT stack)`;
-                if (individuals > 0) { if (stacks > 0) payText += ' + '; payText += `${individuals} × ${item.name} (${indivPrice.toFixed(2)} BT each)`; }
-                const totalBT = stacks * stackPrice + individuals * indivPrice;
-                payText += ` (${totalBT.toFixed(2)} BT)`;
-                if (curr && curr !== BASE_CURRENCY) payText += ' ' + formatValue(totalBT, curr, false);
-                li.textContent = payText;
-                const removeBtn = document.createElement("button"); removeBtn.textContent = "❌";
-                removeBtn.onclick = () => { sellCart = sellCart.filter(it => !(it.isPayWith && it._payId === payId)); li.remove(); renderSellList(); calculateNet(); };
-                li.appendChild(removeBtn);
-                payListEl.appendChild(li);
-                if (stacks > 0) sellCart.push({ name: item.name, qty: stacks, price: stackPrice, bundleSize: item.bundleSize, isPayWith: true, _payId: payId });
-                if (individuals > 0) sellCart.push({ name: item.name, qty: individuals, price: indivPrice, isPayWith: true, _payId: payId });
-            });
-            document.getElementById("paymentResult").textContent = usedPercent !== 100
-                ? `⚠️ Warning: payment percentages total ${usedPercent}%, not 100%.`
-                : `To pay ${owed.toFixed(2)} BT, bring the items listed above.`;
-            renderSellList(); calculateNet();
-        }
-
-        function addConverterRow() {
-            const div = document.createElement("div"); div.className = "payRow";
-            const unique = 'convSelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-            const input = document.createElement("input"); input.id = unique; input.className = 'dropdown-input'; input.placeholder = 'Item name';
-            const list = document.createElement("div"); list.id = unique + 'List'; list.className = 'dropdown-list'; list.style.display = 'none';
-            const wrap = document.createElement('div'); wrap.className = 'dropdown-wrap'; wrap.appendChild(input); wrap.appendChild(list);
-            const percent = document.createElement("input"); percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
-            const removeRowBtn = document.createElement("button"); removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
-            removeRowBtn.onclick = () => { div.remove(); calculateConversion(); };
-            div.appendChild(wrap); div.appendChild(document.createTextNode(" % of Net Balance: ")); div.appendChild(percent); div.appendChild(removeRowBtn);
-            document.getElementById("converterOptions").appendChild(div);
-            attachDropdown(input.id, list.id, (q) => {
-                const ql = (q || "").toLowerCase();
-                if (!ql) return dropdownData.slice(0, 200);
-                return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
-            }, () => { });
-        }
-
-        function calculateConversion() {
-            const converterList = document.getElementById("converterListDisplay");
-            converterList.innerHTML = '';
-            const netBT = parseFloat(document.getElementById("netTotal").dataset.raw) || 0;
-            if (netBT <= 0) { document.getElementById("converterResult").textContent = '⚠️ Net Balance is not positive.'; return; }
-            buyCart = buyCart.filter(e => !e.isConverter);
-            const rows = document.querySelectorAll("#converterOptions .payRow");
-            let usedPercent = 0;
-            rows.forEach(row => {
-                const inputEl = row.querySelector('input.dropdown-input');
-                const name = inputEl?.value.trim() || '';
-                const percent = parseFloat(row.querySelector('input[type="number"]').value) || 0;
-                const item = items.find(i => i.name === name);
-                if (!item || percent <= 0) return;
-                usedPercent += percent;
-                const portion = (percent / 100) * netBT;
-                let stackPrice = item.sellStack || (item.sellEach && item.bundleSize ? item.sellEach * item.bundleSize : 0);
-                let indivPrice = item.sellEach || (item.sellStack && item.bundleSize ? item.sellStack / item.bundleSize : 0);
-                if (!stackPrice && !indivPrice) return;
-                let stacks = 0, individuals = 0, leftover = portion;
-                if (stackPrice > 0) { stacks = Math.floor(portion / stackPrice); leftover -= stacks * stackPrice; }
-                if (indivPrice > 0) { const addIndividuals = Math.floor(leftover / indivPrice); individuals += addIndividuals; leftover -= addIndividuals * indivPrice; }
-                const rowId = 'conv_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-                if (stacks > 0) buyCart.push({ name: item.name, qty: stacks, price: stackPrice, bundleSize: item.bundleSize, isConverter: true, _rowId: rowId });
-                if (individuals > 0) buyCart.push({ name: item.name, qty: individuals, price: indivPrice, isConverter: true, _rowId: rowId });
-                const li = document.createElement('li');
-                let txt = `${percent}% = `;
-                if (stacks > 0) txt += `${stacks} stack(s) × ${item.bundleSize} ${item.name} (${stackPrice.toFixed(2)} BT stack)`;
-                if (individuals > 0) { if (stacks > 0) txt += ' + '; txt += `${individuals} × ${item.name} (${indivPrice.toFixed(2)} BT each)`; }
-                const totalBT = stacks * stackPrice + individuals * indivPrice;
-                txt += ` (${totalBT.toFixed(2)} BT)`;
-                const curr = document.getElementById("currencySelect").value;
-                if (curr && curr !== BASE_CURRENCY) txt += ' ' + formatValue(totalBT, curr, true);
-                li.textContent = txt;
-                const removeBtn = document.createElement('button'); removeBtn.textContent = '❌';
-                removeBtn.onclick = () => { buyCart = buyCart.filter(e => !(e.isConverter && e._rowId === rowId)); li.remove(); renderBuyList(); calculateNet(); };
-                li.appendChild(removeBtn);
-                converterList.appendChild(li);
-            });
-            renderBuyList();
-            document.getElementById("converterResult").textContent = usedPercent === 0
-                ? '⚠️ No allocations set.'
-                : `✅ Conversion done. Allocated ${usedPercent}% of Net Balance.`;
-        }
-
+        /* ===== Quick Calcs ===== */
         function quickStackCalc() {
             const name = document.getElementById("quickStackSelect").value;
             const qty = parseInt(document.getElementById("quickStackQty").value) || 0;
@@ -1506,12 +1049,12 @@
             document.getElementById("quickIndivResult").textContent = [buyText, sellText].filter(Boolean).join(" | ");
         }
 
+        /* ===== Add Items (Buy/Sell) ===== */
         function addStack() {
             const name = document.getElementById("stackSelect").value;
             const qty = parseInt(document.getElementById("stackQty").value) || 0;
             const item = items.find(i => i.name === name); if (!item || !item.sellStack) return;
-            buyCart.push({ name: item.name, qty, price: item.sellStack, bundleSize: item.bundleSize, source: 'STORE' });
-            renderBuyList();
+            buyCart.push({ name: item.name, qty, price: item.sellStack, bundleSize: item.bundleSize, source: 'STORE' }); renderBuyList();
         }
         function addIndividual() {
             const name = document.getElementById("indivSelect").value;
@@ -1591,25 +1134,548 @@
             sellCart.push({ name, qty, bundleSize: stackSize, price, isFullyCustom: true, source: 'CUSTOM' }); renderSellList();
         }
 
-        function toggleInfo(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
-        function openHistory() { alert('History page coming soon.'); }
-        function openOCM() { alert('OCM main page coming soon.'); }
+        /* ===== OCM Listings ===== */
+        function refreshOCMBuy() {
+            const q = document.getElementById('ocmBuyQuery').value.trim();
+            fetch(`${WEB_APP_URL}?action=listings&q=${encodeURIComponent(q)}`)
+                .then(r => r.json()).then(j => {
+                    if (!j.ok) throw new Error(j.error);
+                    ocmListingsCacheBuy = j.data.filter(l => l.type === 'SELL');
+                    renderOCMListings('ocmBuyListings', ocmListingsCacheBuy);
+                }).catch(e => document.getElementById('ocmBuyListings').textContent = 'Error: ' + e.message);
+        }
+        function refreshOCMSell() {
+            const q = document.getElementById('ocmSellQuery').value.trim();
+            fetch(`${WEB_APP_URL}?action=listings&q=${encodeURIComponent(q)}`)
+                .then(r => r.json()).then(j => {
+                    if (!j.ok) throw new Error(j.error);
+                    ocmListingsCacheSell = j.data.filter(l => l.type === 'BUY');
+                    renderOCMListings('ocmSellListings', ocmListingsCacheSell);
+                }).catch(e => document.getElementById('ocmSellListings').textContent = 'Error: ' + e.message);
+        }
+        function renderOCMListings(containerId, arr) {
+            const el = document.getElementById(containerId); el.innerHTML = '';
+            if (!arr.length) { el.textContent = 'No listings'; return; }
+            arr.forEach(l => {
+                const div = document.createElement('div'); div.className = 'ocm-listing';
+                div.textContent = `${l.itemName} | ${l.type} | ${l.unit} | price:${l.priceBT} | qty:${l.qtyAvailable || '∞'} | by ${l.playerName}`;
+                div.dataset.listingId = l.listingId;
+                div.onclick = () => {
+                    Array.from(el.children).forEach(c => c.classList.remove('highlight-action'));
+                    div.classList.add('highlight-action');
+                    el.dataset.selectedListingId = l.listingId;
+                };
+                el.appendChild(div);
+            });
+        }
+        function addOCMBuy() {
+            if (!googleIdToken) { alert('You need to login for this tool'); return; }
+            const id = document.getElementById('ocmBuyListings').dataset.selectedListingId;
+            if (!id) return alert('Select an OCM SELL listing first');
+            const listing = ocmListingsCacheBuy.find(l => l.listingId === id);
+            const qty = parseInt(document.getElementById('ocmBuyQty').value) || 0;
+            if (!listing || qty <= 0) return;
+            buyCart.push({ name: listing.itemName, qty, price: Number(listing.priceBT), source: 'OCM', listingId: id });
+            renderBuyList();
+        }
+        function addOCMSell() {
+            if (!googleIdToken) { alert('You need to login for this tool'); return; }
+            const id = document.getElementById('ocmSellListings').dataset.selectedListingId;
+            if (!id) return alert('Select an OCM BUY listing first');
+            const listing = ocmListingsCacheSell.find(l => l.listingId === id);
+            const qty = parseInt(document.getElementById('ocmSellQty').value) || 0;
+            if (!listing || qty <= 0) return;
+            sellCart.push({ name: listing.itemName, qty, price: Number(listing.priceBT), source: 'OCM', listingId: id });
+            renderSellList();
+        }
 
+        /* ===== Row coloring ===== */
+        function evaluateRowColorBuy(entry) {
+            const item = items.find(i => i.name === entry.name);
+            const prog = stockProgressCache.find(sp => sp.name === entry.name);
+            if (!item && !prog) return null;
+            if (entry.source === 'OCM') return null;
+            const bundleSize = item ? (item.bundleSize || 1) : 1;
+            const requestedStacks = entry.bundleSize ? Number(entry.qty || 0) : (Number(entry.qty || 0) / bundleSize);
+            const availableStacks = item ? (Number(item.stackStock || 0) + (Number(item.indivStock || 0) / bundleSize)) : (prog ? prog.currentStacks : 0);
+            if (availableStacks <= 0) return 'row-warning-red';
+            const ratio = requestedStacks / availableStacks;
+            if (ratio > 1) return 'row-warning-red';
+            if (ratio > 0.5) return 'row-warning-yellow';
+            return null;
+        }
+        function evaluateRowColorSell(entry) {
+            const prog = stockProgressCache.find(sp => sp.name === entry.name);
+            const item = items.find(i => i.name === entry.name);
+            if (!prog || entry.source === 'OCM') return null;
+            const bundleSize = item ? (Number(item.bundleSize || 1) || 1) : 1;
+            const sellingStacks = entry.bundleSize ? Number(entry.qty || 0) : (Number(entry.qty || 0) / bundleSize);
+            const currentStacks = Number(prog.currentStacks || 0);
+            const projected = currentStacks + sellingStacks;
+            const effectiveTarget = Number(item?.targetEach || 0);
+            if (effectiveTarget > 0 && projected > effectiveTarget) return 'row-warning-red';
+            return null;
+        }
+
+        function formatValue(btValue, currencyName, forBuy) {
+            if (isNaN(btValue)) btValue = 0;
+            let txt = `${btValue.toFixed(2)} ${BASE_CURRENCY}`;
+            if (currencyName && currencyName !== BASE_CURRENCY) {
+                const currency = items.find(i => i.name.toLowerCase() === currencyName.toLowerCase());
+                if (currency) {
+                    const rate = forBuy ? (currency.buyEach || currency.buyStack || 0) : (currency.sellEach || currency.sellStack || 0);
+                    if (rate > 0) { txt += ` (≈ ${(btValue / rate).toFixed(2)} ${currencyName})`; }
+                }
+            }
+            return txt;
+        }
+
+        function renderBuyList() {
+            const list = document.getElementById("buyList"); list.innerHTML = "";
+            let total = 0; const curr = document.getElementById("currencySelect").value;
+            buyCart.forEach(e => {
+                const li = document.createElement("li");
+                let rowTotal = 0, rowText = "";
+                if (e.isBalance) { rowTotal = e.price || 0; rowText = `Account Balance: ${rowTotal.toFixed(2)} BT`; }
+                else if (e.bundleSize && e.isFullyCustom) { rowTotal = (e.qty / e.bundleSize) * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`; }
+                else if (e.bundleSize) { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`; }
+                else { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`; }
+                total += rowTotal;
+                if (e.isConverter) rowText += ' [Converted]';
+                if (e.source === 'OCM') rowText += ' [OCM]';
+                const colorClass = evaluateRowColorBuy(e);
+                if (colorClass) li.classList.add(colorClass);
+                if (curr && curr !== BASE_CURRENCY) rowText += ' ' + formatValue(rowTotal, curr, true);
+                li.textContent = rowText;
+                const removeBtn = document.createElement("button");
+                removeBtn.textContent = "❌"; removeBtn.onclick = () => { buyCart = buyCart.filter(x => x !== e); renderBuyList(); calculateNet(); };
+                li.appendChild(removeBtn);
+                list.appendChild(li);
+            });
+            document.getElementById("buyTotal").textContent = formatValue(total, curr, true);
+            calculateNet();
+        }
+
+        function renderSellList() {
+            const list = document.getElementById("sellList"); list.innerHTML = "";
+            let total = 0; const curr = document.getElementById("currencySelect").value;
+            sellCart.forEach(e => {
+                const li = document.createElement("li");
+                let rowTotal = 0, rowText = "";
+                if (e.isBalance) { rowTotal = e.price || 0; rowText = `Account Balance: ${rowTotal.toFixed(2)} BT`; }
+                else if (e.bundleSize && e.isFullyCustom) { rowTotal = (e.qty / e.bundleSize) * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`; }
+                else if (e.bundleSize) { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`; }
+                else { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`; }
+                if (e.isPayWith) rowText += ' [Pay With]';
+                if (e.source === 'OCM') rowText += ' [OCM]';
+                total += rowTotal;
+                const colorClass = evaluateRowColorSell(e);
+                if (colorClass) {
+                    li.classList.add(colorClass);
+                    if (colorClass === 'row-warning-red') {
+                        const warn = document.createElement('span'); warn.className = 'small-note';
+                        warn.textContent = 'over target stock';
+                        li.appendChild(warn);
+                    }
+                }
+                if (curr && curr !== BASE_CURRENCY) rowText += ' ' + formatValue(rowTotal, curr, false);
+                li.textContent = rowText;
+                const removeBtn = document.createElement("button");
+                removeBtn.textContent = "❌"; removeBtn.onclick = () => { sellCart = sellCart.filter(x => x !== e); renderSellList(); calculateNet(); };
+                li.appendChild(removeBtn);
+                list.appendChild(li);
+            });
+            document.getElementById("sellTotal").textContent = formatValue(total, curr, false);
+            calculateNet();
+        }
+
+        function calculateNet() {
+            const buyTotal = buyCart.reduce((s, e) => {
+                if (e.isBalance) return s + (e.price || 0);
+                if (e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
+                if (e.bundleSize) return s + (e.qty * e.price);
+                return s + (e.qty * e.price);
+            }, 0);
+            const sellTotal = sellCart.reduce((s, e) => {
+                if (e.isBalance) return s + (e.price || 0);
+                if (e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
+                if (e.bundleSize) return s + (e.qty * e.price);
+                return s + (e.qty * e.price);
+            }, 0);
+            const net = sellTotal - buyTotal;
+            const curr = document.getElementById("currencySelect").value;
+            const netSpan = document.getElementById("netTotal");
+            netSpan.dataset.raw = String(net);
+            netSpan.textContent = formatValue(net, curr, net < 0);
+            netSpan.className = net >= 0 ? 'positive' : 'negative';
+        }
+
+        function addPayRow() {
+            const div = document.createElement("div"); div.className = "payRow";
+            const unique = 'paySelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            const input = document.createElement("input"); input.id = unique; input.className = 'dropdown-input'; input.placeholder = 'Item name';
+            const list = document.createElement("div"); list.id = unique + 'List'; list.className = 'dropdown-list'; list.style.display = 'none';
+            const wrap = document.createElement('div'); wrap.className = 'dropdown-wrap'; wrap.appendChild(input); wrap.appendChild(list);
+            const percent = document.createElement("input"); percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
+            const removeRowBtn = document.createElement("button"); removeRowBtn.type = "button"; removeRowBtn.textContent = "❌"; removeRowBtn.onclick = () => { div.remove(); calculatePayment(); };
+            div.appendChild(wrap); div.appendChild(document.createTextNode(" % of total: ")); div.appendChild(percent); div.appendChild(removeRowBtn);
+            document.getElementById("payOptions").appendChild(div);
+            attachDropdown(input.id, list.id, (q) => {
+                const ql = (q || "").toLowerCase();
+                if (!ql) return dropdownData.slice(0, 200);
+                return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
+            }, () => { });
+        }
+
+        function calculatePayment() {
+            const payListEl = document.getElementById("payList"); payListEl.innerHTML = "";
+            const netSpan = document.getElementById("netTotal");
+            const netRaw = parseFloat(netSpan.dataset.raw);
+            const totalNet = !isNaN(netRaw) ? netRaw : parseFloat((netSpan.textContent || "0").replace(/[^\d.-]/g, "")) || 0;
+            if (totalNet >= 0) {
+                document.getElementById("paymentResult").textContent = `✅ Net Balance is ${totalNet.toFixed(2)} BT. No payment needed.`;
+                sellCart = sellCart.filter(e => !e.isPayWith);
+                renderSellList(); calculateNet(); return;
+            }
+            const owed = -totalNet; let usedPercent = 0;
+            sellCart = sellCart.filter(e => !e.isPayWith);
+            const curr = document.getElementById("currencySelect").value;
+            const rows = document.querySelectorAll("#payOptions .payRow");
+            rows.forEach(row => {
+                const inputEl = row.querySelector('input.dropdown-input');
+                const percentEl = row.querySelector('input[type="number"]');
+                const rawName = (inputEl?.value || "").trim();
+                const percent = parseFloat(percentEl?.value) || 0;
+                if (!rawName || percent <= 0) return;
+                let item = payItems.find(i => i.name.toLowerCase() === rawName.toLowerCase()) || payItems.find(i => i.name.toLowerCase().includes(rawName.toLowerCase()));
+                if (!item) return;
+                usedPercent += percent;
+                const portion = (percent / 100) * owed;
+                let stackPrice = item.buyStack || (item.buyEach && item.bundleSize ? item.buyEach * item.bundleSize : 0);
+                let indivPrice = item.buyEach || (item.buyStack && item.bundleSize ? item.buyStack / item.bundleSize : 0);
+                if ((!stackPrice || stackPrice <= 0) && (!indivPrice || indivPrice <= 0)) return;
+                let stacks = 0, individuals = 0, leftover = portion;
+                if (stackPrice > 0) { stacks = Math.floor(portion / stackPrice); leftover -= stacks * stackPrice; }
+                if (indivPrice > 0 && leftover > 0) { const addIndividuals = Math.floor(leftover / indivPrice); individuals += addIndividuals; leftover -= addIndividuals * indivPrice; }
+                const payId = 'pay_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+                const li = document.createElement("li"); li.dataset.payid = payId;
+                let payText = `${percent}% = `;
+                if (stacks > 0) payText += `${stacks} stack(s) × ${item.bundleSize} ${item.name} (${stackPrice.toFixed(2)} BT stack)`;
+                if (individuals > 0) { if (stacks > 0) payText += ' + '; payText += `${individuals} × ${item.name} (${indivPrice.toFixed(2)} BT each)`; }
+                const totalBT = stacks * stackPrice + individuals * indivPrice;
+                payText += ` (${totalBT.toFixed(2)} BT)`;
+                if (curr && curr !== BASE_CURRENCY) payText += ' ' + formatValue(totalBT, curr, false);
+                li.textContent = payText;
+                const removeBtn = document.createElement("button"); removeBtn.textContent = "❌";
+                removeBtn.onclick = () => { sellCart = sellCart.filter(it => !(it.isPayWith && it._payId === payId)); li.remove(); renderSellList(); calculateNet(); };
+                li.appendChild(removeBtn);
+                payListEl.appendChild(li);
+                if (stacks > 0) sellCart.push({ name: item.name, qty: stacks, price: stackPrice, bundleSize: item.bundleSize, isPayWith: true, _payId: payId });
+                if (individuals > 0) sellCart.push({ name: item.name, qty: individuals, price: indivPrice, isPayWith: true, _payId: payId });
+            });
+            document.getElementById("paymentResult").textContent = usedPercent !== 100
+                ? `⚠️ Percentages total ${usedPercent}%, not 100%.`
+                : `To pay ${owed.toFixed(2)} BT bring listed items.`;
+            renderSellList(); calculateNet();
+        }
+
+        function addConverterRow() {
+            const div = document.createElement("div"); div.className = "payRow";
+            const unique = 'convSelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            const input = document.createElement("input"); input.id = unique; input.className = 'dropdown-input'; input.placeholder = 'Item name';
+            const list = document.createElement("div"); list.id = unique + 'List'; list.className = 'dropdown-list'; list.style.display = 'none';
+            const wrap = document.createElement('div'); wrap.className = 'dropdown-wrap'; wrap.appendChild(input); wrap.appendChild(list);
+            const percent = document.createElement("input"); percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
+            const removeRowBtn = document.createElement("button"); removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
+            removeRowBtn.onclick = () => { div.remove(); calculateConversion(); };
+            div.appendChild(wrap); div.appendChild(document.createTextNode(" % of Net Balance: ")); div.appendChild(percent); div.appendChild(removeRowBtn);
+            document.getElementById("converterOptions").appendChild(div);
+            attachDropdown(input.id, list.id, (q) => {
+                const ql = (q || "").toLowerCase();
+                if (!ql) return dropdownData.slice(0, 200);
+                return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
+            }, () => { });
+        }
+
+        function calculateConversion() {
+            const converterList = document.getElementById("converterListDisplay");
+            converterList.innerHTML = '';
+            const netBT = parseFloat(document.getElementById("netTotal").dataset.raw) || 0;
+            if (netBT <= 0) { document.getElementById("converterResult").textContent = '⚠️ Net Balance not positive.'; return; }
+            buyCart = buyCart.filter(e => !e.isConverter);
+            const rows = document.querySelectorAll("#converterOptions .payRow");
+            let usedPercent = 0;
+            rows.forEach(row => {
+                const inputEl = row.querySelector('input.dropdown-input');
+                const name = inputEl?.value.trim() || '';
+                const percent = parseFloat(row.querySelector('input[type="number"]').value) || 0;
+                const item = items.find(i => i.name === name);
+                if (!item || percent <= 0) return;
+                usedPercent += percent;
+                const portion = (percent / 100) * netBT;
+                let stackPrice = item.sellStack || (item.sellEach && item.bundleSize ? item.sellEach * item.bundleSize : 0);
+                let indivPrice = item.sellEach || (item.sellStack && item.bundleSize ? item.sellStack / item.bundleSize : 0);
+                if (!stackPrice && !indivPrice) return;
+                let stacks = 0, individuals = 0, leftover = portion;
+                if (stackPrice > 0) { stacks = Math.floor(portion / stackPrice); leftover -= stacks * stackPrice; }
+                if (indivPrice > 0) { const addIndividuals = Math.floor(leftover / indivPrice); individuals += addIndividuals; leftover -= addIndividuals * indivPrice; }
+                const rowId = 'conv_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+                if (stacks > 0) buyCart.push({ name: item.name, qty: stacks, price: stackPrice, bundleSize: item.bundleSize, isConverter: true, _rowId: rowId });
+                if (individuals > 0) buyCart.push({ name: item.name, qty: individuals, price: indivPrice, isConverter: true, _rowId: rowId });
+                const li = document.createElement('li');
+                let txt = `${percent}% = `;
+                if (stacks > 0) txt += `${stacks} stack(s) × ${item.bundleSize} ${item.name} (${stackPrice.toFixed(2)} BT stack)`;
+                if (individuals > 0) { if (stacks > 0) txt += ' + '; txt += `${individuals} × ${item.name} (${indivPrice.toFixed(2)} BT each)`; }
+                const totalBT = stacks * stackPrice + individuals * indivPrice;
+                txt += ` (${totalBT.toFixed(2)} BT)`;
+                const curr = document.getElementById("currencySelect").value;
+                if (curr && curr !== BASE_CURRENCY) txt += ' ' + formatValue(totalBT, curr, true);
+                li.textContent = txt;
+                const removeBtn = document.createElement('button'); removeBtn.textContent = '❌';
+                removeBtn.onclick = () => { buyCart = buyCart.filter(e => !(e.isConverter && e._rowId === rowId)); li.remove(); renderBuyList(); calculateNet(); };
+                li.appendChild(removeBtn);
+                converterList.appendChild(li);
+            });
+            renderBuyList();
+            document.getElementById("converterResult").textContent = usedPercent === 0
+                ? '⚠️ No allocations set.'
+                : `✅ Conversion done. Allocated ${usedPercent}% of Net Balance.`;
+        }
+
+        /* ===== Requests ===== */
+        function buildRequestPayload() {
+            const buyItems = buyCart.map(b => ({ name: b.name, qty: b.qty, priceBT: b.price, bundleSize: b.bundleSize || null, source: b.source || 'STORE' }));
+            const sellItems = sellCart.map(s => ({ name: s.name, qty: s.qty, priceBT: s.price, bundleSize: s.bundleSize || null, source: s.source || 'STORE' }));
+            const totals = {
+                buyBT: buyItems.reduce((s, i) => s + (i.priceBT * (i.bundleSize ? i.qty : i.qty)), 0),
+                sellBT: sellItems.reduce((s, i) => s + (i.priceBT * (i.bundleSize ? i.qty : i.qty)), 0)
+            };
+            totals.netBT = totals.sellBT - totals.buyBT;
+            return {
+                requestId: cryptoRandomId(),
+                createdAt: new Date().toISOString(),
+                user: {
+                    userId: currentUser?.userId,
+                    email: currentUser?.email,
+                    playerName: currentUser?.playerName,
+                    mailbox: currentUser?.mailbox
+                },
+                carts: { buy: buyItems, sell: sellItems },
+                totals,
+                priceSource: { sheetId: 'PRICE_SHEET', asOf: new Date().toISOString() },
+                editedFromRequestId: window.editedFromRequestId || null
+            };
+        }
+
+        function guardedSubmitPurchaseRequest() {
+            if (!googleIdToken) { alert('You need to login for this tool'); return; }
+            submitPurchaseRequest();
+        }
+        function guardedCopyTransactionData() {
+            if (!googleIdToken) { alert('You need to login for this tool'); return; }
+            copyTransactionData();
+        }
+
+        function submitPurchaseRequest() {
+            const payload = buildRequestPayload();
+            const skipCaptcha = currentUser && currentUser.captchaPassed;
+            const doPost = (tokenOrNull) => {
+                const body = { action: 'createRequest', idToken: googleIdToken, payload };
+                if (tokenOrNull) body.recaptchaToken = tokenOrNull;
+                return fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            };
+            (skipCaptcha ? Promise.resolve(null) : recaptchaWrap())
+                .then(token => doPost(token))
+                .then(r => r.json())
+                .then(j => {
+                    if (!j.ok) throw new Error(j.error);
+                    document.getElementById('requestMsg').textContent = 'Request submitted. ID: ' + (j.result.requestId || payload.requestId);
+                    window.editedFromRequestId = null;
+                    refreshOpenOrders();
+                })
+                .catch(e => document.getElementById('requestMsg').textContent = 'Error: ' + e.message);
+        }
+
+        function copyTransactionData() {
+            const payload = buildRequestPayload();
+            navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
+                .then(() => document.getElementById('requestMsg').textContent = 'Transaction data copied.')
+                .catch(e => document.getElementById('requestMsg').textContent = 'Copy failed: ' + e.message);
+        }
+
+        /* ===== Open Orders Indicator ===== */
+        function setStatusBall(state) {
+            const el = document.getElementById('orderStatusBall');
+            if (!el) return;
+            el.className = '';
+            el.classList.add({
+                pending: 'status-pending',
+                error: 'status-error',
+                none: 'status-none'
+            }[state] || 'status-none');
+        }
+
+        async function refreshOpenOrders() {
+            try {
+                if (!googleIdToken) { setStatusBall('none'); return; }
+                const r = await fetch(`${WEB_APP_URL}?action=myOpenOrders&idToken=${encodeURIComponent(googleIdToken)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'myOpenOrders failed');
+                const { requests, trades } = j.data || { requests: [], trades: [] };
+                const hasPending = (requests && requests.length) || (trades && trades.length);
+                setStatusBall(hasPending ? 'pending' : 'none');
+                const body = document.getElementById('orderPopupBody');
+                body.innerHTML = '';
+                if (!hasPending) { body.textContent = 'No open requests or trades.'; return; }
+                if (requests && requests.length) {
+                    const h = document.createElement('div'); h.textContent = 'Requests:'; h.style.fontWeight = 'bold'; body.appendChild(h);
+                    requests.forEach(rq => {
+                        const div = document.createElement('div');
+                        const a = document.createElement('span'); a.className = 'order-link'; a.textContent = `Edit request ${rq.requestId}`;
+                        a.onclick = () => loadRequestIntoEditorFromData(rq);
+                        div.appendChild(a);
+                        body.appendChild(div);
+                    });
+                }
+                if (trades && trades.length) {
+                    const h = document.createElement('div'); h.textContent = 'OCM Trades:'; h.style.fontWeight = 'bold'; h.style.marginTop = '6px'; body.appendChild(h);
+                    trades.forEach(t => {
+                        const div = document.createElement('div');
+                        div.textContent = `Trade ${t.tradeId} qty=${t.quantity} price=${t.price}`;
+                        body.appendChild(div);
+                    });
+                }
+            } catch (e) {
+                setStatusBall('error');
+                const body = document.getElementById('orderPopupBody');
+                body.textContent = 'Error loading open orders: ' + e.message;
+            }
+        }
+
+        function toggleOrderPopup() {
+            const p = document.getElementById('orderPopup');
+            p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none';
+        }
+
+        document.addEventListener('click', (ev) => {
+            const p = document.getElementById('orderPopup');
+            const b = document.getElementById('orderStatusBall');
+            if (!p || !b) return;
+            if (b.contains(ev.target)) { toggleOrderPopup(); return; }
+            if (!p.contains(ev.target)) p.style.display = 'none';
+        });
+
+        function loadRequestIntoEditorFromData(rq) {
+            if (!googleIdToken) { alert('You need to login for this tool'); return; }
+            buyCart = []; sellCart = [];
+            (rq.items || []).forEach(it => {
+                const row = { name: it.itemName, qty: Number(it.quantity || 0), price: Number(it.price || 0) };
+                if (it.side === 'buy') buyCart.push(row);
+                else if (it.side === 'sell') sellCart.push(row);
+            });
+            window.editedFromRequestId = rq.requestId || null;
+            updateAllDisplays();
+            toggleOrderPopup();
+            alert('Request loaded. Edit and Submit to resend (old request cancelled).');
+        }
+
+        setInterval(() => { if (googleIdToken) refreshOpenOrders(); }, 15000);
+
+        /* ===== Utilities ===== */
+        function cryptoRandomId() { return (crypto.getRandomValues(new Uint32Array(4))).join('-'); }
+        function updateAllDisplays() { renderBuyList(); renderSellList(); calculateNet(); }
+        function toggleInfo(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
+
+        /* ===== Init ===== */
+        // ===== Restore auth on load (place BEFORE your window.onload) =====
+        async function tryRestoreAuthOnLoad() {
+            // Ensure storage helpers exist
+            if (!window.initAuthFromStorage) return;
+            try {
+                const res = await window.initAuthFromStorage();
+                if (!res.ok) {
+                    // no saved token or invalid
+                    return;
+                }
+
+                // Rehydrate in-memory token
+                googleIdToken = res.idToken;
+
+                try {
+                    // Validate & fetch user profile from backend
+                    const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
+                    const meJ = await meR.json();
+                    if (!meJ.ok) {
+                        // Backend rejected token -> remove saved token
+                        window.clearSavedIdToken && window.clearSavedIdToken();
+                        googleIdToken = null;
+                        return;
+                    }
+
+                    // Apply user to UI state
+                    currentUser = normalizeUser(meJ.data.user || null);
+                    // Keep compatibility where admin flag may be on data
+                    currentUser.isAdmin = !!meJ.data.isAdmin;
+
+                    // Update top bar + admin button
+                    if (typeof updateTopBarAuth === 'function') updateTopBarAuth();
+                    const adminBtn = document.getElementById('adminPanelBtn');
+                    if (adminBtn) adminBtn.style.display = (currentUser.isAdmin ? 'inline' : 'none');
+
+                    // Setup vs captcha handling
+                    const hasSetup = currentUser && currentUser.playerName;
+                    const passedCaptcha = currentUser && currentUser.captchaPassed;
+                    if (hasSetup && passedCaptcha) {
+                        localStorage.setItem('vak_captcha_ok', '1');
+                        try { hideRecaptchaWidget(); } catch (_) { }
+                        try { hideSetupShowApp(); } catch (_) { }
+                    } else {
+                        localStorage.removeItem('vak_captcha_ok');
+                        try { showSetupOnly(); } catch (_) { }
+                        try { showRecaptchaWidget(); } catch (_) { }
+                    }
+
+                    // Refresh open orders indicator
+                    if (typeof refreshOpenOrders === 'function') refreshOpenOrders();
+
+                } catch (e) {
+                    // If /me fails just log; keep token in storage for next attempt
+                    console.warn('restore /me failed', e);
+                }
+            } catch (e) {
+                console.warn('initAuthFromStorage failed', e);
+            }
+        }
+
+        // ===== Init (replace or insert this block where your existing window.onload is) =====
         window.onload = () => {
+            // Restore auth as early as possible
+            tryRestoreAuthOnLoad();
+
+            // UI setup
+            document.body.classList.add('withTopBar');
+
+            // If URL returned id_token via implicit redirect, handle it
             checkHashForIdToken();
+
+            // App initialization
             loadData();
             addPayRow();
             initRecaptcha();
+
+            // Initialize Google Sign-In when available
             const gsiWait = setInterval(() => {
                 if (window.google && google.accounts && google.accounts.id) {
-                    initGoogleIdentity(); clearInterval(gsiWait);
+                    initGoogleIdentity();
+                    clearInterval(gsiWait);
                 }
             }, 200);
             setTimeout(() => clearInterval(gsiWait), 4000);
-        };
-    </script>
 
-    <!-- Load GSI last -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+            // Ensure top-bar reflects restored auth
+            updateTopBarAuth();
+        };
+        
+    </script>
 </body>
 </html>
