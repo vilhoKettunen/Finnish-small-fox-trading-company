@@ -329,6 +329,70 @@
         .collapsible-content {
             margin-top: 8px;
         }
+        /* ===== Useful Links responsive button grid (paste into existing <style> block) ===== */
+        .links-section { /* keeps section behavior consistent */
+        }
+
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+            align-items: stretch;
+        }
+
+        .link-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 12px 10px;
+            background: #1a73e8;
+            color: #fff;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.08);
+            transition: transform .06s ease, box-shadow .06s ease, background .12s ease;
+            min-height: 48px; /* comfortable tap target */
+        }
+
+            .link-btn:active {
+                transform: translateY(1px);
+            }
+
+            .link-btn:hover {
+                box-shadow: 0 4px 10px rgba(26,115,232,0.12);
+                background: #155fc4;
+            }
+
+            .link-btn:focus {
+                outline: 3px solid rgba(26,115,232,0.18);
+            }
+
+            /* internal links (local pages) use a neutral color */
+            .link-btn.internal {
+                background: #444;
+            }
+
+                .link-btn.internal:hover {
+                    background: #333;
+                }
+
+        @media (max-width:420px) {
+            .links-grid {
+                gap: 8px;
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+
+            .link-btn {
+                padding: 14px 10px;
+                font-size: 15px;
+                min-height: 52px;
+            }
+        }
     </style>
     <script src="app-config.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -370,6 +434,14 @@
             <label>Mailbox (e.g. 1A / 2B / F1): <input type="text" id="setupMailbox"></label><br>
             <button onclick="submitSetup()">Save Setup</button>
             <div id="setupMsg" class="small"></div>
+
+            <div style="margin-top:12px;border-top:1px dashed #ccc;padding-top:10px;">
+                <strong>Already have a store profile?</strong>
+                <div class="small">Request access and an admin will confirm linking your Google account.</div>
+                <input type="text" id="claimRefInput" placeholder="Your player name or mailbox or email">
+                <button type="button" onclick="requestAccountClaim()">Request Access</button>
+                <div id="claimMsg" class="small"></div>
+            </div>
         </div>
     </div>
 
@@ -626,24 +698,40 @@
         <div id="requestGuard" class="guard-msg" style="display:none;">You need to login for this tool.</div>
         <button onclick="guardedSubmitPurchaseRequest()">Submit Purchase Request</button>
         <button class="copy-btn" onclick="guardedCopyTransactionData()">Copy Transaction Data</button>
+        <!-- Add inside <div id="requestControls" class="section"> ... -->
+        <button class="copy-btn" onclick="importTransactionData()">Import Transaction Data</button>
+        <input id="importFile" type="file" accept="application/json" style="display:none" onchange="importTransactionDataFromFile(this.files[0])">
         <div id="requestMsg" class="small"></div>
     </div>
 
+    <!-- Admin: Submit on behalf of (Admin only) -->
+    <div id="onBehalfSection" class="section" style="display:none;">
+        <h2>👤 Submit on behalf of (Admin)</h2>
+        <div class="small">Search a player and set them as the target for the next submission. The request will be recorded in their history.</div>
+        <div class="dropdown-wrap" style="margin-top:6px;">
+            <input id="obPlayerSearchInput" class="dropdown-input" placeholder="Type player name or email">
+            <div id="obPlayerSearchList" class="dropdown-list" style="display:none;"></div>
+        </div>
+        <button id="btnSetOnBehalf" type="button" onclick="setOnBehalfTarget()">Set as target</button>
+        <button id="btnClearOnBehalf" type="button" onclick="clearOnBehalfTarget()">Clear</button>
+        <div id="onBehalfStatus" class="small"></div>
+    </div>
+
     <!-- Links -->
-    <div class="section">
+    <div class="section links-section" id="usefulLinks">
         <h2>🔗 Useful Links</h2>
-        <ul>
-            <li><a href="https://translocator.moe/" target="_blank">TL route calculator</a></li>
-            <li><a href="https://map.tops.vintagestory.at/?x=-419&y=416&zoom=6" target="_blank">TOPS map</a></li>
-            <li><a href="https://wiki.vintagestory.at/Main_Page" target="_blank">Wiki</a></li>
-            <li><a href="https://docs.google.com/spreadsheets/d/1W9ByTiwX3lPakqoYXTHgnOiMNNzwSVnkgmTPqvMrSUc/edit?gid=0#gid=0" target="_blank">Mailbox names</a></li>
-            <li><a href="https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/edit?gid=0#gid=0" target="_blank">PRICE SHEET</a></li>
-            <li><a href="https://www.vintagestory.at/" target="_blank">Vintage Story official website</a></li>
-            <li><a href="https://mods.vintagestory.at/" target="_blank">Official mods page</a></li>
-            <li><a href="BTIncurance.html" target="_blank">BT Insurance</a></li>
-            <li><a href="PriceHistory.html" target="_blank">Price History</a></li>
-            <li><a href="VintageStoryEconomics.html" target="_blank">Vintage Story Economics</a></li>
-        </ul>
+        <nav class="links-grid" aria-label="Useful links">
+            <a class="link-btn" href="https://translocator.moe/" target="_blank" rel="noopener">TL route calculator</a>
+            <a class="link-btn" href="https://map.tops.vintagestory.at/?x=-419&y=416&zoom=6" target="_blank" rel="noopener">TOPS map</a>
+            <a class="link-btn" href="https://wiki.vintagestory.at/Main_Page" target="_blank" rel="noopener">Wiki</a>
+            <a class="link-btn" href="https://docs.google.com/spreadsheets/d/1W9ByTiwX3lPakqoYXTHgnOiMNNzwSVnkgmTPqvMrSUc/edit?gid=0#gid=0" target="_blank" rel="noopener">Mailbox names</a>
+            <a class="link-btn" href="https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/edit?gid=0#gid=0" target="_blank" rel="noopener">PRICE SHEET</a>
+            <a class="link-btn" href="https://www.vintagestory.at/" target="_blank" rel="noopener">Vintage Story</a>
+            <a class="link-btn" href="https://mods.vintagestory.at/" target="_blank" rel="noopener">Official mods</a>
+            <a class="link-btn internal" href="BTIncurance.html" target="_blank" rel="noopener">BT Insurance</a>
+            <a class="link-btn internal" href="PriceHistory.html" target="_blank" rel="noopener">Price History</a>
+            <a class="link-btn internal" href="VintageStoryEconomics.html" target="_blank" rel="noopener">Vintage Story Economics</a>
+        </nav>
     </div>
 
     <script>
@@ -663,50 +751,51 @@
         let lastRecaptchaToken = null;
         let ocmListingsCacheBuy = [], ocmListingsCacheSell = [];
         window.editedFromRequestId = null;
+        // Admin: on-behalf submission
+        window.submitForUser = null;
+        const __playersCache = []; // list of players for admin on-behalf search
 
         /* ===== Collapsible helpers ===== */
-function setCollapseState(btnId, open) {
-    try { localStorage.setItem('__collapse__' + btnId, open ? 'open' : 'closed'); } catch (_) {}
-}
-function getCollapseState(btnId) {
-    try { return localStorage.getItem('__collapse__' + btnId) === 'open'; } catch (_) { return false; }
-}
-function applyCollapseState(contentId, btnId, open) {
-    const content = document.getElementById(contentId);
-    const btn = document.getElementById(btnId);
-    if (!content || !btn) return;
-    if (open) {
-        content.style.display = 'block';
-        btn.textContent = '▾';
-        btn.setAttribute('aria-expanded', 'true');
-    } else {
-        content.style.display = 'none';
-        btn.textContent = '▸';
-        btn.setAttribute('aria-expanded', 'false');
-    }
-}
-function toggleCollapse(contentId, btnId) {
-    const cur = getComputedStyle(document.getElementById(contentId)).display !== 'none';
-    applyCollapseState(contentId, btnId, !cur);
-    setCollapseState(btnId, !cur);
-}
-function initCollapsibles() {
-    // IDs we want collapsible initially closed unless stored otherwise
-    const mapping = [
-        { content: 'ocmBuyContent', btn: 'toggleOCMBuy' },
-        { content: 'customBuyContent', btn: 'toggleCustomBuy' },
-        { content: 'ocmSellContent', btn: 'toggleOCMSell' },
-        { content: 'customSellContent', btn: 'toggleCustomSell' }
-    ];
-    mapping.forEach(m => {
-        const savedOpen = getCollapseState(m.btn);
-        // default: closed -> savedOpen || false
-        applyCollapseState(m.content, m.btn, !!savedOpen);
-    });
-}
+        function setCollapseState(btnId, open) {
+            try { localStorage.setItem('__collapse__' + btnId, open ? 'open' : 'closed'); } catch (_) { }
+        }
+        function getCollapseState(btnId) {
+            try { return localStorage.getItem('__collapse__' + btnId) === 'open'; } catch (_) { return false; }
+        }
+        function applyCollapseState(contentId, btnId, open) {
+            const content = document.getElementById(contentId);
+            const btn = document.getElementById(btnId);
+            if (!content || !btn) return;
+            if (open) {
+                content.style.display = 'block';
+                btn.textContent = '▾';
+                btn.setAttribute('aria-expanded', 'true');
+            } else {
+                content.style.display = 'none';
+                btn.textContent = '▸';
+                btn.setAttribute('aria-expanded', 'false');
+            }
+        }
+        function toggleCollapse(contentId, btnId) {
+            const cur = getComputedStyle(document.getElementById(contentId)).display !== 'none';
+            applyCollapseState(contentId, btnId, !cur);
+            setCollapseState(btnId, !cur);
+        }
+        function initCollapsibles() {
+            const mapping = [
+                { content: 'ocmBuyContent', btn: 'toggleOCMBuy' },
+                { content: 'customBuyContent', btn: 'toggleCustomBuy' },
+                { content: 'ocmSellContent', btn: 'toggleOCMSell' },
+                { content: 'customSellContent', btn: 'toggleCustomSell' }
+            ];
+            mapping.forEach(m => {
+                const savedOpen = getCollapseState(m.btn);
+                applyCollapseState(m.content, m.btn, !!savedOpen);
+            });
+        }
 
         /* ===== Navigation gating ===== */
-        function navigateStore() { /* always allowed */ scrollIntoViewSmooth('buySection'); }
+        function navigateStore() { scrollIntoViewSmooth('buySection'); }
         function navigateHistory() {
             if (!googleIdToken) { alert('You need to login for this tool'); return; }
             window.location.href = 'AccountHistory.html';
@@ -799,10 +888,8 @@ function initCollapsibles() {
                 const info = await tResp.json();
                 if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
 
-                // persist token so other pages can restore it
                 window.saveIdToken && window.saveIdToken(googleIdToken);
 
-                // existing server /me call
                 statusEl.textContent = 'Loading profile...';
                 const meResp = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
                 const meJson = await meResp.json();
@@ -813,8 +900,12 @@ function initCollapsibles() {
                 currentUser.isAdmin = !!meJson.data.isAdmin;
 
                 updateTopBarAuth();
-                if (currentUser.isAdmin) document.getElementById('adminPanelBtn').style.display = 'inline';
-                else document.getElementById('adminPanelBtn').style.display = 'none';
+                document.getElementById('adminPanelBtn').style.display = currentUser.isAdmin ? 'inline' : 'none';
+                document.getElementById('onBehalfSection').style.display = currentUser.isAdmin ? 'block' : 'none';
+
+                if (currentUser.isAdmin) {
+                    try { await adminLoadPlayers(); } catch { /* ignore */ }
+                }
 
                 const hasSetup = serverUser && serverUser.playerName;
                 const passedCaptcha = serverUser && serverUser.captchaPassed;
@@ -828,6 +919,9 @@ function initCollapsibles() {
                     showSetupOnly();
                     showRecaptchaWidget();
                 }
+
+                // Auto-import balance for active target
+                try { await refreshPinnedBalanceForActiveTarget(); } catch (_) { /* non-fatal */ }
 
                 statusEl.textContent = 'Logged in.';
                 refreshOpenOrders();
@@ -948,8 +1042,32 @@ function initCollapsibles() {
                 }
                 updateTopBarAuth();
                 statusEl.textContent = 'Setup complete.';
+
+                // refresh balance for current user
+                try { await refreshPinnedBalanceForActiveTarget(); } catch { }
             } catch (e) {
                 statusEl.textContent = 'Error: ' + e.message;
+            }
+        }
+
+        // Request access to an existing profile (claim flow)
+        async function requestAccountClaim() {
+            const msg = document.getElementById('claimMsg');
+            msg.textContent = '';
+            if (!googleIdToken) { msg.textContent = 'Login first.'; return; }
+            const ref = (document.getElementById('claimRefInput').value || '').trim();
+            if (!ref) { msg.textContent = 'Enter player name, mailbox or email.'; return; }
+            try {
+                const r = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'requestAccountClaim', idToken: googleIdToken, payload: { targetRef: ref } })
+                });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'requestAccountClaim failed');
+                msg.textContent = 'Request sent. An admin will review it.';
+            } catch (e) {
+                msg.textContent = 'Error: ' + e.message;
             }
         }
 
@@ -958,12 +1076,17 @@ function initCollapsibles() {
             googleIdToken = null;
             currentUser = null;
             isAdmin = false;
-            // clear persisted token so other pages don't restore it
+            window.submitForUser = null;
+            // remove pinned balance from receipt
+            sellCart = sellCart.filter(e => !e.isAccountBalancePinned);
             window.clearSavedIdToken && window.clearSavedIdToken();
             document.getElementById('loginStatus').textContent = 'Logged out.';
             document.getElementById('adminPanelBtn').style.display = 'none';
+            document.getElementById('onBehalfSection').style.display = 'none';
             updateTopBarAuth();
             document.getElementById('requestGuard').style.display = 'block';
+            const st = document.getElementById('onBehalfStatus'); if (st) st.textContent = '';
+            renderSellList(); calculateNet();
         }
 
         /* ===== Data loading ===== */
@@ -1356,16 +1479,31 @@ function initCollapsibles() {
         function renderSellList() {
             const list = document.getElementById("sellList"); list.innerHTML = "";
             let total = 0; const curr = document.getElementById("currencySelect").value;
-            sellCart.forEach(e => {
+
+            // Always show pinned Account Balance first (visual order)
+            const pinned = sellCart.filter(e => e.isAccountBalancePinned);
+            const others = sellCart.filter(e => !e.isAccountBalancePinned);
+            const rows = [...pinned, ...others];
+
+            rows.forEach(e => {
                 const li = document.createElement("li");
                 let rowTotal = 0, rowText = "";
-                if (e.isBalance) { rowTotal = e.price || 0; rowText = `Account Balance: ${rowTotal.toFixed(2)} BT`; }
-                else if (e.bundleSize && e.isFullyCustom) { rowTotal = (e.qty / e.bundleSize) * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`; }
-                else if (e.bundleSize) { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`; }
-                else { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`; }
+                if (e.isBalance) {
+                    rowTotal = e.price || 0;
+                    rowText = e.isAccountBalancePinned
+                        ? `Account Balance (auto): ${rowTotal.toFixed(2)} BT`
+                        : `Account Balance: ${rowTotal.toFixed(2)} BT`;
+                } else if (e.bundleSize && e.isFullyCustom) {
+                    rowTotal = (e.qty / e.bundleSize) * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
+                } else if (e.bundleSize) {
+                    rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`;
+                } else {
+                    rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`;
+                }
                 if (e.isPayWith) rowText += ' [Pay With]';
                 if (e.source === 'OCM') rowText += ' [OCM]';
                 total += rowTotal;
+
                 const colorClass = evaluateRowColorSell(e);
                 if (colorClass) {
                     li.classList.add(colorClass);
@@ -1377,11 +1515,17 @@ function initCollapsibles() {
                 }
                 if (curr && curr !== BASE_CURRENCY) rowText += ' ' + formatValue(rowTotal, curr, false);
                 li.textContent = rowText;
-                const removeBtn = document.createElement("button");
-                removeBtn.textContent = "❌"; removeBtn.onclick = () => { sellCart = sellCart.filter(x => x !== e); renderSellList(); calculateNet(); };
-                li.appendChild(removeBtn);
+
+                // Do not allow removing the auto-imported balance row
+                if (!e.isAccountBalancePinned) {
+                    const removeBtn = document.createElement("button");
+                    removeBtn.textContent = "❌"; removeBtn.onclick = () => { sellCart = sellCart.filter(x => x !== e); renderSellList(); calculateNet(); };
+                    li.appendChild(removeBtn);
+                }
+
                 list.appendChild(li);
             });
+
             document.getElementById("sellTotal").textContent = formatValue(total, curr, false);
             calculateNet();
         }
@@ -1408,172 +1552,161 @@ function initCollapsibles() {
         }
 
         function addPayRow() {
-    const div = document.createElement("div"); div.className = "payRow";
-    const unique = 'paySelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-    const input = document.createElement("input"); input.id = unique; input.className = 'dropdown-input'; input.placeholder = 'Item name';
-    const list = document.createElement("div"); list.id = unique + 'List'; list.className = 'dropdown-list'; list.style.display = 'none';
-    const wrap = document.createElement('div'); wrap.className = 'dropdown-wrap'; wrap.appendChild(input); wrap.appendChild(list);
+            const div = document.createElement("div"); div.className = "payRow";
+            const unique = 'paySelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            const input = document.createElement("input"); input.id = unique; input.className = 'dropdown-input'; input.placeholder = 'Item name';
+            const list = document.createElement("div"); list.id = unique + 'List'; list.className = 'dropdown-list'; list.style.display = 'none';
+            const wrap = document.createElement('div'); wrap.className = 'dropdown-wrap'; wrap.appendChild(input); wrap.appendChild(list);
 
-    // default percent set to 100%
-    const percent = document.createElement("input"); percent.type = "number"; percent.value = 100; percent.min = 0; percent.max = 100; percent.placeholder = "%";
+            const percent = document.createElement("input"); percent.type = "number"; percent.value = 100; percent.min = 0; percent.max = 100; percent.placeholder = "%";
 
-    const removeRowBtn = document.createElement("button"); removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
-    removeRowBtn.onclick = () => { div.remove(); calculatePayment(); };
+            const removeRowBtn = document.createElement("button"); removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
+            removeRowBtn.onclick = () => { div.remove(); calculatePayment(); };
 
-    div.appendChild(wrap); div.appendChild(document.createTextNode(" % of total: ")); div.appendChild(percent); div.appendChild(removeRowBtn);
-    document.getElementById("payOptions").appendChild(div);
+            div.appendChild(wrap); div.appendChild(document.createTextNode(" % of total: ")); div.appendChild(percent); div.appendChild(removeRowBtn);
+            document.getElementById("payOptions").appendChild(div);
 
-    attachDropdown(input.id, list.id, (q) => {
-        const ql = (q || "").toLowerCase();
-        if (!ql) return dropdownData.slice(0, 200);
-        return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
-    }, () => { });
+            attachDropdown(input.id, list.id, (q) => {
+                const ql = (q || "").toLowerCase();
+                if (!ql) return dropdownData.slice(0, 200);
+                return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
+            }, () => { });
 
-    // keep UI consistent by focusing the new item input
-    input.focus();
-}
+            input.focus();
+        }
 
         function calculatePayment() {
-    const payListEl = document.getElementById("payList"); payListEl.innerHTML = "";
-    const netSpan = document.getElementById("netTotal");
-    const netRaw = parseFloat(netSpan.dataset.raw);
-    const totalNet = !isNaN(netRaw) ? netRaw : parseFloat((netSpan.textContent || "0").replace(/[^\d.-]/g, "")) || 0;
-    if (totalNet >= 0) {
-        document.getElementById("paymentResult").textContent = `✅ Net Balance is ${totalNet.toFixed(2)} BT. No payment needed.`;
-        sellCart = sellCart.filter(e => !e.isPayWith);
-        renderSellList(); calculateNet(); return;
-    }
-
-    const owed = -totalNet;
-    sellCart = sellCart.filter(e => !e.isPayWith);
-    const curr = document.getElementById("currencySelect").value;
-    const rows = Array.from(document.querySelectorAll("#payOptions .payRow"));
-
-    // Collect per-row computed contributions
-    const computed = [];
-    let usedPercent = 0;
-
-    rows.forEach(row => {
-        const inputEl = row.querySelector('input.dropdown-input');
-        const percentEl = row.querySelector('input[type="number"]');
-        const rawName = (inputEl?.value || "").trim();
-        const percent = parseFloat(percentEl?.value) || 0;
-        if (!rawName || percent <= 0) return;
-
-        const item = payItems.find(i => i.name.toLowerCase() === rawName.toLowerCase())
-            || payItems.find(i => i.name.toLowerCase().includes(rawName.toLowerCase()));
-        if (!item) return;
-
-        usedPercent += percent;
-        const portion = (percent / 100) * owed;
-
-        const stackPrice = item.buyStack || (item.buyEach && item.bundleSize ? item.buyEach * item.bundleSize : 0);
-        const indivPrice = item.buyEach || (item.buyStack && item.bundleSize ? item.buyStack / item.bundleSize : 0);
-
-        let stacks = 0, individuals = 0, leftover = portion;
-        if (stackPrice > 0) { stacks = Math.floor(portion / stackPrice); leftover -= stacks * stackPrice; }
-        if (indivPrice > 0 && leftover > 0) { const addIndividuals = Math.floor(leftover / indivPrice); individuals += addIndividuals; leftover -= addIndividuals * indivPrice; }
-
-        computed.push({
-            item, percent, stacks, individuals, stackPrice, indivPrice
-        });
-    });
-
-    // Sum provided and try to cover rounding shortfall by adding cheapest individuals/stacks
-    const sumProvided = () => computed.reduce((s, c) => s + (c.stacks * (c.stackPrice || 0)) + (c.individuals * (c.indivPrice || 0)), 0);
-    let provided = sumProvided();
-    let remaining = owed - provided;
-
-    // First try to add individuals (cheapest indivPrice first)
-    if (remaining > 0) {
-        const indivRows = computed.filter(c => c.indivPrice > 0).sort((a, b) => a.indivPrice - b.indivPrice);
-        for (const c of indivRows) {
-            while (remaining > 0 && c.indivPrice > 0) {
-                c.individuals += 1;
-                remaining -= c.indivPrice;
-                provided += c.indivPrice;
-                if (remaining <= 0) break;
-                // safety break if loop too long
-                if (c.individuals > 10000) break;
+            const payListEl = document.getElementById("payList"); payListEl.innerHTML = "";
+            const netSpan = document.getElementById("netTotal");
+            const netRaw = parseFloat(netSpan.dataset.raw);
+            const totalNet = !isNaN(netRaw) ? netRaw : parseFloat((netSpan.textContent || "0").replace(/[^\d.-]/g, "")) || 0;
+            if (totalNet >= 0) {
+                document.getElementById("paymentResult").textContent = `✅ Net Balance is ${totalNet.toFixed(2)} BT. No payment needed.`;
+                sellCart = sellCart.filter(e => !e.isPayWith);
+                renderSellList(); calculateNet(); return;
             }
-            if (remaining <= 0) break;
-        }
-    }
 
-    // If still remaining, try adding one stack where applicable (cheapest stackPrice first)
-    if (remaining > 0) {
-        const stackRows = computed.filter(c => c.stackPrice > 0).sort((a, b) => a.stackPrice - b.stackPrice);
-        for (const c of stackRows) {
-            while (remaining > 0 && c.stackPrice > 0) {
-                c.stacks += 1;
-                remaining -= c.stackPrice;
-                provided += c.stackPrice;
-                if (remaining <= 0) break;
-                // safety break
-                if (c.stacks > 10000) break;
+            const owed = -totalNet;
+            sellCart = sellCart.filter(e => !e.isPayWith);
+            const curr = document.getElementById("currencySelect").value;
+            const rows = Array.from(document.querySelectorAll("#payOptions .payRow"));
+
+            const computed = [];
+            let usedPercent = 0;
+
+            rows.forEach(row => {
+                const inputEl = row.querySelector('input.dropdown-input');
+                const percentEl = row.querySelector('input[type="number"]');
+                const rawName = (inputEl?.value || "").trim();
+                const percent = parseFloat(percentEl?.value) || 0;
+                if (!rawName || percent <= 0) return;
+
+                const item = payItems.find(i => i.name.toLowerCase() === rawName.toLowerCase())
+                    || payItems.find(i => i.name.toLowerCase().includes(rawName.toLowerCase()));
+                if (!item) return;
+
+                usedPercent += percent;
+                const portion = (percent / 100) * owed;
+
+                const stackPrice = item.buyStack || (item.buyEach && item.bundleSize ? item.buyEach * item.bundleSize : 0);
+                const indivPrice = item.buyEach || (item.buyStack && item.bundleSize ? item.buyStack / item.bundleSize : 0);
+
+                let stacks = 0, individuals = 0, leftover = portion;
+                if (stackPrice > 0) { stacks = Math.floor(portion / stackPrice); leftover -= stacks * stackPrice; }
+                if (indivPrice > 0 && leftover > 0) { const addIndividuals = Math.floor(leftover / indivPrice); individuals += addIndividuals; leftover -= addIndividuals * indivPrice; }
+
+                computed.push({
+                    item, percent, stacks, individuals, stackPrice, indivPrice
+                });
+            });
+
+            const sumProvided = () => computed.reduce((s, c) => s + (c.stacks * (c.stackPrice || 0)) + (c.individuals * (c.indivPrice || 0)), 0);
+            let provided = sumProvided();
+            let remaining = owed - provided;
+
+            if (remaining > 0) {
+                const indivRows = computed.filter(c => c.indivPrice > 0).sort((a, b) => a.indivPrice - b.indivPrice);
+                for (const c of indivRows) {
+                    while (remaining > 0 && c.indivPrice > 0) {
+                        c.individuals += 1;
+                        remaining -= c.indivPrice;
+                        provided += c.indivPrice;
+                        if (remaining <= 0) break;
+                        if (c.individuals > 10000) break;
+                    }
+                    if (remaining <= 0) break;
+                }
             }
-            if (remaining <= 0) break;
+
+            if (remaining > 0) {
+                const stackRows = computed.filter(c => c.stackPrice > 0).sort((a, b) => a.stackPrice - b.stackPrice);
+                for (const c of stackRows) {
+                    while (remaining > 0 && c.stackPrice > 0) {
+                        c.stacks += 1;
+                        remaining -= c.stackPrice;
+                        provided += c.stackPrice;
+                        if (remaining <= 0) break;
+                        if (c.stacks > 10000) break;
+                    }
+                    if (remaining <= 0) break;
+                }
+            }
+
+            computed.forEach(c => {
+                if ((c.stacks === 0) && (c.individuals === 0)) return;
+                const payId = 'pay_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+                const li = document.createElement("li"); li.dataset.payid = payId;
+                let payText = `${c.percent}% = `;
+                if (c.stacks > 0) payText += `${c.stacks} stack(s) × ${c.item.bundleSize} ${c.item.name} (${(c.stackPrice || 0).toFixed(2)} BT stack)`;
+                if (c.individuals > 0) { if (c.stacks > 0) payText += ' + '; payText += `${c.individuals} × ${c.item.name} (${(c.indivPrice || 0).toFixed(2)} BT each)`; }
+                const totalBT = c.stacks * (c.stackPrice || 0) + c.individuals * (c.indivPrice || 0);
+                payText += ` (${totalBT.toFixed(2)} BT)`;
+                if (curr && curr !== BASE_CURRENCY) payText += ' ' + formatValue(totalBT, curr, false);
+                li.textContent = payText;
+                const removeBtn = document.createElement("button"); removeBtn.textContent = "❌";
+                removeBtn.onclick = () => { sellCart = sellCart.filter(it => !(it.isPayWith && it._payId === payId)); li.remove(); renderSellList(); calculateNet(); };
+                li.appendChild(removeBtn);
+                payListEl.appendChild(li);
+
+                if (c.stacks > 0) sellCart.push({ name: c.item.name, qty: c.stacks, price: c.stackPrice, bundleSize: c.item.bundleSize, isPayWith: true, _payId: payId });
+                if (c.individuals > 0) sellCart.push({ name: c.item.name, qty: c.individuals, price: c.indivPrice, isPayWith: true, _payId: payId });
+            });
+
+            const finalProvided = sumProvided();
+            const finalRemaining = Math.max(0, owed - finalProvided);
+
+            if (finalProvided >= owed) {
+                document.getElementById("paymentResult").textContent = `✅ Covered. Payment items total ${finalProvided.toFixed(2)} BT (needed ${owed.toFixed(2)} BT).`;
+            } else {
+                document.getElementById("paymentResult").textContent = `⚠️ Unable to fully cover owed amount. Still missing ${finalRemaining.toFixed(2)} BT.`;
+            }
+
+            renderSellList(); calculateNet();
         }
-    }
-
-    // Build UI list and add to sellCart
-    computed.forEach(c => {
-        if ((c.stacks === 0) && (c.individuals === 0)) return;
-        const payId = 'pay_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-        const li = document.createElement("li"); li.dataset.payid = payId;
-        let payText = `${c.percent}% = `;
-        if (c.stacks > 0) payText += `${c.stacks} stack(s) × ${c.item.bundleSize} ${c.item.name} (${(c.stackPrice || 0).toFixed(2)} BT stack)`;
-        if (c.individuals > 0) { if (c.stacks > 0) payText += ' + '; payText += `${c.individuals} × ${c.item.name} (${(c.indivPrice || 0).toFixed(2)} BT each)`; }
-        const totalBT = c.stacks * (c.stackPrice || 0) + c.individuals * (c.indivPrice || 0);
-        payText += ` (${totalBT.toFixed(2)} BT)`;
-        if (curr && curr !== BASE_CURRENCY) payText += ' ' + formatValue(totalBT, curr, false);
-        li.textContent = payText;
-        const removeBtn = document.createElement("button"); removeBtn.textContent = "❌";
-        removeBtn.onclick = () => { sellCart = sellCart.filter(it => !(it.isPayWith && it._payId === payId)); li.remove(); renderSellList(); calculateNet(); };
-        li.appendChild(removeBtn);
-        payListEl.appendChild(li);
-
-        if (c.stacks > 0) sellCart.push({ name: c.item.name, qty: c.stacks, price: c.stackPrice, bundleSize: c.item.bundleSize, isPayWith: true, _payId: payId });
-        if (c.individuals > 0) sellCart.push({ name: c.item.name, qty: c.individuals, price: c.indivPrice, isPayWith: true, _payId: payId });
-    });
-
-    const finalProvided = sumProvided();
-    const finalRemaining = Math.max(0, owed - finalProvided);
-
-    if (finalProvided >= owed) {
-        document.getElementById("paymentResult").textContent = `✅ Covered. Payment items total ${finalProvided.toFixed(2)} BT (needed ${owed.toFixed(2)} BT).`;
-    } else {
-        document.getElementById("paymentResult").textContent = `⚠️ Unable to fully cover owed amount. Still missing ${finalRemaining.toFixed(2)} BT.`;
-    }
-
-    renderSellList(); calculateNet();
-}
 
         function addConverterRow() {
-    const div = document.createElement("div"); div.className = "payRow";
-    const unique = 'convSelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-    const input = document.createElement("input"); input.id = unique; input.className = 'dropdown-input'; input.placeholder = 'Item name';
-    const list = document.createElement("div"); list.id = unique + 'List'; list.className = 'dropdown-list'; list.style.display = 'none';
-    const wrap = document.createElement('div'); wrap.className = 'dropdown-wrap'; wrap.appendChild(input); wrap.appendChild(list);
+            const div = document.createElement("div"); div.className = "payRow";
+            const unique = 'convSelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+            const input = document.createElement("input"); input.id = unique; input.className = 'dropdown-input'; input.placeholder = 'Item name';
+            const list = document.createElement("div"); list.id = unique + 'List'; list.className = 'dropdown-list'; list.style.display = 'none';
+            const wrap = document.createElement('div'); wrap.className = 'dropdown-wrap'; wrap.appendChild(input); wrap.appendChild(list);
 
-    // default percent set to 100%
-    const percent = document.createElement("input"); percent.type = "number"; percent.value = 100; percent.min = 0; percent.max = 100; percent.placeholder = "%";
+            const percent = document.createElement("input"); percent.type = "number"; percent.value = 100; percent.min = 0; percent.max = 100; percent.placeholder = "%";
 
-    const removeRowBtn = document.createElement("button"); removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
-    removeRowBtn.onclick = () => { div.remove(); calculateConversion(); };
+            const removeRowBtn = document.createElement("button"); removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
+            removeRowBtn.onclick = () => { div.remove(); calculateConversion(); };
 
-    div.appendChild(wrap); div.appendChild(document.createTextNode(" % of Net Balance: ")); div.appendChild(percent); div.appendChild(removeRowBtn);
-    document.getElementById("converterOptions").appendChild(div);
+            div.appendChild(wrap); div.appendChild(document.createTextNode(" % of Net Balance: ")); div.appendChild(percent); div.appendChild(removeRowBtn);
+            document.getElementById("converterOptions").appendChild(div);
 
-    attachDropdown(input.id, list.id, (q) => {
-        const ql = (q || "").toLowerCase();
-        if (!ql) return dropdownData.slice(0, 200);
-        return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
-    }, () => { });
+            attachDropdown(input.id, list.id, (q) => {
+                const ql = (q || "").toLowerCase();
+                if (!ql) return dropdownData.slice(0, 200);
+                return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
+            }, () => { });
 
-    // focus new converter input so user can type immediately
-    input.focus();
-}
+            input.focus();
+        }
 
         function calculateConversion() {
             const converterList = document.getElementById("converterListDisplay");
@@ -1622,26 +1755,46 @@ function initCollapsibles() {
 
         /* ===== Requests ===== */
         function buildRequestPayload() {
-            const buyItems = buyCart.map(b => ({ name: b.name, qty: b.qty, priceBT: b.price, bundleSize: b.bundleSize || null, source: b.source || 'STORE' }));
-            const sellItems = sellCart.map(s => ({ name: s.name, qty: s.qty, priceBT: s.price, bundleSize: s.bundleSize || null, source: s.source || 'STORE' }));
+            // include flags so backend/history can show "Account Balance" row
+            const mapRow = r => ({
+                name: r.name,
+                qty: r.qty,
+                priceBT: r.price,
+                bundleSize: r.bundleSize || null,
+                source: r.source || 'STORE',
+                isBalance: !!r.isBalance
+            });
+
+            const buyItems = buyCart.map(mapRow);
+            const sellItems = sellCart.map(mapRow);
+
             const totals = {
                 buyBT: buyItems.reduce((s, i) => s + (i.priceBT * (i.bundleSize ? i.qty : i.qty)), 0),
                 sellBT: sellItems.reduce((s, i) => s + (i.priceBT * (i.bundleSize ? i.qty : i.qty)), 0)
             };
             totals.netBT = totals.sellBT - totals.buyBT;
-            return {
-                requestId: cryptoRandomId(),
-                createdAt: new Date().toISOString(),
-                user: {
+
+            const baseUser = (window.submitForUser && currentUser?.isAdmin)
+                ? window.submitForUser
+                : {
                     userId: currentUser?.userId,
                     email: currentUser?.email,
                     playerName: currentUser?.playerName,
                     mailbox: currentUser?.mailbox
-                },
+                };
+
+            return {
+                requestId: cryptoRandomId(),
+                createdAt: new Date().toISOString(),
+                user: baseUser,
                 carts: { buy: buyItems, sell: sellItems },
                 totals,
                 priceSource: { sheetId: 'PRICE_SHEET', asOf: new Date().toISOString() },
-                editedFromRequestId: window.editedFromRequestId || null
+                editedFromRequestId: window.editedFromRequestId || null,
+                meta: (currentUser?.isAdmin && window.submitForUser) ? {
+                    submittedByAdmin: true,
+                    adminEmail: currentUser?.email
+                } : null
             };
         }
 
@@ -1660,6 +1813,9 @@ function initCollapsibles() {
             const doPost = (tokenOrNull) => {
                 const body = { action: 'createRequest', idToken: googleIdToken, payload };
                 if (tokenOrNull) body.recaptchaToken = tokenOrNull;
+                if (currentUser?.isAdmin && window.submitForUser) {
+                    body.onBehalfOf = payload.user; // server should add to player's history
+                }
                 return fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             };
             (skipCaptcha ? Promise.resolve(null) : recaptchaWrap())
@@ -1679,6 +1835,142 @@ function initCollapsibles() {
             navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
                 .then(() => document.getElementById('requestMsg').textContent = 'Transaction data copied.')
                 .catch(e => document.getElementById('requestMsg').textContent = 'Copy failed: ' + e.message);
+        }
+
+        /* ===== Admin: on-behalf selector ===== */
+        function normalizeStr(s) { return (s || '').toLowerCase().trim(); }
+        function score(candidate, query) {
+            const c = normalizeStr(candidate);
+            const q = normalizeStr(query);
+            if (!q) return 0;
+            if (c.startsWith(q)) return 100 - (c.length - q.length);
+            const idx = c.indexOf(q);
+            if (idx >= 0) return 60 - idx;
+            const tokens = q.split(/\s+/).filter(Boolean);
+            let hits = 0;
+            tokens.forEach(t => { if (c.indexOf(t) >= 0) hits++; });
+            return hits > 0 ? 30 + hits : -1;
+        }
+        function attachOnBehalfSearch() {
+            const input = document.getElementById('obPlayerSearchInput');
+            const list = document.getElementById('obPlayerSearchList');
+            if (!input || !list) return;
+            input.addEventListener('input', () => {
+                const q = input.value;
+                const filtered = __playersCache.map(p => ({
+                    ...p,
+                    _score: Math.max(
+                        score(`${p.playerName || ''}`, q),
+                        score(`${p.email || ''}`, q),
+                        score(`${p.userId || ''}`, q)
+                    )
+                }))
+                    .filter(p => p._score >= 0)
+                    .sort((a, b) => b._score - a._score)
+                    .slice(0, 200);
+                list.innerHTML = '';
+                if (!filtered.length) { list.style.display = 'none'; return; }
+                filtered.forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'dropdown-item';
+                    div.innerHTML = `<div><strong>${p.playerName || '(no name)'}</strong><br><small>${p.email || ''}</small></div>`;
+                    div.onclick = () => {
+                        input.value = p.playerName || p.email || p.userId;
+                        input.dataset.userId = p.userId || '';
+                        list.style.display = 'none';
+                    };
+                    list.appendChild(div);
+                });
+                list.style.display = 'block';
+            });
+            input.addEventListener('focus', () => input.dispatchEvent(new Event('input')));
+            input.addEventListener('blur', () => setTimeout(() => list.style.display = 'none', 200));
+        }
+
+        async function adminLoadPlayers() {
+            const st = document.getElementById('onBehalfStatus');
+            try {
+                if (!googleIdToken) return;
+                const r = await fetch(`${WEB_APP_URL}?action=adminListPlayers&idToken=${encodeURIComponent(googleIdToken)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'adminListPlayers failed');
+                const arr = Array.isArray(j.data) ? j.data : (j.data?.players || []);
+                __playersCache.length = 0;
+                arr.forEach(p => __playersCache.push({ userId: p.userId, email: p.email, playerName: p.playerName, mailbox: p.mailbox }));
+                if (st) st.textContent = `Loaded ${__playersCache.length} players.`;
+            } catch (e) {
+                if (st) st.textContent = 'Load players failed: ' + e.message;
+            }
+        }
+
+        // Fetch and pin balance for active target (current user or on-behalf user)
+        function getActiveTarget() {
+            return window.submitForUser || currentUser;
+        }
+        async function fetchBalanceForUser(user) {
+            if (!googleIdToken || !user) return 0;
+            const qs = new URLSearchParams({ action: 'getBalance', idToken: googleIdToken });
+            if (user.userId) qs.append('userId', user.userId);
+            const r = await fetch(`${WEB_APP_URL}?${qs.toString()}`);
+            const j = await r.json();
+            if (!j.ok) throw new Error(j.error || 'getBalance failed');
+            const v = Number(j.data?.balanceBT ?? j.balanceBT ?? j.data?.balance ?? 0);
+            return isNaN(v) ? 0 : v;
+        }
+        function upsertPinnedBalanceRow(balanceBT) {
+            // remove prior pinned balance
+            sellCart = sellCart.filter(e => !e.isAccountBalancePinned);
+            // add fresh pinned at beginning (data order doesn't matter; render keeps it top)
+            sellCart.unshift({
+                name: 'Account Balance',
+                qty: 1,
+                price: Number(balanceBT) || 0,
+                isBalance: true,
+                isAccountBalancePinned: true,
+                source: 'BALANCE'
+            });
+            renderSellList();
+            calculateNet();
+        }
+        async function refreshPinnedBalanceForActiveTarget() {
+            const target = getActiveTarget();
+            if (!target || !googleIdToken) return;
+            try {
+                const bal = await fetchBalanceForUser(target);
+                upsertPinnedBalanceRow(bal);
+                const st = document.getElementById('onBehalfStatus');
+                if (st && window.submitForUser) st.textContent = `Target set: ${target.playerName || target.email || target.userId}. Balance: ${bal.toFixed(2)} BT`;
+            } catch (e) {
+                // leave any existing pinned row; surface message for admins
+                const st = document.getElementById('onBehalfStatus');
+                if (st) st.textContent = `Balance load failed: ${e.message}`;
+            }
+        }
+
+        async function setOnBehalfTarget() {
+            if (!currentUser?.isAdmin) return alert('Admin only');
+            const input = document.getElementById('obPlayerSearchInput');
+            const userId = input?.dataset?.userId || '';
+            const st = document.getElementById('onBehalfStatus');
+            if (!userId) { st.textContent = 'Select a player from the list first.'; return; }
+            const u = __playersCache.find(p => p.userId === userId);
+            if (!u) { st.textContent = 'Selected player not found.'; return; }
+            window.submitForUser = {
+                userId: u.userId,
+                email: u.email || null,
+                playerName: u.playerName || null,
+                mailbox: u.mailbox || null
+            };
+            st.textContent = `Target set: ${u.playerName || u.email || u.userId}. Loading balance...`;
+            try { await refreshPinnedBalanceForActiveTarget(); } catch { }
+        }
+        async function clearOnBehalfTarget() {
+            window.submitForUser = null;
+            const st = document.getElementById('onBehalfStatus');
+            if (st) st.textContent = 'On-behalf target cleared. Loading your balance...';
+            try { await refreshPinnedBalanceForActiveTarget(); } catch { }
+            const input = document.getElementById('obPlayerSearchInput');
+            if (input) { input.value = ''; input.dataset.userId = ''; }
         }
 
         /* ===== Open Orders Indicator ===== */
@@ -1756,7 +2048,156 @@ function initCollapsibles() {
             toggleOrderPopup();
             alert('Request loaded. Edit and Submit to resend (old request cancelled).');
         }
+        // Import Transaction Data — supports clipboard paste, prompt paste, or JSON file
+        async function importTransactionData() {
+            if (!googleIdToken) { alert('You need to login for this tool'); return; }
 
+            // 1) Try read JSON text from clipboard (best UX)
+            try {
+                if (navigator.clipboard?.readText) {
+                    const txt = (await navigator.clipboard.readText()) || '';
+                    if (txt.trim()) {
+                        await importTransactionDataFromText(txt);
+                        return;
+                    }
+                }
+            } catch (_) { /* fall through */ }
+
+            // 2) Ask user to paste JSON manually
+            const pasted = window.prompt('Paste transaction JSON (from Copy Transaction Data), or leave empty to choose a file:');
+            if (pasted && pasted.trim()) {
+                await importTransactionDataFromText(pasted);
+                return;
+            }
+
+            // 3) Fallback to file chooser
+            const fileEl = document.getElementById('importFile');
+            if (fileEl) fileEl.click();
+            else alert('File input not found. Please add the hidden <input id="importFile" ...> element near the button.');
+        }
+
+        async function importTransactionDataFromFile(file) {
+            if (!file) return;
+            try {
+                const txt = await file.text();
+                await importTransactionDataFromText(txt);
+            } catch (e) {
+                document.getElementById('requestMsg').textContent = 'Import failed: ' + e.message;
+            } finally {
+                const fileEl = document.getElementById('importFile');
+                if (fileEl) fileEl.value = ''; // reset
+            }
+        }
+
+        async function importTransactionDataFromText(txt) {
+            try {
+                const payload = JSON.parse(txt);
+                loadTransactionPayloadIntoEditor(payload);
+                document.getElementById('requestMsg').textContent = 'Transaction data imported.';
+            } catch (e) {
+                document.getElementById('requestMsg').textContent = 'Invalid JSON: ' + e.message;
+            }
+        }
+
+        // Accepts both current shape { carts:{buy:[...],sell:[...]}, ... }
+        // and legacy shape { items:[{side:'buy'|'sell', itemName, quantity, price, bundleSize?}], ... }
+        function loadTransactionPayloadIntoEditor(payload) {
+            const asNumber = (v) => { const n = Number(v); return isFinite(n) ? n : 0; };
+
+            // Normalize input to arrays of rows
+            let buyRows = [];
+            let sellRows = [];
+
+            if (payload && payload.carts && (Array.isArray(payload.carts.buy) || Array.isArray(payload.carts.sell))) {
+                // Current format used by copyTransactionData()
+                buyRows = (payload.carts.buy || []).map(r => ({
+                    name: r.name,
+                    qty: asNumber(r.qty),
+                    price: asNumber(r.priceBT),
+                    bundleSize: r.bundleSize || null,
+                    source: r.source || 'STORE',
+                    isBalance: !!r.isBalance
+                }));
+                sellRows = (payload.carts.sell || []).map(r => ({
+                    name: r.name,
+                    qty: asNumber(r.qty),
+                    price: asNumber(r.priceBT),
+                    bundleSize: r.bundleSize || null,
+                    source: r.source || 'STORE',
+                    isBalance: !!r.isBalance
+                }));
+            } else if (Array.isArray(payload?.items)) {
+                // Legacy shape: items[] with side, itemName, quantity, price
+                payload.items.forEach(it => {
+                    const row = {
+                        name: it.itemName || it.name || 'Unknown',
+                        qty: asNumber(it.quantity ?? it.qty),
+                        price: asNumber(it.price ?? it.priceBT),
+                        bundleSize: it.bundleSize || null,
+                        source: it.source || 'STORE',
+                        isBalance: !!it.isBalance
+                    };
+                    if (String(it.side).toLowerCase() === 'buy') buyRows.push(row);
+                    else if (String(it.side).toLowerCase() === 'sell') sellRows.push(row);
+                });
+            } else {
+                throw new Error('Unsupported payload shape.');
+            }
+
+            // Clear current carts
+            buyCart = [];
+            sellCart = [];
+
+            // Preserve the auto-pinned balance row behavior:
+            // - keep pinned row (isAccountBalancePinned) at the top of sellCart
+            const pinned = sellCart.find(r => r.isAccountBalancePinned);
+
+            // Load imported rows
+            buyRows.forEach(r => {
+                // fully custom rows
+                if (r.bundleSize && !isNaN(r.bundleSize) && r.bundleSize > 0) {
+                    buyCart.push({ name: r.name, qty: r.qty, bundleSize: r.bundleSize, price: r.price, source: r.source || 'CUSTOM' });
+                } else {
+                    buyCart.push({ name: r.name, qty: r.qty, price: r.price, source: r.source || 'STORE' });
+                }
+            });
+
+            let importedSell = sellRows.map(r => {
+                const row = r.bundleSize && !isNaN(r.bundleSize) && r.bundleSize > 0
+                    ? { name: r.name, qty: r.qty, bundleSize: r.bundleSize, price: r.price, source: r.source || 'CUSTOM' }
+                    : { name: r.name, qty: r.qty, price: r.price, source: r.source || 'STORE' };
+                if (r.isBalance || r.name === 'Account Balance') {
+                    row.isBalance = true;
+                    row.source = 'BALANCE';
+                }
+                return row;
+            });
+
+            // If a pinned row exists, keep it first; otherwise just use imported order
+            if (pinned) {
+                sellCart.push(pinned);
+                importedSell = importedSell.filter(r => !r.isAccountBalancePinned);
+            }
+
+            sellCart.push(...importedSell);
+
+            // If payload.requestId exists, use it as edit marker so user can resubmit
+            window.editedFromRequestId = payload.requestId || payload.editedFromRequestId || null;
+
+            // If admin imports on behalf payload.user, optionally set target
+            if (currentUser?.isAdmin && payload.user && (payload.user.userId || payload.user.email || payload.user.playerName)) {
+                window.submitForUser = {
+                    userId: payload.user.userId || null,
+                    email: payload.user.email || null,
+                    playerName: payload.user.playerName || null,
+                    mailbox: payload.user.mailbox || null
+                };
+                // also refresh and pin the target's actual balance
+                refreshPinnedBalanceForActiveTarget().catch(() => { /* non-fatal */ });
+            }
+
+            updateAllDisplays();
+        }
         setInterval(() => { if (googleIdToken) refreshOpenOrders(); }, 15000);
 
         /* ===== Utilities ===== */
@@ -1765,81 +2206,77 @@ function initCollapsibles() {
         function toggleInfo(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
 
         /* ===== Init ===== */
-        // ===== Restore auth on load (place BEFORE your window.onload) =====
-        /* ===== Init ===== */
-async function tryRestoreAuthOnLoad() {
-    if (!window.initAuthFromStorage) return;
-    try {
-        const res = await window.initAuthFromStorage();
-        if (!res.ok) return;
-        googleIdToken = res.idToken;
-        try {
-            const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-            const meJ = await meR.json();
-            if (!meJ.ok) {
-                window.clearSavedIdToken && window.clearSavedIdToken();
-                googleIdToken = null;
-                return;
+        async function tryRestoreAuthOnLoad() {
+            if (!window.initAuthFromStorage) return;
+            try {
+                const res = await window.initAuthFromStorage();
+                if (!res.ok) return;
+                googleIdToken = res.idToken;
+                try {
+                    const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
+                    const meJ = await meR.json();
+                    if (!meJ.ok) {
+                        window.clearSavedIdToken && window.clearSavedIdToken();
+                        googleIdToken = null;
+                        return;
+                    }
+                    currentUser = normalizeUser(meJ.data.user || null);
+                    currentUser.isAdmin = !!meJ.data.isAdmin;
+                    if (typeof updateTopBarAuth === 'function') updateTopBarAuth();
+                    const adminBtn = document.getElementById('adminPanelBtn');
+                    if (adminBtn) adminBtn.style.display = (currentUser.isAdmin ? 'inline' : 'none');
+                    document.getElementById('onBehalfSection').style.display = currentUser.isAdmin ? 'block' : 'none';
+                    if (currentUser.isAdmin) {
+                        try { await adminLoadPlayers(); } catch { }
+                    }
+                    const hasSetup = currentUser && currentUser.playerName;
+                    const passedCaptcha = currentUser && currentUser.captchaPassed;
+                    if (hasSetup && passedCaptcha) {
+                        localStorage.setItem('vak_captcha_ok', '1');
+                        try { hideRecaptchaWidget(); } catch (_) { }
+                        try { hideSetupShowApp(); } catch (_) { }
+                    } else {
+                        localStorage.removeItem('vak_captcha_ok');
+                        try { showSetupOnly(); } catch (_) { }
+                        try { showRecaptchaWidget(); } catch (_) { }
+                    }
+                    // Pin balance for current (no on-behalf yet)
+                    try { await refreshPinnedBalanceForActiveTarget(); } catch { }
+                    if (typeof refreshOpenOrders === 'function') refreshOpenOrders();
+                } catch (e) {
+                    console.warn('restore /me failed', e);
+                }
+            } catch (e) {
+                console.warn('initAuthFromStorage failed', e);
             }
-            currentUser = normalizeUser(meJ.data.user || null);
-            currentUser.isAdmin = !!meJ.data.isAdmin;
-            if (typeof updateTopBarAuth === 'function') updateTopBarAuth();
-            const adminBtn = document.getElementById('adminPanelBtn');
-            if (adminBtn) adminBtn.style.display = (currentUser.isAdmin ? 'inline' : 'none');
-            const hasSetup = currentUser && currentUser.playerName;
-            const passedCaptcha = currentUser && currentUser.captchaPassed;
-            if (hasSetup && passedCaptcha) {
-                localStorage.setItem('vak_captcha_ok', '1');
-                try { hideRecaptchaWidget(); } catch (_) {}
-                try { hideSetupShowApp(); } catch (_) {}
-            } else {
-                localStorage.removeItem('vak_captcha_ok');
-                try { showSetupOnly(); } catch (_) {}
-                try { showRecaptchaWidget(); } catch (_) {}
-            }
-            if (typeof refreshOpenOrders === 'function') refreshOpenOrders();
-        } catch (e) {
-            console.warn('restore /me failed', e);
         }
-    } catch (e) {
-        console.warn('initAuthFromStorage failed', e);
-    }
-}
 
-window.onload = () => {
-    // Restore auth as early as possible
-    tryRestoreAuthOnLoad();
+        window.onload = () => {
+            tryRestoreAuthOnLoad();
 
-    // UI setup
-    document.body.classList.add('withTopBar');
+            document.body.classList.add('withTopBar');
+            checkHashForIdToken();
+            loadData();
 
-    // If URL returned id_token via implicit redirect, handle it
-    checkHashForIdToken();
+            addPayRow();
+            addConverterRow();
 
-    // App initialization
-    loadData();
+            initRecaptcha();
 
-    // Ensure both Pay With and Converter have one default row visible
-    addPayRow();
-    addConverterRow();
+            const gsiWait = setInterval(() => {
+                if (window.google && google.accounts && google.accounts.id) {
+                    initGoogleIdentity();
+                    clearInterval(gsiWait);
+                }
+            }, 200);
+            setTimeout(() => clearInterval(gsiWait), 4000);
 
-    initRecaptcha();
+            initCollapsibles();
+            updateTopBarAuth();
 
-    // Initialize Google Sign-In when available
-    const gsiWait = setInterval(() => {
-        if (window.google && google.accounts && google.accounts.id) {
-            initGoogleIdentity();
-            clearInterval(gsiWait);
-        }
-    }, 200);
-    setTimeout(() => clearInterval(gsiWait), 4000);
-
-    // Initialize collapsibles AFTER DOM ready
-    initCollapsibles();
-
-    // Ensure top-bar reflects restored auth
-    updateTopBarAuth();
-};
+            // init admin on-behalf search UI
+            attachOnBehalfSearch();
+        };
 
     </script>
 </body>

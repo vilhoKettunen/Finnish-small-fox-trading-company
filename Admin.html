@@ -54,6 +54,14 @@
             color: #666;
         }
 
+        .section {
+            margin: 16px 0;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fff;
+        }
+
         .request {
             margin: 8px 0;
             padding: 8px;
@@ -102,6 +110,38 @@
             border: 1px solid #555;
             border-radius: 4px;
         }
+
+        .dropdown-wrap {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-input {
+            width: 280px;
+            padding: 6px;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #ccc;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 500;
+            border-radius: 4px;
+        }
+
+        .dropdown-item {
+            padding: 6px 8px;
+            cursor: pointer;
+        }
+
+            .dropdown-item:hover {
+                background: #f0f6ff;
+            }
     </style>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
@@ -120,16 +160,50 @@
         </div>
     </div>
 
-    <h1>Admin Pending Requests</h1>
+    <h1>Admin Panel</h1>
     <div id="loginStatus" class="small">Not signed in</div>
     <div id="adminGuard" class="small" style="color:#a00; display:none;">You are not an admin. Sign in to continue.</div>
 
     <div id="adminContent" style="display:none;">
-        <div style="margin:10px 0;">
-            <label>Filter player/mailbox: <input id="filterPlayer" placeholder="player or mailbox"></label>
-            <button id="btnRefresh">Refresh</button>
+
+        <!-- Create Player Profile -->
+        <div class="section" id="createProfileSection">
+            <h2>🔹 Create Player Profile</h2>
+            <input id="cpPlayerName" type="text" placeholder="Player Name">
+            <input id="cpMailbox" type="text" placeholder="Mailbox (e.g. 1A / F1)">
+            <input id="cpEmail" type="email" placeholder="Email (optional)">
+            <button type="button" onclick="adminCreatePlayer()">Create</button>
+            <div id="cpMsg" class="small"></div>
         </div>
-        <ul id="pendingList"></ul>
+
+        <!-- Add Funds -->
+        <div class="section" id="addFundsSection">
+            <h2>🔹 Add Funds</h2>
+            <div class="dropdown-wrap">
+                <input id="playerSearchInput" class="dropdown-input" placeholder="Type player name/email">
+                <div id="playerSearchList" class="dropdown-list" style="display:none;"></div>
+            </div>
+            <input type="number" id="fundAmountInput" placeholder="Amount (BT)" step="0.01" min="0.01">
+            <input type="text" id="fundReasonInput" placeholder="Reason (optional)">
+            <button id="btnAddFunds" type="button" onclick="adminAddFunds()">Add Funds</button>
+            <div id="addFundsMsg" class="small"></div>
+        </div>
+
+        <!-- Pending Account Claims -->
+        <div class="section" id="accountClaimsSection">
+            <h2>🔹 Pending Account Claims</h2>
+            <ul id="claimsList"></ul>
+        </div>
+
+        <!-- Pending Requests -->
+        <div class="section">
+            <h2>🔹 Pending Transaction Requests</h2>
+            <div style="margin:10px 0;">
+                <label>Filter player/mailbox: <input id="filterPlayer" placeholder="player or mailbox"></label>
+                <button id="btnRefresh">Refresh</button>
+            </div>
+            <ul id="pendingList"></ul>
+        </div>
     </div>
 
     <script>
@@ -179,7 +253,11 @@
                 currentUser = meJ.data.user || null;
                 isAdmin = !!meJ.data.isAdmin;
                 updateAuthUI();
-                if (isAdmin) loadPending();
+                if (isAdmin) {
+                    loadPlayers();
+                    loadAccountClaims();
+                    loadPending();
+                }
             } catch (e) {
                 statusEl.textContent = 'Login error: ' + e.message;
                 updateAuthUI();
@@ -201,6 +279,11 @@
                 } catch (e) { console.warn('restore /me failed', e); }
             } catch (_) { /* ignore */ }
             updateAuthUI();
+            if (isAdmin) {
+                loadPlayers();
+                loadAccountClaims();
+                loadPending();
+            }
         })();
 
         document.getElementById('btnRefresh').addEventListener('click', loadPending);
@@ -208,6 +291,178 @@
 
         function escapeHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
+        /* ===== Create Player Profile ===== */
+        async function adminCreatePlayer() {
+            const msg = document.getElementById('cpMsg');
+            msg.textContent = '';
+            if (!googleIdToken || !isAdmin) { msg.textContent = 'Admin login required'; return; }
+            const playerName = (document.getElementById('cpPlayerName').value || '').trim();
+            const mailbox = (document.getElementById('cpMailbox').value || '').trim();
+            const email = (document.getElementById('cpEmail').value || '').trim();
+            if (!playerName || !mailbox) { msg.textContent = 'Player name and mailbox required'; return; }
+            try {
+                const r = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'adminCreatePlayer', idToken: googleIdToken, payload: { playerName, mailbox, email: email || null } })
+                });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'adminCreatePlayer failed');
+                msg.textContent = 'Profile created.';
+                document.getElementById('cpPlayerName').value = '';
+                document.getElementById('cpMailbox').value = '';
+                document.getElementById('cpEmail').value = '';
+                loadPlayers();
+            } catch (e) {
+                msg.textContent = 'Error: ' + e.message;
+            }
+        }
+
+        /* ===== Add Funds (fuzzy search) ===== */
+        const __playersCache = [];
+        function normalizeStr(s) { return (s || '').toLowerCase().trim(); }
+        function score(candidate, query) {
+            const c = normalizeStr(candidate);
+            const q = normalizeStr(query);
+            if (!q) return 0;
+            if (c.startsWith(q)) return 100 - (c.length - q.length);
+            const idx = c.indexOf(q);
+            if (idx >= 0) return 60 - idx;
+            const tokens = q.split(/\s+/).filter(Boolean);
+            let hits = 0;
+            tokens.forEach(t => { if (c.indexOf(t) >= 0) hits++; });
+            return hits > 0 ? 30 + hits : -1;
+        }
+        function attachPlayerSearch() {
+            const input = document.getElementById('playerSearchInput');
+            const list = document.getElementById('playerSearchList');
+            input.addEventListener('input', () => {
+                const q = input.value;
+                const filtered = __playersCache.map(p => ({
+                    ...p,
+                    _score: Math.max(
+                        score(`${p.playerName || ''}`, q),
+                        score(`${p.email || ''}`, q),
+                        score(`${p.userId || ''}`, q)
+                    )
+                }))
+                    .filter(p => p._score >= 0)
+                    .sort((a, b) => b._score - a._score)
+                    .slice(0, 200);
+                list.innerHTML = '';
+                if (!filtered.length) { list.style.display = 'none'; return; }
+                filtered.forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'dropdown-item';
+                    div.innerHTML = `<div><strong>${p.playerName || '(no name)'}</strong><br><small>${p.email || ''}</small></div>`;
+                    div.onclick = () => {
+                        input.value = p.playerName || p.email || p.userId;
+                        input.dataset.userId = p.userId || '';
+                        list.style.display = 'none';
+                    };
+                    list.appendChild(div);
+                });
+                list.style.display = 'block';
+            });
+            input.addEventListener('focus', () => input.dispatchEvent(new Event('input')));
+            input.addEventListener('blur', () => setTimeout(() => list.style.display = 'none', 200));
+        }
+        async function loadPlayers() {
+            try {
+                if (!googleIdToken) throw new Error('Login required');
+                const r = await fetch(`${WEB_APP_URL}?action=adminListPlayers&idToken=${encodeURIComponent(googleIdToken)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'adminListPlayers failed');
+                const arr = Array.isArray(j.data) ? j.data : (j.data?.players || []);
+                __playersCache.length = 0;
+                arr.forEach(p => __playersCache.push({ userId: p.userId, email: p.email, playerName: p.playerName }));
+            } catch (e) {
+                document.getElementById('addFundsMsg').textContent = 'Load players failed: ' + e.message;
+            }
+        }
+        async function adminAddFunds() {
+            const msg = document.getElementById('addFundsMsg');
+            msg.textContent = '';
+            if (!googleIdToken) { msg.textContent = 'Login required'; return; }
+            const input = document.getElementById('playerSearchInput');
+            const userId = input.dataset.userId || '';
+            const refText = input.value.trim();
+            const amount = parseFloat(document.getElementById('fundAmountInput').value) || 0;
+            const reason = document.getElementById('fundReasonInput').value.trim();
+            if (amount <= 0) { msg.textContent = 'Amount must be > 0'; return; }
+            if (!userId && !refText) { msg.textContent = 'Select a player'; return; }
+
+            try {
+                const payload = userId ? { userId, amountBT: amount, reason } : { playerNameOrEmail: refText, amountBT: amount, reason };
+                const r = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'adminAddFunds', idToken: googleIdToken, payload })
+                });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'adminAddFunds failed');
+                msg.textContent = 'Funds added.';
+                document.getElementById('fundAmountInput').value = '';
+                document.getElementById('fundReasonInput').value = '';
+            } catch (e) {
+                msg.textContent = 'Error: ' + e.message;
+            }
+        }
+
+        /* ===== Pending Account Claims ===== */
+        function renderClaims(claims) {
+            const ul = document.getElementById('claimsList');
+            ul.innerHTML = '';
+            if (!claims || !claims.length) {
+                ul.innerHTML = '<li class="small">No pending claims</li>';
+                return;
+            }
+            claims.forEach(c => {
+                const li = document.createElement('li'); li.className = 'request';
+                const hdr = document.createElement('div');
+                hdr.innerHTML = `<strong>${escapeHtml(c.playerName || '(no name)')}</strong> <span class="small">| mailbox ${escapeHtml(c.mailbox || 'N/A')} | claim ${escapeHtml(c.claimId || '')}</span>`;
+                li.appendChild(hdr);
+                const info = document.createElement('div'); info.className = 'small';
+                info.textContent = `Requester: ${c.requesterEmail || 'unknown'}`;
+                li.appendChild(info);
+                const ctr = document.createElement('div'); ctr.className = 'controls';
+                const approveBtn = document.createElement('button'); approveBtn.textContent = 'Approve'; approveBtn.onclick = () => resolveAccountClaim(c.claimId, true);
+                const rejectBtn = document.createElement('button'); rejectBtn.textContent = 'Reject'; rejectBtn.onclick = () => resolveAccountClaim(c.claimId, false);
+                ctr.append(approveBtn, rejectBtn);
+                li.appendChild(ctr);
+                ul.appendChild(li);
+            });
+        }
+        async function loadAccountClaims() {
+            if (!googleIdToken || !isAdmin) return;
+            try {
+                const r = await fetch(`${WEB_APP_URL}?action=adminListAccountClaims&idToken=${encodeURIComponent(googleIdToken)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'adminListAccountClaims failed');
+                const arr = Array.isArray(j.data) ? j.data : (j.data?.claims || []);
+                renderClaims(arr);
+            } catch (e) {
+                const ul = document.getElementById('claimsList');
+                ul.innerHTML = `<li class="small">Error: ${escapeHtml(e.message)}</li>`;
+            }
+        }
+        async function resolveAccountClaim(claimId, approve) {
+            if (!googleIdToken || !isAdmin) return alert('Admin login required');
+            try {
+                const r = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'adminResolveAccountClaim', idToken: googleIdToken, payload: { claimId, approve: !!approve } })
+                });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'adminResolveAccountClaim failed');
+                loadAccountClaims();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        /* ===== Pending Transaction Requests ===== */
         function loadPending() {
             if (!googleIdToken || !isAdmin) return;
             const filter = encodeURIComponent(document.getElementById('filterPlayer').value || '');
@@ -288,15 +543,26 @@
 
         function approve(requestId, executedByAdmin) {
             if (!googleIdToken) return alert('Login first');
-            fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'approveRequest', idToken: googleIdToken, recaptchaToken: null, payload: { requestId, executedByAdmin } }) })
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'approveRequest', idToken: googleIdToken, recaptchaToken: null, payload: { requestId, executedByAdmin } })
+            })
                 .then(r => r.json()).then(j => { if (!j.ok) throw new Error(j.error); alert('Approved'); loadPending(); }).catch(e => alert(e.message));
         }
 
         function rejectReq(requestId) {
             if (!googleIdToken) return alert('Login first');
-            fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'rejectRequest', idToken: googleIdToken, recaptchaToken: null, payload: { requestId, note: 'Rejected by admin' } }) })
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'rejectRequest', idToken: googleIdToken, recaptchaToken: null, payload: { requestId, note: 'Rejected by admin' } })
+            })
                 .then(r => r.json()).then(j => { if (!j.ok) throw new Error(j.error); alert('Rejected'); loadPending(); }).catch(e => alert(e.message));
         }
+
+        // init search UI for Add Funds
+        attachPlayerSearch();
     </script>
 </body>
 </html>
