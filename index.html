@@ -299,6 +299,36 @@
             color: #c00;
             margin-left: 8px;
         }
+
+        /* Collapsible controls */
+        .collapse-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            margin-left: 8px;
+            background: none;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+            .collapse-btn:focus {
+                outline: 2px solid #1a73e8;
+            }
+
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .collapsible-content {
+            margin-top: 8px;
+        }
     </style>
     <script src="app-config.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -408,47 +438,60 @@
         <button onclick="addIndividual()">Add Individual</button>
 
         <div class="ocm-box">
-            <h3>OCM Listings (Buy)</h3>
-            <input type="text" id="ocmBuyQuery" placeholder="Search OCM items">
-            <button onclick="refreshOCMBuy()">Search</button>
-            <div id="ocmBuyListings"></div>
-            <label>Quantity: <input type="number" id="ocmBuyQty" value="1" min="1"></label>
-            <button onclick="addOCMBuy()">Add OCM Item</button>
+            <div class="collapsible-header">
+                <h3 style="margin:0">OCM Listings (Buy)</h3>
+                <button id="toggleOCMBuy" class="collapse-btn" aria-expanded="false" onclick="toggleCollapse('ocmBuyContent','toggleOCMBuy')">▸</button>
+            </div>
+            <div id="ocmBuyContent" class="collapsible-content" style="display:none">
+                <input type="text" id="ocmBuyQuery" placeholder="Search OCM items">
+                <button onclick="refreshOCMBuy()">Search</button>
+                <div id="ocmBuyListings"></div>
+                <label>Quantity: <input type="number" id="ocmBuyQty" value="1" min="1"></label>
+                <button onclick="addOCMBuy()">Add OCM Item</button>
+            </div>
         </div>
 
         <h3>Account Balance</h3>
         <label>Enter Balance (BT): <input type="number" id="buyAccountBalanceInput" value="0"></label>
         <button onclick="addBuyAccountBalance()">➕ Add Balance</button>
 
-        <h3>Custom Inputs (Store)</h3>
-        <div>
-            <strong>From Spreadsheet — Stack</strong><br>
-            <div class="dropdown-wrap">
-                <input id="customBuyStackSelect" class="dropdown-input" placeholder="Item name">
-                <div id="customBuyStackSelectList" class="dropdown-list" style="display:none;"></div>
+        <div class="section" style="padding:12px;margin-top:12px;">
+            <div class="collapsible-header">
+                <h3 style="margin:0">Custom Inputs (Store)</h3>
+                <button id="toggleCustomBuy" class="collapse-btn" aria-expanded="false" onclick="toggleCollapse('customBuyContent','toggleCustomBuy')">▸</button>
             </div>
-            <input type="number" id="customBuyStackQty" placeholder="Quantity" min="1">
-            <input type="number" id="customBuyStackPrice" placeholder="Price per Stack" step="0.01">
-            <button onclick="addCustomBuyStack()">Add Custom Stack</button>
-        </div>
-        <div>
-            <strong>From Spreadsheet — Individual</strong><br>
-            <div class="dropdown-wrap">
-                <input id="customBuyIndivSelect" class="dropdown-input" placeholder="Item name">
-                <div id="customBuyIndivSelectList" class="dropdown-list" style="display:none;"></div>
+            <div id="customBuyContent" class="collapsible-content" style="display:none">
+                <div style="margin-top:8px">
+                    <strong>From Spreadsheet — Stack</strong><br>
+                    <div class="dropdown-wrap">
+                        <input id="customBuyStackSelect" class="dropdown-input" placeholder="Item name">
+                        <div id="customBuyStackSelectList" class="dropdown-list" style="display:none;"></div>
+                    </div>
+                    <input type="number" id="customBuyStackQty" placeholder="Quantity" min="1">
+                    <input type="number" id="customBuyStackPrice" placeholder="Price per Stack" step="0.01">
+                    <button onclick="addCustomBuyStack()">Add Custom Stack</button>
+                </div>
+                <div style="margin-top:8px">
+                    <strong>From Spreadsheet — Individual</strong><br>
+                    <div class="dropdown-wrap">
+                        <input id="customBuyIndivSelect" class="dropdown-input" placeholder="Item name">
+                        <div id="customBuyIndivSelectList" class="dropdown-list" style="display:none;"></div>
+                    </div>
+                    <input type="number" id="customBuyIndivQty" placeholder="Quantity" min="1">
+                    <input type="number" id="customBuyIndivPrice" placeholder="Price per Each" step="0.01">
+                    <button onclick="addCustomBuyIndividual()">Add Custom Individual</button>
+                </div>
+                <div style="margin-top:8px">
+                    <strong>Fully Custom</strong><br>
+                    <input type="text" id="customBuyName" placeholder="Name">
+                    <input type="number" id="customBuyQty" placeholder="Quantity (pieces)" min="1">
+                    <input type="number" id="customBuyStackSize" placeholder="Stack size" min="1">
+                    <input type="number" id="customBuyPrice" placeholder="Price per Stack" step="0.01">
+                    <button onclick="addFullyCustomBuy()">Add Fully Custom</button>
+                </div>
             </div>
-            <input type="number" id="customBuyIndivQty" placeholder="Quantity" min="1">
-            <input type="number" id="customBuyIndivPrice" placeholder="Price per Each" step="0.01">
-            <button onclick="addCustomBuyIndividual()">Add Custom Individual</button>
         </div>
-        <div>
-            <strong>Fully Custom</strong><br>
-            <input type="text" id="customBuyName" placeholder="Name">
-            <input type="number" id="customBuyQty" placeholder="Quantity (pieces)" min="1">
-            <input type="number" id="customBuyStackSize" placeholder="Stack size" min="1">
-            <input type="number" id="customBuyPrice" placeholder="Price per Stack" step="0.01">
-            <button onclick="addFullyCustomBuy()">Add Fully Custom</button>
-        </div>
+
         <ul id="buyList"></ul>
         <div id="buyTotalBox" class="negative">Buy Total: <span id="buyTotal">0.00</span></div>
     </div>
@@ -478,47 +521,60 @@
         <button onclick="addSellIndividual()">Add Individual</button>
 
         <div class="ocm-box">
-            <h3>OCM Listings (Sell)</h3>
-            <input type="text" id="ocmSellQuery" placeholder="Search OCM items">
-            <button onclick="refreshOCMSell()">Search</button>
-            <div id="ocmSellListings"></div>
-            <label>Quantity: <input type="number" id="ocmSellQty" value="1" min="1"></label>
-            <button onclick="addOCMSell()">Add OCM Item</button>
+            <div class="collapsible-header">
+                <h3 style="margin:0">OCM Listings (Sell)</h3>
+                <button id="toggleOCMSell" class="collapse-btn" aria-expanded="false" onclick="toggleCollapse('ocmSellContent','toggleOCMSell')">▸</button>
+            </div>
+            <div id="ocmSellContent" class="collapsible-content" style="display:none">
+                <input type="text" id="ocmSellQuery" placeholder="Search OCM items">
+                <button onclick="refreshOCMSell()">Search</button>
+                <div id="ocmSellListings"></div>
+                <label>Quantity: <input type="number" id="ocmSellQty" value="1" min="1"></label>
+                <button onclick="addOCMSell()">Add OCM Item</button>
+            </div>
         </div>
 
         <h3>Account Balance</h3>
         <label>Enter Balance (BT): <input type="number" id="accountBalanceInput" value="0"></label>
         <button onclick="addAccountBalance()">➕ Add Balance</button>
 
-        <h3>Custom Inputs (Store)</h3>
-        <div>
-            <strong>From Spreadsheet — Stack</strong><br>
-            <div class="dropdown-wrap">
-                <input id="customSellStackSelect" class="dropdown-input" placeholder="Item name">
-                <div id="customSellStackSelectList" class="dropdown-list" style="display:none;"></div>
+        <div class="section" style="padding:12px;margin-top:12px;">
+            <div class="collapsible-header">
+                <h3 style="margin:0">Custom Inputs (Sell)</h3>
+                <button id="toggleCustomSell" class="collapse-btn" aria-expanded="false" onclick="toggleCollapse('customSellContent','toggleCustomSell')">▸</button>
             </div>
-            <input type="number" id="customSellStackQty" placeholder="Quantity" min="1">
-            <input type="number" id="customSellStackPrice" placeholder="Price per Stack" step="0.01">
-            <button onclick="addCustomSellStack()">Add Custom Stack</button>
-        </div>
-        <div>
-            <strong>From Spreadsheet — Individual</strong><br>
-            <div class="dropdown-wrap">
-                <input id="customSellIndivSelect" class="dropdown-input" placeholder="Item name">
-                <div id="customSellIndivSelectList" class="dropdown-list" style="display:none;"></div>
+            <div id="customSellContent" class="collapsible-content" style="display:none">
+                <div style="margin-top:8px">
+                    <strong>From Spreadsheet — Stack</strong><br>
+                    <div class="dropdown-wrap">
+                        <input id="customSellStackSelect" class="dropdown-input" placeholder="Item name">
+                        <div id="customSellStackSelectList" class="dropdown-list" style="display:none;"></div>
+                    </div>
+                    <input type="number" id="customSellStackQty" placeholder="Quantity" min="1">
+                    <input type="number" id="customSellStackPrice" placeholder="Price per Stack" step="0.01">
+                    <button onclick="addCustomSellStack()">Add Custom Stack</button>
+                </div>
+                <div style="margin-top:8px">
+                    <strong>From Spreadsheet — Individual</strong><br>
+                    <div class="dropdown-wrap">
+                        <input id="customSellIndivSelect" class="dropdown-input" placeholder="Item name">
+                        <div id="customSellIndivSelectList" class="dropdown-list" style="display:none;"></div>
+                    </div>
+                    <input type="number" id="customSellIndivQty" placeholder="Quantity" min="1">
+                    <input type="number" id="customSellIndivPrice" placeholder="Price per Each" step="0.01">
+                    <button onclick="addCustomSellIndividual()">Add Custom Individual</button>
+                </div>
+                <div style="margin-top:8px">
+                    <strong>Fully Custom</strong><br>
+                    <input type="text" id="customSellName" placeholder="Name">
+                    <input type="number" id="customSellQty" placeholder="Quantity (pieces)" min="1">
+                    <input type="number" id="customSellStackSize" placeholder="Stack size" min="1">
+                    <input type="number" id="customSellPrice" placeholder="Price per Stack" step="0.01">
+                    <button onclick="addFullyCustomSell()">Add Fully Custom</button>
+                </div>
             </div>
-            <input type="number" id="customSellIndivQty" placeholder="Quantity" min="1">
-            <input type="number" id="customSellIndivPrice" placeholder="Price per Each" step="0.01">
-            <button onclick="addCustomSellIndividual()">Add Custom Individual</button>
         </div>
-        <div>
-            <strong>Fully Custom</strong><br>
-            <input type="text" id="customSellName" placeholder="Name">
-            <input type="number" id="customSellQty" placeholder="Quantity (pieces)" min="1">
-            <input type="number" id="customSellStackSize" placeholder="Stack size" min="1">
-            <input type="number" id="customSellPrice" placeholder="Price per Stack" step="0.01">
-            <button onclick="addFullyCustomSell()">Add Fully Custom</button>
-        </div>
+
         <ul id="sellList"></ul>
         <div id="sellTotalBox" class="positive">Sell Total: <span id="sellTotal">0.00</span></div>
     </div>
@@ -608,7 +664,47 @@
         let ocmListingsCacheBuy = [], ocmListingsCacheSell = [];
         window.editedFromRequestId = null;
 
-        
+        /* ===== Collapsible helpers ===== */
+function setCollapseState(btnId, open) {
+    try { localStorage.setItem('__collapse__' + btnId, open ? 'open' : 'closed'); } catch (_) {}
+}
+function getCollapseState(btnId) {
+    try { return localStorage.getItem('__collapse__' + btnId) === 'open'; } catch (_) { return false; }
+}
+function applyCollapseState(contentId, btnId, open) {
+    const content = document.getElementById(contentId);
+    const btn = document.getElementById(btnId);
+    if (!content || !btn) return;
+    if (open) {
+        content.style.display = 'block';
+        btn.textContent = '▾';
+        btn.setAttribute('aria-expanded', 'true');
+    } else {
+        content.style.display = 'none';
+        btn.textContent = '▸';
+        btn.setAttribute('aria-expanded', 'false');
+    }
+}
+function toggleCollapse(contentId, btnId) {
+    const cur = getComputedStyle(document.getElementById(contentId)).display !== 'none';
+    applyCollapseState(contentId, btnId, !cur);
+    setCollapseState(btnId, !cur);
+}
+function initCollapsibles() {
+    // IDs we want collapsible initially closed unless stored otherwise
+    const mapping = [
+        { content: 'ocmBuyContent', btn: 'toggleOCMBuy' },
+        { content: 'customBuyContent', btn: 'toggleCustomBuy' },
+        { content: 'ocmSellContent', btn: 'toggleOCMSell' },
+        { content: 'customSellContent', btn: 'toggleCustomSell' }
+    ];
+    mapping.forEach(m => {
+        const savedOpen = getCollapseState(m.btn);
+        // default: closed -> savedOpen || false
+        applyCollapseState(m.content, m.btn, !!savedOpen);
+    });
+}
+
         /* ===== Navigation gating ===== */
         function navigateStore() { /* always allowed */ scrollIntoViewSmooth('buySection'); }
         function navigateHistory() {
@@ -1312,91 +1408,172 @@
         }
 
         function addPayRow() {
-            const div = document.createElement("div"); div.className = "payRow";
-            const unique = 'paySelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-            const input = document.createElement("input"); input.id = unique; input.className = 'dropdown-input'; input.placeholder = 'Item name';
-            const list = document.createElement("div"); list.id = unique + 'List'; list.className = 'dropdown-list'; list.style.display = 'none';
-            const wrap = document.createElement('div'); wrap.className = 'dropdown-wrap'; wrap.appendChild(input); wrap.appendChild(list);
-            const percent = document.createElement("input"); percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
-            const removeRowBtn = document.createElement("button"); removeRowBtn.type = "button"; removeRowBtn.textContent = "❌"; removeRowBtn.onclick = () => { div.remove(); calculatePayment(); };
-            div.appendChild(wrap); div.appendChild(document.createTextNode(" % of total: ")); div.appendChild(percent); div.appendChild(removeRowBtn);
-            document.getElementById("payOptions").appendChild(div);
-            attachDropdown(input.id, list.id, (q) => {
-                const ql = (q || "").toLowerCase();
-                if (!ql) return dropdownData.slice(0, 200);
-                return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
-            }, () => { });
-        }
+    const div = document.createElement("div"); div.className = "payRow";
+    const unique = 'paySelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+    const input = document.createElement("input"); input.id = unique; input.className = 'dropdown-input'; input.placeholder = 'Item name';
+    const list = document.createElement("div"); list.id = unique + 'List'; list.className = 'dropdown-list'; list.style.display = 'none';
+    const wrap = document.createElement('div'); wrap.className = 'dropdown-wrap'; wrap.appendChild(input); wrap.appendChild(list);
+
+    // default percent set to 100%
+    const percent = document.createElement("input"); percent.type = "number"; percent.value = 100; percent.min = 0; percent.max = 100; percent.placeholder = "%";
+
+    const removeRowBtn = document.createElement("button"); removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
+    removeRowBtn.onclick = () => { div.remove(); calculatePayment(); };
+
+    div.appendChild(wrap); div.appendChild(document.createTextNode(" % of total: ")); div.appendChild(percent); div.appendChild(removeRowBtn);
+    document.getElementById("payOptions").appendChild(div);
+
+    attachDropdown(input.id, list.id, (q) => {
+        const ql = (q || "").toLowerCase();
+        if (!ql) return dropdownData.slice(0, 200);
+        return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
+    }, () => { });
+
+    // keep UI consistent by focusing the new item input
+    input.focus();
+}
 
         function calculatePayment() {
-            const payListEl = document.getElementById("payList"); payListEl.innerHTML = "";
-            const netSpan = document.getElementById("netTotal");
-            const netRaw = parseFloat(netSpan.dataset.raw);
-            const totalNet = !isNaN(netRaw) ? netRaw : parseFloat((netSpan.textContent || "0").replace(/[^\d.-]/g, "")) || 0;
-            if (totalNet >= 0) {
-                document.getElementById("paymentResult").textContent = `✅ Net Balance is ${totalNet.toFixed(2)} BT. No payment needed.`;
-                sellCart = sellCart.filter(e => !e.isPayWith);
-                renderSellList(); calculateNet(); return;
+    const payListEl = document.getElementById("payList"); payListEl.innerHTML = "";
+    const netSpan = document.getElementById("netTotal");
+    const netRaw = parseFloat(netSpan.dataset.raw);
+    const totalNet = !isNaN(netRaw) ? netRaw : parseFloat((netSpan.textContent || "0").replace(/[^\d.-]/g, "")) || 0;
+    if (totalNet >= 0) {
+        document.getElementById("paymentResult").textContent = `✅ Net Balance is ${totalNet.toFixed(2)} BT. No payment needed.`;
+        sellCart = sellCart.filter(e => !e.isPayWith);
+        renderSellList(); calculateNet(); return;
+    }
+
+    const owed = -totalNet;
+    sellCart = sellCart.filter(e => !e.isPayWith);
+    const curr = document.getElementById("currencySelect").value;
+    const rows = Array.from(document.querySelectorAll("#payOptions .payRow"));
+
+    // Collect per-row computed contributions
+    const computed = [];
+    let usedPercent = 0;
+
+    rows.forEach(row => {
+        const inputEl = row.querySelector('input.dropdown-input');
+        const percentEl = row.querySelector('input[type="number"]');
+        const rawName = (inputEl?.value || "").trim();
+        const percent = parseFloat(percentEl?.value) || 0;
+        if (!rawName || percent <= 0) return;
+
+        const item = payItems.find(i => i.name.toLowerCase() === rawName.toLowerCase())
+            || payItems.find(i => i.name.toLowerCase().includes(rawName.toLowerCase()));
+        if (!item) return;
+
+        usedPercent += percent;
+        const portion = (percent / 100) * owed;
+
+        const stackPrice = item.buyStack || (item.buyEach && item.bundleSize ? item.buyEach * item.bundleSize : 0);
+        const indivPrice = item.buyEach || (item.buyStack && item.bundleSize ? item.buyStack / item.bundleSize : 0);
+
+        let stacks = 0, individuals = 0, leftover = portion;
+        if (stackPrice > 0) { stacks = Math.floor(portion / stackPrice); leftover -= stacks * stackPrice; }
+        if (indivPrice > 0 && leftover > 0) { const addIndividuals = Math.floor(leftover / indivPrice); individuals += addIndividuals; leftover -= addIndividuals * indivPrice; }
+
+        computed.push({
+            item, percent, stacks, individuals, stackPrice, indivPrice
+        });
+    });
+
+    // Sum provided and try to cover rounding shortfall by adding cheapest individuals/stacks
+    const sumProvided = () => computed.reduce((s, c) => s + (c.stacks * (c.stackPrice || 0)) + (c.individuals * (c.indivPrice || 0)), 0);
+    let provided = sumProvided();
+    let remaining = owed - provided;
+
+    // First try to add individuals (cheapest indivPrice first)
+    if (remaining > 0) {
+        const indivRows = computed.filter(c => c.indivPrice > 0).sort((a, b) => a.indivPrice - b.indivPrice);
+        for (const c of indivRows) {
+            while (remaining > 0 && c.indivPrice > 0) {
+                c.individuals += 1;
+                remaining -= c.indivPrice;
+                provided += c.indivPrice;
+                if (remaining <= 0) break;
+                // safety break if loop too long
+                if (c.individuals > 10000) break;
             }
-            const owed = -totalNet; let usedPercent = 0;
-            sellCart = sellCart.filter(e => !e.isPayWith);
-            const curr = document.getElementById("currencySelect").value;
-            const rows = document.querySelectorAll("#payOptions .payRow");
-            rows.forEach(row => {
-                const inputEl = row.querySelector('input.dropdown-input');
-                const percentEl = row.querySelector('input[type="number"]');
-                const rawName = (inputEl?.value || "").trim();
-                const percent = parseFloat(percentEl?.value) || 0;
-                if (!rawName || percent <= 0) return;
-                let item = payItems.find(i => i.name.toLowerCase() === rawName.toLowerCase()) || payItems.find(i => i.name.toLowerCase().includes(rawName.toLowerCase()));
-                if (!item) return;
-                usedPercent += percent;
-                const portion = (percent / 100) * owed;
-                let stackPrice = item.buyStack || (item.buyEach && item.bundleSize ? item.buyEach * item.bundleSize : 0);
-                let indivPrice = item.buyEach || (item.buyStack && item.bundleSize ? item.buyStack / item.bundleSize : 0);
-                if ((!stackPrice || stackPrice <= 0) && (!indivPrice || indivPrice <= 0)) return;
-                let stacks = 0, individuals = 0, leftover = portion;
-                if (stackPrice > 0) { stacks = Math.floor(portion / stackPrice); leftover -= stacks * stackPrice; }
-                if (indivPrice > 0 && leftover > 0) { const addIndividuals = Math.floor(leftover / indivPrice); individuals += addIndividuals; leftover -= addIndividuals * indivPrice; }
-                const payId = 'pay_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-                const li = document.createElement("li"); li.dataset.payid = payId;
-                let payText = `${percent}% = `;
-                if (stacks > 0) payText += `${stacks} stack(s) × ${item.bundleSize} ${item.name} (${stackPrice.toFixed(2)} BT stack)`;
-                if (individuals > 0) { if (stacks > 0) payText += ' + '; payText += `${individuals} × ${item.name} (${indivPrice.toFixed(2)} BT each)`; }
-                const totalBT = stacks * stackPrice + individuals * indivPrice;
-                payText += ` (${totalBT.toFixed(2)} BT)`;
-                if (curr && curr !== BASE_CURRENCY) payText += ' ' + formatValue(totalBT, curr, false);
-                li.textContent = payText;
-                const removeBtn = document.createElement("button"); removeBtn.textContent = "❌";
-                removeBtn.onclick = () => { sellCart = sellCart.filter(it => !(it.isPayWith && it._payId === payId)); li.remove(); renderSellList(); calculateNet(); };
-                li.appendChild(removeBtn);
-                payListEl.appendChild(li);
-                if (stacks > 0) sellCart.push({ name: item.name, qty: stacks, price: stackPrice, bundleSize: item.bundleSize, isPayWith: true, _payId: payId });
-                if (individuals > 0) sellCart.push({ name: item.name, qty: individuals, price: indivPrice, isPayWith: true, _payId: payId });
-            });
-            document.getElementById("paymentResult").textContent = usedPercent !== 100
-                ? `⚠️ Percentages total ${usedPercent}%, not 100%.`
-                : `To pay ${owed.toFixed(2)} BT bring listed items.`;
-            renderSellList(); calculateNet();
+            if (remaining <= 0) break;
         }
+    }
+
+    // If still remaining, try adding one stack where applicable (cheapest stackPrice first)
+    if (remaining > 0) {
+        const stackRows = computed.filter(c => c.stackPrice > 0).sort((a, b) => a.stackPrice - b.stackPrice);
+        for (const c of stackRows) {
+            while (remaining > 0 && c.stackPrice > 0) {
+                c.stacks += 1;
+                remaining -= c.stackPrice;
+                provided += c.stackPrice;
+                if (remaining <= 0) break;
+                // safety break
+                if (c.stacks > 10000) break;
+            }
+            if (remaining <= 0) break;
+        }
+    }
+
+    // Build UI list and add to sellCart
+    computed.forEach(c => {
+        if ((c.stacks === 0) && (c.individuals === 0)) return;
+        const payId = 'pay_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+        const li = document.createElement("li"); li.dataset.payid = payId;
+        let payText = `${c.percent}% = `;
+        if (c.stacks > 0) payText += `${c.stacks} stack(s) × ${c.item.bundleSize} ${c.item.name} (${(c.stackPrice || 0).toFixed(2)} BT stack)`;
+        if (c.individuals > 0) { if (c.stacks > 0) payText += ' + '; payText += `${c.individuals} × ${c.item.name} (${(c.indivPrice || 0).toFixed(2)} BT each)`; }
+        const totalBT = c.stacks * (c.stackPrice || 0) + c.individuals * (c.indivPrice || 0);
+        payText += ` (${totalBT.toFixed(2)} BT)`;
+        if (curr && curr !== BASE_CURRENCY) payText += ' ' + formatValue(totalBT, curr, false);
+        li.textContent = payText;
+        const removeBtn = document.createElement("button"); removeBtn.textContent = "❌";
+        removeBtn.onclick = () => { sellCart = sellCart.filter(it => !(it.isPayWith && it._payId === payId)); li.remove(); renderSellList(); calculateNet(); };
+        li.appendChild(removeBtn);
+        payListEl.appendChild(li);
+
+        if (c.stacks > 0) sellCart.push({ name: c.item.name, qty: c.stacks, price: c.stackPrice, bundleSize: c.item.bundleSize, isPayWith: true, _payId: payId });
+        if (c.individuals > 0) sellCart.push({ name: c.item.name, qty: c.individuals, price: c.indivPrice, isPayWith: true, _payId: payId });
+    });
+
+    const finalProvided = sumProvided();
+    const finalRemaining = Math.max(0, owed - finalProvided);
+
+    if (finalProvided >= owed) {
+        document.getElementById("paymentResult").textContent = `✅ Covered. Payment items total ${finalProvided.toFixed(2)} BT (needed ${owed.toFixed(2)} BT).`;
+    } else {
+        document.getElementById("paymentResult").textContent = `⚠️ Unable to fully cover owed amount. Still missing ${finalRemaining.toFixed(2)} BT.`;
+    }
+
+    renderSellList(); calculateNet();
+}
 
         function addConverterRow() {
-            const div = document.createElement("div"); div.className = "payRow";
-            const unique = 'convSelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
-            const input = document.createElement("input"); input.id = unique; input.className = 'dropdown-input'; input.placeholder = 'Item name';
-            const list = document.createElement("div"); list.id = unique + 'List'; list.className = 'dropdown-list'; list.style.display = 'none';
-            const wrap = document.createElement('div'); wrap.className = 'dropdown-wrap'; wrap.appendChild(input); wrap.appendChild(list);
-            const percent = document.createElement("input"); percent.type = "number"; percent.value = 0; percent.min = 0; percent.max = 100; percent.placeholder = "%";
-            const removeRowBtn = document.createElement("button"); removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
-            removeRowBtn.onclick = () => { div.remove(); calculateConversion(); };
-            div.appendChild(wrap); div.appendChild(document.createTextNode(" % of Net Balance: ")); div.appendChild(percent); div.appendChild(removeRowBtn);
-            document.getElementById("converterOptions").appendChild(div);
-            attachDropdown(input.id, list.id, (q) => {
-                const ql = (q || "").toLowerCase();
-                if (!ql) return dropdownData.slice(0, 200);
-                return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
-            }, () => { });
-        }
+    const div = document.createElement("div"); div.className = "payRow";
+    const unique = 'convSelect_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+    const input = document.createElement("input"); input.id = unique; input.className = 'dropdown-input'; input.placeholder = 'Item name';
+    const list = document.createElement("div"); list.id = unique + 'List'; list.className = 'dropdown-list'; list.style.display = 'none';
+    const wrap = document.createElement('div'); wrap.className = 'dropdown-wrap'; wrap.appendChild(input); wrap.appendChild(list);
+
+    // default percent set to 100%
+    const percent = document.createElement("input"); percent.type = "number"; percent.value = 100; percent.min = 0; percent.max = 100; percent.placeholder = "%";
+
+    const removeRowBtn = document.createElement("button"); removeRowBtn.type = "button"; removeRowBtn.textContent = "❌";
+    removeRowBtn.onclick = () => { div.remove(); calculateConversion(); };
+
+    div.appendChild(wrap); div.appendChild(document.createTextNode(" % of Net Balance: ")); div.appendChild(percent); div.appendChild(removeRowBtn);
+    document.getElementById("converterOptions").appendChild(div);
+
+    attachDropdown(input.id, list.id, (q) => {
+        const ql = (q || "").toLowerCase();
+        if (!ql) return dropdownData.slice(0, 200);
+        return dropdownData.filter(d => d.name.toLowerCase().includes(ql));
+    }, () => { });
+
+    // focus new converter input so user can type immediately
+    input.focus();
+}
 
         function calculateConversion() {
             const converterList = document.getElementById("converterListDisplay");
@@ -1589,94 +1766,81 @@
 
         /* ===== Init ===== */
         // ===== Restore auth on load (place BEFORE your window.onload) =====
-        async function tryRestoreAuthOnLoad() {
-            // Ensure storage helpers exist
-            if (!window.initAuthFromStorage) return;
-            try {
-                const res = await window.initAuthFromStorage();
-                if (!res.ok) {
-                    // no saved token or invalid
-                    return;
-                }
-
-                // Rehydrate in-memory token
-                googleIdToken = res.idToken;
-
-                try {
-                    // Validate & fetch user profile from backend
-                    const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-                    const meJ = await meR.json();
-                    if (!meJ.ok) {
-                        // Backend rejected token -> remove saved token
-                        window.clearSavedIdToken && window.clearSavedIdToken();
-                        googleIdToken = null;
-                        return;
-                    }
-
-                    // Apply user to UI state
-                    currentUser = normalizeUser(meJ.data.user || null);
-                    // Keep compatibility where admin flag may be on data
-                    currentUser.isAdmin = !!meJ.data.isAdmin;
-
-                    // Update top bar + admin button
-                    if (typeof updateTopBarAuth === 'function') updateTopBarAuth();
-                    const adminBtn = document.getElementById('adminPanelBtn');
-                    if (adminBtn) adminBtn.style.display = (currentUser.isAdmin ? 'inline' : 'none');
-
-                    // Setup vs captcha handling
-                    const hasSetup = currentUser && currentUser.playerName;
-                    const passedCaptcha = currentUser && currentUser.captchaPassed;
-                    if (hasSetup && passedCaptcha) {
-                        localStorage.setItem('vak_captcha_ok', '1');
-                        try { hideRecaptchaWidget(); } catch (_) { }
-                        try { hideSetupShowApp(); } catch (_) { }
-                    } else {
-                        localStorage.removeItem('vak_captcha_ok');
-                        try { showSetupOnly(); } catch (_) { }
-                        try { showRecaptchaWidget(); } catch (_) { }
-                    }
-
-                    // Refresh open orders indicator
-                    if (typeof refreshOpenOrders === 'function') refreshOpenOrders();
-
-                } catch (e) {
-                    // If /me fails just log; keep token in storage for next attempt
-                    console.warn('restore /me failed', e);
-                }
-            } catch (e) {
-                console.warn('initAuthFromStorage failed', e);
+        /* ===== Init ===== */
+async function tryRestoreAuthOnLoad() {
+    if (!window.initAuthFromStorage) return;
+    try {
+        const res = await window.initAuthFromStorage();
+        if (!res.ok) return;
+        googleIdToken = res.idToken;
+        try {
+            const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
+            const meJ = await meR.json();
+            if (!meJ.ok) {
+                window.clearSavedIdToken && window.clearSavedIdToken();
+                googleIdToken = null;
+                return;
             }
+            currentUser = normalizeUser(meJ.data.user || null);
+            currentUser.isAdmin = !!meJ.data.isAdmin;
+            if (typeof updateTopBarAuth === 'function') updateTopBarAuth();
+            const adminBtn = document.getElementById('adminPanelBtn');
+            if (adminBtn) adminBtn.style.display = (currentUser.isAdmin ? 'inline' : 'none');
+            const hasSetup = currentUser && currentUser.playerName;
+            const passedCaptcha = currentUser && currentUser.captchaPassed;
+            if (hasSetup && passedCaptcha) {
+                localStorage.setItem('vak_captcha_ok', '1');
+                try { hideRecaptchaWidget(); } catch (_) {}
+                try { hideSetupShowApp(); } catch (_) {}
+            } else {
+                localStorage.removeItem('vak_captcha_ok');
+                try { showSetupOnly(); } catch (_) {}
+                try { showRecaptchaWidget(); } catch (_) {}
+            }
+            if (typeof refreshOpenOrders === 'function') refreshOpenOrders();
+        } catch (e) {
+            console.warn('restore /me failed', e);
         }
+    } catch (e) {
+        console.warn('initAuthFromStorage failed', e);
+    }
+}
 
-        // ===== Init (replace or insert this block where your existing window.onload is) =====
-        window.onload = () => {
-            // Restore auth as early as possible
-            tryRestoreAuthOnLoad();
+window.onload = () => {
+    // Restore auth as early as possible
+    tryRestoreAuthOnLoad();
 
-            // UI setup
-            document.body.classList.add('withTopBar');
+    // UI setup
+    document.body.classList.add('withTopBar');
 
-            // If URL returned id_token via implicit redirect, handle it
-            checkHashForIdToken();
+    // If URL returned id_token via implicit redirect, handle it
+    checkHashForIdToken();
 
-            // App initialization
-            loadData();
-            addPayRow();
-            initRecaptcha();
+    // App initialization
+    loadData();
 
-            // Initialize Google Sign-In when available
-            const gsiWait = setInterval(() => {
-                if (window.google && google.accounts && google.accounts.id) {
-                    initGoogleIdentity();
-                    clearInterval(gsiWait);
-                }
-            }, 200);
-            setTimeout(() => clearInterval(gsiWait), 4000);
+    // Ensure both Pay With and Converter have one default row visible
+    addPayRow();
+    addConverterRow();
 
-            // Ensure top-bar reflects restored auth
-            updateTopBarAuth();
-        };
-        
+    initRecaptcha();
+
+    // Initialize Google Sign-In when available
+    const gsiWait = setInterval(() => {
+        if (window.google && google.accounts && google.accounts.id) {
+            initGoogleIdentity();
+            clearInterval(gsiWait);
+        }
+    }, 200);
+    setTimeout(() => clearInterval(gsiWait), 4000);
+
+    // Initialize collapsibles AFTER DOM ready
+    initCollapsibles();
+
+    // Ensure top-bar reflects restored auth
+    updateTopBarAuth();
+};
+
     </script>
 </body>
 </html>
