@@ -238,6 +238,7 @@
         .fallback-login {
             margin-top: 8px;
         }
+
         /* Status ball + popup */
         #orderStatusBall {
             width: 16px;
@@ -277,7 +278,8 @@
             min-width: 260px;
             z-index: 1100;
         }
-        /* Login button style */
+
+        /* Auth buttons */
         #btnLogin {
             padding: 6px 10px;
             background: #1a73e8;
@@ -329,8 +331,9 @@
         .collapsible-content {
             margin-top: 8px;
         }
-        /* ===== Useful Links responsive button grid (paste into existing <style> block) ===== */
-        .links-section { /* keeps section behavior consistent */
+
+        /* Useful Links grid */
+        .links-section {
         }
 
         .links-grid {
@@ -356,7 +359,7 @@
             cursor: pointer;
             box-shadow: 0 1px 0 rgba(0,0,0,0.08);
             transition: transform .06s ease, box-shadow .06s ease, background .12s ease;
-            min-height: 48px; /* comfortable tap target */
+            min-height: 48px;
         }
 
             .link-btn:active {
@@ -372,7 +375,6 @@
                 outline: 3px solid rgba(26,115,232,0.18);
             }
 
-            /* internal links (local pages) use a neutral color */
             .link-btn.internal {
                 background: #444;
             }
@@ -698,7 +700,6 @@
         <div id="requestGuard" class="guard-msg" style="display:none;">You need to login for this tool.</div>
         <button onclick="guardedSubmitPurchaseRequest()">Submit Purchase Request</button>
         <button class="copy-btn" onclick="guardedCopyTransactionData()">Copy Transaction Data</button>
-        <!-- Add inside <div id="requestControls" class="section"> ... -->
         <button class="copy-btn" onclick="importTransactionData()">Import Transaction Data</button>
         <input id="importFile" type="file" accept="application/json" style="display:none" onchange="importTransactionDataFromFile(this.files[0])">
         <div id="requestMsg" class="small"></div>
@@ -896,8 +897,9 @@
                 if (!meJson.ok) throw new Error(meJson.error || 'Backend error');
 
                 const serverUser = normalizeUser(meJson.data.user || null);
-                currentUser = serverUser;
-                currentUser.isAdmin = !!meJson.data.isAdmin;
+                const isAdmin = !!meJson.data.isAdmin;
+                currentUser = serverUser || {}; // ensure non-null
+                currentUser.isAdmin = isAdmin;
 
                 updateTopBarAuth();
                 document.getElementById('adminPanelBtn').style.display = currentUser.isAdmin ? 'inline' : 'none';
@@ -907,8 +909,8 @@
                     try { await adminLoadPlayers(); } catch { /* ignore */ }
                 }
 
-                const hasSetup = serverUser && serverUser.playerName;
-                const passedCaptcha = serverUser && serverUser.captchaPassed;
+                const hasSetup = !!currentUser.playerName;
+                const passedCaptcha = !!currentUser.captchaPassed;
 
                 if (hasSetup && passedCaptcha) {
                     localStorage.setItem('vak_captcha_ok', '1');
@@ -1030,8 +1032,10 @@
                 const meResp = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
                 const meJson = await meResp.json();
                 if (!meJson.ok) throw new Error(meJson.error || 'me failed');
-                currentUser = normalizeUser(meJson.data.user || null);
-                currentUser.isAdmin = !!meJson.data.isAdmin;
+                const serverUser = normalizeUser(meJson.data.user || null);
+                const isAdmin = !!meJson.data.isAdmin;
+                currentUser = serverUser || {};
+                currentUser.isAdmin = isAdmin;
 
                 if (currentUser.playerName && currentUser.captchaPassed) {
                     localStorage.setItem('vak_captcha_ok', '1');
@@ -1043,7 +1047,6 @@
                 updateTopBarAuth();
                 statusEl.textContent = 'Setup complete.';
 
-                // refresh balance for current user
                 try { await refreshPinnedBalanceForActiveTarget(); } catch { }
             } catch (e) {
                 statusEl.textContent = 'Error: ' + e.message;
@@ -1075,7 +1078,6 @@
         function logout() {
             googleIdToken = null;
             currentUser = null;
-            isAdmin = false;
             window.submitForUser = null;
             // remove pinned balance from receipt
             sellCart = sellCart.filter(e => !e.isAccountBalancePinned);
@@ -1480,7 +1482,6 @@
             const list = document.getElementById("sellList"); list.innerHTML = "";
             let total = 0; const curr = document.getElementById("currencySelect").value;
 
-            // Always show pinned Account Balance first (visual order)
             const pinned = sellCart.filter(e => e.isAccountBalancePinned);
             const others = sellCart.filter(e => !e.isAccountBalancePinned);
             const rows = [...pinned, ...others];
@@ -1516,7 +1517,6 @@
                 if (curr && curr !== BASE_CURRENCY) rowText += ' ' + formatValue(rowTotal, curr, false);
                 li.textContent = rowText;
 
-                // Do not allow removing the auto-imported balance row
                 if (!e.isAccountBalancePinned) {
                     const removeBtn = document.createElement("button");
                     removeBtn.textContent = "❌"; removeBtn.onclick = () => { sellCart = sellCart.filter(x => x !== e); renderSellList(); calculateNet(); };
@@ -1615,9 +1615,7 @@
                 if (stackPrice > 0) { stacks = Math.floor(portion / stackPrice); leftover -= stacks * stackPrice; }
                 if (indivPrice > 0 && leftover > 0) { const addIndividuals = Math.floor(leftover / indivPrice); individuals += addIndividuals; leftover -= addIndividuals * indivPrice; }
 
-                computed.push({
-                    item, percent, stacks, individuals, stackPrice, indivPrice
-                });
+                computed.push({ item, percent, stacks, individuals, stackPrice, indivPrice });
             });
 
             const sumProvided = () => computed.reduce((s, c) => s + (c.stacks * (c.stackPrice || 0)) + (c.individuals * (c.indivPrice || 0)), 0);
@@ -1755,7 +1753,6 @@
 
         /* ===== Requests ===== */
         function buildRequestPayload() {
-            // include flags so backend/history can show "Account Balance" row
             const mapRow = r => ({
                 name: r.name,
                 qty: r.qty,
@@ -1814,7 +1811,7 @@
                 const body = { action: 'createRequest', idToken: googleIdToken, payload };
                 if (tokenOrNull) body.recaptchaToken = tokenOrNull;
                 if (currentUser?.isAdmin && window.submitForUser) {
-                    body.onBehalfOf = payload.user; // server should add to player's history
+                    body.onBehalfOf = payload.user;
                 }
                 return fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             };
@@ -1918,9 +1915,7 @@
             return isNaN(v) ? 0 : v;
         }
         function upsertPinnedBalanceRow(balanceBT) {
-            // remove prior pinned balance
             sellCart = sellCart.filter(e => !e.isAccountBalancePinned);
-            // add fresh pinned at beginning (data order doesn't matter; render keeps it top)
             sellCart.unshift({
                 name: 'Account Balance',
                 qty: 1,
@@ -1941,7 +1936,6 @@
                 const st = document.getElementById('onBehalfStatus');
                 if (st && window.submitForUser) st.textContent = `Target set: ${target.playerName || target.email || target.userId}. Balance: ${bal.toFixed(2)} BT`;
             } catch (e) {
-                // leave any existing pinned row; surface message for admins
                 const st = document.getElementById('onBehalfStatus');
                 if (st) st.textContent = `Balance load failed: ${e.message}`;
             }
@@ -2048,34 +2042,22 @@
             toggleOrderPopup();
             alert('Request loaded. Edit and Submit to resend (old request cancelled).');
         }
-        // Import Transaction Data — supports clipboard paste, prompt paste, or JSON file
+
+        // Import Transaction Data
         async function importTransactionData() {
             if (!googleIdToken) { alert('You need to login for this tool'); return; }
-
-            // 1) Try read JSON text from clipboard (best UX)
             try {
                 if (navigator.clipboard?.readText) {
                     const txt = (await navigator.clipboard.readText()) || '';
-                    if (txt.trim()) {
-                        await importTransactionDataFromText(txt);
-                        return;
-                    }
+                    if (txt.trim()) { await importTransactionDataFromText(txt); return; }
                 }
-            } catch (_) { /* fall through */ }
-
-            // 2) Ask user to paste JSON manually
+            } catch (_) { }
             const pasted = window.prompt('Paste transaction JSON (from Copy Transaction Data), or leave empty to choose a file:');
-            if (pasted && pasted.trim()) {
-                await importTransactionDataFromText(pasted);
-                return;
-            }
-
-            // 3) Fallback to file chooser
+            if (pasted && pasted.trim()) { await importTransactionDataFromText(pasted); return; }
             const fileEl = document.getElementById('importFile');
             if (fileEl) fileEl.click();
             else alert('File input not found. Please add the hidden <input id="importFile" ...> element near the button.');
         }
-
         async function importTransactionDataFromFile(file) {
             if (!file) return;
             try {
@@ -2085,10 +2067,9 @@
                 document.getElementById('requestMsg').textContent = 'Import failed: ' + e.message;
             } finally {
                 const fileEl = document.getElementById('importFile');
-                if (fileEl) fileEl.value = ''; // reset
+                if (fileEl) fileEl.value = '';
             }
         }
-
         async function importTransactionDataFromText(txt) {
             try {
                 const payload = JSON.parse(txt);
@@ -2098,36 +2079,21 @@
                 document.getElementById('requestMsg').textContent = 'Invalid JSON: ' + e.message;
             }
         }
-
-        // Accepts both current shape { carts:{buy:[...],sell:[...]}, ... }
-        // and legacy shape { items:[{side:'buy'|'sell', itemName, quantity, price, bundleSize?}], ... }
         function loadTransactionPayloadIntoEditor(payload) {
             const asNumber = (v) => { const n = Number(v); return isFinite(n) ? n : 0; };
-
-            // Normalize input to arrays of rows
             let buyRows = [];
             let sellRows = [];
 
             if (payload && payload.carts && (Array.isArray(payload.carts.buy) || Array.isArray(payload.carts.sell))) {
-                // Current format used by copyTransactionData()
                 buyRows = (payload.carts.buy || []).map(r => ({
-                    name: r.name,
-                    qty: asNumber(r.qty),
-                    price: asNumber(r.priceBT),
-                    bundleSize: r.bundleSize || null,
-                    source: r.source || 'STORE',
-                    isBalance: !!r.isBalance
+                    name: r.name, qty: asNumber(r.qty), price: asNumber(r.priceBT),
+                    bundleSize: r.bundleSize || null, source: r.source || 'STORE', isBalance: !!r.isBalance
                 }));
                 sellRows = (payload.carts.sell || []).map(r => ({
-                    name: r.name,
-                    qty: asNumber(r.qty),
-                    price: asNumber(r.priceBT),
-                    bundleSize: r.bundleSize || null,
-                    source: r.source || 'STORE',
-                    isBalance: !!r.isBalance
+                    name: r.name, qty: asNumber(r.qty), price: asNumber(r.priceBT),
+                    bundleSize: r.bundleSize || null, source: r.source || 'STORE', isBalance: !!r.isBalance
                 }));
             } else if (Array.isArray(payload?.items)) {
-                // Legacy shape: items[] with side, itemName, quantity, price
                 payload.items.forEach(it => {
                     const row = {
                         name: it.itemName || it.name || 'Unknown',
@@ -2144,17 +2110,11 @@
                 throw new Error('Unsupported payload shape.');
             }
 
-            // Clear current carts
             buyCart = [];
             sellCart = [];
-
-            // Preserve the auto-pinned balance row behavior:
-            // - keep pinned row (isAccountBalancePinned) at the top of sellCart
             const pinned = sellCart.find(r => r.isAccountBalancePinned);
 
-            // Load imported rows
             buyRows.forEach(r => {
-                // fully custom rows
                 if (r.bundleSize && !isNaN(r.bundleSize) && r.bundleSize > 0) {
                     buyCart.push({ name: r.name, qty: r.qty, bundleSize: r.bundleSize, price: r.price, source: r.source || 'CUSTOM' });
                 } else {
@@ -2166,25 +2126,18 @@
                 const row = r.bundleSize && !isNaN(r.bundleSize) && r.bundleSize > 0
                     ? { name: r.name, qty: r.qty, bundleSize: r.bundleSize, price: r.price, source: r.source || 'CUSTOM' }
                     : { name: r.name, qty: r.qty, price: r.price, source: r.source || 'STORE' };
-                if (r.isBalance || r.name === 'Account Balance') {
-                    row.isBalance = true;
-                    row.source = 'BALANCE';
-                }
+                if (r.isBalance || r.name === 'Account Balance') { row.isBalance = true; row.source = 'BALANCE'; }
                 return row;
             });
 
-            // If a pinned row exists, keep it first; otherwise just use imported order
             if (pinned) {
                 sellCart.push(pinned);
                 importedSell = importedSell.filter(r => !r.isAccountBalancePinned);
             }
-
             sellCart.push(...importedSell);
 
-            // If payload.requestId exists, use it as edit marker so user can resubmit
             window.editedFromRequestId = payload.requestId || payload.editedFromRequestId || null;
 
-            // If admin imports on behalf payload.user, optionally set target
             if (currentUser?.isAdmin && payload.user && (payload.user.userId || payload.user.email || payload.user.playerName)) {
                 window.submitForUser = {
                     userId: payload.user.userId || null,
@@ -2192,12 +2145,12 @@
                     playerName: payload.user.playerName || null,
                     mailbox: payload.user.mailbox || null
                 };
-                // also refresh and pin the target's actual balance
-                refreshPinnedBalanceForActiveTarget().catch(() => { /* non-fatal */ });
+                refreshPinnedBalanceForActiveTarget().catch(() => { });
             }
 
             updateAllDisplays();
         }
+
         setInterval(() => { if (googleIdToken) refreshOpenOrders(); }, 15000);
 
         /* ===== Utilities ===== */
@@ -2220,17 +2173,19 @@
                         googleIdToken = null;
                         return;
                     }
-                    currentUser = normalizeUser(meJ.data.user || null);
-                    currentUser.isAdmin = !!meJ.data.isAdmin;
+                    const serverUser = normalizeUser(meJ.data.user || null);
+                    const isAdmin = !!meJ.data.isAdmin;
+                    currentUser = serverUser || {};
+                    currentUser.isAdmin = isAdmin;
+
                     if (typeof updateTopBarAuth === 'function') updateTopBarAuth();
                     const adminBtn = document.getElementById('adminPanelBtn');
                     if (adminBtn) adminBtn.style.display = (currentUser.isAdmin ? 'inline' : 'none');
                     document.getElementById('onBehalfSection').style.display = currentUser.isAdmin ? 'block' : 'none';
-                    if (currentUser.isAdmin) {
-                        try { await adminLoadPlayers(); } catch { }
-                    }
-                    const hasSetup = currentUser && currentUser.playerName;
-                    const passedCaptcha = currentUser && currentUser.captchaPassed;
+                    if (currentUser.isAdmin) { try { await adminLoadPlayers(); } catch { } }
+
+                    const hasSetup = !!currentUser.playerName;
+                    const passedCaptcha = !!currentUser.captchaPassed;
                     if (hasSetup && passedCaptcha) {
                         localStorage.setItem('vak_captcha_ok', '1');
                         try { hideRecaptchaWidget(); } catch (_) { }
@@ -2240,7 +2195,6 @@
                         try { showSetupOnly(); } catch (_) { }
                         try { showRecaptchaWidget(); } catch (_) { }
                     }
-                    // Pin balance for current (no on-behalf yet)
                     try { await refreshPinnedBalanceForActiveTarget(); } catch { }
                     if (typeof refreshOpenOrders === 'function') refreshOpenOrders();
                 } catch (e) {
@@ -2274,10 +2228,8 @@
             initCollapsibles();
             updateTopBarAuth();
 
-            // init admin on-behalf search UI
             attachOnBehalfSearch();
         };
-
     </script>
 </body>
 </html>

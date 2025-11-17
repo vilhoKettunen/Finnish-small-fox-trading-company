@@ -3,566 +3,721 @@
 <head>
     <script src="auth-storage.js"></script>
     <meta charset="UTF-8">
-    <title>Admin Panel</title>
+    <title>Vak Store Admin</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <script src="app-config.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
-            max-width: 1100px;
+            max-width: 1200px;
             margin: auto;
+            background: #fafafa;
         }
 
-        #topBar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 48px;
-            background: #222;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            z-index: 1000;
-            font-size: 14px;
-        }
-
-            #topBar a, #topBar button {
-                color: #fff;
-                text-decoration: none;
-                margin-right: 18px;
-                background: none;
-                border: none;
-                cursor: pointer;
-            }
-
-            #topBar .right {
-                margin-left: auto;
-                display: flex;
-                gap: 12px;
-                align-items: center;
-            }
-
-        body.withTopBar {
-            padding-top: 70px;
-        }
-
-        .small {
-            font-size: 0.9em;
-            color: #666;
+        h1, h2, h3 {
+            color: #333;
+            margin-top: 0;
         }
 
         .section {
-            margin: 16px 0;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background: #fff;
-        }
-
-        .request {
-            margin: 8px 0;
-            padding: 8px;
+            margin-bottom: 28px;
+            padding: 15px 18px 18px;
             border: 1px solid #ccc;
-            border-radius: 4px;
+            border-radius: 8px;
+            background: #fff;
+            position: relative;
         }
 
-        .controls {
-            margin-top: 6px;
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+        label {
+            display: inline-block;
+            margin: 6px 12px 6px 0;
         }
 
-        .details {
-            margin-top: 8px;
-            padding: 8px;
-            background: #f9f9f9;
-            border-radius: 4px;
-            display: none;
+        input[type="text"], input[type="number"], textarea {
+            padding: 6px;
+            margin: 6px 8px 6px 0;
+            width: 220px;
+            box-sizing: border-box;
         }
 
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
+        textarea {
+            min-height: 80px;
+            resize: vertical;
         }
 
-            .items-table th, .items-table td {
-                border: 1px solid #ddd;
-                padding: 4px;
-                text-align: left;
-            }
-
-        #btnLogin {
-            padding: 6px 10px;
+        button {
+            padding: 6px 12px;
+            margin: 6px 10px 6px 0;
+            cursor: pointer;
+            border: 1px solid #1a73e8;
             background: #1a73e8;
             color: #fff;
-            border: none;
             border-radius: 4px;
+            font-size: 14px;
         }
 
-        #btnLogout {
-            padding: 6px 10px;
-            background: #444;
-            color: #fff;
-            border: 1px solid #555;
-            border-radius: 4px;
+            button.secondary {
+                background: #555;
+                border-color: #555;
+            }
+
+            button.danger {
+                background: #c0392b;
+                border-color: #c0392b;
+            }
+
+            button:disabled {
+                opacity: .55;
+                cursor: not-allowed;
+            }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
         }
 
-        .dropdown-wrap {
-            position: relative;
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px 8px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f6f7fb;
+            text-align: left;
+        }
+
+        tr:hover {
+            background: #f5faff;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #555;
+        }
+
+        .ok {
+            color: #2e7d32;
+        }
+
+        .err {
+            color: #c00;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: #eee;
+            font-size: 12px;
+        }
+
+        .muted {
+            color: #777;
+        }
+
+        .inline-block {
             display: inline-block;
         }
 
-        .dropdown-input {
-            width: 280px;
-            padding: 6px;
+        .flex-end {
+            justify-content: flex-end;
         }
 
-        .dropdown-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #fff;
-            border: 1px solid #ccc;
-            max-height: 220px;
-            overflow-y: auto;
-            z-index: 500;
+        .nowrap {
+            white-space: nowrap;
+        }
+
+        .badge-admin {
+            background: #1a73e8;
+            color: #fff;
+        }
+
+        .status-chip {
+            display: inline-block;
+            padding: 2px 6px;
             border-radius: 4px;
+            background: #eee;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .5px;
         }
 
-        .dropdown-item {
+        .status-pending {
+            background: #ffecb3;
+        }
+
+        .status-open {
+            background: #e0f7fa;
+        }
+
+        .status-approved {
+            background: #c8e6c9;
+        }
+
+        .status-rejected {
+            background: #ffcdd2;
+        }
+
+        .filter-row input {
+            width: 240px;
+        }
+
+        .slim-btn {
+            padding: 3px 6px;
+            font-size: 11px;
+            margin: 0 4px 4px 0;
+        }
+
+        .danger.solid {
+            background: #e53935;
+        }
+
+        .floating-msg {
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            font-size: 11px;
+        }
+
+        .codebox {
+            font-family: monospace;
+            background: #f5f5f5;
             padding: 6px 8px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+
+        .sticky-actions {
+            position: sticky;
+            top: 0;
+            background: #fff;
+            padding: 6px 0 4px;
+            z-index: 5;
+        }
+
+        .soft-sep {
+            border-top: 1px dashed #ddd;
+            margin: 14px 0 10px;
+            padding-top: 10px;
+        }
+
+        .fade-enter {
+            animation: fade .35s ease;
+        }
+
+        @keyframes fade {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pointer {
             cursor: pointer;
         }
 
-            .dropdown-item:hover {
-                background: #f0f6ff;
-            }
+        .nowrap-cell {
+            white-space: nowrap;
+        }
+
+        .w80 {
+            width: 80px;
+        }
+
+        .w100 {
+            width: 100px;
+        }
+
+        .w60 {
+            width: 60px;
+        }
+
+        .wide {
+            width: 260px !important;
+        }
     </style>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="app-config.js"></script>
 </head>
 <body>
-    <div id="topBar">
-        <div><strong>Vak Store</strong></div>
-        <a href="index.html">Store</a>
-        <a href="AccountHistory.html">Account History</a>
-        <a href="OCMHome.html">OCM</a>
-        <a href="OCMUser.html">OCM Merchant</a>
-        <a id="adminLink" href="Admin.html" style="display:none;">Admin Panel</a>
-        <div class="right">
-            <button id="btnLogin" onclick="startLogin()">Login</button>
-            <span id="topUser" class="small"></span>
-            <button id="btnLogout" onclick="logout()" style="display:none;">Logout</button>
+    <h1>🔧 Vak Store Admin</h1>
+    <div id="authState" class="small"></div>
+
+    <div class="section">
+        <button onclick="goHome()">⬅ Back to Store</button>
+        <span id="adminBadge" class="pill badge-admin" style="display:none">Admin</span>
+        <span id="adminEmail" class="small muted"></span>
+        <div id="adminMsg" class="small"></div>
+    </div>
+
+    <!-- PLAYERS -->
+    <div class="section" id="playersSec">
+        <h2>👥 Players</h2>
+        <div class="row filter-row">
+            <input id="plSearch" type="text" placeholder="Search by player/email/userId/mailbox">
+            <button onclick="refreshPlayers()">Refresh</button>
+        </div>
+        <div class="small muted">Click a row to copy userId.</div>
+        <table id="playersTbl">
+            <thead>
+                <tr>
+                    <th>UserId</th>
+                    <th>Player</th>
+                    <th>Email</th>
+                    <th>Mailbox</th>
+                    <th>Balance (BT)</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+
+        <div class="soft-sep"></div>
+        <h3>Create Player (Manual)</h3>
+        <div class="row">
+            <label>Email <input id="cpEmail" type="text" placeholder="optional"></label>
+            <label>Player Name <input id="cpName" type="text"></label>
+            <label>Mailbox <input id="cpMailbox" type="text" placeholder="e.g. 1A"></label>
+            <label>Balance <input id="cpBalance" type="number" step="0.01" value="0"></label>
+            <button onclick="adminCreatePlayer()">Create</button>
+            <span id="cpMsg" class="small"></span>
+        </div>
+
+        <h3>Adjust Funds</h3>
+        <div class="row">
+            <label>UserId <input id="afUserId" type="text" class="wide" placeholder="click row to copy then paste"></label>
+            <label>Δ Balance (BT) <input id="afDelta" type="number" step="0.01" value="0"></label>
+            <label>Reason <input id="afReason" type="text" placeholder="note"></label>
+            <button onclick="adminAddFunds()">Apply</button>
+            <span id="afMsg" class="small"></span>
+        </div>
+
+        <h3>Update Mailbox</h3>
+        <div class="row">
+            <label>Player Name <input id="umName" type="text"></label>
+            <label>New Mailbox <input id="umMailbox" type="text"></label>
+            <button onclick="adminUpdateMailbox()">Update</button>
+            <span id="umMsg" class="small"></span>
         </div>
     </div>
 
-    <h1>Admin Panel</h1>
-    <div id="loginStatus" class="small">Not signed in</div>
-    <div id="adminGuard" class="small" style="color:#a00; display:none;">You are not an admin. Sign in to continue.</div>
-
-    <div id="adminContent" style="display:none;">
-
-        <!-- Create Player Profile -->
-        <div class="section" id="createProfileSection">
-            <h2>🔹 Create Player Profile</h2>
-            <input id="cpPlayerName" type="text" placeholder="Player Name">
-            <input id="cpMailbox" type="text" placeholder="Mailbox (e.g. 1A / F1)">
-            <input id="cpEmail" type="email" placeholder="Email (optional)">
-            <button type="button" onclick="adminCreatePlayer()">Create</button>
-            <div id="cpMsg" class="small"></div>
+    <!-- REQUESTS -->
+    <div class="section" id="requestsSec">
+        <h2>📥 Pending Requests</h2>
+        <div class="row">
+            <input id="rqFilter" type="text" placeholder="Filter by player/mailbox/requestId">
+            <button onclick="refreshPending()">Refresh</button>
         </div>
+        <table id="pendingTbl">
+            <thead><tr><th>RequestId</th><th>Player</th><th>Mailbox</th><th>Items (brief)</th><th>Status</th><th>Open</th></tr></thead>
+            <tbody></tbody>
+        </table>
 
-        <!-- Add Funds -->
-        <div class="section" id="addFundsSection">
-            <h2>🔹 Add Funds</h2>
-            <div class="dropdown-wrap">
-                <input id="playerSearchInput" class="dropdown-input" placeholder="Type player name/email">
-                <div id="playerSearchList" class="dropdown-list" style="display:none;"></div>
+        <div id="rqDetailsBox" style="display:none;margin-top:14px;">
+            <div class="sticky-actions">
+                <h3 style="display:inline-block;margin-right:12px;">Request Details</h3>
+                <label class="small"><input id="rqExecAdmin" type="checkbox"> Executed by admin (apply fee)</label>
+                <button class="secondary" onclick="approveSelectedRequest()">Approve</button>
+                <button class="danger" onclick="rejectSelectedRequest()">Reject</button>
+                <span id="rqActMsg" class="small"></span>
             </div>
-            <input type="number" id="fundAmountInput" placeholder="Amount (BT)" step="0.01" min="0.01">
-            <input type="text" id="fundReasonInput" placeholder="Reason (optional)">
-            <button id="btnAddFunds" type="button" onclick="adminAddFunds()">Add Funds</button>
-            <div id="addFundsMsg" class="small"></div>
+            <div id="rqDetails" class="small codebox fade-enter"></div>
         </div>
+    </div>
 
-        <!-- Pending Account Claims -->
-        <div class="section" id="accountClaimsSection">
-            <h2>🔹 Pending Account Claims</h2>
-            <ul id="claimsList"></ul>
+    <!-- CLAIMS -->
+    <div class="section" id="claimsSec">
+        <h2>🧾 Account Claims</h2>
+        <div class="row">
+            <button onclick="refreshClaims()">Refresh</button>
         </div>
+        <table id="claimsTbl">
+            <thead>
+                <tr><th>ClaimId</th><th>Requester</th><th>TargetRef</th><th>MatchedUserId</th><th>Player</th><th>Mailbox</th><th>Actions</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div id="claimsMsg" class="small"></div>
+    </div>
 
-        <!-- Pending Requests -->
-        <div class="section">
-            <h2>🔹 Pending Transaction Requests</h2>
-            <div style="margin:10px 0;">
-                <label>Filter player/mailbox: <input id="filterPlayer" placeholder="player or mailbox"></label>
-                <button id="btnRefresh">Refresh</button>
-            </div>
-            <ul id="pendingList"></ul>
+    <!-- LISTINGS -->
+    <div class="section" id="listingsSec">
+        <h2>📋 OCM Listings (Pending)</h2>
+        <div class="row">
+            <button onclick="refreshListingsPending()">Refresh</button>
         </div>
+        <table id="listingsTbl">
+            <thead>
+                <tr><th>ListingId</th><th>Type</th><th>Item</th><th>Price</th><th>Remaining</th><th>Seller</th><th>Approve</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div id="listingsMsg" class="small"></div>
+    </div>
+
+    <!-- TRADES -->
+    <div class="section" id="tradesSec">
+        <h2>🔁 OCM Trades (Pending Admin)</h2>
+        <div class="row">
+            <button onclick="refreshTradesPending()">Refresh</button>
+        </div>
+        <table id="tradesTbl">
+            <thead>
+                <tr><th>TradeId</th><th>ListingId</th><th>Qty</th><th>Price</th><th>Status</th><th>Player</th><th>Actions</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div id="tradesMsg" class="small"></div>
     </div>
 
     <script>
-        const WEB_APP_URL = window.WEB_APP_URL;
-        const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID;
-
+        const WEB_APP_URL = window.WEB_APP_URL || 'https://yellow-king-52c6.vilhokettu1.workers.dev/exec';
         let googleIdToken = null;
-        let currentUser = null;
-        let isAdmin = false;
+        let selectedRequestId = null;
 
-        function updateAuthUI() {
-            document.body.classList.add('withTopBar');
-            document.getElementById('btnLogin').style.display = googleIdToken ? 'none' : 'inline-block';
-            document.getElementById('btnLogout').style.display = googleIdToken ? 'inline-block' : 'none';
-            document.getElementById('topUser').textContent = googleIdToken ? (currentUser?.email || '') : '';
-            document.getElementById('adminLink').style.display = isAdmin ? 'inline' : 'none';
-            document.getElementById('loginStatus').textContent = googleIdToken ? `Logged in${isAdmin ? ' (admin)' : ''}.` : 'Not signed in';
-            document.getElementById('adminGuard').style.display = (!isAdmin ? 'block' : 'none');
-            document.getElementById('adminContent').style.display = isAdmin ? 'block' : 'none';
+        function goHome() { location.href = 'index.html'; }
+
+        function postAction(action, payload) {
+            return fetch(WEB_APP_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, idToken: googleIdToken, payload })
+            }).then(r => r.json());
         }
 
-        function startLogin() {
-            if (window.google?.accounts?.id) {
-                try { google.accounts.id.initialize({ client_id: OAUTH_CLIENT_ID, callback: onGoogleSignIn, ux_mode: 'popup' }); google.accounts.id.prompt(); } catch { }
-            } else alert('Google Sign-In not loaded yet.');
-        }
-        function logout() {
-            googleIdToken = null; currentUser = null; isAdmin = false;
-            window.clearSavedIdToken && window.clearSavedIdToken();
-            updateAuthUI();
-        }
-
-        async function onGoogleSignIn(resp) {
-            const statusEl = document.getElementById('loginStatus');
-            googleIdToken = resp && resp.credential;
-            if (!googleIdToken) { statusEl.textContent = 'Login error: no credential'; updateAuthUI(); return; }
-            statusEl.textContent = 'Verifying...';
+        async function ensureAdmin() {
+            const auth = await (window.initAuthFromStorage ? window.initAuthFromStorage() : Promise.resolve({ ok: false }));
+            if (!auth.ok) {
+                document.getElementById('authState').innerHTML = '<span class="err">Not logged in. Login on Store page.</span>';
+                return false;
+            }
+            googleIdToken = auth.idToken;
             try {
-                const ti = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`);
-                if (!ti.ok) throw new Error('tokeninfo failed ' + ti.status);
-                const info = await ti.json();
-                if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
-                window.saveIdToken && window.saveIdToken(googleIdToken);
                 const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
                 const meJ = await meR.json();
-                if (!meJ.ok) throw new Error(meJ.error || '/me failed');
-                currentUser = meJ.data.user || null;
-                isAdmin = !!meJ.data.isAdmin;
-                updateAuthUI();
-                if (isAdmin) {
-                    loadPlayers();
-                    loadAccountClaims();
-                    loadPending();
+                if (!meJ.ok) throw new Error(meJ.error || 'me failed');
+                document.getElementById('adminEmail').textContent = meJ.data.user?.email || '';
+                if (!meJ.data.isAdmin) {
+                    document.getElementById('authState').innerHTML = '<span class="err">Access denied (not admin).</span>';
+                    return false;
                 }
+                document.getElementById('authState').innerHTML = '<span class="ok">Admin authenticated.</span>';
+                document.getElementById('adminBadge').style.display = 'inline-block';
+                return true;
             } catch (e) {
-                statusEl.textContent = 'Login error: ' + e.message;
-                updateAuthUI();
+                document.getElementById('authState').innerHTML = '<span class="err">Auth error: ' + e.message + '</span>';
+                return false;
             }
         }
 
-        (async function tryRestoreAuthOnLoad() {
-            document.body.classList.add('withTopBar');
-            if (!window.initAuthFromStorage) { updateAuthUI(); return; }
+        /* ===== Players ===== */
+        async function refreshPlayers() {
+            const tbody = document.querySelector('#playersTbl tbody');
+            tbody.innerHTML = '';
             try {
-                const res = await window.initAuthFromStorage();
-                if (!res.ok) { updateAuthUI(); return; }
-                googleIdToken = res.idToken;
-                try {
-                    const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-                    const meJ = await meR.json();
-                    if (meJ.ok) { currentUser = meJ.data.user || null; isAdmin = !!meJ.data.isAdmin; }
-                    else { window.clearSavedIdToken && window.clearSavedIdToken(); googleIdToken = null; }
-                } catch (e) { console.warn('restore /me failed', e); }
-            } catch (_) { /* ignore */ }
-            updateAuthUI();
-            if (isAdmin) {
-                loadPlayers();
-                loadAccountClaims();
-                loadPending();
-            }
-        })();
-
-        document.getElementById('btnRefresh').addEventListener('click', loadPending);
-        document.getElementById('filterPlayer').addEventListener('input', () => { if (isAdmin) loadPending(); });
-
-        function escapeHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
-        /* ===== Create Player Profile ===== */
-        async function adminCreatePlayer() {
-            const msg = document.getElementById('cpMsg');
-            msg.textContent = '';
-            if (!googleIdToken || !isAdmin) { msg.textContent = 'Admin login required'; return; }
-            const playerName = (document.getElementById('cpPlayerName').value || '').trim();
-            const mailbox = (document.getElementById('cpMailbox').value || '').trim();
-            const email = (document.getElementById('cpEmail').value || '').trim();
-            if (!playerName || !mailbox) { msg.textContent = 'Player name and mailbox required'; return; }
-            try {
-                const r = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'adminCreatePlayer', idToken: googleIdToken, payload: { playerName, mailbox, email: email || null } })
-                });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'adminCreatePlayer failed');
-                msg.textContent = 'Profile created.';
-                document.getElementById('cpPlayerName').value = '';
-                document.getElementById('cpMailbox').value = '';
-                document.getElementById('cpEmail').value = '';
-                loadPlayers();
-            } catch (e) {
-                msg.textContent = 'Error: ' + e.message;
-            }
-        }
-
-        /* ===== Add Funds (fuzzy search) ===== */
-        const __playersCache = [];
-        function normalizeStr(s) { return (s || '').toLowerCase().trim(); }
-        function score(candidate, query) {
-            const c = normalizeStr(candidate);
-            const q = normalizeStr(query);
-            if (!q) return 0;
-            if (c.startsWith(q)) return 100 - (c.length - q.length);
-            const idx = c.indexOf(q);
-            if (idx >= 0) return 60 - idx;
-            const tokens = q.split(/\s+/).filter(Boolean);
-            let hits = 0;
-            tokens.forEach(t => { if (c.indexOf(t) >= 0) hits++; });
-            return hits > 0 ? 30 + hits : -1;
-        }
-        function attachPlayerSearch() {
-            const input = document.getElementById('playerSearchInput');
-            const list = document.getElementById('playerSearchList');
-            input.addEventListener('input', () => {
-                const q = input.value;
-                const filtered = __playersCache.map(p => ({
-                    ...p,
-                    _score: Math.max(
-                        score(`${p.playerName || ''}`, q),
-                        score(`${p.email || ''}`, q),
-                        score(`${p.userId || ''}`, q)
-                    )
-                }))
-                    .filter(p => p._score >= 0)
-                    .sort((a, b) => b._score - a._score)
-                    .slice(0, 200);
-                list.innerHTML = '';
-                if (!filtered.length) { list.style.display = 'none'; return; }
-                filtered.forEach(p => {
-                    const div = document.createElement('div');
-                    div.className = 'dropdown-item';
-                    div.innerHTML = `<div><strong>${p.playerName || '(no name)'}</strong><br><small>${p.email || ''}</small></div>`;
-                    div.onclick = () => {
-                        input.value = p.playerName || p.email || p.userId;
-                        input.dataset.userId = p.userId || '';
-                        list.style.display = 'none';
-                    };
-                    list.appendChild(div);
-                });
-                list.style.display = 'block';
-            });
-            input.addEventListener('focus', () => input.dispatchEvent(new Event('input')));
-            input.addEventListener('blur', () => setTimeout(() => list.style.display = 'none', 200));
-        }
-        async function loadPlayers() {
-            try {
-                if (!googleIdToken) throw new Error('Login required');
                 const r = await fetch(`${WEB_APP_URL}?action=adminListPlayers&idToken=${encodeURIComponent(googleIdToken)}`);
                 const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'adminListPlayers failed');
-                const arr = Array.isArray(j.data) ? j.data : (j.data?.players || []);
-                __playersCache.length = 0;
-                arr.forEach(p => __playersCache.push({ userId: p.userId, email: p.email, playerName: p.playerName }));
+                if (!j.ok) throw new Error(j.error);
+                const list = Array.isArray(j.data) ? j.data : (j.data.players || []);
+                const q = (document.getElementById('plSearch').value || '').toLowerCase().trim();
+                list.filter(p => {
+                    if (!q) return true;
+                    const hay = `${p.userId} ${p.playerName || ''} ${p.email || ''} ${p.mailbox || ''}`.toLowerCase();
+                    return hay.indexOf(q) >= 0;
+                }).forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td class="small nowrap-cell">${p.userId}</td>
+                                        <td>${p.playerName || ''}</td>
+                                        <td>${p.email || ''}</td>
+                                        <td>${p.mailbox || ''}</td>
+                                        <td class="small">${Number(p.balanceBT || 0).toFixed(2)}</td>`;
+                    tr.onclick = () => {
+                        navigator.clipboard.writeText(p.userId).catch(() => { });
+                        const am = document.getElementById('adminMsg');
+                        am.textContent = 'Copied userId: ' + p.userId;
+                        setTimeout(() => { if (am.textContent.startsWith('Copied')) am.textContent = ''; }, 2500);
+                    };
+                    tbody.appendChild(tr);
+                });
             } catch (e) {
-                document.getElementById('addFundsMsg').textContent = 'Load players failed: ' + e.message;
+                document.getElementById('adminMsg').textContent = 'Players load error: ' + e.message;
             }
+        }
+        async function adminCreatePlayer() {
+            const msg = document.getElementById('cpMsg'); msg.textContent = 'Working...';
+            try {
+                const res = await postAction('adminCreatePlayer', {
+                    email: document.getElementById('cpEmail').value.trim(),
+                    playerName: document.getElementById('cpName').value.trim(),
+                    mailbox: document.getElementById('cpMailbox').value.trim(),
+                    balanceBT: parseFloat(document.getElementById('cpBalance').value) || 0
+                });
+                if (!res.ok) throw new Error(res.error);
+                msg.textContent = 'Created userId=' + res.result.userId;
+                refreshPlayers();
+            } catch (e) { msg.textContent = 'Error: ' + e.message; }
         }
         async function adminAddFunds() {
-            const msg = document.getElementById('addFundsMsg');
-            msg.textContent = '';
-            if (!googleIdToken) { msg.textContent = 'Login required'; return; }
-            const input = document.getElementById('playerSearchInput');
-            const userId = input.dataset.userId || '';
-            const refText = input.value.trim();
-            const amount = parseFloat(document.getElementById('fundAmountInput').value) || 0;
-            const reason = document.getElementById('fundReasonInput').value.trim();
-            if (amount <= 0) { msg.textContent = 'Amount must be > 0'; return; }
-            if (!userId && !refText) { msg.textContent = 'Select a player'; return; }
-
+            const msg = document.getElementById('afMsg'); msg.textContent = 'Working...';
             try {
-                const payload = userId ? { userId, amountBT: amount, reason } : { playerNameOrEmail: refText, amountBT: amount, reason };
-                const r = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'adminAddFunds', idToken: googleIdToken, payload })
+                const res = await postAction('adminAddFunds', {
+                    userId: document.getElementById('afUserId').value.trim(),
+                    deltaBT: parseFloat(document.getElementById('afDelta').value) || 0,
+                    reason: document.getElementById('afReason').value.trim()
                 });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'adminAddFunds failed');
-                msg.textContent = 'Funds added.';
-                document.getElementById('fundAmountInput').value = '';
-                document.getElementById('fundReasonInput').value = '';
-            } catch (e) {
-                msg.textContent = 'Error: ' + e.message;
-            }
+                if (!res.ok) throw new Error(res.error);
+                msg.textContent = 'OK. New balance: ' + Number(res.result.balanceAfter).toFixed(2);
+                refreshPlayers();
+            } catch (e) { msg.textContent = 'Error: ' + e.message; }
+        }
+        async function adminUpdateMailbox() {
+            const msg = document.getElementById('umMsg'); msg.textContent = 'Working...';
+            try {
+                const res = await postAction('adminUpdateMailbox', {
+                    playerName: document.getElementById('umName').value.trim(),
+                    mailbox: document.getElementById('umMailbox').value.trim()
+                });
+                if (!res.ok) throw new Error(res.error);
+                msg.textContent = 'Updated.';
+                refreshPlayers();
+            } catch (e) { msg.textContent = 'Error: ' + e.message; }
         }
 
-        /* ===== Pending Account Claims ===== */
-        function renderClaims(claims) {
-            const ul = document.getElementById('claimsList');
-            ul.innerHTML = '';
-            if (!claims || !claims.length) {
-                ul.innerHTML = '<li class="small">No pending claims</li>';
-                return;
+        /* ===== Requests ===== */
+        async function refreshPending() {
+            const tbody = document.querySelector('#pendingTbl tbody');
+            tbody.innerHTML = '';
+            document.getElementById('rqDetailsBox').style.display = 'none';
+            selectedRequestId = null;
+            try {
+                const f = document.getElementById('rqFilter').value.trim();
+                const r = await fetch(`${WEB_APP_URL}?action=pending&idToken=${encodeURIComponent(googleIdToken)}&filter=${encodeURIComponent(f)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error);
+                (j.data || []).forEach(x => {
+                    const brief = (x.items || [])
+                        .map(i => `${i.side}:${i.itemName}×${i.quantity}@${i.price}`)
+                        .slice(0, 3).join(' | ');
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${x.requestId}</td>
+                                        <td>${x.playerName || ''}</td>
+                                        <td>${x.mailboxNumber || ''}</td>
+                                        <td class="small">${brief}</td>
+                                        <td><span class="status-chip status-${(x.status || '').toLowerCase()}">${x.status}</span></td>
+                                        <td><button class="slim-btn" data-id="${x.requestId}">Open</button></td>`;
+                    tr.querySelector('button').onclick = () => openRequestDetails(x.requestId);
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                document.getElementById('adminMsg').textContent = 'Pending load error: ' + e.message;
             }
-            claims.forEach(c => {
-                const li = document.createElement('li'); li.className = 'request';
-                const hdr = document.createElement('div');
-                hdr.innerHTML = `<strong>${escapeHtml(c.playerName || '(no name)')}</strong> <span class="small">| mailbox ${escapeHtml(c.mailbox || 'N/A')} | claim ${escapeHtml(c.claimId || '')}</span>`;
-                li.appendChild(hdr);
-                const info = document.createElement('div'); info.className = 'small';
-                info.textContent = `Requester: ${c.requesterEmail || 'unknown'}`;
-                li.appendChild(info);
-                const ctr = document.createElement('div'); ctr.className = 'controls';
-                const approveBtn = document.createElement('button'); approveBtn.textContent = 'Approve'; approveBtn.onclick = () => resolveAccountClaim(c.claimId, true);
-                const rejectBtn = document.createElement('button'); rejectBtn.textContent = 'Reject'; rejectBtn.onclick = () => resolveAccountClaim(c.claimId, false);
-                ctr.append(approveBtn, rejectBtn);
-                li.appendChild(ctr);
-                ul.appendChild(li);
-            });
         }
-        async function loadAccountClaims() {
-            if (!googleIdToken || !isAdmin) return;
+        async function openRequestDetails(requestId) {
+            selectedRequestId = requestId;
+            const box = document.getElementById('rqDetailsBox');
+            const el = document.getElementById('rqDetails');
+            el.textContent = 'Loading...';
+            box.style.display = 'block';
+            try {
+                const r = await fetch(`${WEB_APP_URL}?action=requestDetails&idToken=${encodeURIComponent(googleIdToken)}&requestId=${encodeURIComponent(requestId)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error);
+                const d = j.data;
+                const lines = (d.items || []).map(i => `- ${i.side} ${i.itemName} × ${i.quantity} @ ${i.price}`).join('\n');
+                el.innerHTML =
+                    `RequestId: ${d.requestId}
+Player: ${d.playerName} (${d.mailboxNumber})
+Status: ${d.status}
+Balance: ${Number(d.userBalanceBT || 0).toFixed(2)} BT
+
+Items:
+${lines}
+
+Totals: buyBT=${Number(d.buyBT || 0).toFixed(2)} sellBT=${Number(d.sellBT || 0).toFixed(2)} netBT=${Number(d.netBT || 0).toFixed(2)}
+`;
+                document.getElementById('rqActMsg').textContent = '';
+            } catch (e) {
+                el.textContent = 'Error: ' + e.message;
+            }
+        }
+        async function approveSelectedRequest() {
+            const msg = document.getElementById('rqActMsg');
+            if (!selectedRequestId) { msg.textContent = 'Open a request first.'; return; }
+            msg.textContent = 'Working...';
+            try {
+                const executedByAdmin = document.getElementById('rqExecAdmin').checked;
+                const res = await postAction('approveRequest', { requestId: selectedRequestId, executedByAdmin });
+                if (!res.ok) throw new Error(res.error);
+                msg.textContent = `Approved. netBT=${res.result.netBT} fee=${res.result.feeBT}`;
+                refreshPending();
+            } catch (e) { msg.textContent = 'Error: ' + e.message; }
+        }
+        async function rejectSelectedRequest() {
+            const msg = document.getElementById('rqActMsg');
+            if (!selectedRequestId) { msg.textContent = 'Open a request first.'; return; }
+            if (!confirm('Reject this request?')) return;
+            msg.textContent = 'Working...';
+            try {
+                const res = await postAction('rejectRequest', { requestId: selectedRequestId, note: '' });
+                if (!res.ok) throw new Error(res.error);
+                msg.textContent = 'Rejected.';
+                refreshPending();
+            } catch (e) { msg.textContent = 'Error: ' + e.message; }
+        }
+
+        /* ===== Claims ===== */
+        async function refreshClaims() {
+            const tbody = document.querySelector('#claimsTbl tbody');
+            const msg = document.getElementById('claimsMsg');
+            tbody.innerHTML = ''; msg.textContent = '';
             try {
                 const r = await fetch(`${WEB_APP_URL}?action=adminListAccountClaims&idToken=${encodeURIComponent(googleIdToken)}`);
                 const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'adminListAccountClaims failed');
-                const arr = Array.isArray(j.data) ? j.data : (j.data?.claims || []);
-                renderClaims(arr);
-            } catch (e) {
-                const ul = document.getElementById('claimsList');
-                ul.innerHTML = `<li class="small">Error: ${escapeHtml(e.message)}</li>`;
-            }
-        }
-        async function resolveAccountClaim(claimId, approve) {
-            if (!googleIdToken || !isAdmin) return alert('Admin login required');
-            try {
-                const r = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'adminResolveAccountClaim', idToken: googleIdToken, payload: { claimId, approve: !!approve } })
-                });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'adminResolveAccountClaim failed');
-                loadAccountClaims();
-            } catch (e) {
-                alert('Error: ' + e.message);
-            }
-        }
-
-        /* ===== Pending Transaction Requests ===== */
-        function loadPending() {
-            if (!googleIdToken || !isAdmin) return;
-            const filter = encodeURIComponent(document.getElementById('filterPlayer').value || '');
-            fetch(`${WEB_APP_URL}?action=pending&idToken=${encodeURIComponent(googleIdToken)}&filter=${filter}`)
-                .then(r => r.json()).then(j => {
-                    if (!j.ok) throw new Error(j.error || 'Failed to load');
-                    const ul = document.getElementById('pendingList'); ul.innerHTML = '';
-                    if (!j.data || !j.data.length) { ul.innerHTML = '<li class="small">No pending requests</li>'; return; }
-                    j.data.forEach(p => ul.appendChild(renderRequest(p)));
-                }).catch(e => alert('Error: ' + e.message));
-        }
-
-        function renderRequest(p) {
-            const li = document.createElement('li'); li.className = 'request';
-            const header = document.createElement('div');
-            header.innerHTML = `<strong>${escapeHtml(p.playerName || 'Unknown')}</strong> <span class="small">| ${escapeHtml(p.requestId)} | ${escapeHtml(p.status)}</span>`;
-            li.appendChild(header);
-
-            const controls = document.createElement('div'); controls.className = 'controls';
-            const viewBtn = document.createElement('button'); viewBtn.textContent = 'Toggle Details';
-            const loadBtn = document.createElement('button'); loadBtn.textContent = 'Load Details';
-            const appr = document.createElement('button'); appr.textContent = 'Approve'; appr.onclick = () => approve(p.requestId, false);
-            const apprAdmin = document.createElement('button'); apprAdmin.textContent = 'Approve (Admin Sale)'; apprAdmin.onclick = () => approve(p.requestId, true);
-            const rej = document.createElement('button'); rej.textContent = 'Reject'; rej.onclick = () => rejectReq(p.requestId);
-            controls.append(viewBtn, loadBtn, appr, apprAdmin, rej);
-            li.appendChild(controls);
-
-            const details = document.createElement('div'); details.className = 'details';
-            li.appendChild(details);
-
-            viewBtn.addEventListener('click', () => { details.style.display = details.style.display === 'none' ? 'block' : 'none'; });
-            loadBtn.addEventListener('click', async () => { loadBtn.disabled = true; try { await loadRequestDetails(p.requestId, details); } finally { loadBtn.disabled = false; } });
-
-            return li;
-        }
-
-        function populateDetails(detailsDiv, p) {
-            detailsDiv.innerHTML = '';
-            const mb = document.createElement('div');
-            mb.innerHTML = `<div class="small"><strong>Mailbox:</strong> ${escapeHtml(p.mailboxNumber || 'N/A')}</div>`;
-            detailsDiv.appendChild(mb);
-
-            const items = p.items || [];
-            if (items.length) {
-                const table = document.createElement('table'); table.className = 'items-table';
-                table.innerHTML = `<thead><tr><th>Side</th><th>Item</th><th>Qty</th><th>Price</th></tr></thead>`;
-                const tbody = document.createElement('tbody');
-                items.forEach(it => {
+                if (!j.ok) throw new Error(j.error);
+                (j.data || []).forEach(c => {
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${escapeHtml(it.side || '')}</td><td>${escapeHtml(it.itemName || '')}</td><td>${escapeHtml(String(it.quantity || ''))}</td><td>${escapeHtml(String(it.price || ''))}</td>`;
+                    tr.innerHTML = `
+                            <td class="small">${c.claimId}</td>
+                            <td class="small">${c.requesterUserId}<div class="muted">${c.requesterEmail || ''}</div></td>
+                            <td>${c.targetRef}</td>
+                            <td class="small">${c.matchedUserId || ''}</td>
+                            <td>${c.playerName || ''}</td>
+                            <td>${c.mailbox || ''}</td>
+                            <td>
+                                <button class="slim-btn" data-c="${c.claimId}">Approve</button>
+                                <button class="slim-btn danger" data-cr="${c.claimId}">Reject</button>
+                            </td>`;
+                    tr.querySelector('button[data-c]').onclick = () => resolveClaim(c.claimId, true);
+                    tr.querySelector('button[data-cr]').onclick = () => resolveClaim(c.claimId, false);
                     tbody.appendChild(tr);
                 });
-                table.appendChild(tbody);
-                detailsDiv.appendChild(table);
-            } else {
-                const none = document.createElement('div'); none.className = 'small'; none.textContent = 'No item details';
-                detailsDiv.appendChild(none);
-            }
-
-            if (p.notes) {
-                const notes = document.createElement('div'); notes.className = 'small'; notes.textContent = 'Notes: ' + p.notes;
-                detailsDiv.appendChild(notes);
-            }
+            } catch (e) { msg.textContent = 'Claims load error: ' + e.message; }
+        }
+        async function resolveClaim(claimId, approve) {
+            const msg = document.getElementById('claimsMsg');
+            msg.textContent = 'Working...';
+            try {
+                const res = await postAction('adminResolveAccountClaim', { claimId, approve, note: '' });
+                if (!res.ok) throw new Error(res.error);
+                msg.textContent = approve ? 'Claim approved & merged.' : 'Claim rejected.';
+                refreshClaims();
+            } catch (e) { msg.textContent = 'Error: ' + e.message; }
         }
 
-        function loadRequestDetails(requestId, detailsDiv) {
-            if (!googleIdToken) return Promise.reject(new Error('Not signed in'));
-            detailsDiv.innerHTML = 'Loading...';
-            return fetch(`${WEB_APP_URL}?action=requestDetails&requestId=${encodeURIComponent(requestId)}&idToken=${encodeURIComponent(googleIdToken)}`)
-                .then(r => r.json()).then(j => {
-                    if (!j.ok) throw new Error(j.error || 'Failed to load details');
-                    populateDetails(detailsDiv, j.data);
-                    const tag = document.createElement('div'); tag.className = 'small';
-                    tag.innerHTML = `<span class="small">Balance: ${Number(j.data.userBalanceBT || 0).toFixed(2)} BT</span>`;
-                    detailsDiv.appendChild(tag);
-                }).catch(e => { detailsDiv.innerHTML = '<div class="small">Error: ' + e.message + '</div>'; throw e; });
+        /* ===== Listings ===== */
+        async function refreshListingsPending() {
+            const tbody = document.querySelector('#listingsTbl tbody');
+            const msg = document.getElementById('listingsMsg');
+            tbody.innerHTML = ''; msg.textContent = '';
+            try {
+                const r = await fetch(`${WEB_APP_URL}?action=adminListingsPending&idToken=${encodeURIComponent(googleIdToken)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error);
+                (j.data || []).forEach(l => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                            <td class="small">${l.listingId}</td>
+                            <td>${l.type}</td>
+                            <td>${l.itemName}</td>
+                            <td><input class="w80" type="number" step="0.01" value="${l.price || 0}"></td>
+                            <td><input class="w80" type="number" step="1" value="${l.remainingQuantity || l.quantity || 0}"></td>
+                            <td>${l.sellerPlayerName || ''}</td>
+                            <td><button class="slim-btn" data-l="${l.listingId}">Approve</button></td>`;
+                    const inputs = tr.querySelectorAll('input');
+                    tr.querySelector('button[data-l]').onclick = () =>
+                        approveListing(l.listingId, inputs[0].value, inputs[1].value);
+                    tbody.appendChild(tr);
+                });
+            } catch (e) { msg.textContent = 'Listings load error: ' + e.message; }
+        }
+        async function approveListing(listingId, price, remainingQuantity) {
+            const msg = document.getElementById('listingsMsg');
+            msg.textContent = 'Working...';
+            try {
+                const res = await postAction('adminApproveListing', {
+                    listingId,
+                    updates: { price: Number(price), remainingQuantity: Number(remainingQuantity) }
+                });
+                if (!res.ok) throw new Error(res.error);
+                msg.textContent = 'Listing approved.';
+                refreshListingsPending();
+            } catch (e) { msg.textContent = 'Error: ' + e.message; }
         }
 
-        function approve(requestId, executedByAdmin) {
-            if (!googleIdToken) return alert('Login first');
-            fetch(WEB_APP_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'approveRequest', idToken: googleIdToken, recaptchaToken: null, payload: { requestId, executedByAdmin } })
-            })
-                .then(r => r.json()).then(j => { if (!j.ok) throw new Error(j.error); alert('Approved'); loadPending(); }).catch(e => alert(e.message));
+        /* ===== Trades ===== */
+        async function refreshTradesPending() {
+            const tbody = document.querySelector('#tradesTbl tbody');
+            const msg = document.getElementById('tradesMsg');
+            tbody.innerHTML = ''; msg.textContent = '';
+            try {
+                const r = await fetch(`${WEB_APP_URL}?action=adminTradesPending&idToken=${encodeURIComponent(googleIdToken)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error);
+                (j.data || []).forEach(t => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                            <td class="small">${t.tradeId}</td>
+                            <td class="small">${t.listingId}</td>
+                            <td>${t.quantity}</td>
+                            <td>${Number(t.price).toFixed(2)}</td>
+                            <td><span class="status-chip status-${(t.status || '').toLowerCase()}">${t.status}</span></td>
+                            <td>${t.playerName || ''}</td>
+                            <td>
+                                <button class="slim-btn" data-t="${t.tradeId}">Approve</button>
+                                <button class="slim-btn danger" data-tr="${t.tradeId}">Reject</button>
+                            </td>`;
+                    tr.querySelector('button[data-t]').onclick = () => approveTrade(t.tradeId);
+                    tr.querySelector('button[data-tr]').onclick = () => rejectTrade(t.tradeId);
+                    tbody.appendChild(tr);
+                });
+            } catch (e) { msg.textContent = 'Trades load error: ' + e.message; }
+        }
+        async function approveTrade(tradeId) {
+            const msg = document.getElementById('tradesMsg');
+            msg.textContent = 'Working...';
+            try {
+                const res = await postAction('adminApproveTrade', { tradeId });
+                if (!res.ok) throw new Error(res.error);
+                msg.textContent = 'Trade approved.';
+                refreshTradesPending();
+            } catch (e) { msg.textContent = 'Error: ' + e.message; }
+        }
+        async function rejectTrade(tradeId) {
+            if (!confirm('Reject this trade?')) return;
+            const msg = document.getElementById('tradesMsg');
+            msg.textContent = 'Working...';
+            try {
+                const res = await postAction('adminRejectTrade', { tradeId, note: '' });
+                if (!res.ok) throw new Error(res.error);
+                msg.textContent = 'Trade rejected.';
+                refreshTradesPending();
+            } catch (e) { msg.textContent = 'Error: ' + e.message; }
         }
 
-        function rejectReq(requestId) {
-            if (!googleIdToken) return alert('Login first');
-            fetch(WEB_APP_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'rejectRequest', idToken: googleIdToken, recaptchaToken: null, payload: { requestId, note: 'Rejected by admin' } })
-            })
-                .then(r => r.json()).then(j => { if (!j.ok) throw new Error(j.error); alert('Rejected'); loadPending(); }).catch(e => alert(e.message));
-        }
-
-        // init search UI for Add Funds
-        attachPlayerSearch();
+        /* ===== Init ===== */
+        window.onload = async () => {
+            const ok = await ensureAdmin();
+            if (!ok) return;
+            // Initial loads (parallel)
+            refreshPlayers();
+            refreshPending();
+            refreshClaims();
+            refreshListingsPending();
+            refreshTradesPending();
+        };
     </script>
 </body>
 </html>
