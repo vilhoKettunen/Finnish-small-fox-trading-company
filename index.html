@@ -950,20 +950,20 @@
             // Show/hide admin-only UI (Account Balance controls & pinned balance)
             try { updateAccountBalanceUiVisibility(); } catch (_) { /* non-fatal */ }
         }
-        // ------------------------- NEW updateAccountBalanceUiVisibility -------------------------
+        // REPLACE: updateAccountBalanceUiVisibility
         function updateAccountBalanceUiVisibility() {
             const isAdmin = !!currentUser?.isAdmin;
-            // BUY side: label + button are not wrapped in container; hide the input and the following button
+
+            // BUY side: show/hide input + button
             const buyInput = document.getElementById('buyAccountBalanceInput');
             if (buyInput) {
                 const buyLabel = buyInput.closest('label');
                 if (buyLabel) buyLabel.style.display = isAdmin ? '' : 'none';
-                // the add button is the label's nextElementSibling in the DOM
                 const buyBtn = buyLabel ? buyLabel.nextElementSibling : null;
                 if (buyBtn && buyBtn.tagName === 'BUTTON') buyBtn.style.display = isAdmin ? '' : 'none';
             }
 
-            // SELL side: input id = accountBalanceInput
+            // SELL side: show/hide input + button
             const sellInput = document.getElementById('accountBalanceInput');
             if (sellInput) {
                 const sellLabel = sellInput.closest('label');
@@ -972,18 +972,20 @@
                 if (sellBtn && sellBtn.tagName === 'BUTTON') sellBtn.style.display = isAdmin ? '' : 'none';
             }
 
-            // Only admin should get the pinned "Account Balance (auto)" row injected into the sellCart.
             if (isAdmin) {
-                // If we already have a pinned account balance row do nothing; otherwise add one if we have balance value
+                // Admins get a pinned server balance (hidden from receipt but used for projection)
                 const hasPinned = sellCart.some(e => !!e.isAccountBalancePinned);
                 if (!hasPinned && Number(currentBalanceBT) > 0) {
                     upsertPinnedBalanceRow(currentBalanceBT);
                 }
             } else {
-                // remove any pinned account balance rows for non-admin users
-                const removed = sellCart.some(e => e.isAccountBalancePinned);
-                sellCart = sellCart.filter(e => !e.isAccountBalancePinned);
-                if (removed) { renderSellList(); calculateNet(); }
+                // Non-admins: strip ALL balance rows (manual and pinned) from both carts
+                const beforeBuy = buyCart.length, beforeSell = sellCart.length;
+                buyCart = buyCart.filter(e => !e.isBalance);
+                sellCart = sellCart.filter(e => !e.isBalance);
+                if (beforeBuy !== buyCart.length || beforeSell !== sellCart.length) {
+                    renderBuyList(); renderSellList(); calculateNet();
+                }
             }
         }
         /* ===== reCAPTCHA ===== */
@@ -1557,92 +1559,100 @@
             calculateNet();
         }
 
-        // ------------------------- REPLACE renderSellList -------------------------
-        function renderSellList() {
-            const list = document.getElementById("sellList"); list.innerHTML = "";
-            let total = 0;
-            const curr = document.getElementById("currencySelect").value;
+       // REPLACE: renderSellList (show manual balance rows, hide only pinned)
+function renderSellList() {
+    const list = document.getElementById("sellList"); list.innerHTML = "";
+    let total = 0;
+    const curr = document.getElementById("currencySelect").value;
 
-            // iterate over a snapshot of sellCart
-            const rows = sellCart.slice();
+    sellCart.slice().forEach(e => {
+        // Hide only the pinned auto balance row; show manual ones
+        if (e.isAccountBalancePinned) return;
 
-            rows.forEach(e => {
-                // Hide only the pinned automatic balance row (server-provided balance).
-                if (e.isAccountBalancePinned) return;
+        const li = document.createElement("li");
+        let rowTotal = 0, rowText = "";
 
-                const li = document.createElement("li");
-                let rowTotal = 0, rowText = "";
-
-                if (e.bundleSize && e.isFullyCustom) {
-                    rowTotal = (e.qty / e.bundleSize) * e.price;
-                    rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
-                } else if (e.bundleSize) {
-                    rowTotal = e.qty * e.price;
-                    rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`;
-                } else {
-                    rowTotal = e.qty * e.price;
-                    rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`;
-                }
-
-                // For manual balance rows (user-added), show a clear label but keep them visible
-                if (e.isBalance && !e.isAccountBalancePinned) {
-                    rowText = `Account Balance (manual): ${rowTotal.toFixed(2)} BT`;
-                }
-
-                // Include manual balance rows in the Sell section total (so totals match Buy behavior)
-                total += rowTotal;
-
-                if (e.isPayWith) rowText += ' [Pay With]';
-                if (e.source === 'OCM') rowText += ' [OCM]';
-
-                const colorClass = evaluateRowColorSell(e);
-                if (colorClass) {
-                    li.classList.add(colorClass);
-                    if (colorClass === 'row-warning-red') {
-                        const warn = document.createElement('span'); warn.className = 'small-note';
-                        warn.textContent = 'over target stock';
-                        li.appendChild(warn);
-                    }
-                }
-
-                if (curr && curr !== BASE_CURRENCY) rowText += ' ' + formatValue(rowTotal, curr, false);
-                li.textContent = rowText;
-
-                const removeBtn = document.createElement("button");
-                removeBtn.textContent = "❌";
-                removeBtn.onclick = () => { sellCart = sellCart.filter(x => x !== e); renderSellList(); calculateNet(); };
-                li.appendChild(removeBtn);
-
-                list.appendChild(li);
-            });
-
-            document.getElementById("sellTotal").textContent = formatValue(total, curr, false);
-            calculateNet();
+        if (e.bundleSize && e.isFullyCustom) {
+            rowTotal = (e.qty / e.bundleSize) * e.price;
+            rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
+        } else if (e.bundleSize) {
+            rowTotal = e.qty * e.price;
+            rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`;
+        } else {
+            rowTotal = e.qty * e.price;
+            rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`;
         }
+
+        // Show manual balance rows with a clear label
+        if (e.isBalance && !e.isAccountBalancePinned) {
+            rowText = `Account Balance (manual): ${rowTotal.toFixed(2)} BT`;
+        }
+
+        // Manual balance rows DO affect Sell Total (like earlier)
+        total += rowTotal;
+
+        if (e.isPayWith) rowText += ' [Pay With]';
+        if (e.source === 'OCM') rowText += ' [OCM]';
+
+        const colorClass = evaluateRowColorSell(e);
+        if (colorClass) {
+            li.classList.add(colorClass);
+            if (colorClass === 'row-warning-red') {
+                const warn = document.createElement('span'); warn.className = 'small-note';
+                warn.textContent = 'over target stock';
+                li.appendChild(warn);
+            }
+        }
+
+        if (curr && curr !== BASE_CURRENCY) rowText += ' ' + formatValue(rowTotal, curr, false);
+        li.textContent = rowText;
+
+        const removeBtn = document.createElement("button");
+        removeBtn.textContent = "❌";
+        removeBtn.onclick = () => { sellCart = sellCart.filter(x => x !== e); renderSellList(); calculateNet(); };
+        li.appendChild(removeBtn);
+
+        list.appendChild(li);
+    });
+
+    document.getElementById("sellTotal").textContent = formatValue(total, curr, false);
+    calculateNet();
+}
 
         // ------------------------- REPLACE calculateNet -------------------------
         // ------------------------- REPLACE calculateNet -------------------------
         // Net now excludes only pinned (server) balance rows; manual balance rows count toward this transaction's net.
+        // REPLACE calculateNet: Net = (Sell Total including manual balance rows) - (Buy Total including manual balance rows)
         function calculateNet() {
-            const buyTotal = buyCart.reduce((s, e) => {
-                // exclude pinned automatic account-balance rows from totals/net calculation
-                if (e.isAccountBalancePinned) return s;
-                if (e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
-                if (e.bundleSize) return s + (e.qty * e.price);
-                return s + (e.qty * e.price);
+            // Mirrors logic used in renderBuyList and renderSellList (excluding pinned row which is not shown)
+            const buyTotalRaw = buyCart.reduce((sum, e) => {
+                // All buy rows (including manual Account Balance) contribute
+                let rowTotal = 0;
+                if (e.bundleSize && e.isFullyCustom) {
+                    rowTotal = (e.qty / e.bundleSize) * e.price;
+                } else {
+                    rowTotal = e.qty * e.price;
+                }
+                return sum + rowTotal;
             }, 0);
 
-            const sellTotal = sellCart.reduce((s, e) => {
-                // exclude pinned automatic account-balance rows from totals/net calculation
-                if (e.isAccountBalancePinned) return s;
-                if (e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
-                if (e.bundleSize) return s + (e.qty * e.price);
-                return s + (e.qty * e.price);
+            const sellTotalRaw = sellCart.reduce((sum, e) => {
+                // Skip pinned balance row (hidden from receipt and not part of Sell Total)
+                if (e.isAccountBalancePinned) return sum;
+                let rowTotal = 0;
+                if (e.bundleSize && e.isFullyCustom) {
+                    rowTotal = (e.qty / e.bundleSize) * e.price;
+                } else {
+                    rowTotal = e.qty * e.price;
+                }
+                return sum + rowTotal;
             }, 0);
 
-            const net = sellTotal - buyTotal;
+            const net = sellTotalRaw - buyTotalRaw;
             const netSpan = document.getElementById("netTotal");
-            if (netSpan) netSpan.dataset.raw = String(net);
+            if (netSpan) {
+                netSpan.dataset.raw = String(net);
+            }
             updateCombinedTotals();
         }
 
@@ -1847,7 +1857,7 @@
         }
 
         
-        // ------------------------- REPLACE buildRequestPayload -------------------------
+        // === REPLACE buildRequestPayload (do NOT send balance rows to backend) ===
         function buildRequestPayload() {
             const mapRow = r => ({
                 name: r.name,
@@ -1855,17 +1865,16 @@
                 priceBT: r.price,
                 bundleSize: r.bundleSize || null,
                 source: r.source || 'STORE',
-                isBalance: !!r.isBalance,
-                isAccountBalancePinned: !!r.isAccountBalancePinned
+                // Balance rows omitted entirely from carts sent to backend
             });
 
-            // Submit all cart rows (including balance rows). Admin pinned row will be present for admins.
-            const buyItems = buyCart.map(mapRow);
-            const sellItems = sellCart.map(mapRow);
+            // Filter OUT balance rows so backend net uses only real item rows.
+            const buyItems = buyCart.filter(r => !r.isBalance).map(mapRow);
+            const sellItems = sellCart.filter(r => !r.isBalance).map(mapRow);
 
             const totals = {
-                buyBT: buyItems.reduce((s, i) => s + (i.priceBT * (i.bundleSize ? i.qty : i.qty)), 0),
-                sellBT: sellItems.reduce((s, i) => s + (i.priceBT * (i.bundleSize ? i.qty : i.qty)), 0)
+                buyBT: buyItems.reduce((s, i) => s + (i.priceBT * i.qty), 0),
+                sellBT: sellItems.reduce((s, i) => s + (i.priceBT * i.qty), 0)
             };
             totals.netBT = totals.sellBT - totals.buyBT;
 
