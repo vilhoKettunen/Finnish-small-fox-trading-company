@@ -398,6 +398,19 @@
             }).then(r => r.json());
         }
 
+        // Fetch balance for a given user via the same backend endpoint used in index.html
+        async function fetchBalanceForUser(user) {
+            if (!googleIdToken || !user) return 0;
+            const qs = new URLSearchParams({ action: 'getBalance', idToken: googleIdToken });
+            if (user.userId) qs.append('userId', user.userId);
+            const r = await fetch(`${WEB_APP_URL}?${qs.toString()}`);
+            const j = await r.json();
+            if (!j.ok) throw new Error(j.error || 'getBalance failed');
+            // Prefer the explicit field name "balanceBT" (sheet G) but tolerate alternatives
+            const v = Number(j.data?.balanceBT ?? j.balanceBT ?? j.data?.balance ?? 0);
+            return isNaN(v) ? 0 : v;
+        }
+
         async function ensureAdmin() {
             const auth = await (window.initAuthFromStorage ? window.initAuthFromStorage() : Promise.resolve({ ok: false }));
             if (!auth.ok) {
@@ -433,17 +446,38 @@
                 if (!j.ok) throw new Error(j.error);
                 const list = Array.isArray(j.data) ? j.data : (j.data.players || []);
                 const q = (document.getElementById('plSearch').value || '').toLowerCase().trim();
-                list.filter(p => {
+
+                // Filter locally first
+                const filtered = list.filter(p => {
                     if (!q) return true;
                     const hay = `${p.userId} ${p.playerName || ''} ${p.email || ''} ${p.mailbox || ''}`.toLowerCase();
                     return hay.indexOf(q) >= 0;
-                }).forEach(p => {
+                });
+
+                // Fetch balances in parallel (use Promise.allSettled to tolerate individual failures)
+                const balancePromises = filtered.map(async p => {
+                    try {
+                        const b = await fetchBalanceForUser(p);
+                        p._balance = Number(b) || 0;
+                    } catch (_) {
+                        // fallback to any balance fields that might be present on the player object
+                        const raw = p.balanceBT ?? p.userBalanceBT ?? p.userBalance ?? p.balance ?? 0;
+                        p._balance = Number(String(raw).replace(',', '').trim()) || 0;
+                    }
+                    return p;
+                });
+
+                await Promise.allSettled(balancePromises);
+
+                // Render rows
+                filtered.forEach(p => {
+                    const bal = Number(p._balance || 0).toFixed(2);
                     const tr = document.createElement('tr');
                     tr.innerHTML = `<td class="small nowrap-cell">${p.userId}</td>
-                                        <td>${p.playerName || ''}</td>
-                                        <td>${p.email || ''}</td>
-                                        <td>${p.mailbox || ''}</td>
-                                        <td class="small">${Number(p.balanceBT || 0).toFixed(2)}</td>`;
+                                            <td>${p.playerName || ''}</td>
+                                            <td>${p.email || ''}</td>
+                                            <td>${p.mailbox || ''}</td>
+                                            <td class="small">${bal}</td>`;
                     tr.onclick = () => {
                         navigator.clipboard.writeText(p.userId).catch(() => { });
                         const am = document.getElementById('adminMsg');
@@ -513,11 +547,11 @@
                         .slice(0, 3).join(' | ');
                     const tr = document.createElement('tr');
                     tr.innerHTML = `<td>${x.requestId}</td>
-                                        <td>${x.playerName || ''}</td>
-                                        <td>${x.mailboxNumber || ''}</td>
-                                        <td class="small">${brief}</td>
-                                        <td><span class="status-chip status-${(x.status || '').toLowerCase()}">${x.status}</span></td>
-                                        <td><button class="slim-btn" data-id="${x.requestId}">Open</button></td>`;
+                                            <td>${x.playerName || ''}</td>
+                                            <td>${x.mailboxNumber || ''}</td>
+                                            <td class="small">${brief}</td>
+                                            <td><span class="status-chip status-${(x.status || '').toLowerCase()}">${x.status}</span></td>
+                                            <td><button class="slim-btn" data-id="${x.requestId}">Open</button></td>`;
                     tr.querySelector('button').onclick = () => openRequestDetails(x.requestId);
                     tbody.appendChild(tr);
                 });
@@ -525,33 +559,61 @@
                 document.getElementById('adminMsg').textContent = 'Pending load error: ' + e.message;
             }
         }
-        async function openRequestDetails(requestId) {
+        function openRequestDetails(requestId) {
             selectedRequestId = requestId;
             const box = document.getElementById('rqDetailsBox');
             const el = document.getElementById('rqDetails');
             el.textContent = 'Loading...';
             box.style.display = 'block';
-            try {
-                const r = await fetch(`${WEB_APP_URL}?action=requestDetails&idToken=${encodeURIComponent(googleIdToken)}&requestId=${encodeURIComponent(requestId)}`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error);
-                const d = j.data;
-                const lines = (d.items || []).map(i => `- ${i.side} ${i.itemName} × ${i.quantity} @ ${i.price}`).join('\n');
-                el.innerHTML =
-                    `RequestId: ${d.requestId}
+            (async () => {
+                try {
+                    const r = await fetch(`${WEB_APP_URL}?action=requestDetails&idToken=${encodeURIComponent(googleIdToken)}&requestId=${encodeURIComponent(requestId)}`);
+                    const j = await r.json();
+                    if (!j.ok) throw new Error(j.error);
+                    const d = j.data;
+
+                    const items = Array.isArray(d.items) ? d.items : [];
+                    // Identify balance rows (either flagged or by name)
+                    const isBalanceRow = it =>
+                        it.isBalance === true ||
+                        (typeof it.itemName === 'string' && it.itemName.toLowerCase() === 'account balance');
+
+                    let buyBT = 0, sellBT = 0;
+                    items.forEach(i => {
+                        if (isBalanceRow(i)) return; // skip balance rows from transaction math
+                        const qty = Number(i.quantity || 0);
+                        const price = Number(i.price || 0);
+                        if (String(i.side).toLowerCase() === 'buy') buyBT += qty * price;
+                        else if (String(i.side).toLowerCase() === 'sell') sellBT += qty * price;
+                    });
+                    const netBT = sellBT - buyBT;
+                    const oldBalanceBT = Number(d.userBalanceBT || d.balanceBT || 0);
+                    const afterBT = oldBalanceBT + netBT;
+
+                    const lines = items.map(i => {
+                        const balMark = isBalanceRow(i) ? ' (balance row excluded from net)' : '';
+                        return `- ${i.side} ${i.itemName} × ${i.quantity} @ ${i.price}${balMark}`;
+                    }).join('\n');
+
+                    el.innerHTML =
+                        `RequestId: ${d.requestId}
 Player: ${d.playerName} (${d.mailboxNumber})
 Status: ${d.status}
-Balance: ${Number(d.userBalanceBT || 0).toFixed(2)} BT
+
+Old Account Balance: ${oldBalanceBT.toFixed(2)} BT
+Transaction Buy Total (excl balance): ${buyBT.toFixed(2)} BT
+Transaction Sell Total (excl balance): ${sellBT.toFixed(2)} BT
+Transaction Net (Sell - Buy, excl balance): ${netBT.toFixed(2)} BT
+Account Balance After Trade (projected): ${afterBT.toFixed(2)} BT
 
 Items:
 ${lines}
-
-Totals: buyBT=${Number(d.buyBT || 0).toFixed(2)} sellBT=${Number(d.sellBT || 0).toFixed(2)} netBT=${Number(d.netBT || 0).toFixed(2)}
 `;
-                document.getElementById('rqActMsg').textContent = '';
-            } catch (e) {
-                el.textContent = 'Error: ' + e.message;
-            }
+                    document.getElementById('rqActMsg').textContent = '';
+                } catch (e) {
+                    el.textContent = 'Error: ' + e.message;
+                }
+            })();
         }
         async function approveSelectedRequest() {
             const msg = document.getElementById('rqActMsg');
@@ -590,16 +652,16 @@ Totals: buyBT=${Number(d.buyBT || 0).toFixed(2)} sellBT=${Number(d.sellBT || 0).
                 (j.data || []).forEach(c => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                            <td class="small">${c.claimId}</td>
-                            <td class="small">${c.requesterUserId}<div class="muted">${c.requesterEmail || ''}</div></td>
-                            <td>${c.targetRef}</td>
-                            <td class="small">${c.matchedUserId || ''}</td>
-                            <td>${c.playerName || ''}</td>
-                            <td>${c.mailbox || ''}</td>
-                            <td>
-                                <button class="slim-btn" data-c="${c.claimId}">Approve</button>
-                                <button class="slim-btn danger" data-cr="${c.claimId}">Reject</button>
-                            </td>`;
+                                <td class="small">${c.claimId}</td>
+                                <td class="small">${c.requesterUserId}<div class="muted">${c.requesterEmail || ''}</div></td>
+                                <td>${c.targetRef}</td>
+                                <td class="small">${c.matchedUserId || ''}</td>
+                                <td>${c.playerName || ''}</td>
+                                <td>${c.mailbox || ''}</td>
+                                <td>
+                                    <button class="slim-btn" data-c="${c.claimId}">Approve</button>
+                                    <button class="slim-btn danger" data-cr="${c.claimId}">Reject</button>
+                                </td>`;
                     tr.querySelector('button[data-c]').onclick = () => resolveClaim(c.claimId, true);
                     tr.querySelector('button[data-cr]').onclick = () => resolveClaim(c.claimId, false);
                     tbody.appendChild(tr);
@@ -629,13 +691,13 @@ Totals: buyBT=${Number(d.buyBT || 0).toFixed(2)} sellBT=${Number(d.sellBT || 0).
                 (j.data || []).forEach(l => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                            <td class="small">${l.listingId}</td>
-                            <td>${l.type}</td>
-                            <td>${l.itemName}</td>
-                            <td><input class="w80" type="number" step="0.01" value="${l.price || 0}"></td>
-                            <td><input class="w80" type="number" step="1" value="${l.remainingQuantity || l.quantity || 0}"></td>
-                            <td>${l.sellerPlayerName || ''}</td>
-                            <td><button class="slim-btn" data-l="${l.listingId}">Approve</button></td>`;
+                                <td class="small">${l.listingId}</td>
+                                <td>${l.type}</td>
+                                <td>${l.itemName}</td>
+                                <td><input class="w80" type="number" step="0.01" value="${l.price || 0}"></td>
+                                <td><input class="w80" type="number" step="1" value="${l.remainingQuantity || l.quantity || 0}"></td>
+                                <td>${l.sellerPlayerName || ''}</td>
+                                <td><button class="slim-btn" data-l="${l.listingId}">Approve</button></td>`;
                     const inputs = tr.querySelectorAll('input');
                     tr.querySelector('button[data-l]').onclick = () =>
                         approveListing(l.listingId, inputs[0].value, inputs[1].value);
@@ -669,16 +731,16 @@ Totals: buyBT=${Number(d.buyBT || 0).toFixed(2)} sellBT=${Number(d.sellBT || 0).
                 (j.data || []).forEach(t => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                            <td class="small">${t.tradeId}</td>
-                            <td class="small">${t.listingId}</td>
-                            <td>${t.quantity}</td>
-                            <td>${Number(t.price).toFixed(2)}</td>
-                            <td><span class="status-chip status-${(t.status || '').toLowerCase()}">${t.status}</span></td>
-                            <td>${t.playerName || ''}</td>
-                            <td>
-                                <button class="slim-btn" data-t="${t.tradeId}">Approve</button>
-                                <button class="slim-btn danger" data-tr="${t.tradeId}">Reject</button>
-                            </td>`;
+                                <td class="small">${t.tradeId}</td>
+                                <td class="small">${t.listingId}</td>
+                                <td>${t.quantity}</td>
+                                <td>${Number(t.price).toFixed(2)}</td>
+                                <td><span class="status-chip status-${(t.status || '').toLowerCase()}">${t.status}</span></td>
+                                <td>${t.playerName || ''}</td>
+                                <td>
+                                    <button class="slim-btn" data-t="${t.tradeId}">Approve</button>
+                                    <button class="slim-btn danger" data-tr="${t.tradeId}">Reject</button>
+                                </td>`;
                     tr.querySelector('button[data-t]').onclick = () => approveTrade(t.tradeId);
                     tr.querySelector('button[data-tr]').onclick = () => rejectTrade(t.tradeId);
                     tbody.appendChild(tr);

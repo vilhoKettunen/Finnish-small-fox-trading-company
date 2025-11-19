@@ -658,10 +658,19 @@
         <h2>🔹 Combined Totals</h2>
         <button class="more-info-btn" onclick="toggleInfo('combinedInfo')">More Info</button>
         <div id="combinedInfo" class="info-box">
-            <p>Net Balance: sell - buy.</p>
+            <p>
+                - Account Balance shows your current store balance.<br>
+                - Net Balance = Sell items − Buy items (ignores balance rows).<br>
+                - Account Balance After Transaction = Account Balance + Net Balance (projected).
+            </p>
             <button onclick="toggleInfo('combinedInfo')">❌ Close</button>
         </div>
-        <div id="combinedTotalBox">Net Balance: <span id="netTotal">0.00</span></div>
+
+        <div id="combinedTotalBox">
+            <div>Account Balance: <span id="accountBalanceCurrent">0.00 BT</span></div>
+            <div>Net Balance: <span id="netTotal" data-raw="0">0.00 BT</span></div>
+            <div>Account Balance After Transaction: <span id="accountBalanceAfter" data-raw="0">0.00 BT</span></div>
+        </div>
     </div>
 
     <!-- Pay With -->
@@ -932,12 +941,51 @@
             }
         }
 
+        // ------------------------- REPLACE updateTopBarAuth -------------------------
         function updateTopBarAuth() {
             document.getElementById('topUser').textContent = googleIdToken ? (currentUser?.email || '') : '';
             document.getElementById('btnLogin').style.display = googleIdToken ? 'none' : 'inline-block';
             document.getElementById('btnLogout').style.display = googleIdToken ? 'inline-block' : 'none';
-        }
 
+            // Show/hide admin-only UI (Account Balance controls & pinned balance)
+            try { updateAccountBalanceUiVisibility(); } catch (_) { /* non-fatal */ }
+        }
+        // ------------------------- NEW updateAccountBalanceUiVisibility -------------------------
+        function updateAccountBalanceUiVisibility() {
+            const isAdmin = !!currentUser?.isAdmin;
+            // BUY side: label + button are not wrapped in container; hide the input and the following button
+            const buyInput = document.getElementById('buyAccountBalanceInput');
+            if (buyInput) {
+                const buyLabel = buyInput.closest('label');
+                if (buyLabel) buyLabel.style.display = isAdmin ? '' : 'none';
+                // the add button is the label's nextElementSibling in the DOM
+                const buyBtn = buyLabel ? buyLabel.nextElementSibling : null;
+                if (buyBtn && buyBtn.tagName === 'BUTTON') buyBtn.style.display = isAdmin ? '' : 'none';
+            }
+
+            // SELL side: input id = accountBalanceInput
+            const sellInput = document.getElementById('accountBalanceInput');
+            if (sellInput) {
+                const sellLabel = sellInput.closest('label');
+                if (sellLabel) sellLabel.style.display = isAdmin ? '' : 'none';
+                const sellBtn = sellLabel ? sellLabel.nextElementSibling : null;
+                if (sellBtn && sellBtn.tagName === 'BUTTON') sellBtn.style.display = isAdmin ? '' : 'none';
+            }
+
+            // Only admin should get the pinned "Account Balance (auto)" row injected into the sellCart.
+            if (isAdmin) {
+                // If we already have a pinned account balance row do nothing; otherwise add one if we have balance value
+                const hasPinned = sellCart.some(e => !!e.isAccountBalancePinned);
+                if (!hasPinned && Number(currentBalanceBT) > 0) {
+                    upsertPinnedBalanceRow(currentBalanceBT);
+                }
+            } else {
+                // remove any pinned account balance rows for non-admin users
+                const removed = sellCart.some(e => e.isAccountBalancePinned);
+                sellCart = sellCart.filter(e => !e.isAccountBalancePinned);
+                if (removed) { renderSellList(); calculateNet(); }
+            }
+        }
         /* ===== reCAPTCHA ===== */
         function showRecaptchaWidget() { const c = document.getElementById('recaptchaContainer'); if (c) c.style.display = 'block'; }
         function hideRecaptchaWidget() { const c = document.getElementById('recaptchaContainer'); if (c) c.style.display = 'none'; }
@@ -1075,12 +1123,17 @@
         }
 
         /* ===== Logout ===== */
+        // ------------------------- REPLACE logout -------------------------
         function logout() {
             googleIdToken = null;
             currentUser = null;
             window.submitForUser = null;
-            // remove pinned balance from receipt
-            sellCart = sellCart.filter(e => !e.isAccountBalancePinned);
+
+            // Clear projected balance and remove pinned balance rows
+            currentBalanceBT = 0;
+            sellCart = sellCart.filter(e => !e.isAccountBalancePinned && !e.isPayWith);
+            updateCombinedTotals();
+
             window.clearSavedIdToken && window.clearSavedIdToken();
             document.getElementById('loginStatus').textContent = 'Logged out.';
             document.getElementById('adminPanelBtn').style.display = 'none';
@@ -1284,10 +1337,13 @@
             const item = items.find(i => i.name === name); if (!item || !item.sellEach) return;
             buyCart.push({ name: item.name, qty, price: item.sellEach, source: 'STORE' }); renderBuyList();
         }
+        // ------------------------- REPLACE addBuyAccountBalance -------------------------
         function addBuyAccountBalance() {
             const balance = parseFloat(document.getElementById("buyAccountBalanceInput").value) || 0;
             if (balance <= 0) return;
-            buyCart.push({ name: "Account Balance", qty: 1, price: balance, isBalance: true, source: 'BALANCE' }); renderBuyList();
+            // Add as a buy-side balance row (counts in totals)
+            buyCart.push({ name: "Account Balance", qty: 1, price: balance, isBalance: true, source: 'BALANCE' });
+            renderBuyList();
         }
         function addCustomBuyStack() {
             const name = document.getElementById("customBuyStackSelect").value;
@@ -1326,10 +1382,13 @@
             const item = items.find(i => i.name === name); if (!item || !item.buyEach) return;
             sellCart.push({ name: item.name, qty, price: item.buyEach, source: 'STORE' }); renderSellList();
         }
+        // ------------------------- REPLACE addAccountBalance -------------------------
         function addAccountBalance() {
             const balance = parseFloat(document.getElementById("accountBalanceInput").value) || 0;
             if (balance <= 0) return;
-            sellCart.push({ name: "Account Balance", qty: 1, price: balance, isBalance: true, source: 'BALANCE' }); renderSellList();
+            // Add as a sell-side balance row (counts in totals). If admin wants pinned behavior, refreshPinnedBalanceForActiveTarget will manage pinned row.
+            sellCart.push({ name: "Account Balance", qty: 1, price: balance, isBalance: true, source: 'BALANCE' });
+            renderSellList();
         }
         function addCustomSellStack() {
             const name = document.getElementById("customSellStackSelect").value;
@@ -1452,58 +1511,89 @@
             return txt;
         }
 
+        // ------------------------- REPLACE renderBuyList -------------------------
         function renderBuyList() {
             const list = document.getElementById("buyList"); list.innerHTML = "";
             let total = 0; const curr = document.getElementById("currencySelect").value;
             buyCart.forEach(e => {
                 const li = document.createElement("li");
                 let rowTotal = 0, rowText = "";
-                if (e.isBalance) { rowTotal = e.price || 0; rowText = `Account Balance: ${rowTotal.toFixed(2)} BT`; }
-                else if (e.bundleSize && e.isFullyCustom) { rowTotal = (e.qty / e.bundleSize) * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`; }
-                else if (e.bundleSize) { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`; }
-                else { rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`; }
+                if (e.bundleSize && e.isFullyCustom) {
+                    rowTotal = (e.qty / e.bundleSize) * e.price;
+                    rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
+                } else if (e.bundleSize) {
+                    rowTotal = e.qty * e.price;
+                    rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`;
+                } else {
+                    rowTotal = e.qty * e.price;
+                    rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`;
+                }
+
+                // Account balance rows are treated like any other row (counted in totals)
+                if (e.isBalance) {
+                    // nicer label for balance rows
+                    rowText = `Account Balance: ${rowTotal.toFixed(2)} BT`;
+                    if (e.isAccountBalancePinned) rowText += ' (auto)';
+                }
+
                 total += rowTotal;
+
                 if (e.isConverter) rowText += ' [Converted]';
                 if (e.source === 'OCM') rowText += ' [OCM]';
                 const colorClass = evaluateRowColorBuy(e);
                 if (colorClass) li.classList.add(colorClass);
+
                 if (curr && curr !== BASE_CURRENCY) rowText += ' ' + formatValue(rowTotal, curr, true);
                 li.textContent = rowText;
+
                 const removeBtn = document.createElement("button");
-                removeBtn.textContent = "❌"; removeBtn.onclick = () => { buyCart = buyCart.filter(x => x !== e); renderBuyList(); calculateNet(); };
+                removeBtn.textContent = "❌";
+                removeBtn.onclick = () => { buyCart = buyCart.filter(x => x !== e); renderBuyList(); calculateNet(); };
                 li.appendChild(removeBtn);
                 list.appendChild(li);
             });
             document.getElementById("buyTotal").textContent = formatValue(total, curr, true);
+            // Recompute derived totals
             calculateNet();
         }
 
+        // ------------------------- REPLACE renderSellList -------------------------
         function renderSellList() {
             const list = document.getElementById("sellList"); list.innerHTML = "";
-            let total = 0; const curr = document.getElementById("currencySelect").value;
+            let total = 0;
+            const curr = document.getElementById("currencySelect").value;
 
-            const pinned = sellCart.filter(e => e.isAccountBalancePinned);
-            const others = sellCart.filter(e => !e.isAccountBalancePinned);
-            const rows = [...pinned, ...others];
+            // iterate over a snapshot of sellCart
+            const rows = sellCart.slice();
 
             rows.forEach(e => {
+                // Hide only the pinned automatic balance row (server-provided balance).
+                if (e.isAccountBalancePinned) return;
+
                 const li = document.createElement("li");
                 let rowTotal = 0, rowText = "";
-                if (e.isBalance) {
-                    rowTotal = e.price || 0;
-                    rowText = e.isAccountBalancePinned
-                        ? `Account Balance (auto): ${rowTotal.toFixed(2)} BT`
-                        : `Account Balance: ${rowTotal.toFixed(2)} BT`;
-                } else if (e.bundleSize && e.isFullyCustom) {
-                    rowTotal = (e.qty / e.bundleSize) * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
+
+                if (e.bundleSize && e.isFullyCustom) {
+                    rowTotal = (e.qty / e.bundleSize) * e.price;
+                    rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
                 } else if (e.bundleSize) {
-                    rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`;
+                    rowTotal = e.qty * e.price;
+                    rowText = `${e.qty} × ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`;
                 } else {
-                    rowTotal = e.qty * e.price; rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`;
+                    rowTotal = e.qty * e.price;
+                    rowText = `${e.qty} × ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`;
                 }
+
+                // For manual balance rows (user-added), show a clear label but keep them visible
+                if (e.isBalance && !e.isAccountBalancePinned) {
+                    rowText = `Account Balance (manual): ${rowTotal.toFixed(2)} BT`;
+                }
+
+                // Include manual balance rows in the Sell section total (so totals match Buy behavior)
+                total += rowTotal;
+
                 if (e.isPayWith) rowText += ' [Pay With]';
                 if (e.source === 'OCM') rowText += ' [OCM]';
-                total += rowTotal;
 
                 const colorClass = evaluateRowColorSell(e);
                 if (colorClass) {
@@ -1514,14 +1604,14 @@
                         li.appendChild(warn);
                     }
                 }
+
                 if (curr && curr !== BASE_CURRENCY) rowText += ' ' + formatValue(rowTotal, curr, false);
                 li.textContent = rowText;
 
-                if (!e.isAccountBalancePinned) {
-                    const removeBtn = document.createElement("button");
-                    removeBtn.textContent = "❌"; removeBtn.onclick = () => { sellCart = sellCart.filter(x => x !== e); renderSellList(); calculateNet(); };
-                    li.appendChild(removeBtn);
-                }
+                const removeBtn = document.createElement("button");
+                removeBtn.textContent = "❌";
+                removeBtn.onclick = () => { sellCart = sellCart.filter(x => x !== e); renderSellList(); calculateNet(); };
+                li.appendChild(removeBtn);
 
                 list.appendChild(li);
             });
@@ -1530,25 +1620,30 @@
             calculateNet();
         }
 
+        // ------------------------- REPLACE calculateNet -------------------------
+        // ------------------------- REPLACE calculateNet -------------------------
+        // Net now excludes only pinned (server) balance rows; manual balance rows count toward this transaction's net.
         function calculateNet() {
             const buyTotal = buyCart.reduce((s, e) => {
-                if (e.isBalance) return s + (e.price || 0);
+                // exclude pinned automatic account-balance rows from totals/net calculation
+                if (e.isAccountBalancePinned) return s;
                 if (e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
                 if (e.bundleSize) return s + (e.qty * e.price);
                 return s + (e.qty * e.price);
             }, 0);
+
             const sellTotal = sellCart.reduce((s, e) => {
-                if (e.isBalance) return s + (e.price || 0);
+                // exclude pinned automatic account-balance rows from totals/net calculation
+                if (e.isAccountBalancePinned) return s;
                 if (e.bundleSize && e.isFullyCustom) return s + ((e.qty / e.bundleSize) * e.price);
                 if (e.bundleSize) return s + (e.qty * e.price);
                 return s + (e.qty * e.price);
             }, 0);
+
             const net = sellTotal - buyTotal;
-            const curr = document.getElementById("currencySelect").value;
             const netSpan = document.getElementById("netTotal");
-            netSpan.dataset.raw = String(net);
-            netSpan.textContent = formatValue(net, curr, net < 0);
-            netSpan.className = net >= 0 ? 'positive' : 'negative';
+            if (netSpan) netSpan.dataset.raw = String(net);
+            updateCombinedTotals();
         }
 
         function addPayRow() {
@@ -1751,7 +1846,8 @@
                 : `✅ Conversion done. Allocated ${usedPercent}% of Net Balance.`;
         }
 
-        /* ===== Requests ===== */
+        
+        // ------------------------- REPLACE buildRequestPayload -------------------------
         function buildRequestPayload() {
             const mapRow = r => ({
                 name: r.name,
@@ -1759,9 +1855,11 @@
                 priceBT: r.price,
                 bundleSize: r.bundleSize || null,
                 source: r.source || 'STORE',
-                isBalance: !!r.isBalance
+                isBalance: !!r.isBalance,
+                isAccountBalancePinned: !!r.isAccountBalancePinned
             });
 
+            // Submit all cart rows (including balance rows). Admin pinned row will be present for admins.
             const buyItems = buyCart.map(mapRow);
             const sellItems = sellCart.map(mapRow);
 
@@ -1795,6 +1893,7 @@
             };
         }
 
+
         function guardedSubmitPurchaseRequest() {
             if (!googleIdToken) { alert('You need to login for this tool'); return; }
             submitPurchaseRequest();
@@ -1803,7 +1902,41 @@
             if (!googleIdToken) { alert('You need to login for this tool'); return; }
             copyTransactionData();
         }
+        // Add this after: let items = [], payItems = [], buyCart = [], sellCart = [];
+        let currentBalanceBT = 0;
 
+        
+        // ------------------------- REPLACE updateCombinedTotals -------------------------
+        function updateCombinedTotals() {
+            const curr = document.getElementById("currencySelect").value;
+            const netSpan = document.getElementById("netTotal");
+            const netRaw = parseFloat(netSpan?.dataset?.raw ?? "0") || 0;
+
+            // Account Balance (current) — server-provided previous balance only shown here
+            const abEl = document.getElementById("accountBalanceCurrent");
+            if (abEl) abEl.textContent = formatValue(currentBalanceBT, curr, false);
+
+            // Net Balance display (net represents this transaction, including manual balance rows)
+            if (netSpan) {
+                netSpan.textContent = formatValue(netRaw, curr, netRaw < 0);
+                netSpan.className = netRaw >= 0 ? 'positive' : 'negative';
+            }
+
+            // Account Balance After Transaction (projected)
+            // Simple projection: previous/server balance + transaction net (manual balances already included in net)
+            const after = (currentBalanceBT || 0) + netRaw;
+            const afterEl = document.getElementById("accountBalanceAfter");
+            if (afterEl) {
+                afterEl.dataset.raw = String(after);
+                afterEl.textContent = formatValue(after, curr, after < 0);
+                afterEl.className = after >= 0 ? 'positive' : 'negative';
+            }
+        }
+        // Set current balance (from server) and refresh totals
+        function setCurrentBalance(bal) {
+            currentBalanceBT = Number(bal) || 0;
+            updateCombinedTotals();
+        }
         function submitPurchaseRequest() {
             const payload = buildRequestPayload();
             const skipCaptcha = currentUser && currentUser.captchaPassed;
@@ -1927,14 +2060,29 @@
             renderSellList();
             calculateNet();
         }
+        // ------------------------- REPLACE refreshPinnedBalanceForActiveTarget -------------------------
         async function refreshPinnedBalanceForActiveTarget() {
             const target = getActiveTarget();
             if (!target || !googleIdToken) return;
             try {
                 const bal = await fetchBalanceForUser(target);
-                upsertPinnedBalanceRow(bal);
+                // keep the numeric balance (always) for display / projection
+                setCurrentBalance(bal);
+
+                // If current user is admin, keep a pinned sell row so the receipt includes the account balance
+                if (currentUser?.isAdmin) {
+                    upsertPinnedBalanceRow(bal);
+                } else {
+                    // ensure pinned rows are not present for non-admins
+                    sellCart = sellCart.filter(e => !e.isAccountBalancePinned);
+                    renderSellList();
+                    calculateNet();
+                }
+
                 const st = document.getElementById('onBehalfStatus');
-                if (st && window.submitForUser) st.textContent = `Target set: ${target.playerName || target.email || target.userId}. Balance: ${bal.toFixed(2)} BT`;
+                if (st && window.submitForUser) {
+                    st.textContent = `Target set: ${target.playerName || target.email || target.userId}. Balance: ${Number(bal).toFixed(2)} BT`;
+                }
             } catch (e) {
                 const st = document.getElementById('onBehalfStatus');
                 if (st) st.textContent = `Balance load failed: ${e.message}`;
