@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <!-- Top bar dependencies -->
+    <link rel="icon" href="favicon.ico">
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
+    <script src="topbar.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <meta charset="UTF-8">
     <title>OCM Merchant Panel</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -135,6 +141,102 @@
             color: #777;
             margin-top: 30px;
         }
+        /* Shared top bar styling */
+        #topBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 52px;
+            background: #222;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
+            font-size: 14px;
+            gap: 12px;
+        }
+
+            #topBar a, #topBar button {
+                color: #fff;
+                text-decoration: none;
+                margin-right: 16px;
+                background: none;
+                border: none;
+                cursor: pointer;
+            }
+
+            #topBar .right {
+                margin-left: auto;
+                display: flex;
+                gap: 12px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+
+        body.withTopBar {
+            padding-top: 72px;
+        }
+
+        .balance-chip {
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.08);
+            white-space: nowrap;
+        }
+
+        .balance-you.positive {
+            color: #2ecc71;
+        }
+
+        .balance-you.negative {
+            color: #ff5252;
+        }
+
+        .balance-target {
+            color: #f0c200;
+        }
+
+        #orderPopup {
+            position: absolute;
+            top: 52px;
+            right: 100px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 8px;
+            display: none;
+            min-width: 260px;
+            z-index: 1100;
+            color: #000;
+        }
+
+        #orderStatusBall {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #777;
+            cursor: pointer;
+        }
+
+        .status-pending {
+            background: #f0c200 !important;
+        }
+
+        .status-error {
+            background: #e74c3c !important;
+        }
+
+        .status-none {
+            background: #777 !important;
+        }
+
+        .order-link {
+            color: #66c;
+            text-decoration: underline;
+            cursor: pointer;
+        }
     </style>
     <script src="app-config.js"></script>
     <script src="auth-storage.js"></script>
@@ -257,24 +359,24 @@
                 const tr = document.createElement('tr');
                 tr.className = l.status ? '' : 'inactive';
                 tr.innerHTML = `
-                        <td class="truncate">${l.itemName || ''}</td>
-                        <td>${l.type === 'SELL' ? '<span class="badge-sell">SELL</span>' : '<span class="badge-buy">BUY</span>'}</td>
-                        <td>
-                           <div class="mono">stk: ${fmt2(l.priceStack)}</div>
-                           <div class="mono">ind: ${fmt2(l.priceInd)}</div>
-                           <div class="stack-note">stackSize=${ss}</div>
-                        </td>
-                        <td>
-                           <div>stk stock/demand: ${qtyStacks}</div>
-                           <div>ind stock/demand: ${qtyInd}</div>
-                        </td>
-                        <td>${l.status ? '<span class="status-open">OPEN</span>' : '<span class="status-closed">CLOSED</span>'}</td>
-                        <td>
-                           <button data-edit="${l.listingId}">Edit</button>
-                           <button data-toggle="${l.listingId}">${l.status ? 'Close' : 'Open'}</button>
-                           <button data-delete="${l.listingId}">Delete</button>
-                        </td>
-                    `;
+                            <td class="truncate">${l.itemName || ''}</td>
+                            <td>${l.type === 'SELL' ? '<span class="badge-sell">SELL</span>' : '<span class="badge-buy">BUY</span>'}</td>
+                            <td>
+                               <div class="mono">stk: ${fmt2(l.priceStack)}</div>
+                               <div class="mono">ind: ${fmt2(l.priceInd)}</div>
+                               <div class="stack-note">stackSize=${ss}</div>
+                            </td>
+                            <td>
+                               <div>stk stock/demand: ${qtyStacks}</div>
+                               <div>ind stock/demand: ${qtyInd}</div>
+                            </td>
+                            <td>${l.status ? '<span class="status-open">OPEN</span>' : '<span class="status-closed">CLOSED</span>'}</td>
+                            <td>
+                               <button data-edit="${l.listingId}">Edit</button>
+                               <button data-toggle="${l.listingId}">${l.status ? 'Close' : 'Open'}</button>
+                               <button data-delete="${l.listingId}">Delete</button>
+                            </td>
+                        `;
                 tb.appendChild(tr);
             });
         }
@@ -500,6 +602,38 @@
     </script>
 </head>
 <body>
+    <!-- Shared Top Bar -->
+    <div id="topBar">
+        <div><strong>Vak Store</strong></div>
+        <button onclick="navigateStore()">Store</button>
+        <button onclick="navigateHistory()">Account History</button>
+        <button onclick="navigateOCM()">OCM</button>
+        <button onclick="navigateMerchant()">OCM Merchant</button>
+        <button id="adminPanelBtn" style="display:none;" onclick="navigateAdmin()">Admin Panel</button>
+        <div class="right">
+            <button id="btnLogin" onclick="startLogin()">Login</button>
+            <div id="orderStatusBall" title="Orders status"></div>
+            <div id="orderPopup">
+                <div style="font-weight:bold;margin-bottom:6px;">Your open orders</div>
+                <div id="orderPopupBody" class="small"></div>
+            </div>
+            <span id="topBalanceTarget" class="small balance-chip balance-target" style="display:none;"></span>
+            <span id="topBalance" class="small balance-chip balance-you" style="display:none;"></span>
+            <span id="topUser" class="small"></span>
+            <button id="btnLogout" style="display:none;" onclick="logout()">Logout</button>
+        </div>
+    </div>
+    <script>
+        // Minimal nav helpers (works even if topbar.js already offers them)
+        function navigateStore() { location.href = 'index.html'; }
+        function navigateHistory() { location.href = 'AccountHistory.html'; }
+        function navigateOCM() { location.href = 'OCMHome.html'; }
+        function navigateMerchant() { location.href = 'OCMUser.html'; }
+        function navigateAdmin() { location.href = 'Admin.html'; }
+        // Initialize shared top bar if helper exists
+        document.body.classList.add('withTopBar');
+        if (window.initSharedTopBar) { window.initSharedTopBar(); }
+    </script>
     <h1>OCM Merchant Panel</h1>
     <div id="authStatus" class="small">Not logged in.</div>
     <div id="loginBtnArea"></div>

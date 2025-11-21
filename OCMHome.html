@@ -1,6 +1,12 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
+    <!-- Top bar dependencies -->
+    <link rel="icon" href="favicon.ico">
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
+    <script src="topbar.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <meta charset="UTF-8">
     <title>OCM Marketplace</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -112,6 +118,102 @@
             font-size: 11px;
             color: #777;
         }
+        /* Shared top bar styling */
+        #topBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 52px;
+            background: #222;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
+            font-size: 14px;
+            gap: 12px;
+        }
+
+            #topBar a, #topBar button {
+                color: #fff;
+                text-decoration: none;
+                margin-right: 16px;
+                background: none;
+                border: none;
+                cursor: pointer;
+            }
+
+            #topBar .right {
+                margin-left: auto;
+                display: flex;
+                gap: 12px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+
+        body.withTopBar {
+            padding-top: 72px;
+        }
+
+        .balance-chip {
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.08);
+            white-space: nowrap;
+        }
+
+        .balance-you.positive {
+            color: #2ecc71;
+        }
+
+        .balance-you.negative {
+            color: #ff5252;
+        }
+
+        .balance-target {
+            color: #f0c200;
+        }
+
+        #orderPopup {
+            position: absolute;
+            top: 52px;
+            right: 100px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 8px;
+            display: none;
+            min-width: 260px;
+            z-index: 1100;
+            color: #000;
+        }
+
+        #orderStatusBall {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #777;
+            cursor: pointer;
+        }
+
+        .status-pending {
+            background: #f0c200 !important;
+        }
+
+        .status-error {
+            background: #e74c3c !important;
+        }
+
+        .status-none {
+            background: #777 !important;
+        }
+
+        .order-link {
+            color: #66c;
+            text-decoration: underline;
+            cursor: pointer;
+        }
     </style>
     <script src="app-config.js"></script>
     <script src="auth-storage.js"></script>
@@ -204,25 +306,25 @@
                 const sideLabel = isBuyListing ? 'Demand' : 'Stock';
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                        <td class="truncate">${l.itemName || ''}</td>
-                        <td>${l.type === 'SELL' ? '<span class="badge-sell">SELL</span>' : '<span class="badge-buy">BUY</span>'}</td>
-                        <td>
-                           <div class="mono">ind: ${fmt2(l.priceBT)}</div>
-                           <div class="mono">stk: ${fmt2(l.stackPriceBT)}</div>
-                        </td>
-                        <td>
-                           <div>${sideLabel} ind: ${qtyInd}</div>
-                           <div>${sideLabel} stk: ${qtyStacks}</div>
-                        </td>
-                        <td>${l.playerName || ''}</td>
-                        <td>
-                            <input type="number" min="1" value="1" style="width:70px" data-for="${l.listingId}">
-                            <div class="qty-note">Enter individuals</div>
-                        </td>
-                        <td>
-                            <button data-buy="${l.listingId}">${isBuyListing ? 'Sell to Listing' : 'Buy from Listing'}</button>
-                        </td>
-                    `;
+                            <td class="truncate">${l.itemName || ''}</td>
+                            <td>${l.type === 'SELL' ? '<span class="badge-sell">SELL</span>' : '<span class="badge-buy">BUY</span>'}</td>
+                            <td>
+                               <div class="mono">ind: ${fmt2(l.priceBT)}</div>
+                               <div class="mono">stk: ${fmt2(l.stackPriceBT)}</div>
+                            </td>
+                            <td>
+                               <div>${sideLabel} ind: ${qtyInd}</div>
+                               <div>${sideLabel} stk: ${qtyStacks}</div>
+                            </td>
+                            <td>${l.playerName || ''}</td>
+                            <td>
+                                <input type="number" min="1" value="1" style="width:70px" data-for="${l.listingId}">
+                                <div class="qty-note">Enter individuals</div>
+                            </td>
+                            <td>
+                                <button data-buy="${l.listingId}">${isBuyListing ? 'Sell to Listing' : 'Buy from Listing'}</button>
+                            </td>
+                        `;
                 tb.appendChild(tr);
             });
         }
@@ -268,21 +370,21 @@
                 const totalBT = Number(t.quantity || 0) * Number(t.price || 0);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                      <td>${t.tradeId || ''}</td>
-                      <td>${t.itemName || ''}</td>
-                      <td>${t.listingType || ''}</td>
-                      <td>
-                         <div>ind qty: ${t.quantity || 0}</div>
-                         <div>stk qty: ${Math.floor((Number(t.quantity || 0)) / stackSize)}</div>
-                      </td>
-                      <td>
-                         <div>ind price: ${fmt2(t.price || 0)}</div>
-                         <div>stk price: ${fmt2((t.price || 0) * stackSize)}</div>
-                      </td>
-                      <td>${fmt2(totalBT)} BT</td>
-                      <td>${t.status || ''}</td>
-                      <td>${t.createdAt || ''}</td>
-                    `;
+                          <td>${t.tradeId || ''}</td>
+                          <td>${t.itemName || ''}</td>
+                          <td>${t.listingType || ''}</td>
+                          <td>
+                             <div>ind qty: ${t.quantity || 0}</div>
+                             <div>stk qty: ${Math.floor((Number(t.quantity || 0)) / stackSize)}</div>
+                          </td>
+                          <td>
+                             <div>ind price: ${fmt2(t.price || 0)}</div>
+                             <div>stk price: ${fmt2((t.price || 0) * stackSize)}</div>
+                          </td>
+                          <td>${fmt2(totalBT)} BT</td>
+                          <td>${t.status || ''}</td>
+                          <td>${t.createdAt || ''}</td>
+                        `;
                 tb.appendChild(tr);
             });
         }
@@ -305,6 +407,38 @@
     </script>
 </head>
 <body>
+    <!-- Shared Top Bar -->
+    <div id="topBar">
+        <div><strong>Vak Store</strong></div>
+        <button onclick="navigateStore()">Store</button>
+        <button onclick="navigateHistory()">Account History</button>
+        <button onclick="navigateOCM()">OCM</button>
+        <button onclick="navigateMerchant()">OCM Merchant</button>
+        <button id="adminPanelBtn" style="display:none;" onclick="navigateAdmin()">Admin Panel</button>
+        <div class="right">
+            <button id="btnLogin" onclick="startLogin()">Login</button>
+            <div id="orderStatusBall" title="Orders status"></div>
+            <div id="orderPopup">
+                <div style="font-weight:bold;margin-bottom:6px;">Your open orders</div>
+                <div id="orderPopupBody" class="small"></div>
+            </div>
+            <span id="topBalanceTarget" class="small balance-chip balance-target" style="display:none;"></span>
+            <span id="topBalance" class="small balance-chip balance-you" style="display:none;"></span>
+            <span id="topUser" class="small"></span>
+            <button id="btnLogout" style="display:none;" onclick="logout()">Logout</button>
+        </div>
+    </div>
+    <script>
+        // Minimal nav helpers (works even if topbar.js already offers them)
+        function navigateStore() { location.href = 'index.html'; }
+        function navigateHistory() { location.href = 'AccountHistory.html'; }
+        function navigateOCM() { location.href = 'OCMHome.html'; }
+        function navigateMerchant() { location.href = 'OCMUser.html'; }
+        function navigateAdmin() { location.href = 'Admin.html'; }
+        // Initialize shared top bar if helper exists
+        document.body.classList.add('withTopBar');
+        if (window.initSharedTopBar) { window.initSharedTopBar(); }
+    </script>
     <h1>OCM Marketplace</h1>
     <div id="authStatus" class="small">Not logged in.</div>
     <div id="loginBtnArea"></div>

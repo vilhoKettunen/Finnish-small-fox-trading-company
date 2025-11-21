@@ -5,13 +5,11 @@
     <title>Admin Panel</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="icon" href="favicon.ico">
-    <!-- Top bar deps -->
     <script src="app-config.js"></script>
     <script src="auth-storage.js"></script>
     <script src="topbar.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        /* page base */
         body {
             font-family: Arial,sans-serif;
             max-width: 1300px;
@@ -91,16 +89,6 @@
             font-weight: bold;
         }
 
-        .status-executed {
-            color: #2e7d32;
-            font-weight: bold;
-        }
-
-        .status-denied {
-            color: #c62828;
-            font-weight: bold;
-        }
-
         .flex {
             display: flex;
             gap: 8px;
@@ -112,7 +100,6 @@
             padding-top: 72px;
         }
 
-        /* Shared top bar styling */
         #topBar {
             position: fixed;
             top: 0;
@@ -187,21 +174,36 @@
             cursor: pointer;
         }
 
-        .order-link {
-            color: #66c;
-            text-decoration: underline;
-            cursor: pointer;
-        }
-
-        /* Subheaders for OCM split */
         .subheader {
             margin-top: 12px;
             font-weight: bold;
         }
+
+        .two-create-wrap {
+            display: grid;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .create-box {
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+
+            .create-box h4 {
+                margin: 0 0 8px;
+            }
+
+        .inline-note {
+            font-size: 11px;
+            color: #777;
+            margin-top: 4px;
+        }
     </style>
 </head>
 <body>
-    <!-- Shared Top Bar -->
     <div id="topBar">
         <div><strong>Vak Store</strong></div>
         <button onclick="navigateStore()">Store</button>
@@ -222,16 +224,14 @@
             <button id="btnLogout" style="display:none;" onclick="logout()">Logout</button>
         </div>
     </div>
-
     <script>
-        // Minimal nav helpers (safe even if topbar.js defines its own)
         function navigateStore() { location.href = 'index.html'; }
         function navigateHistory() { location.href = 'AccountHistory.html'; }
         function navigateOCM() { location.href = 'OCMHome.html'; }
         function navigateMerchant() { location.href = 'OCMUser.html'; }
         function navigateAdmin() { location.href = 'Admin.html'; }
         document.body.classList.add('withTopBar');
-        if (window.initSharedTopBar) { window.initSharedTopBar(); }
+        if (window.initSharedTopBar) window.initSharedTopBar();
     </script>
 
     <h1>Admin Panel</h1>
@@ -246,17 +246,7 @@
             <span id="reqMsg" class="small"></span>
         </div>
         <table>
-            <thead>
-                <tr>
-                    <th>RequestId</th>
-                    <th>User</th>
-                    <th>Totals</th>
-                    <th>Manual Bal Δ</th>
-                    <th>Net</th>
-                    <th>Created</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
+            <thead><tr><th>RequestId</th><th>User</th><th>Totals</th><th>Manual Bal Δ</th><th>Net</th><th>Created</th><th>Actions</th></tr></thead>
             <tbody id="tbRequests"></tbody>
         </table>
         <div id="reqDetails" class="small" style="margin-top:10px;"></div>
@@ -269,21 +259,7 @@
             <span id="trMsg" class="small"></span>
         </div>
         <table>
-            <thead>
-                <tr>
-                    <th>TradeId</th>
-                    <th>ListingId</th>
-                    <th>Item</th>
-                    <th>Type</th>
-                    <th>Qty (ind / stk)</th>
-                    <th>Price (ind / stk)</th>
-                    <th>Total</th>
-                    <th>Seller Receives</th>
-                    <th>Status</th>
-                    <th>Updated</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
+            <thead><tr><th>TradeId</th><th>ListingId</th><th>Item</th><th>Type</th><th>Qty (ind / stk)</th><th>Price (ind / stk)</th><th>Total</th><th>Seller Receives</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead>
             <tbody id="tbTrades"></tbody>
         </table>
     </div>
@@ -308,15 +284,13 @@
                 <button id="btnTransfer">Send BT</button>
                 <div id="transferMsg" class="small"></div>
             </div>
-            <div>
-                <div id="balancesInfo" class="small">Balances will appear here.</div>
-            </div>
+            <div><div id="balancesInfo" class="small">Balances will appear here.</div></div>
         </div>
     </div>
 
     <div class="section" id="ocmAdminSection">
         <h2>OCM Listing Management (Admin)</h2>
-        <div class="small">Select a player to manage their OCM listings (active & inactive). Edits are instant. Creating on behalf uses their account.</div>
+        <div class="small">Select a player to manage their OCM listings (active & inactive). Edits are instant.</div>
         <div class="flex" style="margin-top:6px;">
             <input id="ocmAdminPlayerInput" type="text" placeholder="Search player name" style="flex:1;max-width:320px;">
             <button type="button" onclick="ocmAdminSelectPlayer()">Load Listings</button>
@@ -324,85 +298,83 @@
         </div>
         <div id="ocmAdminPlayerSuggestions" class="small" style="max-height:140px;overflow:auto;border:1px solid #ddd;border-radius:4px;padding:4px;display:none;margin-top:4px;"></div>
 
-        <div style="margin-top:14px;">
-            <h3 style="margin:4px 0;">Create Listing (On Behalf)</h3>
-            <div class="grid">
+        <h3 style="margin:16px 0 8px;">Create Listings (On Behalf)</h3>
+        <div class="two-create-wrap">
+            <div class="create-box">
+                <h4>Sheet Item Listing</h4>
+                <label>
+                    Sheet Item:<br>
+                    <input id="sheetListingItemInput" list="sheetItemDatalist" placeholder="Start typing item name">
+                    <datalist id="sheetItemDatalist"></datalist>
+                    <datalist id="sheetItemDatalist"></datalist>
+                </label><br>
+                <label>Quantity (ind): <input id="sheetListingQty" type="number" min="1"></label><br>
+                <!-- Replace the editable stack-size input with this read-only display + hidden field -->
                 <div>
                     <label>
-                        Item Name (sheet or custom):<br>
-                        <input id="ocmNewItemName" type="text" placeholder="Item name">
-                    </label>
+                        Stack Size (sheet):<br>
+                        <span id="sheetListingStackSizeDisplay" class="mono">—</span>
+                        <input type="hidden" id="sheetListingStackSizeHidden" value="1">
+                    </label><br>
                 </div>
-                <div>
-                    <label>
-                        Quantity (ind):<br>
-                        <input id="ocmNewQtyInd" type="number" min="1" placeholder="e.g. 64">
-                    </label>
+                <label>
+                    Price:<br>
+                    <input id="sheetListingPrice" type="number" min="0.01" step="0.01">
+                </label>
+                <div style="margin-top:4px;">
+                    <label><input type="radio" name="sheetListingPriceMode" id="sheetListingPriceInd" checked> ind price</label>
+                    <label><input type="radio" name="sheetListingPriceMode" id="sheetListingPriceStk"> stk price</label>
                 </div>
-                <div>
-                    <label>
-                        Stack Size:<br>
-                        <input id="ocmNewStackSize" type="number" min="1" placeholder="e.g. 64">
-                    </label>
-                </div>
-                <div>
-                    <label>
-                        Price:<br>
-                        <input id="ocmNewPrice" type="number" min="0.01" step="0.01" placeholder="e.g. 2.50">
-                    </label>
-                    <div style="margin-top:4px;">
-                        <label><input type="radio" name="ocmNewPriceMode" id="ocmNewPriceInd" checked> ind price</label>
-                        <label><input type="radio" name="ocmNewPriceMode" id="ocmNewPriceStk"> stk price</label>
-                    </div>
-                </div>
-                <div>
-                    <label>
-                        Type:<br>
-                        <select id="ocmNewType">
-                            <option value="SELL">SELL</option>
-                            <option value="BUY">BUY</option>
-                        </select>
-                    </label>
-                </div>
+                <label>
+                    Type:
+                    <select id="sheetListingType">
+                        <option value="SELL">SELL</option>
+                        <option value="BUY">BUY</option>
+                    </select>
+                </label><br>
+                <button type="button" onclick="createSheetListing()">Create Sheet Listing</button>
+                <span id="sheetListingMsg" class="small"></span>
+                <div class="inline-note">Uses sourceItemId from sheet (prefix sheet:). Price mode determines per-ind calculation.</div>
             </div>
-            <div style="margin-top:8px;">
-                <button type="button" onclick="ocmAdminCreateListing()">Create Listing</button>
-                <span id="ocmCreateMsg" class="small"></span>
+            <div class="create-box">
+                <h4>Custom Item Listing</h4>
+                <label>
+                    Custom Item Name:<br>
+                    <input id="customListingItemName" type="text" placeholder="Custom item name">
+                </label><br>
+                <label>Quantity (ind): <input id="customListingQty" type="number" min="1"></label><br>
+                <label>Stack Size: <input id="customListingStackSize" type="number" min="1" value="1"></label><br>
+                <label>
+                    Price:<br>
+                    <input id="customListingPrice" type="number" min="0.01" step="0.01">
+                </label>
+                <div style="margin-top:4px;">
+                    <label><input type="radio" name="customListingPriceMode" id="customListingPriceInd" checked> ind price</label>
+                    <label><input type="radio" name="customListingPriceMode" id="customListingPriceStk"> stk price</label>
+                </div>
+                <label>
+                    Type:
+                    <select id="customListingType">
+                        <option value="SELL">SELL</option>
+                        <option value="BUY">BUY</option>
+                    </select>
+                </label><br>
+                <button type="button" onclick="createCustomListing()">Create Custom Listing</button>
+                <span id="customListingMsg" class="small"></span>
+                <div class="inline-note">No sourceItemId (custom). Same validation rules.</div>
             </div>
         </div>
 
-        <div style="margin-top:18px;">
+        <div style="margin-top:22px;">
             <h3 style="margin:4px 0;">Listings</h3>
-
             <div class="subheader">Referenced (Sheet)</div>
             <table>
-                <thead>
-                    <tr>
-                        <th>ListingId</th>
-                        <th>Item</th>
-                        <th>Type</th>
-                        <th>Prices (stk / ind)</th>
-                        <th>Qty (ind / stk)</th>
-                        <th>Status</th>
-                        <th>Edit</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>ListingId</th><th>Item</th><th>Type</th><th>Prices (stk / ind)</th><th>Qty (ind / stk)</th><th>Status</th><th>Edit</th></tr></thead>
                 <tbody id="ocmAdminListingsBodyRef"></tbody>
             </table>
-
             <div class="subheader">Custom</div>
             <table>
-                <thead>
-                    <tr>
-                        <th>ListingId</th>
-                        <th>Item</th>
-                        <th>Type</th>
-                        <th>Prices (stk / ind)</th>
-                        <th>Qty (ind / stk)</th>
-                        <th>Status</th>
-                        <th>Edit</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>ListingId</th><th>Item</th><th>Type</th><th>Prices (stk / ind)</th><th>Qty (ind / stk)</th><th>Status</th><th>Edit</th></tr></thead>
                 <tbody id="ocmAdminListingsBodyCustom"></tbody>
             </table>
         </div>
@@ -411,23 +383,10 @@
             <h3 style="margin-top:0;">Edit Listing</h3>
             <div id="ocmEditHeader" class="small"></div>
             <div class="grid" style="margin-top:10px;">
+                <div><label>Quantity (ind):<br><input id="ocmEditQtyInd" type="number" min="1"></label></div>
+                <div><label>Stack Size:<br><input id="ocmEditStackSize" type="number" min="1"></label></div>
                 <div>
-                    <label>
-                        Quantity (ind):<br>
-                        <input id="ocmEditQtyInd" type="number" min="1">
-                    </label>
-                </div>
-                <div>
-                    <label>
-                        Stack Size:<br>
-                        <input id="ocmEditStackSize" type="number" min="1">
-                    </label>
-                </div>
-                <div>
-                    <label>
-                        Price input:<br>
-                        <input id="ocmEditPriceVal" type="number" min="0.0001" step="0.01">
-                    </label>
+                    <label>Price input:<br><input id="ocmEditPriceVal" type="number" min="0.0001" step="0.01"></label>
                     <div style="margin-top:4px;">
                         <label><input type="radio" name="ocmEditPriceMode" id="ocmEditModeInd" checked> ind price</label>
                         <label><input type="radio" name="ocmEditPriceMode" id="ocmEditModeStk"> stk price</label>
@@ -441,9 +400,7 @@
                 </div>
             </div>
             <div style="margin-top:8px;" class="small">
-                Derived per-ind: <span id="ocmEditDerivedInd">0</span> |
-                per-stk: <span id="ocmEditDerivedStk">0</span> |
-                stacks from qty: <span id="ocmEditDerivedQtyStk">0</span>
+                Derived per-ind: <span id="ocmEditDerivedInd">0</span> | per-stk: <span id="ocmEditDerivedStk">0</span> | stacks from qty: <span id="ocmEditDerivedQtyStk">0</span>
             </div>
         </div>
     </div>
@@ -451,13 +408,15 @@
     <script>
         const WEB_APP_URL = window.WEB_APP_URL || '';
         const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '';
+        const PRICE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/gviz/tq?tqx=out:json&gid=0';
+
         let googleIdToken = null;
         let currentUser = null;
         let playersCache = [];
+        let adminSheetItems = []; // {name,bundleSize,buyStack,sellStack,buyEach,sellEach}
 
         function byId(id) { return document.getElementById(id); }
         function fmt2(v) { v = Number(v) || 0; return v.toFixed(2); }
-        function fmtShort(v) { v = Number(v) || 0; let s = v.toFixed(2); return s.replace(/\.?0+$/, ''); }
 
         function initLogin() {
             if (!window.google || !google.accounts || !google.accounts.id) return;
@@ -469,38 +428,65 @@
             google.accounts.id.renderButton(byId('loginBtnArea'), { theme: 'outline', size: 'medium' });
         }
 
-        /* ===== OCM Admin Management ===== */
-        let ocmAdminTargetUser = null;
-        let ocmAdminListings = [];
+        function loadSheetItemsForOCM() {
+            fetch(PRICE_SHEET_URL).then(r => r.text()).then(txt => {
+                let payload = txt;
+                const s = payload.indexOf('('), e = payload.lastIndexOf(')');
+                if (s > -1 && e > s) payload = payload.slice(s + 1, e);
+                const json = JSON.parse(payload);
+                const rows = json?.table?.rows || [];
+                adminSheetItems = rows.map(row => {
+                    const c = row.c || [];
+                    const name = c[0]?.v || '';
+                    const buyStack = c[1]?.v || ''; const sellStack = c[2]?.v || '';
+                    const bundleSize = Number(c[4]?.v || 1) || 1;
+                    const buyEach = c[5]?.v || ''; const sellEach = c[6]?.v || '';
+                    if (!name) return null;
+                    return {
+                        name: String(name),
+                        bundleSize,
+                        buyStack: toNum(buyStack),
+                        sellStack: toNum(sellStack),
+                        buyEach: toNum(buyEach),
+                        sellEach: toNum(sellEach)
+                    };
+                }).filter(Boolean);
+                const dl = byId('sheetItemDatalist');
+                dl.innerHTML = '';
+                adminSheetItems.forEach(it => {
+                    const opt = document.createElement('option');
+                    opt.value = it.name;
+                    opt.label = `${it.name} (stk:${it.bundleSize})`;
+                    dl.appendChild(opt);
+                });
+            }).catch(() => { adminSheetItems = []; });
+        }
+        function toNum(v) { if (v === '' || v == null) return null; const n = Number(v); return isNaN(n) ? null : n; }
 
+        /* Player search for on-behalf */
         (function initOcmAdminPlayerSearch() {
-            const input = document.getElementById('ocmAdminPlayerInput');
-            const box = document.getElementById('ocmAdminPlayerSuggestions');
+            const input = byId('ocmAdminPlayerInput');
+            const box = byId('ocmAdminPlayerSuggestions');
             if (!input || !box) return;
             input.addEventListener('input', () => {
                 const q = input.value.trim().toLowerCase();
                 if (!q || !playersCache.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
-                const hits = playersCache
-                    .map(p => {
-                        const name = (p.playerName || '').toLowerCase();
-                        let sc = 0;
-                        if (name.startsWith(q)) sc = 100 - (name.length - q.length);
-                        else {
-                            const idx = name.indexOf(q);
-                            if (idx >= 0) sc = 60 - idx;
-                        }
-                        return { p, sc };
-                    })
-                    .filter(h => h.sc > 0)
-                    .sort((a, b) => b.sc - a.sc)
-                    .slice(0, 25);
+                const hits = playersCache.map(p => {
+                    const n = (p.playerName || '').toLowerCase();
+                    let sc = 0;
+                    if (n.startsWith(q)) sc = 100 - (n.length - q.length);
+                    else {
+                        const idx = n.indexOf(q);
+                        if (idx >= 0) sc = 60 - idx;
+                    }
+                    return { p, sc };
+                }).filter(h => h.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, 25);
                 if (!hits.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
-                box.innerHTML = hits.map(h => `<div class="sugg" data-uid="${h.p.userId}" style="padding:2px 4px;border-radius:4px;cursor:pointer;">${h.p.playerName}</div>`).join('');
+                box.innerHTML = hits.map(h => `<div class="sugg" data-uid="${h.p.userId}" style="padding:2px 4px;cursor:pointer;border-radius:4px;">${h.p.playerName}</div>`).join('');
                 box.style.display = 'block';
             });
             box.addEventListener('click', ev => {
-                const d = ev.target.closest('.sugg');
-                if (!d) return;
+                const d = ev.target.closest('.sugg'); if (!d) return;
                 const uid = d.dataset.uid;
                 const pl = playersCache.find(p => p.userId === uid);
                 if (pl) {
@@ -512,16 +498,94 @@
             });
         })();
 
-        function ocmAdminSelectPlayer() {
-            const input = document.getElementById('ocmAdminPlayerInput');
-            const uid = input.dataset.userId;
-            if (!uid) { document.getElementById('ocmAdminMsg').textContent = 'Select a player from suggestions first.'; return; }
-            ocmAdminTargetUser = playersCache.find(p => p.userId === uid);
-            if (!ocmAdminTargetUser) { document.getElementById('ocmAdminMsg').textContent = 'Player not found.'; return; }
-            document.getElementById('ocmAdminMsg').textContent = 'Loading listings...';
-            ocmAdminLoadListings();
+        let ocmAdminTargetUser = null;
+        let ocmAdminListings = [];
+        // Update read-only stack size when a sheet item is picked
+        function updateSheetListingStackSizeDisplay() {
+            const name = (byId('sheetListingItemInput').value || '').trim().toLowerCase();
+            const display = byId('sheetListingStackSizeDisplay');
+            const hidden = byId('sheetListingStackSizeHidden');
+            if (!name) {
+                if (display) display.textContent = '—';
+                if (hidden) hidden.value = 1;
+                return;
+            }
+            const item = adminSheetItems.find(i => String(i.name || '').trim().toLowerCase() === name);
+            const size = (item && Number(item.bundleSize)) ? Number(item.bundleSize) : 1;
+            if (display) display.textContent = String(size);
+            if (hidden) hidden.value = String(size);
         }
 
+        // Hookup: call update when the sheet item input changes (call after elements exist)
+        (function hookupSheetListingStackSizeListener() {
+            const inp = byId('sheetListingItemInput');
+            if (!inp) return;
+            inp.addEventListener('input', updateSheetListingStackSizeDisplay);
+            inp.addEventListener('change', updateSheetListingStackSizeDisplay);
+            // ensure display initialized if adminSheetItems already loaded
+            // call once after small timeout to allow loadSheetItemsForOCM to populate datalist
+            setTimeout(updateSheetListingStackSizeDisplay, 250);
+        })();
+
+        // Replaced createSheetListing: uses hidden stack-size from sheet item (non-editable)
+        async function createSheetListing() {
+            if (!ocmAdminTargetUser) { byId('sheetListingMsg').textContent = 'Select target first.'; return; }
+            const name = (byId('sheetListingItemInput').value || '').trim();
+            const qty = Number(byId('sheetListingQty').value || 0);
+            const hiddenStack = Number(byId('sheetListingStackSizeHidden').value || 1) || 1;
+            const rawPrice = Number(byId('sheetListingPrice').value || 0);
+            const mode = byId('sheetListingPriceStk').checked ? 'stk' : 'ind';
+            const type = byId('sheetListingType').value;
+            const msg = byId('sheetListingMsg');
+
+            if (!name || qty <= 0 || rawPrice <= 0 || hiddenStack <= 0) { msg.textContent = 'Invalid input'; return; }
+
+            // Ensure we pick bundle from sheet if available
+            const sheetItem = adminSheetItems.find(i => String(i.name || '').trim().toLowerCase() === name.toLowerCase());
+            const stackSize = (sheetItem && Number(sheetItem.bundleSize) > 0) ? Number(sheetItem.bundleSize) : hiddenStack;
+
+            msg.textContent = 'Creating...';
+            try {
+                const r = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'createListing',
+                        idToken: googleIdToken,
+                        sellerUserId: ocmAdminTargetUser.userId,
+                        type,
+                        itemName: name,
+                        quantity: qty,
+                        price: rawPrice,
+                        priceUnit: mode,
+                        stackSize,
+                        sourceItemId: 'sheet:' + name, // mark referenced
+                        status: true
+                    })
+                });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'createListing failed');
+                msg.textContent = 'Created.';
+                // clear inputs and reset display/hidden
+                byId('sheetListingItemInput').value = '';
+                byId('sheetListingQty').value = '';
+                byId('sheetListingPrice').value = '';
+                byId('sheetListingStackSizeHidden').value = 1;
+                byId('sheetListingStackSizeDisplay').textContent = '—';
+                ocmAdminLoadListings();
+            } catch (e) {
+                msg.textContent = 'Error: ' + e.message;
+            }
+        }
+        function ocmAdminSelectPlayer() {
+            const input = byId('ocmAdminPlayerInput');
+            const uid = input.dataset.userId;
+            if (!uid) { byId('ocmAdminMsg').textContent = 'Select a player from suggestions first.'; return; }
+            ocmAdminTargetUser = playersCache.find(p => p.userId === uid);
+            if (!ocmAdminTargetUser) { byId('ocmAdminMsg').textContent = 'Player not found.'; return; }
+            byId('ocmAdminMsg').textContent = 'Loading listings...';
+            ocmAdminLoadListings();
+        }
         async function ocmAdminLoadListings() {
             try {
                 const r = await fetch(`${WEB_APP_URL}?action=adminListAllListings&idToken=${encodeURIComponent(googleIdToken)}&userId=${encodeURIComponent(ocmAdminTargetUser.userId)}`);
@@ -530,106 +594,89 @@
                 ocmAdminListings = j.data.listings || [];
             } catch (e) {
                 ocmAdminListings = [];
-                document.getElementById('ocmAdminMsg').textContent = 'Error: ' + e.message;
+                byId('ocmAdminMsg').textContent = 'Error: ' + e.message;
                 renderOcmAdminListings();
                 return;
             }
-            document.getElementById('ocmAdminMsg').textContent = `Loaded ${ocmAdminListings.length} listings.`;
+            byId('ocmAdminMsg').textContent = `Loaded ${ocmAdminListings.length} listings.`;
             renderOcmAdminListings();
         }
-
         function renderOneRow(l) {
             const qtyInd = (l.remainingQuantity === '' || l.remainingQuantity == null) ? 0 : Number(l.remainingQuantity || 0);
             const ss = Number(l.stackSize || 1) || 1;
             const qtyStacks = Math.floor(qtyInd / ss);
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                        <td class="mono">${l.listingId}</td>
-                        <td>${l.itemName}</td>
-                        <td>${l.type === 'SELL' ? '<span class="pill pill-sell">SELL</span>' : '<span class="pill pill-buy">BUY</span>'}</td>
-                        <td class="mono">${(l.priceInd || 0).toFixed(2)} / ${(l.priceInd * ss || 0).toFixed(2)}</td>
-                        <td class="mono">${qtyInd} / ${qtyStacks}</td>
-                        <td>${l.status ? 'OPEN' : 'CLOSED'}</td>
-                        <td>
-                          <button data-ocm-edit="${l.listingId}">Edit</button>
-                          <button data-ocm-toggle="${l.listingId}">${l.status ? 'Close' : 'Open'}</button>
-                          <button data-ocm-delete="${l.listingId}">Delete</button>
-                        </td>
-                    `;
+                    <td class="mono">${l.listingId}</td>
+                    <td>${l.itemName}</td>
+                    <td>${l.type === 'SELL' ? '<span class="pill pill-sell">SELL</span>' : '<span class="pill pill-buy">BUY</span>'}</td>
+                    <td class="mono">${(l.priceInd || 0).toFixed(2)} / ${(l.priceInd * ss || 0).toFixed(2)}</td>
+                    <td class="mono">${qtyInd} / ${qtyStacks}</td>
+                    <td>${l.status ? 'OPEN' : 'CLOSED'}</td>
+                    <td>
+                      <button data-ocm-edit="${l.listingId}">Edit</button>
+                      <button data-ocm-toggle="${l.listingId}">${l.status ? 'Close' : 'Open'}</button>
+                      <button data-ocm-delete="${l.listingId}">Delete</button>
+                    </td>`;
             return tr;
         }
-
         function renderOcmAdminListings() {
-            const bodyRef = document.getElementById('ocmAdminListingsBodyRef');
-            const bodyCustom = document.getElementById('ocmAdminListingsBodyCustom');
-            bodyRef.innerHTML = '';
-            bodyCustom.innerHTML = '';
-
+            const bodyRef = byId('ocmAdminListingsBodyRef');
+            const bodyCustom = byId('ocmAdminListingsBodyCustom');
+            bodyRef.innerHTML = ''; bodyCustom.innerHTML = '';
             const refList = ocmAdminListings.filter(x => String(x.sourceItemId || '').trim());
             const customList = ocmAdminListings.filter(x => !String(x.sourceItemId || '').trim());
-
             refList.forEach(l => bodyRef.appendChild(renderOneRow(l)));
             customList.forEach(l => bodyCustom.appendChild(renderOneRow(l)));
         }
-
         document.addEventListener('click', ev => {
             const t = ev.target;
             if (t.dataset?.ocmEdit) ocmAdminOpenEdit(t.dataset.ocmEdit);
             if (t.dataset?.ocmToggle) ocmAdminToggleListing(t.dataset.ocmToggle);
             if (t.dataset?.ocmDelete) ocmAdminDeleteListing(t.dataset.ocmDelete);
         });
-
         let ocmEditingListing = null;
         function ocmAdminOpenEdit(listingId) {
             const l = ocmAdminListings.find(x => x.listingId === listingId);
             if (!l) { alert('Listing not found'); return; }
             ocmEditingListing = l;
-            document.getElementById('ocmEditPanel').style.display = 'block';
-            document.getElementById('ocmEditHeader').textContent = `Editing ${l.listingId} (${l.itemName})`;
-            document.getElementById('ocmEditQtyInd').value = l.remainingQuantity ?? l.quantity ?? 0;
-            document.getElementById('ocmEditStackSize').value = l.stackSize || 1;
-            document.getElementById('ocmEditPriceVal').value = (l.priceInd || 0).toFixed(2);
-            document.getElementById('ocmEditStatusOpen').checked = !!l.status;
-            document.getElementById('ocmEditModeInd').checked = true;
+            byId('ocmEditPanel').style.display = 'block';
+            byId('ocmEditHeader').textContent = `Editing ${l.listingId} (${l.itemName})`;
+            byId('ocmEditQtyInd').value = l.remainingQuantity ?? l.quantity ?? 0;
+            byId('ocmEditStackSize').value = l.stackSize || 1;
+            byId('ocmEditPriceVal').value = (l.priceInd || 0).toFixed(2);
+            byId('ocmEditStatusOpen').checked = !!l.status;
+            byId('ocmEditModeInd').checked = true;
             ocmAdminUpdateEditDerived();
         }
-        function ocmAdminCancelEdit() {
-            ocmEditingListing = null;
-            document.getElementById('ocmEditPanel').style.display = 'none';
-        }
+        function ocmAdminCancelEdit() { ocmEditingListing = null; byId('ocmEditPanel').style.display = 'none'; }
         ['ocmEditQtyInd', 'ocmEditStackSize', 'ocmEditPriceVal', 'ocmEditModeInd', 'ocmEditModeStk'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener('input', ocmAdminUpdateEditDerived);
-                el.addEventListener('change', ocmAdminUpdateEditDerived);
-            }
+            const el = byId(id); if (el) { el.addEventListener('input', ocmAdminUpdateEditDerived); el.addEventListener('change', ocmAdminUpdateEditDerived); }
         });
         function ocmAdminUpdateEditDerived() {
-            const stackSize = Number(document.getElementById('ocmEditStackSize').value || 1) || 1;
-            const qtyInd = Number(document.getElementById('ocmEditQtyInd').value || 0) || 0;
-            const priceRaw = Number(document.getElementById('ocmEditPriceVal').value || 0) || 0;
-            const mode = document.getElementById('ocmEditModeStk').checked ? 'stk' : 'ind';
+            const stackSize = Number(byId('ocmEditStackSize').value || 1) || 1;
+            const qtyInd = Number(byId('ocmEditQtyInd').value || 0) || 0;
+            const priceRaw = Number(byId('ocmEditPriceVal').value || 0) || 0;
+            const mode = byId('ocmEditModeStk').checked ? 'stk' : 'ind';
             const priceInd = mode === 'stk' ? (priceRaw / stackSize) : priceRaw;
-            document.getElementById('ocmEditDerivedInd').textContent = isFinite(priceInd) ? priceInd.toFixed(4) : '0';
-            document.getElementById('ocmEditDerivedStk').textContent = isFinite(priceInd) ? (priceInd * stackSize).toFixed(2) : '0';
-            document.getElementById('ocmEditDerivedQtyStk').textContent = stackSize > 0 ? Math.floor(qtyInd / stackSize) : '0';
+            byId('ocmEditDerivedInd').textContent = isFinite(priceInd) ? priceInd.toFixed(4) : '0';
+            byId('ocmEditDerivedStk').textContent = isFinite(priceInd) ? (priceInd * stackSize).toFixed(2) : '0';
+            byId('ocmEditDerivedQtyStk').textContent = stackSize > 0 ? Math.floor(qtyInd / stackSize) : '0';
         }
-
         async function ocmAdminSaveEdit() {
             if (!ocmEditingListing) return;
             const listingId = ocmEditingListing.listingId;
-            const stackSize = Number(document.getElementById('ocmEditStackSize').value || 1) || 1;
-            const qtyInd = Number(document.getElementById('ocmEditQtyInd').value || 0) || 0;
-            const mode = document.getElementById('ocmEditModeStk').checked ? 'stk' : 'ind';
-            const priceRaw = Number(document.getElementById('ocmEditPriceVal').value || 0) || 0;
-            const status = document.getElementById('ocmEditStatusOpen').checked;
-            const msg = document.getElementById('ocmEditMsg');
+            const stackSize = Number(byId('ocmEditStackSize').value || 1) || 1;
+            const qtyInd = Number(byId('ocmEditQtyInd').value || 0) || 0;
+            const mode = byId('ocmEditModeStk').checked ? 'stk' : 'ind';
+            const priceRaw = Number(byId('ocmEditPriceVal').value || 0) || 0;
+            const status = byId('ocmEditStatusOpen').checked;
+            const msg = byId('ocmEditMsg');
             if (priceRaw <= 0 || qtyInd <= 0 || stackSize <= 0) { msg.textContent = 'Invalid values'; return; }
             msg.textContent = 'Saving...';
             try {
                 const r = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'updateListing', idToken: googleIdToken, listingId, price: priceRaw, priceUnit: mode, quantity: qtyInd, stackSize, status })
                 });
                 const j = await r.json();
@@ -637,9 +684,7 @@
                 msg.textContent = 'Saved.';
                 await ocmAdminLoadListings();
                 ocmAdminOpenEdit(listingId);
-            } catch (e) {
-                msg.textContent = 'Error: ' + e.message;
-            }
+            } catch (e) { msg.textContent = 'Error: ' + e.message; }
         }
         async function ocmAdminToggleListing(listingId) {
             const l = ocmAdminListings.find(x => x.listingId === listingId);
@@ -647,8 +692,7 @@
             const targetStatus = !l.status;
             try {
                 const r = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'toggleListingStatus', idToken: googleIdToken, listingId, status: targetStatus })
                 });
                 const j = await r.json();
@@ -661,8 +705,7 @@
             if (!confirm('Delete listing ' + listingId + '?')) return;
             try {
                 const r = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'deleteListing', idToken: googleIdToken, listingId })
                 });
                 const j = await r.json();
@@ -671,43 +714,84 @@
                 if (ocmEditingListing?.listingId === listingId) ocmAdminCancelEdit();
             } catch (e) { alert(e.message); }
         }
-        async function ocmAdminCreateListing() {
-            if (!ocmAdminTargetUser) { document.getElementById('ocmCreateMsg').textContent = 'Select target first.'; return; }
-            const itemName = document.getElementById('ocmNewItemName').value.trim();
-            const qtyInd = Number(document.getElementById('ocmNewQtyInd').value || 0);
-            const stackSize = Number(document.getElementById('ocmNewStackSize').value || 1) || 1;
-            const priceRaw = Number(document.getElementById('ocmNewPrice').value || 0);
-            const mode = document.getElementById('ocmNewPriceStk').checked ? 'stk' : 'ind';
-            const type = document.getElementById('ocmNewType').value;
-            const msg = document.getElementById('ocmCreateMsg');
-            if (!itemName || qtyInd <= 0 || priceRaw <= 0 || stackSize <= 0) { msg.textContent = 'Invalid input'; return; }
+
+        function normalizePrice(mode, raw, stackSize) {
+            if (mode === 'stk') return Number((raw / stackSize).toFixed(4));
+            return Number(raw.toFixed(4));
+        }
+
+        async function createSheetListing() {
+            if (!ocmAdminTargetUser) { byId('sheetListingMsg').textContent = 'Select target first.'; return; }
+            const name = byId('sheetListingItemInput').value.trim();
+            const qty = Number(byId('sheetListingQty').value || 0);
+            let stackSize = Number(byId('sheetListingStackSize').value || 1) || 1;
+            const rawPrice = Number(byId('sheetListingPrice').value || 0);
+            const mode = byId('sheetListingPriceStk').checked ? 'stk' : 'ind';
+            const type = byId('sheetListingType').value;
+            const msg = byId('sheetListingMsg');
+            if (!name || qty <= 0 || rawPrice <= 0 || stackSize <= 0) { msg.textContent = 'Invalid input'; return; }
+            const sheetItem = adminSheetItems.find(i => i.name.toLowerCase() === name.toLowerCase());
+            if (sheetItem && !isNaN(sheetItem.bundleSize) && sheetItem.bundleSize > 0) stackSize = stackSize || sheetItem.bundleSize;
             msg.textContent = 'Creating...';
             try {
-                const body = {
-                    action: 'createListing',
-                    idToken: googleIdToken,
-                    sellerUserId: ocmAdminTargetUser.userId,
-                    type,
-                    itemName,
-                    quantity: qtyInd,
-                    price: priceRaw,
-                    priceUnit: mode,
-                    stackSize,
-                    sourceItemId: '', // leave empty for custom; set to sheet-id if you wire a picker later
-                    status: true
-                };
-                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const r = await fetch(WEB_APP_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'createListing',
+                        idToken: googleIdToken,
+                        sellerUserId: ocmAdminTargetUser.userId,
+                        type,
+                        itemName: name,
+                        quantity: qty,
+                        price: rawPrice,
+                        priceUnit: mode,
+                        stackSize,
+                        sourceItemId: 'sheet:' + name, // mark referenced
+                        status: true
+                    })
+                });
                 const j = await r.json();
                 if (!j.ok) throw new Error(j.error || 'createListing failed');
-                msg.textContent = 'Listing created.';
-                document.getElementById('ocmNewItemName').value = '';
-                document.getElementById('ocmNewQtyInd').value = '';
-                document.getElementById('ocmNewStackSize').value = '';
-                document.getElementById('ocmNewPrice').value = '';
+                msg.textContent = 'Created.';
+                ['sheetListingItemInput', 'sheetListingQty', 'sheetListingStackSize', 'sheetListingPrice'].forEach(id => byId(id).value = '');
                 ocmAdminLoadListings();
-            } catch (e) {
-                msg.textContent = 'Error: ' + e.message;
-            }
+            } catch (e) { msg.textContent = 'Error: ' + e.message; }
+        }
+
+        async function createCustomListing() {
+            if (!ocmAdminTargetUser) { byId('customListingMsg').textContent = 'Select target first.'; return; }
+            const name = byId('customListingItemName').value.trim();
+            const qty = Number(byId('customListingQty').value || 0);
+            let stackSize = Number(byId('customListingStackSize').value || 1) || 1;
+            const rawPrice = Number(byId('customListingPrice').value || 0);
+            const mode = byId('customListingPriceStk').checked ? 'stk' : 'ind';
+            const type = byId('customListingType').value;
+            const msg = byId('customListingMsg');
+            if (!name || qty <= 0 || rawPrice <= 0 || stackSize <= 0) { msg.textContent = 'Invalid input'; return; }
+            msg.textContent = 'Creating...';
+            try {
+                const r = await fetch(WEB_APP_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'createListing',
+                        idToken: googleIdToken,
+                        sellerUserId: ocmAdminTargetUser.userId,
+                        type,
+                        itemName: name,
+                        quantity: qty,
+                        price: rawPrice,
+                        priceUnit: mode,
+                        stackSize,
+                        sourceItemId: '', // custom
+                        status: true
+                    })
+                });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'createListing failed');
+                msg.textContent = 'Created.';
+                ['customListingItemName', 'customListingQty', 'customListingStackSize', 'customListingPrice'].forEach(id => byId(id).value = '');
+                ocmAdminLoadListings();
+            } catch (e) { msg.textContent = 'Error: ' + e.message; }
         }
 
         async function onLogin(token, silent = false) {
@@ -722,17 +806,13 @@
                 byId('authStatus').textContent = `Admin: ${currentUser.email}`;
                 byId('logoutBtn').style.display = 'inline-block';
                 byId('loginBtnArea').style.display = 'none';
-                // show admin button on top bar
-                const adm = document.getElementById('adminPanelBtn');
-                if (adm) adm.style.display = 'inline';
+                const ap = byId('adminPanelBtn'); if (ap) ap.style.display = 'inline';
                 loadPlayers();
                 loadPendingRequests();
                 loadPendingTrades();
-            } catch (e) {
-                if (!silent) byId('authStatus').textContent = 'Auth failed: ' + e.message;
-            }
+                loadSheetItemsForOCM();
+            } catch (e) { if (!silent) byId('authStatus').textContent = 'Auth failed: ' + e.message; }
         }
-
         function logout() {
             googleIdToken = null; currentUser = null;
             window.clearSavedIdToken && window.clearSavedIdToken();
@@ -741,11 +821,12 @@
             byId('loginBtnArea').style.display = 'block';
             byId('tbRequests').innerHTML = '';
             byId('tbTrades').innerHTML = '';
-            playersCache = [];
+            playersCache = []; ocmAdminListings = []; adminSheetItems = [];
             byId('playerList').innerHTML = '';
+            byId('ocmAdminListingsBodyRef').innerHTML = '';
+            byId('ocmAdminListingsBodyCustom').innerHTML = '';
             byId('balancesInfo').textContent = 'Balances will appear here.';
         }
-
         async function loadPlayers() {
             if (!googleIdToken) return;
             try {
@@ -753,49 +834,34 @@
                 const j = await r.json();
                 if (!j.ok) throw new Error(j.error || 'adminListPlayers failed');
                 playersCache = j.data;
-            } catch (e) {
-                console.warn('loadPlayers', e.message);
-            }
+            } catch (e) { console.warn('loadPlayers', e.message); }
         }
-
         function fuzzyPlayers(q) {
-            q = q.trim().toLowerCase();
-            if (!q) return [];
-            return playersCache
-                .map(p => {
-                    const base = (p.playerName || '').toLowerCase();
-                    let score = 0;
-                    if (base.startsWith(q)) score = 100 - (base.length - q.length);
-                    else {
-                        const idx = base.indexOf(q);
-                        if (idx >= 0) score = 60 - idx;
-                    }
-                    return { ...p, _score: score };
-                })
-                .filter(p => p._score > 0)
-                .sort((a, b) => b._score - a._score)
-                .slice(0, 30);
+            q = q.trim().toLowerCase(); if (!q) return [];
+            return playersCache.map(p => {
+                const base = (p.playerName || '').toLowerCase();
+                let score = 0;
+                if (base.startsWith(q)) score = 100 - (base.length - q.length);
+                else { const idx = base.indexOf(q); if (idx >= 0) score = 60 - idx; }
+                return { ...p, _score: score };
+            }).filter(p => p._score > 0).sort((a, b) => b._score - a._score).slice(0, 30);
         }
-
         byId('playerSearch').addEventListener('input', () => {
             const q = byId('playerSearch').value;
             const arr = fuzzyPlayers(q);
-            const out = arr.map(p => `<div data-user="${p.userId}" class="player-row">${p.playerName || '(no name)'} <span class="small">(${fmtShort(p.balanceBT)} BT)</span></div>`).join('');
+            const out = arr.map(p => `<div data-user="${p.userId}" class="player-row">${p.playerName || '(no name)'} <span class="small">(${(Number(p.balanceBT) || 0).toFixed(2)} BT)</span></div>`).join('');
             byId('playerList').innerHTML = out || '<div class="small">No matches</div>';
         });
-
         byId('playerList').addEventListener('click', ev => {
-            const row = ev.target.closest('.player-row');
-            if (!row) return;
+            const row = ev.target.closest('.player-row'); if (!row) return;
             const userId = row.dataset.user;
             const player = playersCache.find(p => p.userId === userId);
             if (player) {
-                byId('balancesInfo').textContent = `Selected: ${player.playerName} | Balance: ${fmt2(player.balanceBT)} BT`;
+                byId('balancesInfo').textContent = `Selected: ${player.playerName} | Balance: ${(Number(player.balanceBT) || 0).toFixed(2)} BT`;
                 byId('transferTarget').value = player.playerName || '';
             }
         });
 
-        /* Pending Requests */
         async function loadPendingRequests() {
             if (!googleIdToken) return;
             byId('reqMsg').textContent = 'Loading...';
@@ -806,11 +872,8 @@
                 const arr = j.data.requests || [];
                 renderRequests(arr);
                 byId('reqMsg').textContent = `Loaded ${arr.length}`;
-            } catch (e) {
-                byId('reqMsg').textContent = 'Error: ' + e.message;
-            }
+            } catch (e) { byId('reqMsg').textContent = 'Error: ' + e.message; }
         }
-
         function renderRequests(arr) {
             const tb = byId('tbRequests'); tb.innerHTML = '';
             arr.forEach(r => {
@@ -819,22 +882,14 @@
                 tr.innerHTML = `
                       <td><button data-detail="${r.requestId}">${r.requestId}</button></td>
                       <td>${r.user?.playerName || ''}</td>
-                      <td>
-                        <div class="mono">Buy: ${fmt2(r.totals?.buyBT || 0)}</div>
-                        <div class="mono">Sell: ${fmt2(r.totals?.sellBT || 0)}</div>
-                      </td>
-                      <td class="mono">${fmt2(r.manualBalanceDeltaBT || 0)}</td>
-                      <td class="mono">${fmt2(net)}</td>
+                      <td><div class="mono">Buy: ${(Number(r.totals?.buyBT || 0)).toFixed(2)}</div><div class="mono">Sell: ${(Number(r.totals?.sellBT || 0)).toFixed(2)}</div></td>
+                      <td class="mono">${(Number(r.manualBalanceDeltaBT || 0)).toFixed(2)}</td>
+                      <td class="mono">${net.toFixed(2)}</td>
                       <td>${r.createdAt || ''}</td>
-                      <td>
-                        <button data-approve="${r.requestId}">Approve</button>
-                        <button data-deny="${r.requestId}">Deny</button>
-                      </td>
-                    `;
+                      <td><button data-approve="${r.requestId}">Approve</button><button data-deny="${r.requestId}">Deny</button></td>`;
                 tb.appendChild(tr);
             });
         }
-
         async function showRequestDetails(id) {
             if (!googleIdToken) return;
             byId('reqDetails').textContent = 'Loading details...';
@@ -846,16 +901,9 @@
                 const carts = details.carts || {};
                 const buy = (carts.buy || []).map(x => `${x.qty}×${x.name}@${x.priceBT}`).join(', ');
                 const sell = (carts.sell || []).map(x => `${x.qty}×${x.name}@${x.priceBT}`).join(', ');
-                byId('reqDetails').innerHTML =
-                    `<div><b>${id}</b></div>
-                       <div>Buy: ${buy || '-'}</div>
-                       <div>Sell: ${sell || '-'}</div>
-                       <div>Net: ${fmt2(details.totals?.netBT || 0)} BT</div>`;
-            } catch (e) {
-                byId('reqDetails').textContent = 'Error: ' + e.message;
-            }
+                byId('reqDetails').innerHTML = `<div><b>${id}</b></div><div>Buy: ${buy || '-'}</div><div>Sell: ${sell || '-'}</div><div>Net: ${(Number(details.totals?.netBT || 0)).toFixed(2)} BT</div>`;
+            } catch (e) { byId('reqDetails').textContent = 'Error: ' + e.message; }
         }
-
         async function approveRequest(id) {
             if (!confirm('Approve request ' + id + '?')) return;
             try {
@@ -875,7 +923,6 @@
             } catch (e) { alert(e.message); }
         }
 
-        /* Trades */
         async function loadPendingTrades() {
             if (!googleIdToken) return;
             byId('trMsg').textContent = 'Loading...';
@@ -886,11 +933,8 @@
                 const arr = j.data.trades || [];
                 renderTrades(arr);
                 byId('trMsg').textContent = `Loaded ${arr.length}`;
-            } catch (e) {
-                byId('trMsg').textContent = 'Error: ' + e.message;
-            }
+            } catch (e) { byId('trMsg').textContent = 'Error: ' + e.message; }
         }
-
         function renderTrades(arr) {
             const tb = byId('tbTrades'); tb.innerHTML = '';
             arr.forEach(t => {
@@ -899,41 +943,40 @@
                 const stackSize = Number(t.stackSize || 1) || 1;
                 const stkQty = Math.floor(qty / stackSize);
                 const total = qty * priceInd;
-                const listingType = (JSON.parse(t.detailsJson || '{}').type || 'SELL').toUpperCase();
+                let details = {}; try { details = JSON.parse(t.detailsJson || '{}'); } catch { }
+                const listingType = (details.type || 'SELL').toUpperCase();
                 const sellerReceives = listingType === 'SELL' ? (total * 0.95) : total;
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                       <td>${t.tradeId}</td>
                       <td>${t.listingId}</td>
-                      <td>${JSON.parse(t.detailsJson || '{}').itemName || ''}</td>
+                      <td>${details.itemName || ''}</td>
                       <td>${listingType === 'SELL' ? '<span class="pill pill-sell">SELL</span>' : '<span class="pill pill-buy">BUY</span>'}</td>
                       <td>${qty} / ${stkQty}</td>
-                      <td>${fmt2(priceInd)} / ${fmt2(priceInd * stackSize)}</td>
-                      <td>${fmt2(total)}</td>
-                      <td>${fmt2(sellerReceives)} ${listingType === 'SELL' ? '(95%)' : ''}</td>
+                      <td>${priceInd.toFixed(2)} / ${(priceInd * stackSize).toFixed(2)}</td>
+                      <td>${total.toFixed(2)}</td>
+                      <td>${sellerReceives.toFixed(2)} ${listingType === 'SELL' ? '(95%)' : ''}</td>
                       <td class="status-pending">${t.status}</td>
                       <td>${t.updatedAt || ''}</td>
-                      <td>
-                        <button data-tr-approve="${t.tradeId}">Approve</button>
-                        <button data-tr-deny="${t.tradeId}">Deny</button>
-                      </td>
-                    `;
+                      <td><button data-tr-approve="${t.tradeId}">Approve</button><button data-tr-deny="${t.tradeId}">Deny</button></td>`;
                 tb.appendChild(tr);
             });
         }
 
-        /* Adjust Balance */
         async function adjustBalance() {
             const userName = byId('playerSearch').value.trim();
             const delta = Number(byId('adjAmount').value || 0);
             const reason = byId('adjReason').value.trim();
             if (!googleIdToken || !currentUser?.isAdmin) { byId('adjMsg').textContent = 'Admin login required'; return; }
-            if (!userName || !delta) { byId('adjMsg').textContent = 'Fill player search and delta'; return; }
+            if (!userName || !delta) { byId('adjMsg').textContent = 'Fill player and delta'; return; }
             const target = playersCache.find(p => p.playerName && p.playerName.toLowerCase() === userName.toLowerCase());
             if (!target) { byId('adjMsg').textContent = 'Player not found'; return; }
             byId('adjMsg').textContent = 'Applying...';
             try {
-                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'adjustBalance', idToken: googleIdToken, userId: target.userId, deltaBT: delta, reason }) });
+                const r = await fetch(WEB_APP_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'adjustBalance', idToken: googleIdToken, userId: target.userId, deltaBT: delta, reason })
+                });
                 const j = await r.json();
                 if (!j.ok) throw new Error(j.error || 'adjustBalance failed');
                 byId('adjMsg').textContent = 'Done.';
@@ -941,7 +984,6 @@
             } catch (e) { byId('adjMsg').textContent = 'Error: ' + e.message; }
         }
 
-        /* Transfer BT */
         async function transferBT() {
             const targetName = byId('transferTarget').value.trim();
             const amount = Number(byId('transferAmount').value || 0);
@@ -950,8 +992,10 @@
             if (!targetName || !amount || amount < 0.01) { byId('transferMsg').textContent = 'Invalid input'; return; }
             byId('transferMsg').textContent = 'Sending...';
             try {
-                const body = { action: 'transferBT', idToken: googleIdToken, targetPlayerName: targetName, amountBT: amount, note };
-                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const r = await fetch(WEB_APP_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'transferBT', idToken: googleIdToken, targetPlayerName: targetName, amountBT: amount, note })
+                });
                 const j = await r.json();
                 if (!j.ok) throw new Error(j.error || 'transferBT failed');
                 byId('transferMsg').textContent = 'Transfer complete.';
@@ -959,21 +1003,19 @@
             } catch (e) { byId('transferMsg').textContent = 'Error: ' + e.message; }
         }
 
-        /* Events */
         document.addEventListener('click', ev => {
             const t = ev.target;
-            if (t.dataset && t.dataset.detail) showRequestDetails(t.dataset.detail);
-            if (t.dataset && t.dataset.approve) approveRequest(t.dataset.approve);
-            if (t.dataset && t.dataset.deny) denyRequest(t.dataset.deny);
-            if (t.dataset && t.dataset.trApprove) approveTrade(t.dataset.trApprove);
-            if (t.dataset && t.dataset.trDeny) denyTrade(t.dataset.trDeny);
+            if (t.dataset?.detail) showRequestDetails(t.dataset.detail);
+            if (t.dataset?.approve) approveRequest(t.dataset.approve);
+            if (t.dataset?.deny) denyRequest(t.dataset.deny);
+            if (t.dataset?.trApprove) approveTrade(t.dataset.trApprove);
+            if (t.dataset?.trDeny) denyTrade(t.dataset.trDeny);
         });
         byId('btnLoadRequests').onclick = loadPendingRequests;
         byId('btnLoadTrades').onclick = loadPendingTrades;
         byId('btnAdjust').onclick = adjustBalance;
         byId('btnTransfer').onclick = transferBT;
 
-        /* Init */
         window.onload = () => {
             initLogin();
             const saved = window.getSavedIdToken && window.getSavedIdToken();
