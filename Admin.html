@@ -4,38 +4,45 @@
     <meta charset="UTF-8">
     <title>Admin Panel</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" href="favicon.ico">
+    <!-- Top bar deps -->
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
+    <script src="topbar.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
+        /* page base */
         body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            max-width: 1100px;
-            margin: auto;
+            font-family: Arial,sans-serif;
+            max-width: 1300px;
+            margin: 20px auto;
+            padding: 0 16px;
         }
 
-        h1, h2 {
-            margin-bottom: 8px;
-        }
-
-        .section {
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 16px;
+        h1, h2, h3 {
+            margin: 0 0 12px;
         }
 
         table {
             border-collapse: collapse;
             width: 100%;
+            margin-top: 8px;
         }
 
         th, td {
             border: 1px solid #ddd;
             padding: 6px;
-            text-align: left;
+            font-size: 13px;
+            vertical-align: top;
         }
 
         th {
             background: #f5f5f5;
+        }
+
+        button, input, select {
+            padding: 6px;
+            font-size: 13px;
         }
 
         .small {
@@ -43,310 +50,935 @@
             color: #555;
         }
 
-        .row {
+        .grid {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
             margin-top: 8px;
         }
 
-        input[type="number"], input[type="text"] {
-            padding: 6px;
+        .section {
+            border: 1px solid #ccc;
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 22px;
         }
 
-        button {
-            padding: 6px 10px;
-            margin-right: 6px;
+        .mono {
+            font-family: Consolas,monospace;
         }
 
-        .muted {
-            color: #777;
+        .pill {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #eee;
+            font-size: 11px;
+            margin-right: 4px;
         }
 
-        .danger {
-            color: #b00;
+        .pill-sell {
+            background: #e9ffe8;
         }
 
-        .ok {
-            color: #2a8f2a;
+        .pill-buy {
+            background: #e8f7ff;
         }
 
-        .grid2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+        .status-pending {
+            color: #f0a400;
+            font-weight: bold;
+        }
+
+        .status-executed {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .status-denied {
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        .flex {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .withTopBar {
+            padding-top: 72px;
+        }
+
+        /* Shared top bar styling */
+        #topBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 52px;
+            background: #222;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
+            font-size: 14px;
             gap: 12px;
         }
 
-        @media (max-width:900px) {
-            .grid2 {
-                grid-template-columns: 1fr;
+            #topBar a, #topBar button {
+                color: #fff;
+                text-decoration: none;
+                margin-right: 16px;
+                background: none;
+                border: none;
+                cursor: pointer;
             }
+
+            #topBar .right {
+                margin-left: auto;
+                display: flex;
+                gap: 12px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+
+        .balance-chip {
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.08);
+            white-space: nowrap;
+        }
+
+        .balance-you.positive {
+            color: #2ecc71;
+        }
+
+        .balance-you.negative {
+            color: #ff5252;
+        }
+
+        .balance-target {
+            color: #f0c200;
+        }
+
+        #orderPopup {
+            position: absolute;
+            top: 52px;
+            right: 100px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 8px;
+            display: none;
+            min-width: 260px;
+            z-index: 1100;
+            color: #000;
+        }
+
+        #orderStatusBall {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #777;
+            cursor: pointer;
+        }
+
+        .order-link {
+            color: #66c;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        /* Subheaders for OCM split */
+        .subheader {
+            margin-top: 12px;
+            font-weight: bold;
         }
     </style>
-    <script src="app-config.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="topbar.js"></script>
-    <script src="api-client.js"></script>
 </head>
 <body>
+    <!-- Shared Top Bar -->
+    <div id="topBar">
+        <div><strong>Vak Store</strong></div>
+        <button onclick="navigateStore()">Store</button>
+        <button onclick="navigateHistory()">Account History</button>
+        <button onclick="navigateOCM()">OCM</button>
+        <button onclick="navigateMerchant()">OCM Merchant</button>
+        <button id="adminPanelBtn" style="display:none;" onclick="navigateAdmin()">Admin Panel</button>
+        <div class="right">
+            <button id="btnLogin" onclick="startLogin()">Login</button>
+            <div id="orderStatusBall" title="Orders status"></div>
+            <div id="orderPopup">
+                <div style="font-weight:bold;margin-bottom:6px;">Your open orders</div>
+                <div id="orderPopupBody" class="small"></div>
+            </div>
+            <span id="topBalanceTarget" class="small balance-chip balance-target" style="display:none;"></span>
+            <span id="topBalance" class="small balance-chip balance-you" style="display:none;"></span>
+            <span id="topUser" class="small"></span>
+            <button id="btnLogout" style="display:none;" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        // Minimal nav helpers (safe even if topbar.js defines its own)
+        function navigateStore() { location.href = 'index.html'; }
+        function navigateHistory() { location.href = 'AccountHistory.html'; }
+        function navigateOCM() { location.href = 'OCMHome.html'; }
+        function navigateMerchant() { location.href = 'OCMUser.html'; }
+        function navigateAdmin() { location.href = 'Admin.html'; }
+        document.body.classList.add('withTopBar');
+        if (window.initSharedTopBar) { window.initSharedTopBar(); }
+    </script>
+
     <h1>Admin Panel</h1>
-    <div id="authStatus" class="small muted">Checking auth...</div>
+    <div id="authStatus" class="small">Not logged in.</div>
+    <div id="loginBtnArea"></div>
+    <button id="logoutBtn" style="display:none;" onclick="logout()">Logout</button>
+
     <div class="section">
-        <h2>Pending Requests</h2>
-        <div class="row">
-            <label>
-                Status:
-                <select id="rqStatus">
-                    <option value="">Any</option>
-                    <option value="PENDING" selected>PENDING</option>
-                    <option value="DENIED">DENIED</option>
-                    <option value="EXECUTED">EXECUTED</option>
-                    <option value="CANCELLED">CANCELLED</option>
-                    <option value="OVERRIDDEN">OVERRIDDEN</option>
-                </select>
-            </label>
-            <button id="btnLoadReq">Load</button>
-            <span id="rqMsg" class="small"></span>
+        <h2>Pending Store Requests</h2>
+        <div class="flex">
+            <button id="btnLoadRequests">Reload</button>
+            <span id="reqMsg" class="small"></span>
         </div>
         <table>
             <thead>
                 <tr>
-                    <th>Created</th>
                     <th>RequestId</th>
                     <th>User</th>
-                    <th>Totals (buy/sell/net)</th>
-                    <th>Status</th>
-                    <th>EditedFrom</th>
+                    <th>Totals</th>
+                    <th>Manual Bal Δ</th>
+                    <th>Net</th>
+                    <th>Created</th>
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody id="rqTbody"></tbody>
+            <tbody id="tbRequests"></tbody>
         </table>
-        <div id="rqDetails" class="small" style="white-space:pre-wrap;margin-top:8px;"></div>
+        <div id="reqDetails" class="small" style="margin-top:10px;"></div>
     </div>
 
     <div class="section">
-        <h2>OCM Trades (Pending)</h2>
-        <div class="row">
-            <button id="btnLoadTrades">Load</button>
+        <h2>Pending OCM Trades</h2>
+        <div class="flex">
+            <button id="btnLoadTrades">Reload</button>
             <span id="trMsg" class="small"></span>
         </div>
         <table>
             <thead>
                 <tr>
-                    <th>Created</th>
                     <th>TradeId</th>
-                    <th>Listing</th>
-                    <th>Buyer</th>
-                    <th>Qty</th>
-                    <th>Price</th>
+                    <th>ListingId</th>
+                    <th>Item</th>
+                    <th>Type</th>
+                    <th>Qty (ind / stk)</th>
+                    <th>Price (ind / stk)</th>
+                    <th>Total</th>
+                    <th>Seller Receives</th>
                     <th>Status</th>
+                    <th>Updated</th>
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody id="trTbody"></tbody>
+            <tbody id="tbTrades"></tbody>
         </table>
     </div>
 
     <div class="section">
-        <h2>Adjust Balance</h2>
-        <div class="row grid2">
+        <h2>Players / Balances / Transfer</h2>
+        <div class="grid">
             <div>
-                <div class="small">Pick user from adminListPlayers cache.</div>
-                <input id="abUserQuery" type="text" placeholder="Type name/email to filter">
-                <select id="abUserSelect" size="8" style="width:100%;"></select>
+                <label>Search player: <input id="playerSearch" type="text" placeholder="player name"></label>
+                <div id="playerList" class="small"></div>
             </div>
             <div>
-                <div class="row">
-                    <label>Delta BT: <input id="abDelta" type="number" step="0.01" value="0"></label>
+                <label>Adjust Balance (Δ BT): <input id="adjAmount" type="number" step="0.01"></label><br>
+                <label>Reason: <input id="adjReason" type="text"></label><br>
+                <button id="btnAdjust">Apply Adjustment</button>
+                <div id="adjMsg" class="small"></div>
+            </div>
+            <div>
+                <label>Transfer To (playerName): <input id="transferTarget" type="text"></label><br>
+                <label>Amount BT: <input id="transferAmount" type="number" step="0.01" min="0.01"></label><br>
+                <label>Note (optional): <input id="transferNote" type="text"></label><br>
+                <button id="btnTransfer">Send BT</button>
+                <div id="transferMsg" class="small"></div>
+            </div>
+            <div>
+                <div id="balancesInfo" class="small">Balances will appear here.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section" id="ocmAdminSection">
+        <h2>OCM Listing Management (Admin)</h2>
+        <div class="small">Select a player to manage their OCM listings (active & inactive). Edits are instant. Creating on behalf uses their account.</div>
+        <div class="flex" style="margin-top:6px;">
+            <input id="ocmAdminPlayerInput" type="text" placeholder="Search player name" style="flex:1;max-width:320px;">
+            <button type="button" onclick="ocmAdminSelectPlayer()">Load Listings</button>
+            <span id="ocmAdminMsg" class="small"></span>
+        </div>
+        <div id="ocmAdminPlayerSuggestions" class="small" style="max-height:140px;overflow:auto;border:1px solid #ddd;border-radius:4px;padding:4px;display:none;margin-top:4px;"></div>
+
+        <div style="margin-top:14px;">
+            <h3 style="margin:4px 0;">Create Listing (On Behalf)</h3>
+            <div class="grid">
+                <div>
+                    <label>
+                        Item Name (sheet or custom):<br>
+                        <input id="ocmNewItemName" type="text" placeholder="Item name">
+                    </label>
                 </div>
-                <div class="row">
-                    <label>Reason: <input id="abReason" type="text" placeholder="Reason"></label>
+                <div>
+                    <label>
+                        Quantity (ind):<br>
+                        <input id="ocmNewQtyInd" type="number" min="1" placeholder="e.g. 64">
+                    </label>
                 </div>
-                <div class="row">
-                    <button id="btnAdjust">Adjust</button>
-                    <span id="abMsg" class="small"></span>
+                <div>
+                    <label>
+                        Stack Size:<br>
+                        <input id="ocmNewStackSize" type="number" min="1" placeholder="e.g. 64">
+                    </label>
                 </div>
+                <div>
+                    <label>
+                        Price:<br>
+                        <input id="ocmNewPrice" type="number" min="0.01" step="0.01" placeholder="e.g. 2.50">
+                    </label>
+                    <div style="margin-top:4px;">
+                        <label><input type="radio" name="ocmNewPriceMode" id="ocmNewPriceInd" checked> ind price</label>
+                        <label><input type="radio" name="ocmNewPriceMode" id="ocmNewPriceStk"> stk price</label>
+                    </div>
+                </div>
+                <div>
+                    <label>
+                        Type:<br>
+                        <select id="ocmNewType">
+                            <option value="SELL">SELL</option>
+                            <option value="BUY">BUY</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+            <div style="margin-top:8px;">
+                <button type="button" onclick="ocmAdminCreateListing()">Create Listing</button>
+                <span id="ocmCreateMsg" class="small"></span>
+            </div>
+        </div>
+
+        <div style="margin-top:18px;">
+            <h3 style="margin:4px 0;">Listings</h3>
+
+            <div class="subheader">Referenced (Sheet)</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ListingId</th>
+                        <th>Item</th>
+                        <th>Type</th>
+                        <th>Prices (stk / ind)</th>
+                        <th>Qty (ind / stk)</th>
+                        <th>Status</th>
+                        <th>Edit</th>
+                    </tr>
+                </thead>
+                <tbody id="ocmAdminListingsBodyRef"></tbody>
+            </table>
+
+            <div class="subheader">Custom</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ListingId</th>
+                        <th>Item</th>
+                        <th>Type</th>
+                        <th>Prices (stk / ind)</th>
+                        <th>Qty (ind / stk)</th>
+                        <th>Status</th>
+                        <th>Edit</th>
+                    </tr>
+                </thead>
+                <tbody id="ocmAdminListingsBodyCustom"></tbody>
+            </table>
+        </div>
+
+        <div id="ocmEditPanel" style="display:none;margin-top:18px;border:1px solid #ddd;padding:10px;border-radius:6px;background:#fafafa;">
+            <h3 style="margin-top:0;">Edit Listing</h3>
+            <div id="ocmEditHeader" class="small"></div>
+            <div class="grid" style="margin-top:10px;">
+                <div>
+                    <label>
+                        Quantity (ind):<br>
+                        <input id="ocmEditQtyInd" type="number" min="1">
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Stack Size:<br>
+                        <input id="ocmEditStackSize" type="number" min="1">
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Price input:<br>
+                        <input id="ocmEditPriceVal" type="number" min="0.0001" step="0.01">
+                    </label>
+                    <div style="margin-top:4px;">
+                        <label><input type="radio" name="ocmEditPriceMode" id="ocmEditModeInd" checked> ind price</label>
+                        <label><input type="radio" name="ocmEditPriceMode" id="ocmEditModeStk"> stk price</label>
+                    </div>
+                </div>
+                <div>
+                    <label><input type="checkbox" id="ocmEditStatusOpen"> Open (active)</label><br>
+                    <button type="button" onclick="ocmAdminSaveEdit()">Save</button>
+                    <button type="button" onclick="ocmAdminCancelEdit()">Cancel</button>
+                    <div id="ocmEditMsg" class="small"></div>
+                </div>
+            </div>
+            <div style="margin-top:8px;" class="small">
+                Derived per-ind: <span id="ocmEditDerivedInd">0</span> |
+                per-stk: <span id="ocmEditDerivedStk">0</span> |
+                stacks from qty: <span id="ocmEditDerivedQtyStk">0</span>
             </div>
         </div>
     </div>
 
     <script>
+        const WEB_APP_URL = window.WEB_APP_URL || '';
+        const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '';
         let googleIdToken = null;
-        let __players = [];
+        let currentUser = null;
+        let playersCache = [];
 
-        function fmt(n) { const x = Number(n) || 0; return x.toFixed(2).replace(/\.?0+$/, ''); }
         function byId(id) { return document.getElementById(id); }
-        function normalizeResult(j) { return (j && j.result != null) ? j.result : (j && j.data != null ? j.data : j); }
-        function shortUser(u) {
-            if (!u) return '';
-            return (u.playerName || u.email || u.userId || '').toString();
+        function fmt2(v) { v = Number(v) || 0; return v.toFixed(2); }
+        function fmtShort(v) { v = Number(v) || 0; let s = v.toFixed(2); return s.replace(/\.?0+$/, ''); }
+
+        function initLogin() {
+            if (!window.google || !google.accounts || !google.accounts.id) return;
+            google.accounts.id.initialize({
+                client_id: OAUTH_CLIENT_ID,
+                callback: cred => onLogin(cred.credential),
+                ux_mode: 'popup'
+            });
+            google.accounts.id.renderButton(byId('loginBtnArea'), { theme: 'outline', size: 'medium' });
         }
 
-        async function ensureAuth() {
-            const st = byId('authStatus');
-            const saved = window.getSavedIdToken && window.getSavedIdToken();
-            if (!saved) { st.textContent = 'Not logged in. Open index.html and login.'; throw new Error('no token'); }
-            googleIdToken = saved;
-            try {
-                const me = await apiGet('me', { idToken: googleIdToken });
-                const d = normalizeResult(me);
-                if (!d?.isAdmin) { st.textContent = 'You are not an admin.'; throw new Error('not admin'); }
-                st.textContent = 'Admin authenticated: ' + (d?.user?.email || '');
-                // load players for Adjust Balance
-                const pl = await apiGet('adminListPlayers', { idToken: googleIdToken });
-                const arr = Array.isArray(pl?.data) ? pl.data : (pl?.players || pl?.result?.players || []);
-                __players = arr || [];
-                renderPlayersList();
-            } catch (e) {
-                st.textContent = 'Auth failed: ' + (e.message || e);
-                throw e;
-            }
-        }
+        /* ===== OCM Admin Management ===== */
+        let ocmAdminTargetUser = null;
+        let ocmAdminListings = [];
 
-        function renderPlayersList() {
-            const q = (byId('abUserQuery').value || '').toLowerCase().trim();
-            const sel = byId('abUserSelect'); sel.innerHTML = '';
-            __players
-                .map(p => ({ ...p, _k: (p.playerName || '') + ' ' + (p.email || '') + ' ' + (p.userId || '') }))
-                .filter(p => !q || p._k.toLowerCase().includes(q))
-                .slice(0, 200)
-                .forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.userId || '';
-                    opt.textContent = `${p.playerName || '(no name)'} — ${p.email || ''}`;
-                    sel.appendChild(opt);
-                });
-        }
-
-        async function loadPendingRequests() {
-            const msg = byId('rqMsg'); msg.textContent = 'Loading...';
-            const status = byId('rqStatus').value || '';
-            try {
-                const j = await apiGet('listPendingRequests', { idToken: googleIdToken, status });
-                const d = normalizeResult(j);
-                const rows = Array.isArray(d) ? d : (d?.requests || []);
-                const tb = byId('rqTbody'); tb.innerHTML = '';
-                rows.forEach(r => {
-                    const tr = document.createElement('tr');
-                    const totals = r?.totals || {};
-                    tr.innerHTML = `
-                    <td>${r.createdAt || ''}</td>
-                    <td>${r.requestId || ''}</td>
-                    <td>${shortUser(r.user)}</td>
-                    <td>buy:${fmt(totals.buyBT)} sell:${fmt(totals.sellBT)} net:${fmt(totals.netBT)}</td>
-                    <td>${r.status || 'PENDING'}</td>
-                    <td>${r.editedFromRequestId || ''}</td>
-                    <td>
-                      <button data-act="view" data-id="${r.requestId}">View</button>
-                      <button data-act="approve" data-id="${r.requestId}">Approve</button>
-                      <button data-act="deny" data-id="${r.requestId}">Deny</button>
-                      <button data-act="cancel" data-id="${r.requestId}">Cancel</button>
-                    </td>
-                  `;
-                    tb.appendChild(tr);
-                });
-                msg.textContent = `Loaded ${rows.length}.`;
-            } catch (e) {
-                msg.textContent = 'Error: ' + (e.message || e);
-            }
-        }
-
-        async function onRqAction(act, id) {
-            const msg = byId('rqMsg');
-            try {
-                if (act === 'view') {
-                    const j = await apiGet('getRequest', { idToken: googleIdToken, requestId: id });
-                    const d = normalizeResult(j);
-                    byId('rqDetails').textContent = JSON.stringify(d, null, 2);
-                    return;
+        (function initOcmAdminPlayerSearch() {
+            const input = document.getElementById('ocmAdminPlayerInput');
+            const box = document.getElementById('ocmAdminPlayerSuggestions');
+            if (!input || !box) return;
+            input.addEventListener('input', () => {
+                const q = input.value.trim().toLowerCase();
+                if (!q || !playersCache.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+                const hits = playersCache
+                    .map(p => {
+                        const name = (p.playerName || '').toLowerCase();
+                        let sc = 0;
+                        if (name.startsWith(q)) sc = 100 - (name.length - q.length);
+                        else {
+                            const idx = name.indexOf(q);
+                            if (idx >= 0) sc = 60 - idx;
+                        }
+                        return { p, sc };
+                    })
+                    .filter(h => h.sc > 0)
+                    .sort((a, b) => b.sc - a.sc)
+                    .slice(0, 25);
+                if (!hits.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+                box.innerHTML = hits.map(h => `<div class="sugg" data-uid="${h.p.userId}" style="padding:2px 4px;border-radius:4px;cursor:pointer;">${h.p.playerName}</div>`).join('');
+                box.style.display = 'block';
+            });
+            box.addEventListener('click', ev => {
+                const d = ev.target.closest('.sugg');
+                if (!d) return;
+                const uid = d.dataset.uid;
+                const pl = playersCache.find(p => p.userId === uid);
+                if (pl) {
+                    input.value = pl.playerName || '';
+                    input.dataset.userId = pl.userId;
+                    box.style.display = 'none';
+                    box.innerHTML = '';
                 }
-                if (act === 'approve') {
-                    await apiPost('approveRequest', { idToken: googleIdToken, requestId: id, note: '' });
-                } else if (act === 'deny') {
-                    await apiPost('denyRequest', { idToken: googleIdToken, requestId: id, note: '' });
-                } else if (act === 'cancel') {
-                    await apiPost('cancelRequest', { idToken: googleIdToken, requestId: id });
-                }
-                msg.textContent = 'OK.';
-                await loadPendingRequests();
-            } catch (e) {
-                msg.textContent = 'Error: ' + (e.message || e);
-            }
-        }
-
-        async function loadPendingTrades() {
-            const msg = byId('trMsg'); msg.textContent = 'Loading...';
-            try {
-                const j = await apiGet('listTrades', { idToken: googleIdToken, status: 'PENDING' });
-                const d = normalizeResult(j);
-                const rows = Array.isArray(d) ? d : (d?.trades || []);
-                const tb = byId('trTbody'); tb.innerHTML = '';
-                rows.forEach(t => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                    <td>${t.createdAt || ''}</td>
-                    <td>${t.tradeId || ''}</td>
-                    <td>${t.itemName || ''} (${t.listingId || ''})</td>
-                    <td>${shortUser(t.buyer)}</td>
-                    <td>${t.quantity || 0}</td>
-                    <td>${fmt(t.price || 0)} BT</td>
-                    <td>${t.status || 'PENDING'}</td>
-                    <td>
-                      <button data-tr="approve" data-id="${t.tradeId}">Approve</button>
-                      <button data-tr="deny" data-id="${t.tradeId}">Deny</button>
-                    </td>
-                  `;
-                    tb.appendChild(tr);
-                });
-                msg.textContent = `Loaded ${rows.length}.`;
-            } catch (e) {
-                msg.textContent = 'Error: ' + (e.message || e);
-            }
-        }
-
-        async function onTradeAction(act, id) {
-            const msg = byId('trMsg');
-            try {
-                if (act === 'approve') await apiPost('approveTrade', { idToken: googleIdToken, tradeId: id });
-                else if (act === 'deny') await apiPost('denyTrade', { idToken: googleIdToken, tradeId: id });
-                msg.textContent = 'OK.';
-                await loadPendingTrades();
-            } catch (e) {
-                msg.textContent = 'Error: ' + (e.message || e);
-            }
-        }
-
-        async function doAdjustBalance() {
-            const msg = byId('abMsg'); msg.textContent = 'Saving...';
-            const sel = byId('abUserSelect');
-            const userId = sel.value;
-            const delta = Number(byId('abDelta').value || 0);
-            const reason = (byId('abReason').value || '').trim();
-            if (!userId) { msg.textContent = 'Pick a user first.'; return; }
-            if (!isFinite(delta) || delta === 0) { msg.textContent = 'Enter non-zero delta.'; return; }
-            try {
-                await apiPost('adjustBalance', { idToken: googleIdToken, userId, deltaBT: delta, reason });
-                msg.textContent = 'Adjusted.';
-            } catch (e) {
-                msg.textContent = 'Error: ' + (e.message || e);
-            }
-        }
-
-        // Events
-        document.addEventListener('click', (ev) => {
-            const t = ev.target;
-            if (t.dataset && t.dataset.act && t.dataset.id) onRqAction(t.dataset.act, t.dataset.id);
-            if (t.dataset && t.dataset.tr && t.dataset.id) onTradeAction(t.dataset.tr, t.dataset.id);
-        });
-        byId('btnLoadReq').onclick = loadPendingRequests;
-        byId('btnLoadTrades').onclick = loadPendingTrades;
-        byId('btnAdjust').onclick = doAdjustBalance;
-        byId('abUserQuery').oninput = renderPlayersList;
-
-        (async () => {
-            try { await ensureAuth(); } catch { return; }
-            // auto-load
-            loadPendingRequests();
-            loadPendingTrades();
+            });
         })();
+
+        function ocmAdminSelectPlayer() {
+            const input = document.getElementById('ocmAdminPlayerInput');
+            const uid = input.dataset.userId;
+            if (!uid) { document.getElementById('ocmAdminMsg').textContent = 'Select a player from suggestions first.'; return; }
+            ocmAdminTargetUser = playersCache.find(p => p.userId === uid);
+            if (!ocmAdminTargetUser) { document.getElementById('ocmAdminMsg').textContent = 'Player not found.'; return; }
+            document.getElementById('ocmAdminMsg').textContent = 'Loading listings...';
+            ocmAdminLoadListings();
+        }
+
+        async function ocmAdminLoadListings() {
+            try {
+                const r = await fetch(`${WEB_APP_URL}?action=adminListAllListings&idToken=${encodeURIComponent(googleIdToken)}&userId=${encodeURIComponent(ocmAdminTargetUser.userId)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'adminListAllListings failed');
+                ocmAdminListings = j.data.listings || [];
+            } catch (e) {
+                ocmAdminListings = [];
+                document.getElementById('ocmAdminMsg').textContent = 'Error: ' + e.message;
+                renderOcmAdminListings();
+                return;
+            }
+            document.getElementById('ocmAdminMsg').textContent = `Loaded ${ocmAdminListings.length} listings.`;
+            renderOcmAdminListings();
+        }
+
+        function renderOneRow(l) {
+            const qtyInd = (l.remainingQuantity === '' || l.remainingQuantity == null) ? 0 : Number(l.remainingQuantity || 0);
+            const ss = Number(l.stackSize || 1) || 1;
+            const qtyStacks = Math.floor(qtyInd / ss);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                        <td class="mono">${l.listingId}</td>
+                        <td>${l.itemName}</td>
+                        <td>${l.type === 'SELL' ? '<span class="pill pill-sell">SELL</span>' : '<span class="pill pill-buy">BUY</span>'}</td>
+                        <td class="mono">${(l.priceInd || 0).toFixed(2)} / ${(l.priceInd * ss || 0).toFixed(2)}</td>
+                        <td class="mono">${qtyInd} / ${qtyStacks}</td>
+                        <td>${l.status ? 'OPEN' : 'CLOSED'}</td>
+                        <td>
+                          <button data-ocm-edit="${l.listingId}">Edit</button>
+                          <button data-ocm-toggle="${l.listingId}">${l.status ? 'Close' : 'Open'}</button>
+                          <button data-ocm-delete="${l.listingId}">Delete</button>
+                        </td>
+                    `;
+            return tr;
+        }
+
+        function renderOcmAdminListings() {
+            const bodyRef = document.getElementById('ocmAdminListingsBodyRef');
+            const bodyCustom = document.getElementById('ocmAdminListingsBodyCustom');
+            bodyRef.innerHTML = '';
+            bodyCustom.innerHTML = '';
+
+            const refList = ocmAdminListings.filter(x => String(x.sourceItemId || '').trim());
+            const customList = ocmAdminListings.filter(x => !String(x.sourceItemId || '').trim());
+
+            refList.forEach(l => bodyRef.appendChild(renderOneRow(l)));
+            customList.forEach(l => bodyCustom.appendChild(renderOneRow(l)));
+        }
+
+        document.addEventListener('click', ev => {
+            const t = ev.target;
+            if (t.dataset?.ocmEdit) ocmAdminOpenEdit(t.dataset.ocmEdit);
+            if (t.dataset?.ocmToggle) ocmAdminToggleListing(t.dataset.ocmToggle);
+            if (t.dataset?.ocmDelete) ocmAdminDeleteListing(t.dataset.ocmDelete);
+        });
+
+        let ocmEditingListing = null;
+        function ocmAdminOpenEdit(listingId) {
+            const l = ocmAdminListings.find(x => x.listingId === listingId);
+            if (!l) { alert('Listing not found'); return; }
+            ocmEditingListing = l;
+            document.getElementById('ocmEditPanel').style.display = 'block';
+            document.getElementById('ocmEditHeader').textContent = `Editing ${l.listingId} (${l.itemName})`;
+            document.getElementById('ocmEditQtyInd').value = l.remainingQuantity ?? l.quantity ?? 0;
+            document.getElementById('ocmEditStackSize').value = l.stackSize || 1;
+            document.getElementById('ocmEditPriceVal').value = (l.priceInd || 0).toFixed(2);
+            document.getElementById('ocmEditStatusOpen').checked = !!l.status;
+            document.getElementById('ocmEditModeInd').checked = true;
+            ocmAdminUpdateEditDerived();
+        }
+        function ocmAdminCancelEdit() {
+            ocmEditingListing = null;
+            document.getElementById('ocmEditPanel').style.display = 'none';
+        }
+        ['ocmEditQtyInd', 'ocmEditStackSize', 'ocmEditPriceVal', 'ocmEditModeInd', 'ocmEditModeStk'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', ocmAdminUpdateEditDerived);
+                el.addEventListener('change', ocmAdminUpdateEditDerived);
+            }
+        });
+        function ocmAdminUpdateEditDerived() {
+            const stackSize = Number(document.getElementById('ocmEditStackSize').value || 1) || 1;
+            const qtyInd = Number(document.getElementById('ocmEditQtyInd').value || 0) || 0;
+            const priceRaw = Number(document.getElementById('ocmEditPriceVal').value || 0) || 0;
+            const mode = document.getElementById('ocmEditModeStk').checked ? 'stk' : 'ind';
+            const priceInd = mode === 'stk' ? (priceRaw / stackSize) : priceRaw;
+            document.getElementById('ocmEditDerivedInd').textContent = isFinite(priceInd) ? priceInd.toFixed(4) : '0';
+            document.getElementById('ocmEditDerivedStk').textContent = isFinite(priceInd) ? (priceInd * stackSize).toFixed(2) : '0';
+            document.getElementById('ocmEditDerivedQtyStk').textContent = stackSize > 0 ? Math.floor(qtyInd / stackSize) : '0';
+        }
+
+        async function ocmAdminSaveEdit() {
+            if (!ocmEditingListing) return;
+            const listingId = ocmEditingListing.listingId;
+            const stackSize = Number(document.getElementById('ocmEditStackSize').value || 1) || 1;
+            const qtyInd = Number(document.getElementById('ocmEditQtyInd').value || 0) || 0;
+            const mode = document.getElementById('ocmEditModeStk').checked ? 'stk' : 'ind';
+            const priceRaw = Number(document.getElementById('ocmEditPriceVal').value || 0) || 0;
+            const status = document.getElementById('ocmEditStatusOpen').checked;
+            const msg = document.getElementById('ocmEditMsg');
+            if (priceRaw <= 0 || qtyInd <= 0 || stackSize <= 0) { msg.textContent = 'Invalid values'; return; }
+            msg.textContent = 'Saving...';
+            try {
+                const r = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'updateListing', idToken: googleIdToken, listingId, price: priceRaw, priceUnit: mode, quantity: qtyInd, stackSize, status })
+                });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'updateListing failed');
+                msg.textContent = 'Saved.';
+                await ocmAdminLoadListings();
+                ocmAdminOpenEdit(listingId);
+            } catch (e) {
+                msg.textContent = 'Error: ' + e.message;
+            }
+        }
+        async function ocmAdminToggleListing(listingId) {
+            const l = ocmAdminListings.find(x => x.listingId === listingId);
+            if (!l) return;
+            const targetStatus = !l.status;
+            try {
+                const r = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'toggleListingStatus', idToken: googleIdToken, listingId, status: targetStatus })
+                });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'toggleListingStatus failed');
+                ocmAdminLoadListings();
+                if (ocmEditingListing?.listingId === listingId) ocmAdminOpenEdit(listingId);
+            } catch (e) { alert(e.message); }
+        }
+        async function ocmAdminDeleteListing(listingId) {
+            if (!confirm('Delete listing ' + listingId + '?')) return;
+            try {
+                const r = await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'deleteListing', idToken: googleIdToken, listingId })
+                });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'deleteListing failed');
+                ocmAdminLoadListings();
+                if (ocmEditingListing?.listingId === listingId) ocmAdminCancelEdit();
+            } catch (e) { alert(e.message); }
+        }
+        async function ocmAdminCreateListing() {
+            if (!ocmAdminTargetUser) { document.getElementById('ocmCreateMsg').textContent = 'Select target first.'; return; }
+            const itemName = document.getElementById('ocmNewItemName').value.trim();
+            const qtyInd = Number(document.getElementById('ocmNewQtyInd').value || 0);
+            const stackSize = Number(document.getElementById('ocmNewStackSize').value || 1) || 1;
+            const priceRaw = Number(document.getElementById('ocmNewPrice').value || 0);
+            const mode = document.getElementById('ocmNewPriceStk').checked ? 'stk' : 'ind';
+            const type = document.getElementById('ocmNewType').value;
+            const msg = document.getElementById('ocmCreateMsg');
+            if (!itemName || qtyInd <= 0 || priceRaw <= 0 || stackSize <= 0) { msg.textContent = 'Invalid input'; return; }
+            msg.textContent = 'Creating...';
+            try {
+                const body = {
+                    action: 'createListing',
+                    idToken: googleIdToken,
+                    sellerUserId: ocmAdminTargetUser.userId,
+                    type,
+                    itemName,
+                    quantity: qtyInd,
+                    price: priceRaw,
+                    priceUnit: mode,
+                    stackSize,
+                    sourceItemId: '', // leave empty for custom; set to sheet-id if you wire a picker later
+                    status: true
+                };
+                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'createListing failed');
+                msg.textContent = 'Listing created.';
+                document.getElementById('ocmNewItemName').value = '';
+                document.getElementById('ocmNewQtyInd').value = '';
+                document.getElementById('ocmNewStackSize').value = '';
+                document.getElementById('ocmNewPrice').value = '';
+                ocmAdminLoadListings();
+            } catch (e) {
+                msg.textContent = 'Error: ' + e.message;
+            }
+        }
+
+        async function onLogin(token, silent = false) {
+            googleIdToken = token;
+            try {
+                const r = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(token)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'me failed');
+                currentUser = j.data.user;
+                currentUser.isAdmin = !!j.data.isAdmin;
+                if (!currentUser.isAdmin) { byId('authStatus').textContent = 'Not admin.'; return; }
+                byId('authStatus').textContent = `Admin: ${currentUser.email}`;
+                byId('logoutBtn').style.display = 'inline-block';
+                byId('loginBtnArea').style.display = 'none';
+                // show admin button on top bar
+                const adm = document.getElementById('adminPanelBtn');
+                if (adm) adm.style.display = 'inline';
+                loadPlayers();
+                loadPendingRequests();
+                loadPendingTrades();
+            } catch (e) {
+                if (!silent) byId('authStatus').textContent = 'Auth failed: ' + e.message;
+            }
+        }
+
+        function logout() {
+            googleIdToken = null; currentUser = null;
+            window.clearSavedIdToken && window.clearSavedIdToken();
+            byId('authStatus').textContent = 'Logged out.';
+            byId('logoutBtn').style.display = 'none';
+            byId('loginBtnArea').style.display = 'block';
+            byId('tbRequests').innerHTML = '';
+            byId('tbTrades').innerHTML = '';
+            playersCache = [];
+            byId('playerList').innerHTML = '';
+            byId('balancesInfo').textContent = 'Balances will appear here.';
+        }
+
+        async function loadPlayers() {
+            if (!googleIdToken) return;
+            try {
+                const r = await fetch(`${WEB_APP_URL}?action=adminListPlayers&idToken=${encodeURIComponent(googleIdToken)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'adminListPlayers failed');
+                playersCache = j.data;
+            } catch (e) {
+                console.warn('loadPlayers', e.message);
+            }
+        }
+
+        function fuzzyPlayers(q) {
+            q = q.trim().toLowerCase();
+            if (!q) return [];
+            return playersCache
+                .map(p => {
+                    const base = (p.playerName || '').toLowerCase();
+                    let score = 0;
+                    if (base.startsWith(q)) score = 100 - (base.length - q.length);
+                    else {
+                        const idx = base.indexOf(q);
+                        if (idx >= 0) score = 60 - idx;
+                    }
+                    return { ...p, _score: score };
+                })
+                .filter(p => p._score > 0)
+                .sort((a, b) => b._score - a._score)
+                .slice(0, 30);
+        }
+
+        byId('playerSearch').addEventListener('input', () => {
+            const q = byId('playerSearch').value;
+            const arr = fuzzyPlayers(q);
+            const out = arr.map(p => `<div data-user="${p.userId}" class="player-row">${p.playerName || '(no name)'} <span class="small">(${fmtShort(p.balanceBT)} BT)</span></div>`).join('');
+            byId('playerList').innerHTML = out || '<div class="small">No matches</div>';
+        });
+
+        byId('playerList').addEventListener('click', ev => {
+            const row = ev.target.closest('.player-row');
+            if (!row) return;
+            const userId = row.dataset.user;
+            const player = playersCache.find(p => p.userId === userId);
+            if (player) {
+                byId('balancesInfo').textContent = `Selected: ${player.playerName} | Balance: ${fmt2(player.balanceBT)} BT`;
+                byId('transferTarget').value = player.playerName || '';
+            }
+        });
+
+        /* Pending Requests */
+        async function loadPendingRequests() {
+            if (!googleIdToken) return;
+            byId('reqMsg').textContent = 'Loading...';
+            try {
+                const r = await fetch(`${WEB_APP_URL}?action=listPendingRequests&idToken=${encodeURIComponent(googleIdToken)}&status=PENDING`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'listPendingRequests failed');
+                const arr = j.data.requests || [];
+                renderRequests(arr);
+                byId('reqMsg').textContent = `Loaded ${arr.length}`;
+            } catch (e) {
+                byId('reqMsg').textContent = 'Error: ' + e.message;
+            }
+        }
+
+        function renderRequests(arr) {
+            const tb = byId('tbRequests'); tb.innerHTML = '';
+            arr.forEach(r => {
+                const net = Number(r.totals?.netBT || 0);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                      <td><button data-detail="${r.requestId}">${r.requestId}</button></td>
+                      <td>${r.user?.playerName || ''}</td>
+                      <td>
+                        <div class="mono">Buy: ${fmt2(r.totals?.buyBT || 0)}</div>
+                        <div class="mono">Sell: ${fmt2(r.totals?.sellBT || 0)}</div>
+                      </td>
+                      <td class="mono">${fmt2(r.manualBalanceDeltaBT || 0)}</td>
+                      <td class="mono">${fmt2(net)}</td>
+                      <td>${r.createdAt || ''}</td>
+                      <td>
+                        <button data-approve="${r.requestId}">Approve</button>
+                        <button data-deny="${r.requestId}">Deny</button>
+                      </td>
+                    `;
+                tb.appendChild(tr);
+            });
+        }
+
+        async function showRequestDetails(id) {
+            if (!googleIdToken) return;
+            byId('reqDetails').textContent = 'Loading details...';
+            try {
+                const r = await fetch(`${WEB_APP_URL}?action=getRequest&idToken=${encodeURIComponent(googleIdToken)}&requestId=${encodeURIComponent(id)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'getRequest failed');
+                const details = j.data.details || {};
+                const carts = details.carts || {};
+                const buy = (carts.buy || []).map(x => `${x.qty}×${x.name}@${x.priceBT}`).join(', ');
+                const sell = (carts.sell || []).map(x => `${x.qty}×${x.name}@${x.priceBT}`).join(', ');
+                byId('reqDetails').innerHTML =
+                    `<div><b>${id}</b></div>
+                       <div>Buy: ${buy || '-'}</div>
+                       <div>Sell: ${sell || '-'}</div>
+                       <div>Net: ${fmt2(details.totals?.netBT || 0)} BT</div>`;
+            } catch (e) {
+                byId('reqDetails').textContent = 'Error: ' + e.message;
+            }
+        }
+
+        async function approveRequest(id) {
+            if (!confirm('Approve request ' + id + '?')) return;
+            try {
+                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'approveRequest', idToken: googleIdToken, requestId: id }) });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'approveRequest failed');
+                loadPendingRequests();
+            } catch (e) { alert(e.message); }
+        }
+        async function denyRequest(id) {
+            if (!confirm('Deny request ' + id + '?')) return;
+            try {
+                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'denyRequest', idToken: googleIdToken, requestId: id }) });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'denyRequest failed');
+                loadPendingRequests();
+            } catch (e) { alert(e.message); }
+        }
+
+        /* Trades */
+        async function loadPendingTrades() {
+            if (!googleIdToken) return;
+            byId('trMsg').textContent = 'Loading...';
+            try {
+                const r = await fetch(`${WEB_APP_URL}?action=listTrades&idToken=${encodeURIComponent(googleIdToken)}&status=PENDING`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'listTrades failed');
+                const arr = j.data.trades || [];
+                renderTrades(arr);
+                byId('trMsg').textContent = `Loaded ${arr.length}`;
+            } catch (e) {
+                byId('trMsg').textContent = 'Error: ' + e.message;
+            }
+        }
+
+        function renderTrades(arr) {
+            const tb = byId('tbTrades'); tb.innerHTML = '';
+            arr.forEach(t => {
+                const qty = Number(t.quantity || 0);
+                const priceInd = Number(t.price || 0);
+                const stackSize = Number(t.stackSize || 1) || 1;
+                const stkQty = Math.floor(qty / stackSize);
+                const total = qty * priceInd;
+                const listingType = (JSON.parse(t.detailsJson || '{}').type || 'SELL').toUpperCase();
+                const sellerReceives = listingType === 'SELL' ? (total * 0.95) : total;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                      <td>${t.tradeId}</td>
+                      <td>${t.listingId}</td>
+                      <td>${JSON.parse(t.detailsJson || '{}').itemName || ''}</td>
+                      <td>${listingType === 'SELL' ? '<span class="pill pill-sell">SELL</span>' : '<span class="pill pill-buy">BUY</span>'}</td>
+                      <td>${qty} / ${stkQty}</td>
+                      <td>${fmt2(priceInd)} / ${fmt2(priceInd * stackSize)}</td>
+                      <td>${fmt2(total)}</td>
+                      <td>${fmt2(sellerReceives)} ${listingType === 'SELL' ? '(95%)' : ''}</td>
+                      <td class="status-pending">${t.status}</td>
+                      <td>${t.updatedAt || ''}</td>
+                      <td>
+                        <button data-tr-approve="${t.tradeId}">Approve</button>
+                        <button data-tr-deny="${t.tradeId}">Deny</button>
+                      </td>
+                    `;
+                tb.appendChild(tr);
+            });
+        }
+
+        /* Adjust Balance */
+        async function adjustBalance() {
+            const userName = byId('playerSearch').value.trim();
+            const delta = Number(byId('adjAmount').value || 0);
+            const reason = byId('adjReason').value.trim();
+            if (!googleIdToken || !currentUser?.isAdmin) { byId('adjMsg').textContent = 'Admin login required'; return; }
+            if (!userName || !delta) { byId('adjMsg').textContent = 'Fill player search and delta'; return; }
+            const target = playersCache.find(p => p.playerName && p.playerName.toLowerCase() === userName.toLowerCase());
+            if (!target) { byId('adjMsg').textContent = 'Player not found'; return; }
+            byId('adjMsg').textContent = 'Applying...';
+            try {
+                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'adjustBalance', idToken: googleIdToken, userId: target.userId, deltaBT: delta, reason }) });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'adjustBalance failed');
+                byId('adjMsg').textContent = 'Done.';
+                loadPlayers();
+            } catch (e) { byId('adjMsg').textContent = 'Error: ' + e.message; }
+        }
+
+        /* Transfer BT */
+        async function transferBT() {
+            const targetName = byId('transferTarget').value.trim();
+            const amount = Number(byId('transferAmount').value || 0);
+            const note = byId('transferNote').value.trim();
+            if (!googleIdToken) { byId('transferMsg').textContent = 'Login required'; return; }
+            if (!targetName || !amount || amount < 0.01) { byId('transferMsg').textContent = 'Invalid input'; return; }
+            byId('transferMsg').textContent = 'Sending...';
+            try {
+                const body = { action: 'transferBT', idToken: googleIdToken, targetPlayerName: targetName, amountBT: amount, note };
+                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'transferBT failed');
+                byId('transferMsg').textContent = 'Transfer complete.';
+                loadPlayers();
+            } catch (e) { byId('transferMsg').textContent = 'Error: ' + e.message; }
+        }
+
+        /* Events */
+        document.addEventListener('click', ev => {
+            const t = ev.target;
+            if (t.dataset && t.dataset.detail) showRequestDetails(t.dataset.detail);
+            if (t.dataset && t.dataset.approve) approveRequest(t.dataset.approve);
+            if (t.dataset && t.dataset.deny) denyRequest(t.dataset.deny);
+            if (t.dataset && t.dataset.trApprove) approveTrade(t.dataset.trApprove);
+            if (t.dataset && t.dataset.trDeny) denyTrade(t.dataset.trDeny);
+        });
+        byId('btnLoadRequests').onclick = loadPendingRequests;
+        byId('btnLoadTrades').onclick = loadPendingTrades;
+        byId('btnAdjust').onclick = adjustBalance;
+        byId('btnTransfer').onclick = transferBT;
+
+        /* Init */
+        window.onload = () => {
+            initLogin();
+            const saved = window.getSavedIdToken && window.getSavedIdToken();
+            if (saved) onLogin(saved, true);
+        };
     </script>
 </body>
 </html>

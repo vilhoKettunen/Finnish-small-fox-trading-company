@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <title>Vak Store Trading Calculator</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <!-- In <head>, after existing meta tags -->
     <link rel="icon" href="favicon.ico">
     <style>
         body {
@@ -392,7 +391,7 @@
                 min-height: 52px;
             }
         }
-        /* Top bar balance chips */
+
         .balance-chip {
             padding: 2px 6px;
             border-radius: 4px;
@@ -464,8 +463,37 @@
         <input id="currencyInput" list="currencyDatalist" placeholder="Search currency / item">
         <input id="currencySelect" type="hidden" value="BT">
         <datalist id="currencyDatalist"></datalist>
+        <!-- Add this button inside the Display Currency section, after the existing inputs -->
+        <button id="btnSendBT" type="button" onclick="openTransferModal()">Send BT</button>
     </div>
-
+    <!-- Add this modal just before the closing </body> (or anywhere after the Display Currency section) -->
+    <div id="transferModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:3000;">
+        <div style="background:#fff;padding:16px;max-width:440px;margin:60px auto;border-radius:8px;position:relative;">
+            <h3 style="margin-top:0;">Send BT</h3>
+            <div class="small" style="margin-bottom:8px;">
+                Transfer BT directly to another player. Minimum 0.01 BT. No fees. Your balance: <span id="transferYourBalance">0.00</span> BT.
+            </div>
+            <label style="display:block;margin-bottom:8px;">
+                Target Player Name:
+                <input id="transferPlayerNameInput" type="text" placeholder="Exact player name" autocomplete="off" style="width:100%;">
+            </label>
+            <div id="transferSuggestions" class="small" style="max-height:140px;overflow:auto;border:1px solid #ddd;border-radius:4px;padding:4px;display:none;"></div>
+            <label style="display:block;margin:8px 0;">
+                Amount (BT):
+                <input id="transferAmountInput" type="number" min="0.01" step="0.01" placeholder="0.01" style="width:140px;">
+            </label>
+            <label style="display:block;margin:8px 0;">
+                Note (optional):
+                <input id="transferNoteInput" type="text" maxlength="120" placeholder="Memo for history (optional)" style="width:100%;">
+            </label>
+            <div id="transferError" class="small" style="color:#c00;margin-top:4px;"></div>
+            <div id="transferSuccess" class="small" style="color:#2e7d32;margin-top:4px;"></div>
+            <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" onclick="performDirectTransfer()">Send</button>
+                <button type="button" onclick="closeTransferModal()">Close</button>
+            </div>
+        </div>
+    </div>
     <div class="section">
         <h2>🔹 Quick Individual Item Calculator</h2>
         <button class="more-info-btn" onclick="toggleInfo('quickInfo')">More Info</button>
@@ -658,7 +686,7 @@
         <ul id="sellList"></ul>
         <div id="sellTotalBox" class="positive">Sell Total: <span id="sellTotal">0.00</span></div>
     </div>
-    <!-- Combined Totals -->
+
     <div class="section">
         <h2>🔹 Combined Totals</h2>
         <button class="more-info-btn" onclick="toggleInfo('combinedInfo')">More Info</button>
@@ -670,7 +698,6 @@
             </p>
             <button onclick="toggleInfo('combinedInfo')">❌ Close</button>
         </div>
-
         <div id="combinedTotalBox">
             <div>Account Balance: <span id="accountBalanceCurrent">0.00 BT</span></div>
             <div>Net Balance: <span id="netTotal" data-raw="0">0.00 BT</span></div>
@@ -678,7 +705,6 @@
         </div>
     </div>
 
-    <!-- Pay With -->
     <div class="section">
         <h2>🔹 Pay With</h2>
         <button class="more-info-btn" onclick="toggleInfo('payInfo')">More Info</button>
@@ -693,7 +719,6 @@
         <div id="paymentResult" class="result"></div>
     </div>
 
-    <!-- Item Converter -->
     <div class="section">
         <h2>🔹 Item Converter</h2>
         <button class="more-info-btn" onclick="toggleInfo('converterInfo')">More Info</button>
@@ -708,7 +733,6 @@
         <div id="converterResult" class="result"></div>
     </div>
 
-    <!-- Request Controls -->
     <div id="requestControls" class="section">
         <h2>🔹 Transaction Request</h2>
         <div id="requestGuard" class="guard-msg" style="display:none;">You need to login for this tool.</div>
@@ -719,7 +743,6 @@
         <div id="requestMsg" class="small"></div>
     </div>
 
-    <!-- Admin: Submit on behalf of (Admin only) -->
     <div id="onBehalfSection" class="section" style="display:none;">
         <h2>👤 Submit on behalf of (Admin)</h2>
         <div class="small">Search a player and set them as the target for the next submission. The request will be recorded in their history.</div>
@@ -732,7 +755,6 @@
         <div id="onBehalfStatus" class="small"></div>
     </div>
 
-    <!-- Links -->
     <div class="section links-section" id="usefulLinks">
         <h2>🔗 Useful Links</h2>
         <nav class="links-grid" aria-label="Useful links">
@@ -743,12 +765,14 @@
             <a class="link-btn" href="https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/edit?gid=0#gid=0" target="_blank" rel="noopener">PRICE SHEET</a>
             <a class="link-btn" href="https://www.vintagestory.at/" target="_blank" rel="noopener">Vintage Story</a>
             <a class="link-btn" href="https://mods.vintagestory.at/" target="_blank" rel="noopener">Official mods</a>
-            <a class="link-btn internal" href="BTIncurance.html" target="_blank" rel="noopener">BT Insurance</a>
-            <a class="link-btn internal" href="PriceHistory.html" target="_blank" rel="noopener">Price History</a>
-            <a class="link-btn internal" href="VintageStoryEconomics.html" target="_blank" rel="noopener">Vintage Story Economics</a>
+            <a class="link-btn internal" href="BTIncurance.html">BT Insurance</a>
+            <a class="link-btn internal" href="PriceHistory.html">Price History</a>
+            <a class="link-btn internal" href="VintageStoryEconomics.html">Vintage Story Economics</a>
         </nav>
     </div>
+
     <script src="pay-converter.js"></script>
+    <!-- Inline application script moved to separate segment -->
     <script>
         /* ===== CONFIG / CONSTANTS ===== */
         const WEB_APP_URL = window.WEB_APP_URL || 'https://yellow-king-52c6.vilhokettu1.workers.dev/exec';
@@ -838,7 +862,7 @@
                 callback: handleCredentialResponse,
                 ux_mode: 'popup',
                 auto_select: false,
-                use_fedcm_for_prompt: true   // was false
+                use_fedcm_for_prompt: true
             });
             google.accounts.id.renderButton(
                 document.getElementById('googleBtn'),
@@ -873,7 +897,101 @@
                 history.replaceState({}, document.title, location.pathname + location.search);
             }
         }
-
+        /* ===== Direct BT Transfer (UI) ===== */
+        function openTransferModal() {
+            if (!googleIdToken) { alert('Login first'); return; }
+            document.getElementById('transferError').textContent = '';
+            document.getElementById('transferSuccess').textContent = '';
+            document.getElementById('transferAmountInput').value = '';
+            document.getElementById('transferNoteInput').value = '';
+            document.getElementById('transferPlayerNameInput').value = '';
+            document.getElementById('transferYourBalance').textContent = (topBalanceSelfBT != null ? topBalanceSelfBT : currentBalanceBT).toFixed(2);
+            document.getElementById('transferModal').style.display = 'block';
+            setupTransferSuggestions();
+        }
+        function closeTransferModal() {
+            document.getElementById('transferModal').style.display = 'none';
+        }
+        function setupTransferSuggestions() {
+            // Only admins have player cache; normal users must type exact name manually (spec allows direct input).
+            const input = document.getElementById('transferPlayerNameInput');
+            const box = document.getElementById('transferSuggestions');
+            if (!currentUser?.isAdmin || !__playersCache.length) {
+                box.style.display = 'none';
+                return;
+            }
+            input.addEventListener('input', () => {
+                const q = input.value.trim().toLowerCase();
+                if (!q) { box.style.display = 'none'; box.innerHTML = ''; return; }
+                const hits = __playersCache
+                    .map(p => {
+                        const name = (p.playerName || '').toLowerCase();
+                        let sc = 0;
+                        if (name.startsWith(q)) sc = 100 - (name.length - q.length);
+                        else {
+                            const idx = name.indexOf(q);
+                            if (idx >= 0) sc = 60 - idx;
+                        }
+                        return { p, sc };
+                    })
+                    .filter(x => x.sc > 0)
+                    .sort((a, b) => b.sc - a.sc)
+                    .slice(0, 25);
+                if (!hits.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+                box.innerHTML = hits.map(h => `<div class="transfer-sugg" data-n="${h.p.playerName || ''}" style="padding:2px 4px;cursor:pointer;border-radius:4px;">${h.p.playerName}</div>`).join('');
+                box.style.display = 'block';
+            }, { once: true });
+            box.onclick = ev => {
+                const el = ev.target.closest('.transfer-sugg');
+                if (el) {
+                    document.getElementById('transferPlayerNameInput').value = el.dataset.n || '';
+                    box.style.display = 'none';
+                    box.innerHTML = '';
+                }
+            };
+        }
+        function performDirectTransfer() {
+            const errEl = document.getElementById('transferError');
+            const okEl = document.getElementById('transferSuccess');
+            errEl.textContent = '';
+            okEl.textContent = '';
+            if (!googleIdToken) { errEl.textContent = 'Login required'; return; }
+            const targetName = document.getElementById('transferPlayerNameInput').value.trim();
+            const amtRaw = document.getElementById('transferAmountInput').value.trim();
+            const note = document.getElementById('transferNoteInput').value.trim();
+            if (!targetName) { errEl.textContent = 'Enter target player name'; return; }
+            let amount = Number(amtRaw);
+            if (!isFinite(amount) || amount < 0.01) { errEl.textContent = 'Minimum 0.01 BT'; return; }
+            const balance = topBalanceSelfBT != null ? topBalanceSelfBT : currentBalanceBT;
+            if (amount > balance) { errEl.textContent = 'not enough funds'; return; }
+            if (amount < 0) { errEl.textContent = 'Amount cannot be negative'; return; }
+            // Prevent sending to self (optional)
+            if (currentUser?.playerName && currentUser.playerName.trim().toLowerCase() === targetName.toLowerCase()) {
+                errEl.textContent = 'Cannot transfer to yourself';
+                return;
+            }
+            errEl.textContent = 'Sending...';
+            fetch(WEB_APP_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'transferBT',
+                    idToken: googleIdToken,
+                    targetPlayerName: targetName,
+                    amountBT: +amount.toFixed(2),
+                    note: note || null
+                })
+            }).then(r => r.json()).then(j => {
+                if (!j.ok) throw new Error(j.error || 'transferBT failed');
+                errEl.textContent = '';
+                okEl.textContent = 'Transfer complete.';
+                // Refresh balances immediately (sender + if admin and on-behalf target pinned)
+                refreshTopBarBalances().catch(() => { });
+                refreshPinnedBalanceForActiveTarget().catch(() => { });
+            }).catch(e => {
+                errEl.textContent = e.message;
+            });
+        }
         /* ===== User normalize ===== */
         function normalizeUser(u) {
             if (!u) return u;
@@ -889,7 +1007,7 @@
         function formatBTShort(val) {
             const n = Number(val) || 0;
             let s = n.toFixed(2);
-            s = s.replace(/\.?0+$/, ''); // trim trailing .00 / .0
+            s = s.replace(/\.?0+$/, '');
             const parts = s.split('.');
             parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
             return parts.join('.');
@@ -995,7 +1113,6 @@
             document.getElementById('btnLogin').style.display = googleIdToken ? 'none' : 'inline-block';
             document.getElementById('btnLogout').style.display = googleIdToken ? 'inline-block' : 'none';
             try { updateAccountBalanceUiVisibility(); } catch { }
-            // balance chips visibility handled separately
             updateTopBarBalanceDom();
         }
         function updateAccountBalanceUiVisibility() {
@@ -1128,7 +1245,7 @@
             }
         }
 
-        /* ===== Claim (legacy – will be replaced later) ===== */
+        /* ===== Claim (legacy) ===== */
         async function requestAccountClaim() {
             const msg = document.getElementById('claimMsg');
             msg.textContent = '';
@@ -1587,7 +1704,7 @@
             let total = 0;
             const curr = document.getElementById("currencySelect").value;
             sellCart.slice().forEach(e => {
-                if (e.isAccountBalancePinned) return; // hide pinned row
+                if (e.isAccountBalancePinned) return;
                 const li = document.createElement("li");
                 let rowTotal = 0, rowText = "";
                 if (e.bundleSize && e.isFullyCustom) {
@@ -1733,7 +1850,6 @@
                     document.getElementById('requestMsg').textContent = 'Request submitted. ID: ' + (j.result.requestId || payload.requestId);
                     window.editedFromRequestId = null;
                     refreshOpenOrders();
-                    // Do NOT refresh balances now (only after admin approval, per requirements)
                 })
                 .catch(e => document.getElementById('requestMsg').textContent = 'Error: ' + e.message);
         }
