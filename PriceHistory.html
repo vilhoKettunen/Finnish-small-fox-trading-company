@@ -5,9 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Item Buy/Sell History</title>
-
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <!-- Added for top bar only -->
+    <script src="app-config.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="topbar.js"></script>
     <style>
         body {
             font-family: system-ui, sans-serif;
@@ -90,7 +92,11 @@
         .sheetItem.active {
             outline: 2px solid rgba(0,123,255,0.08);
         }
-
+        body {
+            font-family: system-ui, sans-serif;
+            padding: 1rem;
+            background: #fafafa;
+        }
         /* container for two charts stacked vertically */
         #charts {
             display: flex;

@@ -1,96 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="auth-storage.js"></script>
     <meta charset="UTF-8">
-    <title>Vak Store Admin</title>
+    <title>Admin Panel</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
-            max-width: 1200px;
+            max-width: 1100px;
             margin: auto;
-            background: #fafafa;
         }
 
-        h1, h2, h3 {
-            color: #333;
-            margin-top: 0;
+        h1, h2 {
+            margin-bottom: 8px;
         }
 
         .section {
-            margin-bottom: 28px;
-            padding: 15px 18px 18px;
             border: 1px solid #ccc;
             border-radius: 8px;
-            background: #fff;
-            position: relative;
+            padding: 12px;
+            margin-bottom: 16px;
         }
-
-        label {
-            display: inline-block;
-            margin: 6px 12px 6px 0;
-        }
-
-        input[type="text"], input[type="number"], textarea {
-            padding: 6px;
-            margin: 6px 8px 6px 0;
-            width: 220px;
-            box-sizing: border-box;
-        }
-
-        textarea {
-            min-height: 80px;
-            resize: vertical;
-        }
-
-        button {
-            padding: 6px 12px;
-            margin: 6px 10px 6px 0;
-            cursor: pointer;
-            border: 1px solid #1a73e8;
-            background: #1a73e8;
-            color: #fff;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-            button.secondary {
-                background: #555;
-                border-color: #555;
-            }
-
-            button.danger {
-                background: #c0392b;
-                border-color: #c0392b;
-            }
-
-            button:disabled {
-                opacity: .55;
-                cursor: not-allowed;
-            }
 
         table {
-            width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 13px;
+            width: 100%;
         }
 
         th, td {
             border: 1px solid #ddd;
-            padding: 6px 8px;
-            vertical-align: top;
-        }
-
-        th {
-            background: #f6f7fb;
+            padding: 6px;
             text-align: left;
         }
 
-        tr:hover {
-            background: #f5faff;
+        th {
+            background: #f5f5f5;
         }
 
         .small {
@@ -98,688 +43,310 @@
             color: #555;
         }
 
-        .ok {
-            color: #2e7d32;
-        }
-
-        .err {
-            color: #c00;
-        }
-
         .row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: center;
+            margin-top: 8px;
         }
 
-        .pill {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 999px;
-            background: #eee;
-            font-size: 12px;
+        input[type="number"], input[type="text"] {
+            padding: 6px;
+        }
+
+        button {
+            padding: 6px 10px;
+            margin-right: 6px;
         }
 
         .muted {
             color: #777;
         }
 
-        .inline-block {
-            display: inline-block;
+        .danger {
+            color: #b00;
         }
 
-        .flex-end {
-            justify-content: flex-end;
+        .ok {
+            color: #2a8f2a;
         }
 
-        .nowrap {
-            white-space: nowrap;
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
         }
 
-        .badge-admin {
-            background: #1a73e8;
-            color: #fff;
-        }
-
-        .status-chip {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: #eee;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: .5px;
-        }
-
-        .status-pending {
-            background: #ffecb3;
-        }
-
-        .status-open {
-            background: #e0f7fa;
-        }
-
-        .status-approved {
-            background: #c8e6c9;
-        }
-
-        .status-rejected {
-            background: #ffcdd2;
-        }
-
-        .filter-row input {
-            width: 240px;
-        }
-
-        .slim-btn {
-            padding: 3px 6px;
-            font-size: 11px;
-            margin: 0 4px 4px 0;
-        }
-
-        .danger.solid {
-            background: #e53935;
-        }
-
-        .floating-msg {
-            position: absolute;
-            top: 10px;
-            right: 14px;
-            font-size: 11px;
-        }
-
-        .codebox {
-            font-family: monospace;
-            background: #f5f5f5;
-            padding: 6px 8px;
-            border-radius: 4px;
-            white-space: pre-wrap;
-        }
-
-        .sticky-actions {
-            position: sticky;
-            top: 0;
-            background: #fff;
-            padding: 6px 0 4px;
-            z-index: 5;
-        }
-
-        .soft-sep {
-            border-top: 1px dashed #ddd;
-            margin: 14px 0 10px;
-            padding-top: 10px;
-        }
-
-        .fade-enter {
-            animation: fade .35s ease;
-        }
-
-        @keyframes fade {
-            from {
-                opacity: 0;
-                transform: translateY(4px);
+        @media (max-width:900px) {
+            .grid2 {
+                grid-template-columns: 1fr;
             }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .pointer {
-            cursor: pointer;
-        }
-
-        .nowrap-cell {
-            white-space: nowrap;
-        }
-
-        .w80 {
-            width: 80px;
-        }
-
-        .w100 {
-            width: 100px;
-        }
-
-        .w60 {
-            width: 60px;
-        }
-
-        .wide {
-            width: 260px !important;
         }
     </style>
     <script src="app-config.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="topbar.js"></script>
+    <script src="api-client.js"></script>
 </head>
 <body>
-    <h1>🔧 Vak Store Admin</h1>
-    <div id="authState" class="small"></div>
-
+    <h1>Admin Panel</h1>
+    <div id="authStatus" class="small muted">Checking auth...</div>
     <div class="section">
-        <button onclick="goHome()">⬅ Back to Store</button>
-        <span id="adminBadge" class="pill badge-admin" style="display:none">Admin</span>
-        <span id="adminEmail" class="small muted"></span>
-        <div id="adminMsg" class="small"></div>
-    </div>
-
-    <!-- PLAYERS -->
-    <div class="section" id="playersSec">
-        <h2>👥 Players</h2>
-        <div class="row filter-row">
-            <input id="plSearch" type="text" placeholder="Search by player/email/userId/mailbox">
-            <button onclick="refreshPlayers()">Refresh</button>
+        <h2>Pending Requests</h2>
+        <div class="row">
+            <label>
+                Status:
+                <select id="rqStatus">
+                    <option value="">Any</option>
+                    <option value="PENDING" selected>PENDING</option>
+                    <option value="DENIED">DENIED</option>
+                    <option value="EXECUTED">EXECUTED</option>
+                    <option value="CANCELLED">CANCELLED</option>
+                    <option value="OVERRIDDEN">OVERRIDDEN</option>
+                </select>
+            </label>
+            <button id="btnLoadReq">Load</button>
+            <span id="rqMsg" class="small"></span>
         </div>
-        <div class="small muted">Click a row to copy userId.</div>
-        <table id="playersTbl">
+        <table>
             <thead>
                 <tr>
-                    <th>UserId</th>
-                    <th>Player</th>
-                    <th>Email</th>
-                    <th>Mailbox</th>
-                    <th>Balance (BT)</th>
+                    <th>Created</th>
+                    <th>RequestId</th>
+                    <th>User</th>
+                    <th>Totals (buy/sell/net)</th>
+                    <th>Status</th>
+                    <th>EditedFrom</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
-            <tbody></tbody>
+            <tbody id="rqTbody"></tbody>
         </table>
-
-        <div class="soft-sep"></div>
-        <h3>Create Player (Manual)</h3>
-        <div class="row">
-            <label>Email <input id="cpEmail" type="text" placeholder="optional"></label>
-            <label>Player Name <input id="cpName" type="text"></label>
-            <label>Mailbox <input id="cpMailbox" type="text" placeholder="e.g. 1A"></label>
-            <label>Balance <input id="cpBalance" type="number" step="0.01" value="0"></label>
-            <button onclick="adminCreatePlayer()">Create</button>
-            <span id="cpMsg" class="small"></span>
-        </div>
-
-        <h3>Adjust Funds</h3>
-        <div class="row">
-            <label>UserId <input id="afUserId" type="text" class="wide" placeholder="click row to copy then paste"></label>
-            <label>Δ Balance (BT) <input id="afDelta" type="number" step="0.01" value="0"></label>
-            <label>Reason <input id="afReason" type="text" placeholder="note"></label>
-            <button onclick="adminAddFunds()">Apply</button>
-            <span id="afMsg" class="small"></span>
-        </div>
-
-        <h3>Update Mailbox</h3>
-        <div class="row">
-            <label>Player Name <input id="umName" type="text"></label>
-            <label>New Mailbox <input id="umMailbox" type="text"></label>
-            <button onclick="adminUpdateMailbox()">Update</button>
-            <span id="umMsg" class="small"></span>
-        </div>
+        <div id="rqDetails" class="small" style="white-space:pre-wrap;margin-top:8px;"></div>
     </div>
 
-    <!-- REQUESTS -->
-    <div class="section" id="requestsSec">
-        <h2>📥 Pending Requests</h2>
+    <div class="section">
+        <h2>OCM Trades (Pending)</h2>
         <div class="row">
-            <input id="rqFilter" type="text" placeholder="Filter by player/mailbox/requestId">
-            <button onclick="refreshPending()">Refresh</button>
+            <button id="btnLoadTrades">Load</button>
+            <span id="trMsg" class="small"></span>
         </div>
-        <table id="pendingTbl">
-            <thead><tr><th>RequestId</th><th>Player</th><th>Mailbox</th><th>Items (brief)</th><th>Status</th><th>Open</th></tr></thead>
-            <tbody></tbody>
+        <table>
+            <thead>
+                <tr>
+                    <th>Created</th>
+                    <th>TradeId</th>
+                    <th>Listing</th>
+                    <th>Buyer</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="trTbody"></tbody>
         </table>
+    </div>
 
-        <div id="rqDetailsBox" style="display:none;margin-top:14px;">
-            <div class="sticky-actions">
-                <h3 style="display:inline-block;margin-right:12px;">Request Details</h3>
-                <label class="small"><input id="rqExecAdmin" type="checkbox"> Executed by admin (apply fee)</label>
-                <button class="secondary" onclick="approveSelectedRequest()">Approve</button>
-                <button class="danger" onclick="rejectSelectedRequest()">Reject</button>
-                <span id="rqActMsg" class="small"></span>
+    <div class="section">
+        <h2>Adjust Balance</h2>
+        <div class="row grid2">
+            <div>
+                <div class="small">Pick user from adminListPlayers cache.</div>
+                <input id="abUserQuery" type="text" placeholder="Type name/email to filter">
+                <select id="abUserSelect" size="8" style="width:100%;"></select>
             </div>
-            <div id="rqDetails" class="small codebox fade-enter"></div>
+            <div>
+                <div class="row">
+                    <label>Delta BT: <input id="abDelta" type="number" step="0.01" value="0"></label>
+                </div>
+                <div class="row">
+                    <label>Reason: <input id="abReason" type="text" placeholder="Reason"></label>
+                </div>
+                <div class="row">
+                    <button id="btnAdjust">Adjust</button>
+                    <span id="abMsg" class="small"></span>
+                </div>
+            </div>
         </div>
-    </div>
-
-    <!-- CLAIMS -->
-    <div class="section" id="claimsSec">
-        <h2>🧾 Account Claims</h2>
-        <div class="row">
-            <button onclick="refreshClaims()">Refresh</button>
-        </div>
-        <table id="claimsTbl">
-            <thead>
-                <tr><th>ClaimId</th><th>Requester</th><th>TargetRef</th><th>MatchedUserId</th><th>Player</th><th>Mailbox</th><th>Actions</th></tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-        <div id="claimsMsg" class="small"></div>
-    </div>
-
-    <!-- LISTINGS -->
-    <div class="section" id="listingsSec">
-        <h2>📋 OCM Listings (Pending)</h2>
-        <div class="row">
-            <button onclick="refreshListingsPending()">Refresh</button>
-        </div>
-        <table id="listingsTbl">
-            <thead>
-                <tr><th>ListingId</th><th>Type</th><th>Item</th><th>Price</th><th>Remaining</th><th>Seller</th><th>Approve</th></tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-        <div id="listingsMsg" class="small"></div>
-    </div>
-
-    <!-- TRADES -->
-    <div class="section" id="tradesSec">
-        <h2>🔁 OCM Trades (Pending Admin)</h2>
-        <div class="row">
-            <button onclick="refreshTradesPending()">Refresh</button>
-        </div>
-        <table id="tradesTbl">
-            <thead>
-                <tr><th>TradeId</th><th>ListingId</th><th>Qty</th><th>Price</th><th>Status</th><th>Player</th><th>Actions</th></tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-        <div id="tradesMsg" class="small"></div>
     </div>
 
     <script>
-        const WEB_APP_URL = window.WEB_APP_URL || 'https://yellow-king-52c6.vilhokettu1.workers.dev/exec';
         let googleIdToken = null;
-        let selectedRequestId = null;
+        let __players = [];
 
-        function goHome() { location.href = 'index.html'; }
-
-        function postAction(action, payload) {
-            return fetch(WEB_APP_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action, idToken: googleIdToken, payload })
-            }).then(r => r.json());
+        function fmt(n) { const x = Number(n) || 0; return x.toFixed(2).replace(/\.?0+$/, ''); }
+        function byId(id) { return document.getElementById(id); }
+        function normalizeResult(j) { return (j && j.result != null) ? j.result : (j && j.data != null ? j.data : j); }
+        function shortUser(u) {
+            if (!u) return '';
+            return (u.playerName || u.email || u.userId || '').toString();
         }
 
-        // Fetch balance for a given user via the same backend endpoint used in index.html
-        async function fetchBalanceForUser(user) {
-            if (!googleIdToken || !user) return 0;
-            const qs = new URLSearchParams({ action: 'getBalance', idToken: googleIdToken });
-            if (user.userId) qs.append('userId', user.userId);
-            const r = await fetch(`${WEB_APP_URL}?${qs.toString()}`);
-            const j = await r.json();
-            if (!j.ok) throw new Error(j.error || 'getBalance failed');
-            // Prefer the explicit field name "balanceBT" (sheet G) but tolerate alternatives
-            const v = Number(j.data?.balanceBT ?? j.balanceBT ?? j.data?.balance ?? 0);
-            return isNaN(v) ? 0 : v;
-        }
-
-        async function ensureAdmin() {
-            const auth = await (window.initAuthFromStorage ? window.initAuthFromStorage() : Promise.resolve({ ok: false }));
-            if (!auth.ok) {
-                document.getElementById('authState').innerHTML = '<span class="err">Not logged in. Login on Store page.</span>';
-                return false;
-            }
-            googleIdToken = auth.idToken;
+        async function ensureAuth() {
+            const st = byId('authStatus');
+            const saved = window.getSavedIdToken && window.getSavedIdToken();
+            if (!saved) { st.textContent = 'Not logged in. Open index.html and login.'; throw new Error('no token'); }
+            googleIdToken = saved;
             try {
-                const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-                const meJ = await meR.json();
-                if (!meJ.ok) throw new Error(meJ.error || 'me failed');
-                document.getElementById('adminEmail').textContent = meJ.data.user?.email || '';
-                if (!meJ.data.isAdmin) {
-                    document.getElementById('authState').innerHTML = '<span class="err">Access denied (not admin).</span>';
-                    return false;
+                const me = await apiGet('me', { idToken: googleIdToken });
+                const d = normalizeResult(me);
+                if (!d?.isAdmin) { st.textContent = 'You are not an admin.'; throw new Error('not admin'); }
+                st.textContent = 'Admin authenticated: ' + (d?.user?.email || '');
+                // load players for Adjust Balance
+                const pl = await apiGet('adminListPlayers', { idToken: googleIdToken });
+                const arr = Array.isArray(pl?.data) ? pl.data : (pl?.players || pl?.result?.players || []);
+                __players = arr || [];
+                renderPlayersList();
+            } catch (e) {
+                st.textContent = 'Auth failed: ' + (e.message || e);
+                throw e;
+            }
+        }
+
+        function renderPlayersList() {
+            const q = (byId('abUserQuery').value || '').toLowerCase().trim();
+            const sel = byId('abUserSelect'); sel.innerHTML = '';
+            __players
+                .map(p => ({ ...p, _k: (p.playerName || '') + ' ' + (p.email || '') + ' ' + (p.userId || '') }))
+                .filter(p => !q || p._k.toLowerCase().includes(q))
+                .slice(0, 200)
+                .forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.userId || '';
+                    opt.textContent = `${p.playerName || '(no name)'} — ${p.email || ''}`;
+                    sel.appendChild(opt);
+                });
+        }
+
+        async function loadPendingRequests() {
+            const msg = byId('rqMsg'); msg.textContent = 'Loading...';
+            const status = byId('rqStatus').value || '';
+            try {
+                const j = await apiGet('listPendingRequests', { idToken: googleIdToken, status });
+                const d = normalizeResult(j);
+                const rows = Array.isArray(d) ? d : (d?.requests || []);
+                const tb = byId('rqTbody'); tb.innerHTML = '';
+                rows.forEach(r => {
+                    const tr = document.createElement('tr');
+                    const totals = r?.totals || {};
+                    tr.innerHTML = `
+                    <td>${r.createdAt || ''}</td>
+                    <td>${r.requestId || ''}</td>
+                    <td>${shortUser(r.user)}</td>
+                    <td>buy:${fmt(totals.buyBT)} sell:${fmt(totals.sellBT)} net:${fmt(totals.netBT)}</td>
+                    <td>${r.status || 'PENDING'}</td>
+                    <td>${r.editedFromRequestId || ''}</td>
+                    <td>
+                      <button data-act="view" data-id="${r.requestId}">View</button>
+                      <button data-act="approve" data-id="${r.requestId}">Approve</button>
+                      <button data-act="deny" data-id="${r.requestId}">Deny</button>
+                      <button data-act="cancel" data-id="${r.requestId}">Cancel</button>
+                    </td>
+                  `;
+                    tb.appendChild(tr);
+                });
+                msg.textContent = `Loaded ${rows.length}.`;
+            } catch (e) {
+                msg.textContent = 'Error: ' + (e.message || e);
+            }
+        }
+
+        async function onRqAction(act, id) {
+            const msg = byId('rqMsg');
+            try {
+                if (act === 'view') {
+                    const j = await apiGet('getRequest', { idToken: googleIdToken, requestId: id });
+                    const d = normalizeResult(j);
+                    byId('rqDetails').textContent = JSON.stringify(d, null, 2);
+                    return;
                 }
-                document.getElementById('authState').innerHTML = '<span class="ok">Admin authenticated.</span>';
-                document.getElementById('adminBadge').style.display = 'inline-block';
-                return true;
-            } catch (e) {
-                document.getElementById('authState').innerHTML = '<span class="err">Auth error: ' + e.message + '</span>';
-                return false;
-            }
-        }
-
-        /* ===== Players ===== */
-        async function refreshPlayers() {
-            const tbody = document.querySelector('#playersTbl tbody');
-            tbody.innerHTML = '';
-            try {
-                const r = await fetch(`${WEB_APP_URL}?action=adminListPlayers&idToken=${encodeURIComponent(googleIdToken)}`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error);
-                const list = Array.isArray(j.data) ? j.data : (j.data.players || []);
-                const q = (document.getElementById('plSearch').value || '').toLowerCase().trim();
-
-                // Filter locally first
-                const filtered = list.filter(p => {
-                    if (!q) return true;
-                    const hay = `${p.userId} ${p.playerName || ''} ${p.email || ''} ${p.mailbox || ''}`.toLowerCase();
-                    return hay.indexOf(q) >= 0;
-                });
-
-                // Fetch balances in parallel (use Promise.allSettled to tolerate individual failures)
-                const balancePromises = filtered.map(async p => {
-                    try {
-                        const b = await fetchBalanceForUser(p);
-                        p._balance = Number(b) || 0;
-                    } catch (_) {
-                        // fallback to any balance fields that might be present on the player object
-                        const raw = p.balanceBT ?? p.userBalanceBT ?? p.userBalance ?? p.balance ?? 0;
-                        p._balance = Number(String(raw).replace(',', '').trim()) || 0;
-                    }
-                    return p;
-                });
-
-                await Promise.allSettled(balancePromises);
-
-                // Render rows
-                filtered.forEach(p => {
-                    const bal = Number(p._balance || 0).toFixed(2);
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td class="small nowrap-cell">${p.userId}</td>
-                                            <td>${p.playerName || ''}</td>
-                                            <td>${p.email || ''}</td>
-                                            <td>${p.mailbox || ''}</td>
-                                            <td class="small">${bal}</td>`;
-                    tr.onclick = () => {
-                        navigator.clipboard.writeText(p.userId).catch(() => { });
-                        const am = document.getElementById('adminMsg');
-                        am.textContent = 'Copied userId: ' + p.userId;
-                        setTimeout(() => { if (am.textContent.startsWith('Copied')) am.textContent = ''; }, 2500);
-                    };
-                    tbody.appendChild(tr);
-                });
-            } catch (e) {
-                document.getElementById('adminMsg').textContent = 'Players load error: ' + e.message;
-            }
-        }
-        async function adminCreatePlayer() {
-            const msg = document.getElementById('cpMsg'); msg.textContent = 'Working...';
-            try {
-                const res = await postAction('adminCreatePlayer', {
-                    email: document.getElementById('cpEmail').value.trim(),
-                    playerName: document.getElementById('cpName').value.trim(),
-                    mailbox: document.getElementById('cpMailbox').value.trim(),
-                    balanceBT: parseFloat(document.getElementById('cpBalance').value) || 0
-                });
-                if (!res.ok) throw new Error(res.error);
-                msg.textContent = 'Created userId=' + res.result.userId;
-                refreshPlayers();
-            } catch (e) { msg.textContent = 'Error: ' + e.message; }
-        }
-        async function adminAddFunds() {
-            const msg = document.getElementById('afMsg'); msg.textContent = 'Working...';
-            try {
-                const res = await postAction('adminAddFunds', {
-                    userId: document.getElementById('afUserId').value.trim(),
-                    deltaBT: parseFloat(document.getElementById('afDelta').value) || 0,
-                    reason: document.getElementById('afReason').value.trim()
-                });
-                if (!res.ok) throw new Error(res.error);
-                msg.textContent = 'OK. New balance: ' + Number(res.result.balanceAfter).toFixed(2);
-                refreshPlayers();
-            } catch (e) { msg.textContent = 'Error: ' + e.message; }
-        }
-        async function adminUpdateMailbox() {
-            const msg = document.getElementById('umMsg'); msg.textContent = 'Working...';
-            try {
-                const res = await postAction('adminUpdateMailbox', {
-                    playerName: document.getElementById('umName').value.trim(),
-                    mailbox: document.getElementById('umMailbox').value.trim()
-                });
-                if (!res.ok) throw new Error(res.error);
-                msg.textContent = 'Updated.';
-                refreshPlayers();
-            } catch (e) { msg.textContent = 'Error: ' + e.message; }
-        }
-
-        /* ===== Requests ===== */
-        async function refreshPending() {
-            const tbody = document.querySelector('#pendingTbl tbody');
-            tbody.innerHTML = '';
-            document.getElementById('rqDetailsBox').style.display = 'none';
-            selectedRequestId = null;
-            try {
-                const f = document.getElementById('rqFilter').value.trim();
-                const r = await fetch(`${WEB_APP_URL}?action=pending&idToken=${encodeURIComponent(googleIdToken)}&filter=${encodeURIComponent(f)}`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error);
-                (j.data || []).forEach(x => {
-                    const brief = (x.items || [])
-                        .map(i => `${i.side}:${i.itemName}×${i.quantity}@${i.price}`)
-                        .slice(0, 3).join(' | ');
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${x.requestId}</td>
-                                            <td>${x.playerName || ''}</td>
-                                            <td>${x.mailboxNumber || ''}</td>
-                                            <td class="small">${brief}</td>
-                                            <td><span class="status-chip status-${(x.status || '').toLowerCase()}">${x.status}</span></td>
-                                            <td><button class="slim-btn" data-id="${x.requestId}">Open</button></td>`;
-                    tr.querySelector('button').onclick = () => openRequestDetails(x.requestId);
-                    tbody.appendChild(tr);
-                });
-            } catch (e) {
-                document.getElementById('adminMsg').textContent = 'Pending load error: ' + e.message;
-            }
-        }
-        function openRequestDetails(requestId) {
-            selectedRequestId = requestId;
-            const box = document.getElementById('rqDetailsBox');
-            const el = document.getElementById('rqDetails');
-            el.textContent = 'Loading...';
-            box.style.display = 'block';
-            (async () => {
-                try {
-                    const r = await fetch(`${WEB_APP_URL}?action=requestDetails&idToken=${encodeURIComponent(googleIdToken)}&requestId=${encodeURIComponent(requestId)}`);
-                    const j = await r.json();
-                    if (!j.ok) throw new Error(j.error);
-                    const d = j.data;
-
-                    const items = Array.isArray(d.items) ? d.items : [];
-                    // Identify balance rows (either flagged or by name)
-                    const isBalanceRow = it =>
-                        it.isBalance === true ||
-                        (typeof it.itemName === 'string' && it.itemName.toLowerCase() === 'account balance');
-
-                    let buyBT = 0, sellBT = 0;
-                    items.forEach(i => {
-                        if (isBalanceRow(i)) return; // skip balance rows from transaction math
-                        const qty = Number(i.quantity || 0);
-                        const price = Number(i.price || 0);
-                        if (String(i.side).toLowerCase() === 'buy') buyBT += qty * price;
-                        else if (String(i.side).toLowerCase() === 'sell') sellBT += qty * price;
-                    });
-                    const netBT = sellBT - buyBT;
-                    const oldBalanceBT = Number(d.userBalanceBT || d.balanceBT || 0);
-                    const afterBT = oldBalanceBT + netBT;
-
-                    const lines = items.map(i => {
-                        const balMark = isBalanceRow(i) ? ' (balance row excluded from net)' : '';
-                        return `- ${i.side} ${i.itemName} × ${i.quantity} @ ${i.price}${balMark}`;
-                    }).join('\n');
-
-                    el.innerHTML =
-                        `RequestId: ${d.requestId}
-Player: ${d.playerName} (${d.mailboxNumber})
-Status: ${d.status}
-
-Old Account Balance: ${oldBalanceBT.toFixed(2)} BT
-Transaction Buy Total (excl balance): ${buyBT.toFixed(2)} BT
-Transaction Sell Total (excl balance): ${sellBT.toFixed(2)} BT
-Transaction Net (Sell - Buy, excl balance): ${netBT.toFixed(2)} BT
-Account Balance After Trade (projected): ${afterBT.toFixed(2)} BT
-
-Items:
-${lines}
-`;
-                    document.getElementById('rqActMsg').textContent = '';
-                } catch (e) {
-                    el.textContent = 'Error: ' + e.message;
+                if (act === 'approve') {
+                    await apiPost('approveRequest', { idToken: googleIdToken, requestId: id, note: '' });
+                } else if (act === 'deny') {
+                    await apiPost('denyRequest', { idToken: googleIdToken, requestId: id, note: '' });
+                } else if (act === 'cancel') {
+                    await apiPost('cancelRequest', { idToken: googleIdToken, requestId: id });
                 }
-            })();
-        }
-        async function approveSelectedRequest() {
-            const msg = document.getElementById('rqActMsg');
-            if (!selectedRequestId) { msg.textContent = 'Open a request first.'; return; }
-            msg.textContent = 'Working...';
-            try {
-                const executedByAdmin = document.getElementById('rqExecAdmin').checked;
-                const res = await postAction('approveRequest', { requestId: selectedRequestId, executedByAdmin });
-                if (!res.ok) throw new Error(res.error);
-                msg.textContent = `Approved. netBT=${res.result.netBT} fee=${res.result.feeBT}`;
-                refreshPending();
-            } catch (e) { msg.textContent = 'Error: ' + e.message; }
-        }
-        async function rejectSelectedRequest() {
-            const msg = document.getElementById('rqActMsg');
-            if (!selectedRequestId) { msg.textContent = 'Open a request first.'; return; }
-            if (!confirm('Reject this request?')) return;
-            msg.textContent = 'Working...';
-            try {
-                const res = await postAction('rejectRequest', { requestId: selectedRequestId, note: '' });
-                if (!res.ok) throw new Error(res.error);
-                msg.textContent = 'Rejected.';
-                refreshPending();
-            } catch (e) { msg.textContent = 'Error: ' + e.message; }
+                msg.textContent = 'OK.';
+                await loadPendingRequests();
+            } catch (e) {
+                msg.textContent = 'Error: ' + (e.message || e);
+            }
         }
 
-        /* ===== Claims ===== */
-        async function refreshClaims() {
-            const tbody = document.querySelector('#claimsTbl tbody');
-            const msg = document.getElementById('claimsMsg');
-            tbody.innerHTML = ''; msg.textContent = '';
+        async function loadPendingTrades() {
+            const msg = byId('trMsg'); msg.textContent = 'Loading...';
             try {
-                const r = await fetch(`${WEB_APP_URL}?action=adminListAccountClaims&idToken=${encodeURIComponent(googleIdToken)}`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error);
-                (j.data || []).forEach(c => {
+                const j = await apiGet('listTrades', { idToken: googleIdToken, status: 'PENDING' });
+                const d = normalizeResult(j);
+                const rows = Array.isArray(d) ? d : (d?.trades || []);
+                const tb = byId('trTbody'); tb.innerHTML = '';
+                rows.forEach(t => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                                <td class="small">${c.claimId}</td>
-                                <td class="small">${c.requesterUserId}<div class="muted">${c.requesterEmail || ''}</div></td>
-                                <td>${c.targetRef}</td>
-                                <td class="small">${c.matchedUserId || ''}</td>
-                                <td>${c.playerName || ''}</td>
-                                <td>${c.mailbox || ''}</td>
-                                <td>
-                                    <button class="slim-btn" data-c="${c.claimId}">Approve</button>
-                                    <button class="slim-btn danger" data-cr="${c.claimId}">Reject</button>
-                                </td>`;
-                    tr.querySelector('button[data-c]').onclick = () => resolveClaim(c.claimId, true);
-                    tr.querySelector('button[data-cr]').onclick = () => resolveClaim(c.claimId, false);
-                    tbody.appendChild(tr);
+                    <td>${t.createdAt || ''}</td>
+                    <td>${t.tradeId || ''}</td>
+                    <td>${t.itemName || ''} (${t.listingId || ''})</td>
+                    <td>${shortUser(t.buyer)}</td>
+                    <td>${t.quantity || 0}</td>
+                    <td>${fmt(t.price || 0)} BT</td>
+                    <td>${t.status || 'PENDING'}</td>
+                    <td>
+                      <button data-tr="approve" data-id="${t.tradeId}">Approve</button>
+                      <button data-tr="deny" data-id="${t.tradeId}">Deny</button>
+                    </td>
+                  `;
+                    tb.appendChild(tr);
                 });
-            } catch (e) { msg.textContent = 'Claims load error: ' + e.message; }
-        }
-        async function resolveClaim(claimId, approve) {
-            const msg = document.getElementById('claimsMsg');
-            msg.textContent = 'Working...';
-            try {
-                const res = await postAction('adminResolveAccountClaim', { claimId, approve, note: '' });
-                if (!res.ok) throw new Error(res.error);
-                msg.textContent = approve ? 'Claim approved & merged.' : 'Claim rejected.';
-                refreshClaims();
-            } catch (e) { msg.textContent = 'Error: ' + e.message; }
+                msg.textContent = `Loaded ${rows.length}.`;
+            } catch (e) {
+                msg.textContent = 'Error: ' + (e.message || e);
+            }
         }
 
-        /* ===== Listings ===== */
-        async function refreshListingsPending() {
-            const tbody = document.querySelector('#listingsTbl tbody');
-            const msg = document.getElementById('listingsMsg');
-            tbody.innerHTML = ''; msg.textContent = '';
+        async function onTradeAction(act, id) {
+            const msg = byId('trMsg');
             try {
-                const r = await fetch(`${WEB_APP_URL}?action=adminListingsPending&idToken=${encodeURIComponent(googleIdToken)}`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error);
-                (j.data || []).forEach(l => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                                <td class="small">${l.listingId}</td>
-                                <td>${l.type}</td>
-                                <td>${l.itemName}</td>
-                                <td><input class="w80" type="number" step="0.01" value="${l.price || 0}"></td>
-                                <td><input class="w80" type="number" step="1" value="${l.remainingQuantity || l.quantity || 0}"></td>
-                                <td>${l.sellerPlayerName || ''}</td>
-                                <td><button class="slim-btn" data-l="${l.listingId}">Approve</button></td>`;
-                    const inputs = tr.querySelectorAll('input');
-                    tr.querySelector('button[data-l]').onclick = () =>
-                        approveListing(l.listingId, inputs[0].value, inputs[1].value);
-                    tbody.appendChild(tr);
-                });
-            } catch (e) { msg.textContent = 'Listings load error: ' + e.message; }
-        }
-        async function approveListing(listingId, price, remainingQuantity) {
-            const msg = document.getElementById('listingsMsg');
-            msg.textContent = 'Working...';
-            try {
-                const res = await postAction('adminApproveListing', {
-                    listingId,
-                    updates: { price: Number(price), remainingQuantity: Number(remainingQuantity) }
-                });
-                if (!res.ok) throw new Error(res.error);
-                msg.textContent = 'Listing approved.';
-                refreshListingsPending();
-            } catch (e) { msg.textContent = 'Error: ' + e.message; }
+                if (act === 'approve') await apiPost('approveTrade', { idToken: googleIdToken, tradeId: id });
+                else if (act === 'deny') await apiPost('denyTrade', { idToken: googleIdToken, tradeId: id });
+                msg.textContent = 'OK.';
+                await loadPendingTrades();
+            } catch (e) {
+                msg.textContent = 'Error: ' + (e.message || e);
+            }
         }
 
-        /* ===== Trades ===== */
-        async function refreshTradesPending() {
-            const tbody = document.querySelector('#tradesTbl tbody');
-            const msg = document.getElementById('tradesMsg');
-            tbody.innerHTML = ''; msg.textContent = '';
+        async function doAdjustBalance() {
+            const msg = byId('abMsg'); msg.textContent = 'Saving...';
+            const sel = byId('abUserSelect');
+            const userId = sel.value;
+            const delta = Number(byId('abDelta').value || 0);
+            const reason = (byId('abReason').value || '').trim();
+            if (!userId) { msg.textContent = 'Pick a user first.'; return; }
+            if (!isFinite(delta) || delta === 0) { msg.textContent = 'Enter non-zero delta.'; return; }
             try {
-                const r = await fetch(`${WEB_APP_URL}?action=adminTradesPending&idToken=${encodeURIComponent(googleIdToken)}`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error);
-                (j.data || []).forEach(t => {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                                <td class="small">${t.tradeId}</td>
-                                <td class="small">${t.listingId}</td>
-                                <td>${t.quantity}</td>
-                                <td>${Number(t.price).toFixed(2)}</td>
-                                <td><span class="status-chip status-${(t.status || '').toLowerCase()}">${t.status}</span></td>
-                                <td>${t.playerName || ''}</td>
-                                <td>
-                                    <button class="slim-btn" data-t="${t.tradeId}">Approve</button>
-                                    <button class="slim-btn danger" data-tr="${t.tradeId}">Reject</button>
-                                </td>`;
-                    tr.querySelector('button[data-t]').onclick = () => approveTrade(t.tradeId);
-                    tr.querySelector('button[data-tr]').onclick = () => rejectTrade(t.tradeId);
-                    tbody.appendChild(tr);
-                });
-            } catch (e) { msg.textContent = 'Trades load error: ' + e.message; }
-        }
-        async function approveTrade(tradeId) {
-            const msg = document.getElementById('tradesMsg');
-            msg.textContent = 'Working...';
-            try {
-                const res = await postAction('adminApproveTrade', { tradeId });
-                if (!res.ok) throw new Error(res.error);
-                msg.textContent = 'Trade approved.';
-                refreshTradesPending();
-            } catch (e) { msg.textContent = 'Error: ' + e.message; }
-        }
-        async function rejectTrade(tradeId) {
-            if (!confirm('Reject this trade?')) return;
-            const msg = document.getElementById('tradesMsg');
-            msg.textContent = 'Working...';
-            try {
-                const res = await postAction('adminRejectTrade', { tradeId, note: '' });
-                if (!res.ok) throw new Error(res.error);
-                msg.textContent = 'Trade rejected.';
-                refreshTradesPending();
-            } catch (e) { msg.textContent = 'Error: ' + e.message; }
+                await apiPost('adjustBalance', { idToken: googleIdToken, userId, deltaBT: delta, reason });
+                msg.textContent = 'Adjusted.';
+            } catch (e) {
+                msg.textContent = 'Error: ' + (e.message || e);
+            }
         }
 
-        /* ===== Init ===== */
-        window.onload = async () => {
-            const ok = await ensureAdmin();
-            if (!ok) return;
-            // Initial loads (parallel)
-            refreshPlayers();
-            refreshPending();
-            refreshClaims();
-            refreshListingsPending();
-            refreshTradesPending();
-        };
+        // Events
+        document.addEventListener('click', (ev) => {
+            const t = ev.target;
+            if (t.dataset && t.dataset.act && t.dataset.id) onRqAction(t.dataset.act, t.dataset.id);
+            if (t.dataset && t.dataset.tr && t.dataset.id) onTradeAction(t.dataset.tr, t.dataset.id);
+        });
+        byId('btnLoadReq').onclick = loadPendingRequests;
+        byId('btnLoadTrades').onclick = loadPendingTrades;
+        byId('btnAdjust').onclick = doAdjustBalance;
+        byId('abUserQuery').oninput = renderPlayersList;
+
+        (async () => {
+            try { await ensureAuth(); } catch { return; }
+            // auto-load
+            loadPendingRequests();
+            loadPendingTrades();
+        })();
     </script>
 </body>
 </html>

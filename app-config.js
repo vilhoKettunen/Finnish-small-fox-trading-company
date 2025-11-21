@@ -8,9 +8,10 @@
         RECAPTCHA_SITE_KEY: '6LdjcAgsAAAAABWoHl5dmFjbJQL61kOu7ddvkUZF'
     };
 
-    window.WEB_APP_URL = window.WEB_APP_URL || DEFAULTS.WEB_APP_URL;
-    window.OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || DEFAULTS.OAUTH_CLIENT_ID;
-    window.RECAPTCHA_SITE_KEY = window.RECAPTCHA_SITE_KEY || DEFAULTS.RECAPTCHA_SITE_KEY;
+    // Override from deployment if you want, but ensure it is non-empty
+    window.WEB_APP_URL = window.WEB_APP_URL || 'https://yellow-king-52c6.vilhokettu1.workers.dev/exec';
+    window.RECAPTCHA_SITE_KEY = window.RECAPTCHA_SITE_KEY || '6LdjcAgsAAAAABWoHl5dmFjbJQL61kOu7ddvkUZF';
+    window.OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '857098772457-kuvq861sa844esf2jc4b7av1pnlmnn1c.apps.googleusercontent.com';
 
     // Persistent id_token storage
     const STORAGE_KEY = 'vak_id_token';

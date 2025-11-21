@@ -1,168 +1,359 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-    <script src="auth-storage.js"></script>
     <meta charset="UTF-8">
-    <title>OCM Home</title>
+    <title>OCM Marketplace</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <script src="app-config.js"></script>
+    <link rel="icon" href="favicon.ico">
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
-            max-width: 1100px;
+            max-width: 1200px;
             margin: auto;
         }
 
-        #topBar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 48px;
-            background: #222;
-            color: #fff;
+        h1, h2 {
+            margin-top: 0;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #555;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            font-size: 13px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f5f5f5;
+        }
+
+        input, button, select {
+            padding: 6px;
+            font-size: 13px;
+        }
+
+        .flex {
             display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
             align-items: center;
-            padding: 0 20px;
-            z-index: 1000;
-            font-size: 14px;
         }
 
-            #topBar a, #topBar button {
-                color: #fff;
-                text-decoration: none;
-                margin-right: 18px;
-                background: none;
-                border: none;
-                cursor: pointer;
-            }
-
-            #topBar .right {
-                margin-left: auto;
-                display: flex;
-                gap: 12px;
-                align-items: center;
-            }
-
-        body.withTopBar {
-            padding-top: 70px;
-        }
-
-        ul {
-            padding-left: 18px;
-        }
-
-        #btnLogin {
-            padding: 6px 10px;
-            background: #1a73e8;
-            color: #fff;
-            border: none;
+        .badge-buy {
+            background: #e8f7ff;
+            padding: 2px 6px;
             border-radius: 4px;
         }
 
-        #btnLogout {
-            padding: 6px 10px;
-            background: #444;
-            color: #fff;
-            border: 1px solid #555;
+        .badge-sell {
+            background: #e9ffe8;
+            padding: 2px 6px;
             border-radius: 4px;
+        }
+
+        .inactive {
+            opacity: .5;
+        }
+
+        .status-open {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .status-closed {
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        .qty-note {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .warn {
+            color: #c00;
+            font-size: 12px;
+            margin-left: 6px;
+        }
+
+        .toolbar {
+            margin-top: 8px;
+        }
+
+        .mono {
+            font-family: Consolas, monospace;
+        }
+
+        .stack-col {
+            white-space: nowrap;
+        }
+
+        .truncate {
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .footer-note {
+            margin-top: 30px;
+            font-size: 11px;
+            color: #777;
         }
     </style>
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        const WEB_APP_URL = window.WEB_APP_URL || 'https://yellow-king-52c6.vilhokettu1.workers.dev/exec';
+        const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '857098772457-kuvq861sa844esf2jc4b7av1pnlmnn1c.apps.googleusercontent.com';
+
+        let googleIdToken = null;
+        let currentUser = null;
+
+        function byId(id) { return document.getElementById(id); }
+        function fmt2(v) { v = Number(v) || 0; let s = v.toFixed(2); return s.replace(/\.?0+$/, ''); }
+        function fmt4(v) { v = Number(v) || 0; return v.toFixed(4).replace(/0+$/, '').replace(/\.$/, ''); }
+
+        function initLogin() {
+            if (!window.google || !google.accounts || !google.accounts.id) return;
+            google.accounts.id.initialize({
+                client_id: OAUTH_CLIENT_ID,
+                callback: cred => onLogin(cred.credential),
+                ux_mode: 'popup'
+            });
+            google.accounts.id.renderButton(byId('loginBtnArea'), { theme: 'outline', size: 'medium' });
+        }
+
+        async function restore() {
+            if (!window.initAuthFromStorage) return;
+            const res = await window.initAuthFromStorage();
+            if (res.ok) {
+                onLogin(res.idToken, true);
+            }
+        }
+
+        async function onLogin(idToken, silent = false) {
+            googleIdToken = idToken;
+            try {
+                const r = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(idToken)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'me failed');
+                currentUser = j.data.user;
+                currentUser.isAdmin = !!j.data.isAdmin;
+                byId('authStatus').textContent = `Logged as ${currentUser.email}`;
+                byId('logoutBtn').style.display = 'inline-block';
+                byId('loginBtnArea').style.display = 'none';
+                loadListings();
+                loadTrades();
+            } catch (e) {
+                if (!silent) byId('authStatus').textContent = 'Auth failed: ' + e.message;
+            }
+        }
+
+        function logout() {
+            googleIdToken = null;
+            currentUser = null;
+            window.clearSavedIdToken && window.clearSavedIdToken();
+            byId('authStatus').textContent = 'Logged out.';
+            byId('logoutBtn').style.display = 'none';
+            byId('loginBtnArea').style.display = 'block';
+            byId('tbListings').innerHTML = '';
+            byId('tbTrades').innerHTML = '';
+        }
+
+        function normalizeResult(j) {
+            return (j && j.result != null) ? j.result : (j && j.data != null ? j.data : j);
+        }
+
+        async function loadListings() {
+            const q = (byId('q').value || '').trim();
+            byId('msgList').textContent = 'Loading...';
+            try {
+                const r = await fetch(`${WEB_APP_URL}?action=listings&q=${encodeURIComponent(q)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'listings failed');
+                const arr = normalizeResult(j);
+                renderListings(Array.isArray(arr) ? arr : []);
+                byId('msgList').textContent = `Found ${arr.length}`;
+            } catch (e) {
+                byId('msgList').textContent = 'Error: ' + e.message;
+            }
+        }
+
+        function renderListings(arr) {
+            const tb = byId('tbListings'); tb.innerHTML = '';
+            arr.forEach(l => {
+                // Distinguish BUY vs SELL wording: SELL has stock; BUY has demand.
+                const isBuyListing = l.type === 'BUY';
+                const qtyInd = (l.qtyAvailable === '' || l.qtyAvailable == null) ? '∞' : Number(l.qtyAvailable || 0);
+                const stackSize = Number(l.stackSize || 1) || 1;
+                const qtyStacks = (qtyInd === '∞') ? '∞' : Math.floor(Number(qtyInd) / stackSize);
+                const sideLabel = isBuyListing ? 'Demand' : 'Stock';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                        <td class="truncate">${l.itemName || ''}</td>
+                        <td>${l.type === 'SELL' ? '<span class="badge-sell">SELL</span>' : '<span class="badge-buy">BUY</span>'}</td>
+                        <td>
+                           <div class="mono">ind: ${fmt2(l.priceBT)}</div>
+                           <div class="mono">stk: ${fmt2(l.stackPriceBT)}</div>
+                        </td>
+                        <td>
+                           <div>${sideLabel} ind: ${qtyInd}</div>
+                           <div>${sideLabel} stk: ${qtyStacks}</div>
+                        </td>
+                        <td>${l.playerName || ''}</td>
+                        <td>
+                            <input type="number" min="1" value="1" style="width:70px" data-for="${l.listingId}">
+                            <div class="qty-note">Enter individuals</div>
+                        </td>
+                        <td>
+                            <button data-buy="${l.listingId}">${isBuyListing ? 'Sell to Listing' : 'Buy from Listing'}</button>
+                        </td>
+                    `;
+                tb.appendChild(tr);
+            });
+        }
+
+        async function createTrade(listingId) {
+            if (!googleIdToken) { alert('Login first'); return; }
+            const inp = document.querySelector(`input[data-for="${listingId}"]`);
+            const qty = Number(inp?.value || 0);
+            if (!qty || qty <= 0) return;
+            byId('msgList').textContent = 'Creating trade...';
+            try {
+                const body = { action: 'createTradeRequest', idToken: googleIdToken, listingId, quantity: qty };
+                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'createTradeRequest failed');
+                byId('msgList').textContent = 'Trade request created (pending approval).';
+                loadTrades();
+            } catch (e) {
+                byId('msgList').textContent = 'Error: ' + e.message;
+            }
+        }
+
+        async function loadTrades() {
+            if (!googleIdToken) { byId('msgTrades').textContent = 'Login first.'; return; }
+            byId('msgTrades').textContent = 'Loading...';
+            try {
+                const r = await fetch(`${WEB_APP_URL}?action=myOpenTrades&idToken=${encodeURIComponent(googleIdToken)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'myOpenTrades failed');
+                const d = normalizeResult(j);
+                const arr = Array.isArray(d.trades) ? d.trades : d;
+                renderTrades(arr || []);
+                byId('msgTrades').textContent = `Loaded ${arr.length}`;
+            } catch (e) {
+                byId('msgTrades').textContent = 'Error: ' + e.message;
+            }
+        }
+
+        function renderTrades(arr) {
+            const tb = byId('tbTrades'); tb.innerHTML = '';
+            arr.forEach(t => {
+                const stackSize = Number(t.stackSize || 1) || 1;
+                const totalBT = Number(t.quantity || 0) * Number(t.price || 0);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                      <td>${t.tradeId || ''}</td>
+                      <td>${t.itemName || ''}</td>
+                      <td>${t.listingType || ''}</td>
+                      <td>
+                         <div>ind qty: ${t.quantity || 0}</div>
+                         <div>stk qty: ${Math.floor((Number(t.quantity || 0)) / stackSize)}</div>
+                      </td>
+                      <td>
+                         <div>ind price: ${fmt2(t.price || 0)}</div>
+                         <div>stk price: ${fmt2((t.price || 0) * stackSize)}</div>
+                      </td>
+                      <td>${fmt2(totalBT)} BT</td>
+                      <td>${t.status || ''}</td>
+                      <td>${t.createdAt || ''}</td>
+                    `;
+                tb.appendChild(tr);
+            });
+        }
+
+        document.addEventListener('click', (ev) => {
+            const t = ev.target;
+            if (t.dataset && t.dataset.buy) createTrade(t.dataset.buy);
+        });
+
+        window.onload = () => {
+            initLogin();
+            restore();
+            byId('btnSearch').onclick = loadListings;
+            byId('btnRefreshTrades').onclick = loadTrades;
+            // Basic saved token restore:
+            const saved = window.getSavedIdToken && window.getSavedIdToken();
+            if (saved) onLogin(saved, true);
+            loadListings();
+        };
+    </script>
 </head>
 <body>
-    <div id="topBar">
-        <div><strong>Vak Store</strong></div>
-        <a href="index.html">Store</a>
-        <a href="AccountHistory.html">Account History</a>
-        <a href="OCMHome.html">OCM</a>
-        <a href="OCMUser.html">OCM Merchant</a>
-        <a id="adminLink" href="Admin.html" style="display:none;">Admin Panel</a>
-        <div class="right">
-            <button id="btnLogin" onclick="startLogin()">Login</button>
-            <span id="topUser" style="font-size:12px;color:#ddd;"></span>
-            <button id="btnLogout" onclick="logout()" style="display:none;">Logout</button>
-        </div>
+    <h1>OCM Marketplace</h1>
+    <div id="authStatus" class="small">Not logged in.</div>
+    <div id="loginBtnArea"></div>
+    <button id="logoutBtn" style="display:none;" onclick="logout()">Logout</button>
+
+    <div class="flex toolbar">
+        <input id="q" type="text" placeholder="Search item name">
+        <button id="btnSearch">Search</button>
+        <span id="msgList" class="small"></span>
     </div>
 
-    <h1>OCM Listings</h1>
-    <input id="q" placeholder="Search item">
-    <button onclick="load()">Search</button>
-    <ul id="list"></ul>
+    <table>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Type</th>
+                <th>Price</th>
+                <th>Stock / Demand</th>
+                <th>Owner</th>
+                <th>Qty (ind)</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="tbListings"></tbody>
+    </table>
 
-    <script>
-        const WEB_APP_URL = window.WEB_APP_URL;
-        const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID;
+    <h2>My Pending Trades</h2>
+    <div class="flex">
+        <button id="btnRefreshTrades">Refresh</button>
+        <span id="msgTrades" class="small"></span>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>TradeId</th>
+                <th>Item</th>
+                <th>Listing Type</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Total BT</th>
+                <th>Status</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody id="tbTrades"></tbody>
+    </table>
 
-        let googleIdToken = null; let currentUser = null; let isAdmin = false;
-
-        function updateAuthUI() {
-            document.body.classList.add('withTopBar');
-            document.getElementById('btnLogin').style.display = googleIdToken ? 'none' : 'inline-block';
-            document.getElementById('btnLogout').style.display = googleIdToken ? 'inline-block' : 'none';
-            document.getElementById('topUser').textContent = googleIdToken ? (currentUser?.email || '') : '';
-            document.getElementById('adminLink').style.display = isAdmin ? 'inline' : 'none';
-        }
-
-        function startLogin() {
-            if (window.google?.accounts?.id) {
-                try { google.accounts.id.initialize({ client_id: OAUTH_CLIENT_ID, callback: onGoogleSignIn, ux_mode: 'popup' }); google.accounts.id.prompt(); } catch { }
-            } else alert('Google Sign-In not loaded yet.');
-        }
-        function logout() {
-            googleIdToken = null; currentUser = null; isAdmin = false;
-            window.clearSavedIdToken && window.clearSavedIdToken();
-            updateAuthUI();
-        }
-
-        async function onGoogleSignIn(resp) {
-            googleIdToken = resp && resp.credential;
-            if (!googleIdToken) { updateAuthUI(); return; }
-            try {
-                const ti = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`);
-                if (!ti.ok) throw new Error('tokeninfo failed');
-                const info = await ti.json();
-                if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
-                window.saveIdToken && window.saveIdToken(googleIdToken);
-                const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-                const meJ = await meR.json();
-                if (meJ.ok) { currentUser = meJ.data.user || null; isAdmin = !!meJ.data.isAdmin; }
-            } catch (e) { console.warn('signin failed', e); }
-            updateAuthUI();
-        }
-
-        (async function tryRestoreAuthOnLoad() {
-            document.body.classList.add('withTopBar');
-            if (!window.initAuthFromStorage) { updateAuthUI(); return; }
-            try {
-                const res = await window.initAuthFromStorage();
-                if (!res.ok) { updateAuthUI(); return; }
-                googleIdToken = res.idToken;
-                try {
-                    const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-                    const meJ = await meR.json();
-                    if (meJ.ok) { currentUser = meJ.data.user || null; isAdmin = !!meJ.data.isAdmin; }
-                    else { window.clearSavedIdToken && window.clearSavedIdToken(); googleIdToken = null; }
-                } catch (e) { console.warn('restore /me failed', e); }
-            } catch (_) { /* ignore */ }
-            updateAuthUI();
-            load();
-        })();
-
-        function load() {
-            const q = document.getElementById('q').value.trim();
-            fetch(`${WEB_APP_URL}?action=listings&q=${encodeURIComponent(q)}`)
-                .then(r => r.json()).then(j => {
-                    if (!j.ok) throw new Error(j.error);
-                    const ul = document.getElementById('list'); ul.innerHTML = '';
-                    j.data.forEach(l => {
-                        const li = document.createElement('li');
-                        li.textContent = `${l.itemName} | ${l.type} | ${l.unit} | price:${l.priceBT} | qty:${l.qtyAvailable || '∞'} | ${l.playerName}`;
-                        ul.appendChild(li);
-                    });
-                }).catch(e => { alert(e.message); });
-        }
-    </script>
+    <div class="footer-note">
+        Prices shown: per-ind (canonical) and derived per-stack. BUY shows Demand; SELL shows Stock.
+    </div>
 </body>
 </html>

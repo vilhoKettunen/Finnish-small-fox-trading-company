@@ -1,714 +1,147 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="auth-storage.js"></script>
     <meta charset="UTF-8">
     <title>Account History</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <script src="app-config.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
-            max-width: 1100px;
+            max-width: 1000px;
             margin: auto;
         }
 
-        #topBar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 48px;
-            background: #222;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            z-index: 1000;
-            font-size: 14px;
+        .row {
+            margin: 8px 0;
         }
 
-            #topBar a, #topBar button {
-                color: #fff;
-                text-decoration: none;
-                margin-right: 18px;
-                background: none;
-                border: none;
-                cursor: pointer;
-            }
-
-            #topBar .right {
-                margin-left: auto;
-                display: flex;
-                gap: 12px;
-                align-items: center;
-            }
-
-        body.withTopBar {
-            padding-top: 70px;
+        table {
+            border-collapse: collapse;
+            width: 100%;
         }
 
-        .section {
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 16px;
-            background: #fff;
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+        }
+
+        th {
+            background: #f5f5f5;
         }
 
         .small {
             font-size: 12px;
-            color: #666;
+            color: #555;
         }
 
-        .muted {
-            color: #888;
-        }
-
-        .error {
-            color: #a00;
-        }
-
-        #btnLogin, #btnLogout {
-            padding: 6px 10px;
-            border-radius: 4px;
-            border: none;
-        }
-
-        #btnLogin {
-            background: #1a73e8;
-            color: #fff;
-        }
-
-        #btnLogout {
-            background: #444;
-            color: #fff;
-            border: 1px solid #555;
-        }
-
-        .history-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .history-row {
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            padding: 8px 10px;
-            margin-bottom: 8px;
-            background: #fafafa;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            flex-wrap: wrap;
-        }
-
-            .history-row:hover {
-                background: #f5faff;
-            }
-
-        .delta-pos {
-            color: #2e7d32;
-            font-weight: 600;
-        }
-
-        .delta-neg {
-            color: #c62828;
-            font-weight: 600;
-        }
-
-        .expand-btn {
-            padding: 4px 10px;
-            font-size: 12px;
-            background: #1a73e8;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-            .expand-btn:focus {
-                outline: 2px solid #1a73e8;
-            }
-
-        .receipt-box {
-            margin-top: 8px;
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            padding: 10px;
-            font-size: 12px;
-        }
-
-            .receipt-box h4 {
-                margin: 4px 0 6px;
-                font-size: 13px;
-            }
-
-        .mono {
-            font-family: monospace;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
-        .grid-two {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 6px;
-            margin-top: 6px;
-        }
-
-        .pill {
-            display: inline-block;
-            padding: 2px 6px;
-            background: #eee;
-            border-radius: 4px;
-            font-size: 11px;
-        }
-
-        .dropdown-wrap {
-            position: relative;
-            display: inline-block;
-        }
-
-        .dropdown-input {
-            width: 260px;
+        input, select, button {
             padding: 6px;
         }
-
-        .dropdown-list {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #fff;
-            border: 1px solid #ccc;
-            max-height: 240px;
-            overflow-y: auto;
-            z-index: 500;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0,0,0,.12);
-        }
-
-        .dropdown-item {
-            padding: 6px 8px;
-            cursor: pointer;
-            font-size: 13px;
-            line-height: 1.3;
-        }
-
-            .dropdown-item:hover, .dropdown-item.active {
-                background: #e9f5ff;
-            }
-
-        .flex-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .inline {
-            display: inline-block;
-        }
-
-        .faded {
-            opacity: .75;
-        }
-
-        .copy-btn {
-            background: #444;
-            color: #fff;
-            border: none;
-            padding: 4px 8px;
-            font-size: 11px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-            .copy-btn:hover {
-                background: #222;
-            }
     </style>
+    <script src="app-config.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="topbar.js"></script>
+    <script src="api-client.js"></script>
 </head>
 <body>
-    <div id="topBar">
-        <div><strong>Vak Store</strong></div>
-        <a href="index.html">Store</a>
-        <a href="AccountHistory.html">Account History</a>
-        <a href="OCMHome.html">OCM</a>
-        <a href="OCMUser.html">OCM Merchant</a>
-        <a id="adminLink" href="Admin.html" style="display:none;">Admin Panel</a>
-        <div class="right">
-            <button id="btnLogin" onclick="startLogin()">Login</button>
-            <span id="topUser" class="small"></span>
-            <button id="btnLogout" onclick="logout()" style="display:none;">Logout</button>
-        </div>
-    </div>
-
     <h1>Account History</h1>
-    <div id="loginStatus" class="small">Not signed in</div>
+    <div id="authStatus" class="small">Checking auth...</div>
 
-    <div id="adminSearch" class="section" style="display:none;">
-        <h3>Admin Player History Search</h3>
-        <div class="flex-row">
-            <div class="dropdown-wrap">
-                <input id="historyPlayerSearchInput" class="dropdown-input" placeholder="Type player name / email / userId">
-                <div id="historyPlayerSearchList" class="dropdown-list" style="display:none;"></div>
-            </div>
-            <button onclick="loadSelectedPlayerHistory()">Load Selected</button>
-            <button onclick="refreshAdminPlayersCache()">Refresh Players Cache</button>
-            <span class="small muted" id="adminPlayersStatus"></span>
-        </div>
+    <div class="row">
+        <label>From: <input id="dtFrom" type="date"></label>
+        <label>To: <input id="dtTo" type="date"></label>
+        <label>
+            Page size:
+            <select id="pgSize">
+                <option>20</option>
+                <option selected>50</option>
+                <option>100</option>
+            </select>
+        </label>
+        <button id="btnLoad">Load</button>
+        <span id="msg" class="small"></span>
     </div>
 
-    <div class="section">
-        <h3>Your History</h3>
-        <div id="historyBox" class="small">Sign in to load your history.</div>
-        <div id="historyErr" class="error"></div>
-        <ul id="historyList" class="history-list"></ul>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>TxId</th>
+                <th>Type</th>
+                <th>Delta BT</th>
+                <th>Balance After</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody id="tb"></tbody>
+    </table>
+
+    <div class="row">
+        <button id="prev">Prev</button>
+        <span id="pgInfo" class="small"></span>
+        <button id="next">Next</button>
     </div>
 
     <script>
-        const WEB_APP_URL = window.WEB_APP_URL;
-        const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID;
-
         let googleIdToken = null;
-        let currentUser = null;
-        let isAdmin = false;
-        const __playersCacheHistory = []; // {userId,email,playerName,mailbox,balanceBT}
-        // ADD tryRestoreAuthOnLoad (restores saved id token and loads profile/history)
-        async function tryRestoreAuthOnLoad() {
-            document.body.classList.add('withTopBar');
-            if (!window.initAuthFromStorage) { updateAuthUI(); return; }
+        let page = 1;
+
+        function byId(x) { return document.getElementById(x); }
+        function fmt(n) { const v = Number(n) || 0; return v.toFixed(2).replace(/\.?0+$/, ''); }
+        function normalizeResult(j) { return (j && j.result != null) ? j.result : (j && j.data != null ? j.data : j); }
+
+        async function ensureAuth() {
+            const st = byId('authStatus');
+            const saved = window.getSavedIdToken && window.getSavedIdToken();
+            if (!saved) { st.textContent = 'Not logged in. Open index.html and login.'; throw new Error('no token'); }
+            googleIdToken = saved;
             try {
-                const res = await window.initAuthFromStorage();
-                if (!res.ok) { updateAuthUI(); return; }
-                googleIdToken = res.idToken;
-                try {
-                    const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-                    const meJ = await meR.json();
-                    if (!meJ.ok) {
-                        window.clearSavedIdToken && window.clearSavedIdToken();
-                        googleIdToken = null;
-                        updateAuthUI();
-                        return;
-                    }
-                    currentUser = meJ.data.user || null;
-                    isAdmin = !!meJ.data.isAdmin;
-                } catch (e) {
-                    console.warn('restore /me failed', e);
-                    googleIdToken = null;
-                    window.clearSavedIdToken && window.clearSavedIdToken();
-                }
+                const me = await apiGet('me', { idToken: googleIdToken });
+                const d = normalizeResult(me);
+                st.textContent = 'Logged as ' + (d?.user?.email || '');
             } catch (e) {
-                console.warn('initAuthFromStorage failed', e);
-            }
-            updateAuthUI();
-            if (googleIdToken) {
-                try { await loadMyHistory(); } catch (_) { /* ignore */ }
-                if (isAdmin) refreshAdminPlayersCache();
+                st.textContent = 'Auth failed: ' + (e.message || e);
+                throw e;
             }
         }
-        /* ===== Auth UI ===== */
-        function updateAuthUI() {
-            document.body.classList.add('withTopBar');
-            document.getElementById('btnLogin').style.display = googleIdToken ? 'none' : 'inline-block';
-            document.getElementById('btnLogout').style.display = googleIdToken ? 'inline-block' : 'none';
-            document.getElementById('topUser').textContent = googleIdToken ? (currentUser?.email || '') : '';
-            document.getElementById('adminLink').style.display = isAdmin ? 'inline' : 'none';
-            document.getElementById('loginStatus').textContent = googleIdToken ? `Logged in${isAdmin ? ' (admin)' : ''}.` : 'Not signed in';
-            document.getElementById('adminSearch').style.display = isAdmin ? 'block' : 'none';
-        }
 
-        function startLogin() {
-            if (window.google?.accounts?.id) {
-                try { google.accounts.id.prompt(); } catch { alert('Login error: prompt failed'); }
-            } else alert('Google Sign-In not loaded yet.');
-        }
-
-        async function onGoogleSignIn(resp) {
-            const statusEl = document.getElementById('loginStatus');
-            googleIdToken = resp && resp.credential;
-            if (!googleIdToken) { statusEl.textContent = 'Login error: no credential'; updateAuthUI(); return; }
-            statusEl.textContent = 'Verifying...';
+        async function loadHistory() {
+            const msg = byId('msg'); msg.textContent = 'Loading...';
+            const size = Number(byId('pgSize').value || 50);
+            const since = byId('dtFrom').value || '';
+            const until = byId('dtTo').value || '';
             try {
-                const ti = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`);
-                if (!ti.ok) throw new Error('tokeninfo failed ' + ti.status);
-                const info = await ti.json();
-                if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
-
-                window.saveIdToken && window.saveIdToken(googleIdToken);
-
-                const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-                const meJ = await meR.json();
-                if (!meJ.ok) throw new Error(meJ.error || '/me failed');
-
-                currentUser = meJ.data.user || null;
-                isAdmin = !!meJ.data.isAdmin;
-
-                updateAuthUI();
-                loadMyHistory();
-                if (isAdmin) refreshAdminPlayersCache();
-            } catch (e) {
-                statusEl.textContent = 'Login error: ' + (e.message || e);
-                googleIdToken = null;
-                window.clearSavedIdToken && window.clearSavedIdToken();
-                updateAuthUI();
-            }
-        }
-
-        function logout() {
-            googleIdToken = null;
-            currentUser = null;
-            isAdmin = false;
-            window.clearSavedIdToken && window.clearSavedIdToken();
-            updateAuthUI();
-            document.getElementById('historyList').innerHTML = '';
-            document.getElementById('historyBox').textContent = 'Sign in to load your history.';
-        }
-
-        async function tryRestoreAuthOnLoad() {
-            document.body.classList.add('withTopBar');
-            if (!window.initAuthFromStorage) { updateAuthUI(); return; }
-            try {
-                const res = await window.initAuthFromStorage();
-                if (!res.ok) { updateAuthUI(); return; }
-                googleIdToken = res.idToken;
-                const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-                const meJ = await meR.json();
-                if (!meJ.ok) {
-                    window.clearSavedIdToken && window.clearSavedIdToken();
-                    googleIdToken = null;
-                } else {
-                    currentUser = meJ.data.user || null;
-                    isAdmin = !!meJ.data.isAdmin;
-                }
-            } catch { /* ignore */ }
-            updateAuthUI();
-            if (googleIdToken) {
-                loadMyHistory();
-                if (isAdmin) refreshAdminPlayersCache();
-            }
-        }
-
-        function initGoogleIdentity() {
-            if (!window.google?.accounts?.id) return;
-            try {
-                google.accounts.id.initialize({ client_id: OAUTH_CLIENT_ID, callback: onGoogleSignIn, ux_mode: 'popup' });
-            } catch (_) { }
-        }
-
-        /* ===== Player Search (Admin) ===== */
-        function normalizeStr(s) { return (s || '').toLowerCase().trim(); }
-        function scoreCandidate(candidate, query) {
-            const c = normalizeStr(candidate);
-            const q = normalizeStr(query);
-            if (!q) return -1;
-            if (c.startsWith(q)) return 100 - (c.length - q.length);
-            const idx = c.indexOf(q);
-            if (idx >= 0) return 60 - idx;
-            const tokens = q.split(/\s+/).filter(Boolean);
-            let hits = 0;
-            tokens.forEach(t => { if (c.indexOf(t) >= 0) hits++; });
-            return hits > 0 ? 30 + hits : -1;
-        }
-        function refreshAdminPlayersCache() {
-            const st = document.getElementById('adminPlayersStatus'); st.textContent = 'Loading players...';
-            if (!googleIdToken) return;
-            fetch(`${WEB_APP_URL}?action=adminListPlayers&idToken=${encodeURIComponent(googleIdToken)}`)
-                .then(r => r.json())
-                .then(j => {
-                    if (!j.ok) throw new Error(j.error || 'adminListPlayers failed');
-                    const arr = Array.isArray(j.data) ? j.data : (j.data?.players || []);
-                    __playersCacheHistory.length = 0;
-                    arr.forEach(p => __playersCacheHistory.push({
-                        userId: p.userId, email: p.email, playerName: p.playerName, mailbox: p.mailbox, balanceBT: p.balanceBT
-                    }));
-                    st.textContent = `Players loaded: ${__playersCacheHistory.length}`;
-                }).catch(e => st.textContent = 'Load error: ' + e.message);
-        }
-        // attachHistoryPlayerSearch — single correct implementation (no duplicates)
-        function attachHistoryPlayerSearch() {
-            const input = document.getElementById('historyPlayerSearchInput');
-            const list = document.getElementById('historyPlayerSearchList');
-            if (!input || !list) return;
-
-            function renderResults(results) {
-                list.innerHTML = '';
-                if (!results.length) { list.style.display = 'none'; return; }
-                results.forEach(p => {
-                    const div = document.createElement('div');
-                    div.className = 'dropdown-item';
-                    div.innerHTML =
-                        `<strong>${p.playerName || '(no name)'}</strong><br><span class="small">${p.email || ''} | ${p.mailbox || ''}</span>`;
-                    div.onclick = () => {
-                        // store both userId and playerName for later resolution
-                        input.value = p.playerName || p.email || p.userId;
-                        input.dataset.userId = p.userId || '';
-                        input.dataset.playerName = p.playerName || '';
-                        list.style.display = 'none';
-                    };
-                    list.appendChild(div);
+                const j = await apiGet('getHistory', { idToken: googleIdToken, page, pageSize: size, since, until });
+                const d = normalizeResult(j);
+                const arr = Array.isArray(d) ? d : (d?.items || []);
+                const total = Number(d?.total || 0);
+                const tb = byId('tb'); tb.innerHTML = '';
+                arr.forEach(h => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                    <td>${h.at || ''}</td>
+                    <td>${h.txId || ''}</td>
+                    <td>${h.type || ''}</td>
+                    <td>${fmt(h.deltaBT || 0)}</td>
+                    <td>${fmt(h.balanceAfterBT || 0)}</td>
+                    <td><pre class="small" style="white-space:pre-wrap;margin:0">${(h.detailsJson || '')}</pre></td>
+                  `;
+                    tb.appendChild(tr);
                 });
-                list.style.display = 'block';
+                const pages = total && size ? Math.ceil(total / size) : (arr.length < size ? page : page + 1);
+                byId('pgInfo').textContent = `Page ${page} / ${pages || '?'}`;
+                msg.textContent = `Loaded ${arr.length}.`;
+            } catch (e) {
+                msg.textContent = 'Error: ' + (e.message || e);
             }
-
-            input.addEventListener('input', () => {
-                const q = input.value.trim();
-                if (!q) { list.style.display = 'none'; input.dataset.userId = ''; input.dataset.playerName = ''; return; }
-                const scored = __playersCacheHistory.map(p => ({
-                    p,
-                    s: Math.max(
-                        scoreCandidate(`${p.playerName || ''}`, q),
-                        scoreCandidate(`${p.email || ''}`, q),
-                        scoreCandidate(`${p.userId || ''}`, q),
-                        scoreCandidate(`${p.mailbox || ''}`, q)
-                    )
-                })).filter(x => x.s >= 0).sort((a, b) => b.s - a.s).slice(0, 150).map(x => x.p);
-                renderResults(scored);
-            });
-
-            input.addEventListener('focus', () => {
-                if (input.value.trim()) input.dispatchEvent(new Event('input'));
-            });
-
-            input.addEventListener('blur', () => setTimeout(() => { list.style.display = 'none'; }, 180));
         }
 
-        // ------------------------- REPLACE loadSelectedPlayerHistory -------------------------
-        function loadSelectedPlayerHistory() {
-            if (!googleIdToken) { alert('You need to login for this tool'); return; }
-            const input = document.getElementById('historyPlayerSearchInput');
-            const playerName = input?.dataset?.playerName || '';
-            const userId = input?.dataset?.userId || '';
+        byId('btnLoad').onclick = () => { page = 1; loadHistory(); };
+        byId('prev').onclick = () => { if (page > 1) { page--; loadHistory(); } };
+        byId('next').onclick = () => { page++; loadHistory(); };
 
-            if (playerName) {
-                // Use existing backend endpoint that already works: allHistory by playerName
-                loadHistoryForPlayerName(playerName);
-                return;
-            }
-
-            if (userId) {
-                // try to map userId -> playerName from cache, then load by playerName
-                const p = __playersCacheHistory.find(x => x.userId === userId);
-                if (p && p.playerName) {
-                    loadHistoryForPlayerName(p.playerName);
-                    return;
-                }
-            }
-
-            alert('Select a player from the dropdown (choose an item, not free text).');
-        }
-
-
-        // ------------------------- NEW loadHistoryForPlayerName (uses existing backend) -------------------------
-        function loadHistoryForPlayerName(playerName) {
-            if (!googleIdToken) { alert('You need to login for this tool'); return; }
-            const box = document.getElementById('historyBox');
-            const err = document.getElementById('historyErr');
-            box.textContent = 'Loading history...'; err.textContent = '';
-            // Use the working endpoint `allHistory` with playerName (no backend change required)
-            fetch(`${WEB_APP_URL}?action=allHistory&idToken=${encodeURIComponent(googleIdToken)}&playerName=${encodeURIComponent(playerName)}`)
-                .then(r => r.json())
-                .then(j => {
-                    if (!j.ok) throw new Error(j.error || 'allHistory failed');
-                    renderHistoryList(j.data || []);
-                    box.textContent = 'Loaded.';
-                })
-                .catch(e => { err.textContent = 'Error: ' + e.message; box.textContent = ''; });
-        }
-
-        /* ===== History Rendering (Compact + Expand) ===== */
-        function formatDateTime(iso) {
-            const d = new Date(iso);
-            if (isNaN(d.getTime())) return iso || '';
-            return d.toLocaleString();
-        }
-
-        function parseDetails(detailsJson) {
-            if (!detailsJson || typeof detailsJson !== 'string') return null;
-            try { return JSON.parse(detailsJson); } catch { return null; }
-        }
-
-        function buildReceiptContent(row) {
-            const detailsObj = parseDetails(row.detailsJson);
-            const parts = [];
-            parts.push(`<h4>Transaction Receipt</h4>`);
-            parts.push(`<div><strong>Timestamp:</strong> ${formatDateTime(row.createdAt)}</div>`);
-            parts.push(`<div class="grid-two">
-                    <div><strong>Type:</strong> ${row.type || ''}</div>
-                    <div><strong>Δ Balance:</strong> ${(Number(row.deltaBT) >= 0 ? '+' : '') + Number(row.deltaBT).toFixed(2)} BT</div>
-                    <div><strong>Balance After:</strong> ${Number(row.balanceAfter).toFixed(2)} BT</div>
-                    <div><strong>TxId:</strong> ${row.txId || ''}</div>
-                </div>`);
-
-            if (!detailsObj) {
-                parts.push(`<div class="small muted">Raw details:</div><div class="mono">${(row.detailsJson || '').slice(0, 400)}</div>`);
-                return parts.join('\n');
-            }
-
-            // Recognize request structure vs simple fund adjust
-            const items = [];
-            // Try standardized shapes
-            if (detailsObj.carts?.buy || detailsObj.carts?.sell) {
-                const buy = Array.isArray(detailsObj.carts.buy) ? detailsObj.carts.buy : [];
-                const sell = Array.isArray(detailsObj.carts.sell) ? detailsObj.carts.sell : [];
-                if (buy.length) {
-                    items.push('<h4>Buy Items</h4>');
-                    items.push('<ul>' + buy.map(i => {
-                        const qty = i.bundleSize ? `${i.qty} stack(s)` : `${i.qty} pcs`;
-                        const unit = i.bundleSize ? `@ ${i.priceBT.toFixed(2)} BT / stack` : `@ ${i.priceBT.toFixed(2)} BT / each`;
-                        return `<li>${qty} ${i.name} ${unit} = ${(i.priceBT * i.qty).toFixed(2)} BT</li>`;
-                    }).join('') + '</ul>');
-                }
-                if (sell.length) {
-                    items.push('<h4>Sell Items</h4>');
-                    items.push('<ul>' + sell.map(i => {
-                        const qty = i.bundleSize ? `${i.qty} stack(s)` : `${i.qty} pcs`;
-                        const unit = i.bundleSize ? `@ ${i.priceBT.toFixed(2)} BT / stack` : `@ ${i.priceBT.toFixed(2)} BT / each`;
-                        return `<li>${qty} ${i.name} ${unit} = ${(i.priceBT * i.qty).toFixed(2)} BT</li>`;
-                    }).join('') + '</ul>');
-                }
-            } else if (Array.isArray(detailsObj.items)) {
-                const buy = detailsObj.items.filter(i => String(i.side).toLowerCase() === 'buy');
-                const sell = detailsObj.items.filter(i => String(i.side).toLowerCase() === 'sell');
-                if (buy.length) {
-                    items.push('<h4>Buy Items</h4><ul>' + buy.map(i =>
-                        `<li>${i.quantity} × ${i.itemName} @ ${Number(i.price).toFixed(2)} BT = ${(i.quantity * Number(i.price)).toFixed(2)} BT</li>`
-                    ).join('') + '</ul>');
-                }
-                if (sell.length) {
-                    items.push('<h4>Sell Items</h4><ul>' + sell.map(i =>
-                        `<li>${i.quantity} × ${i.itemName} @ ${Number(i.price).toFixed(2)} BT = ${(i.quantity * Number(i.price)).toFixed(2)} BT</li>`
-                    ).join('') + '</ul>');
-                }
-            }
-
-            // OCM trade/listing metadata guess (if present)
-            if (detailsObj.ocmTrades || detailsObj.trades) {
-                const trades = Array.isArray(detailsObj.ocmTrades) ? detailsObj.ocmTrades : (Array.isArray(detailsObj.trades) ? detailsObj.trades : []);
-                if (trades.length) {
-                    items.push('<h4>OCM Trades</h4><ul>' + trades.map(t =>
-                        `<li>Trade ${t.tradeId}: ${t.quantity} × ${t.itemName || t.listingItem || ''} @ ${Number(t.price || t.priceBT || 0).toFixed(2)} BT (${t.status || 'status'})</li>`
-                    ).join('') + '</ul>');
-                }
-            }
-
-            // Totals
-            let buyTotal = 0, sellTotal = 0;
-            if (detailsObj.totals?.buyBT !== undefined) buyTotal = Number(detailsObj.totals.buyBT);
-            if (detailsObj.totals?.sellBT !== undefined) sellTotal = Number(detailsObj.totals.sellBT);
-            if (buyTotal || sellTotal || detailsObj.totals?.netBT !== undefined) {
-                const net = detailsObj.totals?.netBT !== undefined ? Number(detailsObj.totals.netBT) : (sellTotal - buyTotal);
-                items.push(`<div class="pill">Buy Total: ${buyTotal.toFixed(2)} BT</div>
-                                <div class="pill">Sell Total: ${sellTotal.toFixed(2)} BT</div>
-                                <div class="pill">Net: ${(net >= 0 ? '+' : '') + net.toFixed(2)} BT</div>`);
-            }
-
-            parts.push(items.join('\n') || '<div class="small muted">No item details parsed.</div>');
-            parts.push('<details style="margin-top:8px;"><summary class="small">Raw details JSON</summary><div class="mono small">' +
-                escapeHtml(JSON.stringify(detailsObj).slice(0, 4000)) + '</div></details>');
-            return parts.join('\n');
-        }
-
-        function escapeHtml(s) {
-            return String(s)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-        }
-
-        function renderHistoryList(rows) {
-            const listEl = document.getElementById('historyList');
-            listEl.innerHTML = '';
-            if (!rows || !rows.length) {
-                listEl.innerHTML = '<li class="small muted">No history.</li>';
-                return;
-            }
-
-            rows.forEach(r => {
-                const li = document.createElement('li');
-                li.className = 'history-row';
-
-                const dt = document.createElement('div');
-                dt.className = 'small';
-                dt.textContent = formatDateTime(r.createdAt);
-
-                const delta = Number(r.deltaBT || 0);
-                const deltaDiv = document.createElement('div');
-                deltaDiv.className = delta >= 0 ? 'delta-pos' : 'delta-neg';
-                deltaDiv.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2) + ' BT';
-
-                const expandBtn = document.createElement('button');
-                expandBtn.type = 'button';
-                expandBtn.className = 'expand-btn';
-                expandBtn.textContent = 'Expand';
-                const receipt = document.createElement('div');
-                receipt.className = 'receipt-box';
-                receipt.style.display = 'none';
-
-                expandBtn.onclick = () => {
-                    const open = receipt.style.display === 'block';
-                    if (open) {
-                        receipt.style.display = 'none';
-                        expandBtn.textContent = 'Expand';
-                    } else {
-                        receipt.innerHTML = buildReceiptContent(r);
-                        receipt.style.display = 'block';
-                        expandBtn.textContent = 'Collapse';
-                    }
-                };
-
-                const copyBtn = document.createElement('button');
-                copyBtn.type = 'button';
-                copyBtn.className = 'copy-btn';
-                copyBtn.textContent = 'Copy Raw';
-                copyBtn.onclick = () => {
-                    navigator.clipboard.writeText(JSON.stringify(r, null, 2))
-                        .then(() => copyBtn.textContent = 'Copied!')
-                        .catch(() => copyBtn.textContent = 'Copy failed');
-                    setTimeout(() => { if (copyBtn.textContent.startsWith('Copied')) copyBtn.textContent = 'Copy Raw'; }, 2000);
-                };
-
-                li.appendChild(dt);
-                li.appendChild(deltaDiv);
-                li.appendChild(expandBtn);
-                li.appendChild(copyBtn);
-                li.appendChild(receipt);
-                listEl.appendChild(li);
-            });
-        }
-
-        function loadMyHistory() {
-            if (!googleIdToken) { alert('You need to login for this tool'); return; }
-            const box = document.getElementById('historyBox');
-            const err = document.getElementById('historyErr');
-            box.textContent = 'Loading...'; err.textContent = '';
-            fetch(`${WEB_APP_URL}?action=myHistory&idToken=${encodeURIComponent(googleIdToken)}`)
-                .then(r => r.json()).then(j => {
-                    if (!j.ok) throw new Error(j.error);
-                    renderHistoryList(j.data || []);
-                    box.textContent = 'Loaded.';
-                }).catch(e => { err.textContent = 'Error: ' + e.message; box.textContent = ''; });
-        }
-
-        /* ===== Init ===== */
-        (async function init() {
-            await tryRestoreAuthOnLoad();
-            const gsiWait = setInterval(() => {
-                if (window.google?.accounts?.id) {
-                    initGoogleIdentity();
-                    clearInterval(gsiWait);
-                }
-            }, 200);
-            setTimeout(() => clearInterval(gsiWait), 4000);
-            attachHistoryPlayerSearch();
-            updateAuthUI();
-        })();
+        (async () => { try { await ensureAuth(); loadHistory(); } catch { } })();
     </script>
 </body>
 </html>

@@ -1,428 +1,634 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="auth-storage.js"></script>
     <meta charset="UTF-8">
-    <title>OCM Merchant</title>
+    <title>OCM Merchant Panel</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <script src="app-config.js"></script>
+    <link rel="icon" href="favicon.ico">
     <style>
         body {
             font-family: Arial, sans-serif;
-            padding: 20px;
-            max-width: 1100px;
-            margin: auto;
+            margin: 20px;
+            max-width: 1250px;
         }
 
-        #topBar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 48px;
-            background: #222;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            z-index: 1000;
-            font-size: 14px;
+        h1, h2, h3 {
+            margin-top: 0;
         }
 
-            #topBar a, #topBar button {
-                color: #fff;
-                text-decoration: none;
-                margin-right: 18px;
-                background: none;
-                border: none;
-                cursor: pointer;
-            }
-
-            #topBar .right {
-                margin-left: auto;
-                display: flex;
-                gap: 12px;
-            }
-
-        body.withTopBar {
-            padding-top: 70px;
-        }
-
-        .section {
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 16px;
-            background: #fff;
-        }
-
-        .row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            align-items: center;
-            margin: 6px 0;
-        }
-
-        label {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+        .small {
+            font-size: 12px;
+            color: #555;
         }
 
         table {
-            width: 100%;
             border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
         }
 
         th, td {
             border: 1px solid #ddd;
             padding: 6px;
+            font-size: 13px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f5f5f5;
+        }
+
+        input, button, select {
+            padding: 6px;
+            font-size: 13px;
+        }
+
+        .radio-wrap {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .flex {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .section {
+            border: 1px solid #ccc;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 22px;
+            background: #fff;
+        }
+
+        .grid {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
+        }
+
+        .mono {
+            font-family: Consolas, monospace;
+        }
+
+        .inactive {
+            opacity: .5;
+        }
+
+        .status-open {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .status-closed {
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        .warn {
+            color: #c00;
+            font-size: 12px;
+            margin-left: 6px;
+        }
+
+        .edit-panel {
+            background: #fcfcfc;
+            padding: 10px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            margin-top: 6px;
         }
 
         .hidden {
             display: none;
         }
 
-        .small {
-            font-size: 12px;
+        .stack-note {
+            font-size: 11px;
             color: #666;
         }
 
-        .tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-            .tabs button {
-                padding: 6px 10px;
-            }
-
-        .muted {
-            color: #888;
-        }
-
-        #btnLogin {
-            padding: 6px 10px;
-            background: #1a73e8;
-            color: #fff;
-            border: none;
+        .badge-sell {
+            background: #e9ffe8;
+            padding: 2px 6px;
             border-radius: 4px;
         }
 
-        #btnLogout {
-            padding: 6px 10px;
-            background: #444;
-            color: #fff;
-            border: 1px solid #555;
+        .badge-buy {
+            background: #e8f7ff;
+            padding: 2px 6px;
             border-radius: 4px;
+        }
+
+        .truncate {
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .footer-note {
+            font-size: 11px;
+            color: #777;
+            margin-top: 30px;
         }
     </style>
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-</head>
-<body>
-    <div id="topBar">
-        <div><strong>Vak Store</strong></div>
-        <a href="index.html">Store</a>
-        <a href="AccountHistory.html">Account History</a>
-        <a href="OCMHome.html">OCM</a>
-        <a href="OCMUser.html">OCM Merchant</a>
-        <a id="adminLink" href="Admin.html" style="display:none;">Admin Panel</a>
-        <div class="right">
-            <button id="btnLogin" onclick="startLogin()">Login</button>
-            <span id="topUser" class="small"></span>
-            <button id="btnLogout" onclick="logout()" style="display:none;">Logout</button>
-        </div>
-    </div>
-
-    <h1>OCM Merchant</h1>
-    <div id="loginStatus" class="small">Not signed in</div>
-
-    <div class="tabs">
-        <button id="tabMerchant">Merchant</button>
-        <button id="tabAdmin" class="hidden">Admin Merchant</button>
-    </div>
-
-    <div id="merchantView" class="section">
-        <h3>Create Listing</h3>
-        <div class="row">
-            <label>
-                Type:
-                <select id="mType">
-                    <option value="SELL">SELL (you sell items)</option>
-                    <option value="BUY">BUY (you buy items)</option>
-                </select>
-            </label>
-            <label>Item: <input id="mItem" placeholder="Item name"></label>
-            <label>Price (BT): <input id="mPrice" type="number" step="0.01"></label>
-            <label>Quantity: <input id="mQty" type="number" step="1" min="1"></label>
-            <label><input id="mInPerson" type="checkbox"> In-person trade (0% fee)</label>
-            <button onclick="createListing()">Create</button>
-        </div>
-        <div id="mMsg" class="small"></div>
-        <div class="small muted">Note: Listings require admin approval before becoming active.</div>
-    </div>
-
-    <div id="adminView" class="section hidden">
-        <h3>Admin Merchant</h3>
-
-        <div class="section">
-            <h4>Listings Pending Approval</h4>
-            <button onclick="loadAdminListings()">Refresh</button>
-            <div id="adminListings"></div>
-        </div>
-
-        <div class="section">
-            <h4>OCM Trades Pending</h4>
-            <button onclick="loadAdminTrades()">Refresh</button>
-            <div id="adminTrades"></div>
-        </div>
-
-        <div class="section">
-            <h4>Create Listing On Behalf</h4>
-            <div class="row">
-                <label>Target userId: <input id="aTargetUserId" placeholder="Paste userId from Users sheet"></label>
-                <label>
-                    Type:
-                    <select id="aType"><option value="SELL">SELL</option><option value="BUY">BUY</option></select>
-                </label>
-                <label>Item: <input id="aItem"></label>
-                <label>Price (BT): <input id="aPrice" type="number" step="0.01"></label>
-                <label>Quantity: <input id="aQty" type="number" step="1" min="1"></label>
-                <label><input id="aInPerson" type="checkbox"> In-person</label>
-                <button onclick="adminCreateOnBehalf()">Create</button>
-            </div>
-            <div class="small muted">Tip: Use exact userId for now.</div>
-            <div id="aMsg" class="small"></div>
-        </div>
-    </div>
-
     <script>
-        const WEB_APP_URL = window.WEB_APP_URL;
-        const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID;
+        const WEB_APP_URL = window.WEB_APP_URL || 'https://yellow-king-52c6.vilhokettu1.workers.dev/exec';
+        const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '857098772457-kuvq861sa844esf2jc4b7av1pnlmnn1c.apps.googleusercontent.com';
+        const PRICE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/gviz/tq?tqx=out:json&gid=0";
 
         let googleIdToken = null;
-        let isAdmin = false;
         let currentUser = null;
+        let items = [];
+        let myListings = [];
+        let editingId = null;
 
-        // UI helpers and tabs
-        function updateAuthUI() {
-            document.body.classList.add('withTopBar');
-            document.getElementById('btnLogin').style.display = googleIdToken ? 'none' : 'inline-block';
-            document.getElementById('btnLogout').style.display = googleIdToken ? 'inline-block' : 'none';
-            document.getElementById('topUser').textContent = googleIdToken ? (currentUser?.email || '') : '';
-            document.getElementById('adminLink').style.display = isAdmin ? 'inline' : 'none';
-            document.getElementById('tabAdmin').classList.toggle('hidden', !isAdmin);
-            document.getElementById('loginStatus').textContent = googleIdToken ? `Logged in${isAdmin ? ' (admin)' : ''}.` : 'Not signed in';
-        }
+        function byId(i) { return document.getElementById(i); }
+        function fmt2(v) { v = Number(v) || 0; let s = v.toFixed(2); return s.replace(/\.?0+$/, ''); }
+        function fmt4(v) { v = Number(v) || 0; return v.toFixed(4); }
 
-        function selectTab(which) {
-            if (which === 'admin' && isAdmin) {
-                document.getElementById('merchantView').classList.add('hidden');
-                document.getElementById('adminView').classList.remove('hidden');
-                loadAdminListings(); loadAdminTrades();
-            } else {
-                document.getElementById('merchantView').classList.remove('hidden');
-                document.getElementById('adminView').classList.add('hidden');
-            }
-        }
-        document.getElementById('tabMerchant').addEventListener('click', () => selectTab('merchant'));
-        document.getElementById('tabAdmin').addEventListener('click', () => selectTab('admin'));
-
-        function requireAuthOrWarn() {
-            if (!googleIdToken) { alert('You need to login for this tool'); return false; }
-            return true;
+        function initLogin() {
+            if (!window.google || !google.accounts || !google.accounts.id) return;
+            google.accounts.id.initialize({
+                client_id: OAUTH_CLIENT_ID,
+                callback: cred => onLogin(cred.credential),
+                ux_mode: 'popup'
+            });
+            google.accounts.id.renderButton(byId('loginBtnArea'), { theme: 'outline', size: 'medium' });
         }
 
-        // Login
-        function startLogin() {
-            if (window.google?.accounts?.id) {
-                try {
-                    google.accounts.id.initialize({ client_id: OAUTH_CLIENT_ID, callback: onGoogleSignIn, ux_mode: 'popup' });
-                    google.accounts.id.prompt();
-                } catch { }
-            } else { alert('Google Sign-In not loaded yet. Try again in a moment.'); }
-        }
-        function logout() {
-            googleIdToken = null; currentUser = null; isAdmin = false;
-            window.clearSavedIdToken();
-            updateAuthUI();
-            selectTab('merchant');
-        }
-        async function onGoogleSignIn(resp) {
-            const statusEl = document.getElementById('loginStatus');
-            googleIdToken = resp && resp.credential;
-            if (!googleIdToken) { statusEl.textContent = 'Login error: no credential'; updateAuthUI(); return; }
-            statusEl.textContent = 'Verifying...';
-            try {
-                const ti = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`);
-                if (!ti.ok) throw new Error('tokeninfo failed ' + ti.status);
-                const info = await ti.json();
-                if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
-                window.saveIdToken(googleIdToken);
-                const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-                const meJ = await meR.json();
-                if (!meJ.ok) throw new Error(meJ.error || '/me failed');
-                currentUser = meJ.data.user || null;
-                isAdmin = !!meJ.data.isAdmin;
-                updateAuthUI();
-            } catch (e) {
-                statusEl.textContent = 'Login error: ' + e.message;
-                updateAuthUI();
-            }
-        }
-
-        // Restore saved login
-        (async function init() {
-            document.body.classList.add('withTopBar');
+        async function restore() {
+            if (!window.initAuthFromStorage) return;
             const res = await window.initAuthFromStorage();
-            if (res.ok) {
-                googleIdToken = res.idToken;
-                try {
-                    const meR = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-                    const meJ = await meR.json();
-                    if (meJ.ok) { currentUser = meJ.data.user || null; isAdmin = !!meJ.data.isAdmin; }
-                    else { window.clearSavedIdToken(); googleIdToken = null; }
-                } catch { }
+            if (res.ok) onLogin(res.idToken, true);
+        }
+
+        async function onLogin(token, silent = false) {
+            googleIdToken = token;
+            try {
+                const r = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(token)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'me failed');
+                currentUser = j.data.user;
+                currentUser.isAdmin = !!j.data.isAdmin;
+                byId('authStatus').textContent = `Logged as ${currentUser.email}`;
+                byId('logoutBtn').style.display = 'inline-block';
+                byId('loginBtnArea').style.display = 'none';
+                await loadPriceSheet();
+                await loadMyListings();
+            } catch (e) {
+                if (!silent) byId('authStatus').textContent = 'Auth failed: ' + e.message;
             }
-            updateAuthUI();
-            // Optional render button
-            if (window.google?.accounts?.id) {
-                google.accounts.id.initialize({ client_id: OAUTH_CLIENT_ID, callback: onGoogleSignIn, ux_mode: 'popup' });
-                // no auto prompt; user can click Login
+        }
+
+        function logout() {
+            googleIdToken = null; currentUser = null;
+            window.clearSavedIdToken && window.clearSavedIdToken();
+            byId('authStatus').textContent = 'Logged out.';
+            byId('logoutBtn').style.display = 'none';
+            byId('loginBtnArea').style.display = 'block';
+            byId('tbListings').innerHTML = '';
+        }
+
+        async function loadPriceSheet() {
+            byId('itemsStatus').textContent = 'Loading items...';
+            try {
+                const txt = await fetch(PRICE_SHEET_URL).then(r => r.text());
+                let payloadText = txt;
+                const start = payloadText.indexOf('('), end = payloadText.lastIndexOf(')');
+                if (start > -1 && end > start) payloadText = payloadText.slice(start + 1, end);
+                const json = JSON.parse(payloadText);
+                const rows = json?.table?.rows || [];
+                items = rows.map(row => {
+                    const c = row.c || [];
+                    const name = c[0]?.v ?? "";
+                    const bundleSize = Number(c[4]?.v ?? 1);
+                    if (!name) return null;
+                    return { name: String(name), bundleSize: bundleSize || 1 };
+                }).filter(Boolean);
+                byId('itemsStatus').textContent = `Loaded ${items.length} items.`;
+                rebuildItemSelect();
+            } catch (e) {
+                items = []; byId('itemsStatus').textContent = 'Item load error: ' + e.message;
             }
-        })();
-
-        // Merchant actions
-        function createListing() {
-            if (!requireAuthOrWarn()) return;
-            const type = (document.getElementById('mType').value || '').toUpperCase();
-            const itemName = document.getElementById('mItem').value.trim();
-            const price = Number(document.getElementById('mPrice').value || 0);
-            const quantity = Number(document.getElementById('mQty').value || 0);
-            const inPerson = !!document.getElementById('mInPerson').checked;
-            const msg = document.getElementById('mMsg');
-            if (!itemName || price <= 0 || quantity <= 0) { msg.textContent = 'Fill all fields'; return; }
-            fetch(WEB_APP_URL, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'createListing', idToken: googleIdToken, payload: { type, itemName, price, quantity, inPerson } })
-            }).then(r => r.json()).then(j => {
-                if (!j.ok) throw new Error(j.error);
-                msg.textContent = `Listing created. ID: ${j.result.listingId}. Awaiting approval.`;
-            }).catch(e => msg.textContent = 'Error: ' + e.message);
         }
 
-        // Admin Merchant
-        function loadAdminListings() {
-            const el = document.getElementById('adminListings');
-            if (!googleIdToken || !isAdmin) { el.textContent = 'Login as admin.'; return; }
-            el.textContent = 'Loading...';
-            fetch(`${WEB_APP_URL}?action=adminListingsPending&idToken=${encodeURIComponent(googleIdToken)}`)
-                .then(r => r.json()).then(j => {
-                    if (!j.ok) throw new Error(j.error);
-                    const arr = j.data || [];
-                    if (!arr.length) { el.textContent = 'No listings pending.'; return; }
-                    const table = document.createElement('table');
-                    table.innerHTML = '<thead><tr><th>ID</th><th>Type</th><th>Item</th><th>Price</th><th>Remain</th><th>Seller</th><th>Actions</th></tr></thead>';
-                    const tb = document.createElement('tbody');
-                    arr.forEach(l => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML =
-                            `<td>${l.listingId}</td><td>${l.type}</td><td>${l.itemName}</td>` +
-                            `<td><input type="number" step="0.01" value="${Number(l.price || 0)}" style="width:90px"></td>` +
-                            `<td><input type="number" step="1" value="${Number(l.remainingQuantity || 0)}" style="width:80px"></td>` +
-                            `<td>${l.sellerPlayerName}</td>` +
-                            `<td><button>Approve</button></td>`;
-                        tr.querySelector('button').onclick = () => {
-                            const newPrice = Number(tr.querySelectorAll('input')[0].value || 0);
-                            const newRemain = Number(tr.querySelectorAll('input')[1].value || 0);
-                            adminApproveListing(l.listingId, { price: newPrice, remainingQuantity: newRemain });
-                        };
-                        tb.appendChild(tr);
-                    });
-                    table.appendChild(tb);
-                    el.innerHTML = ''; el.appendChild(table);
-                }).catch(e => el.textContent = 'Error: ' + e.message);
+        function rebuildItemSelect() {
+            const sel = byId('refItemInput');
+            sel.setAttribute('list', 'refItemsDatalist');
+            const dl = byId('refItemsDatalist');
+            dl.innerHTML = '';
+            items.forEach(i => {
+                const opt = document.createElement('option');
+                opt.value = i.name;
+                dl.appendChild(opt);
+            });
         }
 
-        function adminApproveListing(listingId, updates) {
-            fetch(WEB_APP_URL, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'adminApproveListing', idToken: googleIdToken, payload: { listingId, updates } })
-            }).then(r => r.json()).then(j => {
-                if (!j.ok) throw new Error(j.error);
-                loadAdminListings();
-                alert('Listing approved.');
-            }).catch(e => alert('Error: ' + e.message));
+        async function loadMyListings() {
+            if (!googleIdToken) { byId('listingsMsg').textContent = 'Login first.'; return; }
+            byId('listingsMsg').textContent = 'Loading...';
+            try {
+                const r = await fetch(`${WEB_APP_URL}?action=listMyListings&idToken=${encodeURIComponent(googleIdToken)}`);
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'listMyListings failed');
+                const d = (j.data && j.data.listings) ? j.data.listings : [];
+                myListings = d;
+                renderMyListings();
+                byId('listingsMsg').textContent = `Loaded ${d.length}`;
+            } catch (e) {
+                byId('listingsMsg').textContent = 'Error: ' + e.message;
+            }
         }
 
-        function loadAdminTrades() {
-            const el = document.getElementById('adminTrades');
-            if (!googleIdToken || !isAdmin) { el.textContent = 'Login as admin.'; return; }
-            el.textContent = 'Loading...';
-            fetch(`${WEB_APP_URL}?action=adminTradesPending&idToken=${encodeURIComponent(googleIdToken)}`)
-                .then(r => r.json()).then(j => {
-                    if (!j.ok) throw new Error(j.error);
-                    const arr = j.data || [];
-                    if (!arr.length) { el.textContent = 'No trades pending.'; return; }
-                    const table = document.createElement('table');
-                    table.innerHTML = '<thead><tr><th>TradeId</th><th>ListingId</th><th>Qty</th><th>Price</th><th>Buyer</th><th>Seller</th><th>Actions</th></tr></thead>';
-                    const tb = document.createElement('tbody');
-                    arr.forEach(t => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML =
-                            `<td>${t.tradeId}</td><td>${t.listingId}</td><td>${t.quantity}</td><td>${t.price}</td>` +
-                            `<td>${t.buyerUserId}</td><td>${t.sellerUserId}</td>` +
-                            `<td><button data-a="approve">Approve</button> <button data-a="reject">Reject</button></td>`;
-                        tr.querySelector('[data-a="approve"]').onclick = () => adminApproveTrade(t.tradeId);
-                        tr.querySelector('[data-a="reject"]').onclick = () => adminRejectTrade(t.tradeId);
-                        tb.appendChild(tr);
-                    });
-                    table.appendChild(tb); el.innerHTML = ''; el.appendChild(table);
-                }).catch(e => el.textContent = 'Error: ' + e.message);
+        function renderMyListings() {
+            const tb = byId('tbListings'); tb.innerHTML = '';
+            myListings.forEach(l => {
+                const qtyInd = (l.remainingQuantity === '' || l.remainingQuantity == null) ? 0 : Number(l.remainingQuantity || 0);
+                const ss = Number(l.stackSize || 1) || 1;
+                const qtyStacks = Math.floor(qtyInd / ss);
+                const tr = document.createElement('tr');
+                tr.className = l.status ? '' : 'inactive';
+                tr.innerHTML = `
+                        <td class="truncate">${l.itemName || ''}</td>
+                        <td>${l.type === 'SELL' ? '<span class="badge-sell">SELL</span>' : '<span class="badge-buy">BUY</span>'}</td>
+                        <td>
+                           <div class="mono">stk: ${fmt2(l.priceStack)}</div>
+                           <div class="mono">ind: ${fmt2(l.priceInd)}</div>
+                           <div class="stack-note">stackSize=${ss}</div>
+                        </td>
+                        <td>
+                           <div>stk stock/demand: ${qtyStacks}</div>
+                           <div>ind stock/demand: ${qtyInd}</div>
+                        </td>
+                        <td>${l.status ? '<span class="status-open">OPEN</span>' : '<span class="status-closed">CLOSED</span>'}</td>
+                        <td>
+                           <button data-edit="${l.listingId}">Edit</button>
+                           <button data-toggle="${l.listingId}">${l.status ? 'Close' : 'Open'}</button>
+                           <button data-delete="${l.listingId}">Delete</button>
+                        </td>
+                    `;
+                tb.appendChild(tr);
+            });
         }
 
-        function adminApproveTrade(tradeId) {
-            fetch(WEB_APP_URL, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'adminApproveTrade', idToken: googleIdToken, payload: { tradeId } })
-            }).then(r => r.json()).then(j => {
-                if (!j.ok) throw new Error(j.error);
-                alert(`Trade approved. Fee: ${j.result.feeBT}, Net: ${j.result.netBT}`);
-                loadAdminTrades();
-            }).catch(e => alert('Error: ' + e.message));
-        }
-        function adminRejectTrade(tradeId) {
-            const note = prompt('Rejection note:', 'Rejected by admin');
-            fetch(WEB_APP_URL, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'adminRejectTrade', idToken: googleIdToken, payload: { tradeId, note: note || '' } })
-            }).then(r => r.json()).then(j => {
-                if (!j.ok) throw new Error(j.error);
-                alert('Trade rejected.');
-                loadAdminTrades();
-            }).catch(e => alert('Error: ' + e.message));
+        function resetCreateForms() {
+            byId('refItemInput').value = '';
+            byId('refQtyInd').value = '';
+            byId('refPrice').value = '';
+            byId('refPriceModeInd').checked = true;
+            byId('refSideSell').checked = true;
+            byId('customName').value = '';
+            byId('customStackSize').value = '';
+            byId('customQtyInd').value = '';
+            byId('customPrice').value = '';
+            byId('customPriceModeInd').checked = true;
+            byId('customSideSell').checked = true;
         }
 
-        function adminCreateOnBehalf() {
-            if (!requireAuthOrWarn() || !isAdmin) { alert('Admin only'); return; }
-            const targetUserId = document.getElementById('aTargetUserId').value.trim();
-            const type = (document.getElementById('aType').value || '').toUpperCase();
-            const itemName = document.getElementById('aItem').value.trim();
-            const price = Number(document.getElementById('aPrice').value || 0);
-            const quantity = Number(document.getElementById('aQty').value || 0);
-            const inPerson = !!document.getElementById('aInPerson').checked;
-            const msg = document.getElementById('aMsg');
-            if (!targetUserId || !itemName || price <= 0 || quantity <= 0) { msg.textContent = 'Fill all fields'; return; }
-            fetch(WEB_APP_URL, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'adminUpsertListingOnBehalf', idToken: googleIdToken, payload: { targetUserId, listing: { type, itemName, price, quantity, inPerson } } })
-            }).then(r => r.json()).then(j => {
-                if (!j.ok) throw new Error(j.error);
-                msg.textContent = 'Listing created on behalf. ID: ' + j.result.listingId;
-            }).catch(e => msg.textContent = 'Error: ' + e.message);
+        async function createReferencedListing() {
+            if (!googleIdToken) { alert('Login first'); return; }
+            const itemName = byId('refItemInput').value.trim();
+            const qtyInd = Number(byId('refQtyInd').value || 0);
+            const priceRaw = Number(byId('refPrice').value || 0);
+            const priceMode = byId('refPriceModeStack').checked ? 'stk' : 'ind';
+            const side = byId('refSideBuy').checked ? 'BUY' : 'SELL';
+            if (!itemName || qtyInd <= 0 || priceRaw <= 0) { alert('Fill all fields'); return; }
+            const item = items.find(i => i.name.toLowerCase() === itemName.toLowerCase());
+            const stackSize = item ? Number(item.bundleSize || 1) || 1 : 1;
+            const body = {
+                action: 'createListing',
+                idToken: googleIdToken,
+                type: side,
+                itemName,
+                quantity: qtyInd,
+                price: priceRaw,
+                priceUnit: priceMode,
+                stackSize: stackSize,
+                sourceItemId: item ? item.name : '',
+                status: true
+            };
+            await postListing(body, 'Referenced listing created.');
+        }
+
+        async function createCustomListing() {
+            if (!googleIdToken) { alert('Login first'); return; }
+            const name = byId('customName').value.trim();
+            let stackSize = Number(byId('customStackSize').value || 0);
+            const qtyInd = Number(byId('customQtyInd').value || 0);
+            const priceRaw = Number(byId('customPrice').value || 0);
+            const priceMode = byId('customPriceModeStack').checked ? 'stk' : 'ind';
+            const side = byId('customSideBuy').checked ? 'BUY' : 'SELL';
+            if (!name || qtyInd <= 0 || priceRaw <= 0 || stackSize <= 0) { alert('Fill all fields'); return; }
+            stackSize = Math.max(1, Math.floor(stackSize));
+            const body = {
+                action: 'createListing',
+                idToken: googleIdToken,
+                type: side,
+                itemName: name,
+                quantity: qtyInd,
+                price: priceRaw,
+                priceUnit: priceMode,
+                stackSize: stackSize,
+                sourceItemId: '',
+                status: true
+            };
+            await postListing(body, 'Custom listing created.');
+        }
+
+        async function postListing(body, okMsg) {
+            const msg = byId('createMsg');
+            msg.textContent = 'Creating...';
+            try {
+                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'createListing failed');
+                msg.textContent = okMsg;
+                resetCreateForms();
+                loadMyListings();
+            } catch (e) {
+                msg.textContent = 'Error: ' + e.message;
+            }
+        }
+
+        function openEdit(listingId) {
+            const l = myListings.find(x => x.listingId === listingId);
+            if (!l) { alert('Listing not found'); return; }
+            editingId = listingId;
+            byId('editPanel').classList.remove('hidden');
+            byId('editItemName').textContent = l.itemName;
+            byId('editListingId').textContent = l.listingId;
+            byId('editSide').textContent = l.type;
+            byId('editStackSize').value = l.stackSize;
+            byId('editQtyInd').value = l.remainingQuantity ?? 0;
+            // Price input: show raw in chosen mode; default to individual
+            byId('editPriceModeInd').checked = true;
+            byId('editPriceValue').value = fmt2(l.priceInd);
+            byId('editStatusOpen').checked = !!l.status;
+            updateEditDerived();
+        }
+
+        function closeEdit() {
+            editingId = null;
+            byId('editPanel').classList.add('hidden');
+        }
+
+        function updateEditDerived() {
+            const stackSize = Number(byId('editStackSize').value || 1) || 1;
+            const qtyInd = Number(byId('editQtyInd').value || 0);
+            const mode = byId('editPriceModeStack').checked ? 'stk' : 'ind';
+            const priceInput = Number(byId('editPriceValue').value || 0);
+            const indPrice = mode === 'stk' ? (priceInput / stackSize) : priceInput;
+            byId('editDerivedPriceInd').textContent = isFinite(indPrice) ? fmt4(indPrice) : '0';
+            byId('editDerivedPriceStack').textContent = isFinite(indPrice) ? fmt2(indPrice * stackSize) : '0';
+            byId('editDerivedQtyStacks').textContent = stackSize > 0 ? Math.floor(qtyInd / stackSize) : 0;
+        }
+
+        async function saveEdit() {
+            if (!googleIdToken || !editingId) { alert('Nothing to save'); return; }
+            const listingId = editingId;
+            const stackSize = Number(byId('editStackSize').value || 1) || 1;
+            const qtyInd = Number(byId('editQtyInd').value || 0);
+            const mode = byId('editPriceModeStack').checked ? 'stk' : 'ind';
+            const priceRaw = Number(byId('editPriceValue').value || 0);
+            const status = byId('editStatusOpen').checked;
+            if (priceRaw <= 0 || qtyInd <= 0 || stackSize <= 0) { alert('Fill valid values'); return; }
+            const body = {
+                action: 'updateListing',
+                idToken: googleIdToken,
+                listingId,
+                price: priceRaw,
+                priceUnit: mode,
+                quantity: qtyInd,
+                stackSize,
+                status
+            };
+            const msg = byId('editMsg');
+            msg.textContent = 'Saving...';
+            try {
+                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'updateListing failed');
+                msg.textContent = 'Saved.';
+                await loadMyListings();
+                openEdit(listingId); // refresh panel values
+            } catch (e) {
+                msg.textContent = 'Error: ' + e.message;
+            }
+        }
+
+        async function toggleListing(listingId) {
+            if (!googleIdToken) { alert('Login first'); return; }
+            const l = myListings.find(x => x.listingId === listingId);
+            if (!l) return;
+            const body = { action: 'toggleListingStatus', idToken: googleIdToken, listingId, status: !l.status };
+            const msg = byId('listingsMsg');
+            msg.textContent = 'Toggling...';
+            try {
+                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'toggleListingStatus failed');
+                msg.textContent = 'Status toggled.';
+                loadMyListings();
+                if (editingId === listingId) openEdit(listingId);
+            } catch (e) {
+                msg.textContent = 'Error: ' + e.message;
+            }
+        }
+
+        async function deleteListing(listingId) {
+            if (!googleIdToken) { alert('Login first'); return; }
+            if (!confirm('Delete listing? This closes it and zeroes remaining quantity.')) return;
+            const body = { action: 'deleteListing', idToken: googleIdToken, listingId };
+            const msg = byId('listingsMsg');
+            msg.textContent = 'Deleting...';
+            try {
+                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const j = await r.json();
+                if (!j.ok) throw new Error(j.error || 'deleteListing failed');
+                msg.textContent = 'Deleted.';
+                if (editingId === listingId) closeEdit();
+                loadMyListings();
+            } catch (e) {
+                msg.textContent = 'Error: ' + e.message;
+            }
+        }
+
+        document.addEventListener('click', ev => {
+            const t = ev.target;
+            if (t.dataset && t.dataset.edit) openEdit(t.dataset.edit);
+            if (t.dataset && t.dataset.toggle) toggleListing(t.dataset.toggle);
+            if (t.dataset && t.dataset.delete) deleteListing(t.dataset.delete);
+        });
+
+        window.onload = () => {
+            initLogin();
+            restore();
+            const saved = window.getSavedIdToken && window.getSavedIdToken();
+            if (saved) onLogin(saved, true);
+            byId('refPriceModeInd').onchange = () => syncReferencedMode();
+            byId('refPriceModeStack').onchange = () => syncReferencedMode();
+            byId('customPriceModeInd').onchange = () => syncCustomMode();
+            byId('customPriceModeStack').onchange = () => syncCustomMode();
+            // Edit mode dynamic updates
+            ['editStackSize', 'editQtyInd', 'editPriceValue', 'editPriceModeInd', 'editPriceModeStack'].forEach(id => {
+                byId(id).addEventListener('input', updateEditDerived);
+                byId(id).addEventListener('change', updateEditDerived);
+            });
+            byId('btnCreateRef').onclick = createReferencedListing;
+            byId('btnCreateCustom').onclick = createCustomListing;
+            byId('btnSaveEdit').onclick = saveEdit;
+            byId('btnCancelEdit').onclick = closeEdit;
+        };
+
+        function syncReferencedMode() {
+            // Just visual; canonical price always per-ind stored after creation
+            const mode = byId('refPriceModeStack').checked ? 'stk' : 'ind';
+            byId('refPriceModeIndicator').textContent = mode === 'stk' ? 'Stack price' : 'Individual price';
+        }
+        function syncCustomMode() {
+            const mode = byId('customPriceModeStack').checked ? 'stk' : 'ind';
+            byId('customPriceModeIndicator').textContent = mode === 'stk' ? 'Stack price' : 'Individual price';
         }
     </script>
+</head>
+<body>
+    <h1>OCM Merchant Panel</h1>
+    <div id="authStatus" class="small">Not logged in.</div>
+    <div id="loginBtnArea"></div>
+    <button id="logoutBtn" style="display:none;" onclick="logout()">Logout</button>
+
+    <div class="section">
+        <h2>Create Referenced Listing</h2>
+        <div id="itemsStatus" class="small">Items not loaded yet.</div>
+        <div class="grid">
+            <div>
+                <label>Item (sheet): <input id="refItemInput" list="refItemsDatalist" placeholder="Search item"></label>
+                <datalist id="refItemsDatalist"></datalist>
+            </div>
+            <div>
+                <label>Quantity (ind): <input id="refQtyInd" type="number" min="1" placeholder="e.g. 128"></label>
+                <div class="stack-note">System derives stack count.</div>
+            </div>
+            <div>
+                <label>Price: <input id="refPrice" type="number" min="0.01" step="0.01" placeholder="e.g. 2.5"></label>
+                <div class="radio-wrap">
+                    <label><input type="radio" name="refPriceMode" id="refPriceModeInd" checked> ind price</label>
+                    <label><input type="radio" name="refPriceMode" id="refPriceModeStack"> stk price</label>
+                </div>
+                <div class="stack-note" id="refPriceModeIndicator">Individual price</div>
+            </div>
+            <div>
+                <div class="radio-wrap">
+                    <label><input type="radio" name="refSide" id="refSideSell" checked> SELL (provide stock)</label>
+                    <label><input type="radio" name="refSide" id="refSideBuy"> BUY (provide demand)</label>
+                </div>
+            </div>
+        </div>
+        <button id="btnCreateRef">Create Referenced Listing</button>
+    </div>
+
+    <div class="section">
+        <h2>Create Fully Custom Listing</h2>
+        <div class="grid">
+            <div>
+                <label>Custom Name: <input id="customName" type="text" placeholder="Name"></label>
+            </div>
+            <div>
+                <label>Stack Size: <input id="customStackSize" type="number" min="1" placeholder="e.g. 64"></label>
+            </div>
+            <div>
+                <label>Quantity (ind): <input id="customQtyInd" type="number" min="1" placeholder="e.g. 64"></label>
+            </div>
+            <div>
+                <label>Price: <input id="customPrice" type="number" min="0.01" step="0.01" placeholder="e.g. 10"></label>
+                <div class="radio-wrap">
+                    <label><input type="radio" name="customPriceMode" id="customPriceModeInd" checked> ind price</label>
+                    <label><input type="radio" name="customPriceMode" id="customPriceModeStack"> stk price</label>
+                </div>
+                <div class="stack-note" id="customPriceModeIndicator">Individual price</div>
+            </div>
+            <div>
+                <div class="radio-wrap">
+                    <label><input type="radio" name="customSide" id="customSideSell" checked> SELL</label>
+                    <label><input type="radio" name="customSide" id="customSideBuy"> BUY</label>
+                </div>
+            </div>
+        </div>
+        <button id="btnCreateCustom">Create Custom Listing</button>
+        <div id="createMsg" class="small"></div>
+    </div>
+
+    <div class="section">
+        <h2>My Listings</h2>
+        <div class="small">Columns: Item / Price per stack & per ind / stk stock or demand / ind stock or demand / Status / Actions</div>
+        <span id="listingsMsg" class="small"></span>
+        <table>
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Type</th>
+                    <th>Prices</th>
+                    <th>Stock / Demand</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="tbListings"></tbody>
+        </table>
+    </div>
+
+    <div id="editPanel" class="section hidden">
+        <h2>Edit Listing</h2>
+        <div><b>ListingId:</b> <span id="editListingId"></span></div>
+        <div><b>Item:</b> <span id="editItemName"></span></div>
+        <div><b>Type:</b> <span id="editSide"></span></div>
+        <div class="grid" style="margin-top:10px;">
+            <div>
+                <label>Stack Size: <input id="editStackSize" type="number" min="1"></label>
+                <div class="stack-note">Changing stack size affects stack price display only.</div>
+            </div>
+            <div>
+                <label>Quantity (ind): <input id="editQtyInd" type="number" min="1"></label>
+                <div class="stack-note">Shows as stock (SELL) or demand (BUY).</div>
+            </div>
+            <div>
+                <label>Price input: <input id="editPriceValue" type="number" min="0.0001" step="0.01"></label>
+                <div class="radio-wrap">
+                    <label><input type="radio" name="editPriceMode" id="editPriceModeInd" checked> ind price</label>
+                    <label><input type="radio" name="editPriceMode" id="editPriceModeStack"> stk price</label>
+                </div>
+                <div class="small">Canonical stored: per-ind (4 decimals). UI shows 2 decimals.</div>
+            </div>
+            <div>
+                <label>
+                    Status:
+                    <input type="checkbox" id="editStatusOpen"> Open
+                </label>
+            </div>
+        </div>
+        <div style="margin-top:10px;">
+            <b>Derived:</b>
+            <div>Per-ind price: <span id="editDerivedPriceInd" class="mono">0</span></div>
+            <div>Per-stack price: <span id="editDerivedPriceStack" class="mono">0</span></div>
+            <div>Stack count from quantity: <span id="editDerivedQtyStacks" class="mono">0</span></div>
+        </div>
+        <div style="margin-top:10px;">
+            <button id="btnSaveEdit">Save Changes</button>
+            <button id="btnCancelEdit" type="button">Cancel</button>
+            <span id="editMsg" class="small"></span>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        Internal storage uses individual price & quantity; stack data derived for display. SELL = stock, BUY = demand. Fee (5%) applied on SELL trade approval (seller receives 95%).
+    </div>
 </body>
 </html>
