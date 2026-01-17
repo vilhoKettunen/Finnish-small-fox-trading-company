@@ -7,17 +7,18 @@
     <link rel="icon" href="favicon.ico">
     <script src="app-config.js"></script>
     <script src="auth-storage.js"></script>
+    <script src="api-client.js"></script>
     <script src="topbar.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         body {
-            font-family: Arial,sans-serif;
+            font-family: Arial, sans-serif;
             max-width: 1300px;
             margin: 20px auto;
             padding: 0 16px;
         }
 
-        h1, h2, h3 {
+        h1, h2, h3, h4 {
             margin: 0 0 12px;
         }
 
@@ -51,7 +52,7 @@
         .grid {
             display: grid;
             gap: 12px;
-            grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             margin-top: 8px;
         }
 
@@ -64,16 +65,17 @@
         }
 
         .mono {
-            font-family: Consolas,monospace;
+            font-family: Consolas, monospace;
         }
 
         .pill {
             display: inline-block;
             padding: 2px 6px;
-            border-radius: 4px;
+            border-radius: 999px;
             background: #eee;
             font-size: 11px;
             margin-right: 4px;
+            white-space: nowrap;
         }
 
         .pill-sell {
@@ -82,6 +84,22 @@
 
         .pill-buy {
             background: #e8f7ff;
+        }
+
+        .pill-active {
+            background: #e9ffe8;
+        }
+
+        .pill-pending {
+            background: #fff8d0;
+        }
+
+        .pill-paused {
+            background: #eee;
+        }
+
+        .pill-rejected {
+            background: #ffe3e3;
         }
 
         .status-pending {
@@ -96,8 +114,14 @@
             align-items: center;
         }
 
-        .withTopBar {
+        body.withTopBar {
             padding-top: 72px;
+        }
+
+        @supports (padding:max(0px)) {
+            body.withTopBar {
+                padding-top: max(72px, env(safe-area-inset-top));
+            }
         }
 
         #topBar {
@@ -174,36 +198,304 @@
             cursor: pointer;
         }
 
-        .subheader {
-            margin-top: 12px;
-            font-weight: bold;
+        .admin-tabs {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0;
+            flex-wrap: wrap;
         }
 
-        .two-create-wrap {
-            display: grid;
-            gap: 20px;
+            .admin-tabs button {
+                padding: 6px 10px;
+                border-radius: 6px;
+                border: 1px solid #ccc;
+                background: #fff;
+                cursor: pointer;
+            }
+
+                .admin-tabs button.active {
+                    background: #222;
+                    color: #fff;
+                    border-color: #222;
+                }
+
+        .suggestions {
+            max-height: 160px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 4px;
+            display: none;
+            background: #fff;
+        }
+
+            .suggestions .sugg {
+                padding: 4px;
+                cursor: pointer;
+                border-radius: 4px;
+            }
+
+                .suggestions .sugg:hover {
+                    background: #f0f0f0;
+                }
+
+        /* Request pick list styles */
+        .picklist-container {
+            background: #fdfdfd;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 15px;
             margin-top: 10px;
         }
 
-        .create-box {
-            border: 1px solid #ddd;
-            padding: 10px;
-            border-radius: 6px;
+        .picklist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .mailbox-badge {
+            background: #222;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .picklist-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .picklist-col h4 {
+            margin-top: 0;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .picklist-col.give h4 {
+            border-color: #2ecc71;
+            color: #27ae60;
+        }
+
+        .picklist-col.take h4 {
+            border-color: #f39c12;
+            color: #d35400;
+        }
+
+        .picklist-item {
+            padding: 4px 0;
+            border-bottom: 1px dashed #eee;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+        }
+
+        .picklist-qty {
+            font-weight: bold;
+            margin-right: 6px;
+        }
+
+        .picklist-empty {
+            color: #aaa;
+            font-style: italic;
+            padding: 10px 0;
+        }
+
+        /* History details */
+        .history-details-row td {
             background: #fafafa;
         }
 
-            .create-box h4 {
-                margin: 0 0 8px;
+        .history-details-box {
+            padding: 8px 6px;
+            font-size: 12px;
+        }
+
+        .history-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+            gap: 10px;
+        }
+
+        .history-details-col h4 {
+            margin: 0 0 4px;
+            font-size: 13px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .history-item-line {
+            border-bottom: 1px dashed #eee;
+            padding: 2px 0;
+        }
+
+            .history-item-line span.qty {
+                font-weight: bold;
+                margin-right: 4px;
             }
 
-        .inline-note {
-            font-size: 11px;
+        .history-empty-msg {
+            font-style: italic;
             color: #777;
-            margin-top: 4px;
+        }
+
+        .pill-lite {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: #eee;
+            font-size: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .picklist-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Trades tab sub-tabs */
+        .subtabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 8px 0 12px;
+        }
+
+            .subtabs button {
+                padding: 6px 10px;
+                border-radius: 999px;
+                border: 1px solid #ccc;
+                background: #fff;
+                cursor: pointer;
+            }
+
+                .subtabs button[aria-selected="true"] {
+                    background: #222;
+                    color: #fff;
+                    border-color: #222;
+                }
+
+        .details-row td {
+            background: #fafafa;
+        }
+
+        .details-box {
+            padding: 10px;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+            gap: 10px;
+        }
+
+        .warn {
+            color: #b45309;
+            font-weight: bold;
+        }
+
+        .banner {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        dialog::backdrop {
+            background: rgba(0,0,0,0.35);
+        }
+
+        /* ===== Store-style dropdown search (same pattern as OCMUser) ===== */
+        .dropdown-wrap {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .dropdown-input {
+            width: 100%;
+            max-width: 360px;
+            padding: 6px;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #ccc;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 500;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .dropdown-item {
+            padding: 6px 8px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+            .dropdown-item:hover, .dropdown-item.active {
+                background: #f0f6ff;
+            }
+
+        .inline-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .inline-row > * {
+                flex: 0 0 auto;
+            }
+
+        .peg-box {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fafafa;
+        }
+
+        .peg-row {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 8px;
+            background: #fff;
+            margin-top: 8px;
+        }
+
+        .peg-row-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .peg-row-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+            gap: 8px;
+            margin-top: 8px;
         }
     </style>
 </head>
 <body>
+    <!-- KEEP legacy top bar markup (do not remove) -->
     <div id="topBar">
         <div><strong>Vak Store</strong></div>
         <button onclick="navigateStore()">Store</button>
@@ -230,6 +522,7 @@
         function navigateOCM() { location.href = 'OCMHome.html'; }
         function navigateMerchant() { location.href = 'OCMUser.html'; }
         function navigateAdmin() { location.href = 'Admin.html'; }
+
         document.body.classList.add('withTopBar');
         if (window.initSharedTopBar) window.initSharedTopBar();
     </script>
@@ -239,32 +532,119 @@
     <div id="loginBtnArea"></div>
     <button id="logoutBtn" style="display:none;" onclick="logout()">Logout</button>
 
-    <div class="section">
+    <div class="admin-tabs" id="adminTabs">
+        <button id="tabTargetUser" class="active" onclick="showTab('targetUser')">Target User</button>
+        <button id="tabRequests" onclick="showTab('requests')">Requests</button>
+        <button id="tabTrades" onclick="showTab('trades')">Trades</button>
+        <button id="tabPlayers" onclick="showTab('players')">Players / Transfer</button>
+        <button id="tabOcm" onclick="showTab('ocmAdmin')">OCM Admin</button>
+        <button id="tabAccountHistory" onclick="showTab('accountHistory')">Account History</button>
+        <button id="tabStock" onclick="showTab('stock')">Stock</button>
+    </div>
+
+    <!-- Target User -->
+    <div class="section" id="targetUserSection">
+        <h2>Universal Target User (applies to OCM & History)</h2>
+        <div class="flex">
+            <input id="globalUserInput" type="text" placeholder="Start typing player name" style="flex:1;max-width:420px;">
+            <button onclick="clearGlobalTarget()">Clear</button>
+            <div id="globalUserSelected" class="small" style="margin-left:8px;">No user selected</div>
+        </div>
+        <div id="globalUserSuggestions" class="suggestions"></div>
+        <div id="globalPlayersCount" class="small" style="margin-top:6px;">Players loaded: 0</div>
+        <div class="small" style="margin-top:8px;">
+            Select a user here to make them the current inspection target. This affects OCM listing management, account history and other admin actions.
+        </div>
+    </div>
+
+    <!-- Requests -->
+    <div class="section" id="requestsSection" style="display:none;">
         <h2>Pending Store Requests</h2>
         <div class="flex">
             <button id="btnLoadRequests">Reload</button>
             <span id="reqMsg" class="small"></span>
         </div>
         <table>
-            <thead><tr><th>RequestId</th><th>User</th><th>Totals</th><th>Manual Bal Δ</th><th>Net</th><th>Created</th><th>Actions</th></tr></thead>
+            <thead><tr><th>RequestId</th><th>User</th><th>Mailbox</th><th>Totals</th><th>Manual Bal Δ</th><th>Net</th><th>Created</th><th>Actions</th></tr></thead>
             <tbody id="tbRequests"></tbody>
         </table>
         <div id="reqDetails" class="small" style="margin-top:10px;"></div>
     </div>
 
-    <div class="section">
-        <h2>Pending OCM Trades</h2>
-        <div class="flex">
-            <button id="btnLoadTrades">Reload</button>
-            <span id="trMsg" class="small"></span>
+    <!-- Trades -->
+    <div class="section" id="tradesSection" style="display:none;">
+        <h2>OCM Trades + Listing Review</h2>
+
+        <div class="subtabs" role="tablist" aria-label="Trades sub tabs">
+            <button id="subtabPendingTrades" type="button" role="tab" aria-selected="true" onclick="showTradesSubTab('pendingTrades')">Pending Trades Management</button>
+            <button id="subtabReviewQueue" type="button" role="tab" aria-selected="false" onclick="showTradesSubTab('reviewQueue')">Listing Review Queue</button>
         </div>
-        <table>
-            <thead><tr><th>TradeId</th><th>ListingId</th><th>Item</th><th>Type</th><th>Qty (ind / stk)</th><th>Price (ind / stk)</th><th>Total</th><th>Seller Receives</th><th>Status</th><th>Updated</th><th>Actions</th></tr></thead>
-            <tbody id="tbTrades"></tbody>
-        </table>
+
+        <div id="panelPendingTrades" role="tabpanel" aria-labelledby="subtabPendingTrades">
+            <div class="small" style="margin-bottom:6px;">
+                Uses <span class="mono">ocmAdminListAllPendingTradesV2</span>. Mailboxes resolved live from players list (<span class="mono">adminListPlayers</span>).
+            </div>
+
+            <div class="flex">
+                <button type="button" id="btnReloadAllPendingTrades">Reload</button>
+                <button type="button" id="btnFilterPendingTradesToTarget">Filter to Target User</button>
+                <button type="button" id="btnClearPendingTradesFilter">Clear filter</button>
+                <span id="pendingTradesFilterIndicator" class="small"></span>
+                <span id="pendingTradesMsg" class="small"></span>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>TradeId</th>
+                        <th>Item</th>
+                        <th>Buyer</th>
+                        <th>Seller</th>
+                        <th>Qty</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tbAllPendingTrades"></tbody>
+            </table>
+        </div>
+
+        <div id="panelReviewQueue" role="tabpanel" aria-labelledby="subtabReviewQueue" style="display:none;">
+            <div class="small" style="margin-bottom:6px;">
+                Uses <span class="mono">ocmListListingReviewQueue</span>. Includes invalid-qty listings with warning.
+            </div>
+
+            <div class="flex">
+                <button type="button" id="btnReloadReviewQueue">Reload</button>
+                <button type="button" id="btnFilterReviewQueueToTarget">Filter to Target User</button>
+                <button type="button" id="btnClearReviewQueueFilter">Clear filter</button>
+                <span id="reviewQueueFilterIndicator" class="small"></span>
+                <span id="reviewQueueMsg" class="small"></span>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ListingId</th>
+                        <th>Item</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Qty</th>
+                        <th>Stack</th>
+                        <th>Seller</th>
+                        <th>Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tbReviewQueue"></tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="section">
+    <!-- Players/Transfer -->
+    <div class="section" id="playersSection" style="display:none;">
         <h2>Players / Balances / Transfer</h2>
         <div class="grid">
             <div>
@@ -288,739 +668,370 @@
         </div>
     </div>
 
-    <div class="section" id="ocmAdminSection">
-        <h2>OCM Listing Management (Admin)</h2>
-        <div class="small">Select a player to manage their OCM listings (active & inactive). Edits are instant.</div>
-        <div class="flex" style="margin-top:6px;">
-            <input id="ocmAdminPlayerInput" type="text" placeholder="Search player name" style="flex:1;max-width:320px;">
-            <button type="button" onclick="ocmAdminSelectPlayer()">Load Listings</button>
-            <span id="ocmAdminMsg" class="small"></span>
-        </div>
-        <div id="ocmAdminPlayerSuggestions" class="small" style="max-height:140px;overflow:auto;border:1px solid #ddd;border-radius:4px;padding:4px;display:none;margin-top:4px;"></div>
+    <!-- OCM Admin -->
+    <div class="section" id="ocmAdminSection" style="display:none;">
+        <h2>OCM Admin — Acting as Target User</h2>
+        <div class="small">This tab uses dedicated admin V2 endpoints. Completion uses admin fee path (10%).</div>
 
-        <h3 style="margin:16px 0 8px;">Create Listings (On Behalf)</h3>
-        <div class="two-create-wrap">
-            <div class="create-box">
-                <h4>Sheet Item Listing</h4>
-                <label>
-                    Sheet Item:<br>
-                    <input id="sheetListingItemInput" list="sheetItemDatalist" placeholder="Start typing item name">
-                    <datalist id="sheetItemDatalist"></datalist>
-                    <datalist id="sheetItemDatalist"></datalist>
-                </label><br>
-                <label>Quantity (ind): <input id="sheetListingQty" type="number" min="1"></label><br>
-                <!-- Replace the editable stack-size input with this read-only display + hidden field -->
-                <div>
-                    <label>
-                        Stack Size (sheet):<br>
-                        <span id="sheetListingStackSizeDisplay" class="mono">—</span>
-                        <input type="hidden" id="sheetListingStackSizeHidden" value="1">
-                    </label><br>
-                </div>
-                <label>
-                    Price:<br>
-                    <input id="sheetListingPrice" type="number" min="0.01" step="0.01">
-                </label>
-                <div style="margin-top:4px;">
-                    <label><input type="radio" name="sheetListingPriceMode" id="sheetListingPriceInd" checked> ind price</label>
-                    <label><input type="radio" name="sheetListingPriceMode" id="sheetListingPriceStk"> stk price</label>
-                </div>
-                <label>
-                    Type:
-                    <select id="sheetListingType">
-                        <option value="SELL">SELL</option>
-                        <option value="BUY">BUY</option>
-                    </select>
-                </label><br>
-                <button type="button" onclick="createSheetListing()">Create Sheet Listing</button>
-                <span id="sheetListingMsg" class="small"></span>
-                <div class="inline-note">Uses sourceItemId from sheet (prefix sheet:). Price mode determines per-ind calculation.</div>
-            </div>
-            <div class="create-box">
-                <h4>Custom Item Listing</h4>
-                <label>
-                    Custom Item Name:<br>
-                    <input id="customListingItemName" type="text" placeholder="Custom item name">
-                </label><br>
-                <label>Quantity (ind): <input id="customListingQty" type="number" min="1"></label><br>
-                <label>Stack Size: <input id="customListingStackSize" type="number" min="1" value="1"></label><br>
-                <label>
-                    Price:<br>
-                    <input id="customListingPrice" type="number" min="0.01" step="0.01">
-                </label>
-                <div style="margin-top:4px;">
-                    <label><input type="radio" name="customListingPriceMode" id="customListingPriceInd" checked> ind price</label>
-                    <label><input type="radio" name="customListingPriceMode" id="customListingPriceStk"> stk price</label>
-                </div>
-                <label>
-                    Type:
-                    <select id="customListingType">
-                        <option value="SELL">SELL</option>
-                        <option value="BUY">BUY</option>
-                    </select>
-                </label><br>
-                <button type="button" onclick="createCustomListing()">Create Custom Listing</button>
-                <span id="customListingMsg" class="small"></span>
-                <div class="inline-note">No sourceItemId (custom). Same validation rules.</div>
-            </div>
+        <div id="ocmActingBanner" class="banner" style="display:none;"></div>
+        <div id="ocmActingNoTarget" class="banner">
+            <div><strong>Select a target user first.</strong></div>
+            <div class="small">Use the <span class="mono">Target User</span> tab to select a player. Actions here will be disabled until then.</div>
         </div>
 
-        <div style="margin-top:22px;">
-            <h3 style="margin:4px 0;">Listings</h3>
-            <div class="subheader">Referenced (Sheet)</div>
-            <table>
-                <thead><tr><th>ListingId</th><th>Item</th><th>Type</th><th>Prices (stk / ind)</th><th>Qty (ind / stk)</th><th>Status</th><th>Edit</th></tr></thead>
-                <tbody id="ocmAdminListingsBodyRef"></tbody>
-            </table>
-            <div class="subheader">Custom</div>
-            <table>
-                <thead><tr><th>ListingId</th><th>Item</th><th>Type</th><th>Prices (stk / ind)</th><th>Qty (ind / stk)</th><th>Status</th><th>Edit</th></tr></thead>
-                <tbody id="ocmAdminListingsBodyCustom"></tbody>
-            </table>
-        </div>
+        <div id="ocmActingContent" class="disabled">
+            <div class="section" style="margin-top:12px;">
+                <h3>Listing creation tool</h3>
+                <div class="subtabs" role="tablist" aria-label="Listing creation modes">
+                    <button id="tabCreateStore" type="button" role="tab" aria-selected="true" onclick="setAdminCreateTab('store')">Store search (recommended)</button>
+                    <button id="tabCreateHalf" type="button" role="tab" aria-selected="false" onclick="setAdminCreateTab('half')">Half custom</button>
+                    <button id="tabCreateFull" type="button" role="tab" aria-selected="false" onclick="setAdminCreateTab('full')">Full custom</button>
+                </div>
 
-        <div id="ocmEditPanel" style="display:none;margin-top:18px;border:1px solid #ddd;padding:10px;border-radius:6px;background:#fafafa;">
-            <h3 style="margin-top:0;">Edit Listing</h3>
-            <div id="ocmEditHeader" class="small"></div>
-            <div class="grid" style="margin-top:10px;">
-                <div><label>Quantity (ind):<br><input id="ocmEditQtyInd" type="number" min="1"></label></div>
-                <div><label>Stack Size:<br><input id="ocmEditStackSize" type="number" min="1"></label></div>
-                <div>
-                    <label>Price input:<br><input id="ocmEditPriceVal" type="number" min="0.0001" step="0.01"></label>
-                    <div style="margin-top:4px;">
-                        <label><input type="radio" name="ocmEditPriceMode" id="ocmEditModeInd" checked> ind price</label>
-                        <label><input type="radio" name="ocmEditPriceMode" id="ocmEditModeStk"> stk price</label>
+                <!-- STORE -->
+                <div id="panelCreateStore" style="margin-top:10px;">
+                    <div class="grid">
+                        <div>
+                            <label>
+                                Type
+                                <select id="createTypeStore"><option value="SELL">SELL (supply)</option><option value="BUY">BUY (demand)</option></select>
+                            </label>
+
+                            <label>Store item (must match catalog)</label>
+                            <div class="dropdown-wrap">
+                                <input id="createItemStore" class="dropdown-input" type="text" placeholder="Type to search store item" autocomplete="off">
+                                <div id="createItemStoreList" class="dropdown-list"></div>
+                            </div>
+
+                            <label>Quantity available</label>
+                            <div class="inline-row">
+                                <input id="createQtyUnitsStore" type="number" min="1" value="1">
+                                <select id="createQtyModeStore" aria-label="Quantity unit">
+                                    <option value="IND" selected>individual</option>
+                                    <option value="STACK">stack</option>
+                                </select>
+                            </div>
+                            <div class="small">Stack size locked to store catalog bundle size.</div>
+                        </div>
+
+                        <div>
+                            <div class="peg-box">
+                                <div class="small"><strong>Pricing (PEG)</strong></div>
+                                <div class="small">Primary + up to 10 alternative pegs. Buyer can pay with BT or exactly one peg item.</div>
+                                <div id="createStorePegBox"></div>
+                                <div class="flex" style="margin-top:8px;">
+                                    <button type="button" id="btnCreateStoreAddAlt">Add alternative peg</button>
+                                    <span id="createStorePegWarn" class="small warn"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <button type="button" id="btnCreateStore">Create listing</button>
+                            <div id="createMsgStore" class="small"></div>
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <label><input type="checkbox" id="ocmEditStatusOpen"> Open (active)</label><br>
-                    <button type="button" onclick="ocmAdminSaveEdit()">Save</button>
-                    <button type="button" onclick="ocmAdminCancelEdit()">Cancel</button>
-                    <div id="ocmEditMsg" class="small"></div>
+
+                <!-- HALF -->
+                <div id="panelCreateHalf" style="display:none;margin-top:10px;">
+                    <div class="grid">
+                        <div>
+                            <label>
+                                Type
+                                <select id="createTypeHalf"><option value="SELL">SELL</option><option value="BUY">BUY</option></select>
+                            </label>
+
+                            <label>Custom item name <input id="createItemHalf" type="text" placeholder="Custom item name"></label>
+                            <label>Stack size <input id="createStackHalf" type="number" min="1" value="1"></label>
+
+                            <label>Quantity available</label>
+                            <div class="inline-row">
+                                <input id="createQtyUnitsHalf" type="number" min="1" value="1">
+                                <select id="createQtyModeHalf" aria-label="Quantity unit">
+                                    <option value="IND" selected>individual</option>
+                                    <option value="STACK">stack</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="peg-box">
+                                <div class="small"><strong>Pricing (PEG)</strong></div>
+                                <div class="small">Peg items must be store-catalog items.</div>
+                                <div id="createHalfPegBox"></div>
+                                <div class="flex" style="margin-top:8px;">
+                                    <button type="button" id="btnCreateHalfAddAlt">Add alternative peg</button>
+                                    <span id="createHalfPegWarn" class="small warn"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <button type="button" id="btnCreateHalf">Create listing</button>
+                            <div id="createMsgHalf" class="small"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FULL -->
+                <div id="panelCreateFull" style="display:none;margin-top:10px;">
+                    <div class="grid">
+                        <div>
+                            <label>
+                                Type
+                                <select id="createTypeFull"><option value="SELL">SELL</option><option value="BUY">BUY</option></select>
+                            </label>
+                            <label>Custom item name <input id="createItemFull" type="text" placeholder="Custom item name"></label>
+                            <label>Stack size <input id="createStackFull" type="number" min="1" value="1"></label>
+                            <label>Quantity available (individual units) <input id="createQtyUnitsFull" type="number" min="1" value="1"></label>
+                        </div>
+                        <div>
+                            <label>Fixed BT price per 1 unit (individual) <input id="createFixedBT" type="number" min="0.01" step="0.01" value="1"></label>
+                            <div class="small">Full custom listings use fixed BT (no item payment).</div>
+                        </div>
+                        <div>
+                            <button type="button" id="btnCreateFull">Create listing</button>
+                            <div id="createMsgFull" class="small"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div style="margin-top:8px;" class="small">
-                Derived per-ind: <span id="ocmEditDerivedInd">0</span> | per-stk: <span id="ocmEditDerivedStk">0</span> | stacks from qty: <span id="ocmEditDerivedQtyStk">0</span>
+
+            <div class="section">
+                <h3>Listing editor (Target user)</h3>
+                <div class="flex">
+                    <button type="button" id="btnReloadTargetListings">Reload</button>
+                    <span id="msgTargetListings" class="small"></span>
+                </div>
+
+                <h4 style="margin-top:12px;">SELL listings</h4>
+                <table>
+                    <thead><tr><th>ListingId</th><th>Item</th><th>Status</th><th>Qty (ind)</th><th>Stack</th><th>Pricing</th><th>Actions</th></tr></thead>
+                    <tbody id="tbSellListings"></tbody>
+                </table>
+
+                <h4 style="margin-top:12px;">BUY listings</h4>
+                <table>
+                    <thead><tr><th>ListingId</th><th>Item</th><th>Status</th><th>Qty (ind)</th><th>Stack</th><th>Pricing</th><th>Actions</th></tr></thead>
+                    <tbody id="tbBuyListings"></tbody>
+                </table>
+
+                <h4 style="margin-top:12px;">Other statuses</h4>
+                <table>
+                    <thead><tr><th>ListingId</th><th>Item</th><th>Type</th><th>Status</th><th>Updated</th><th>ApprovedBy</th><th>Notes</th></tr></thead>
+                    <tbody id="tbOtherListings"></tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h3>Pending trades (Target user)</h3>
+                <div class="grid">
+                    <div>
+                        <h4>My pending requests (target is buyer)</h4>
+                        <div class="flex">
+                            <button type="button" id="btnReloadTargetMyPending">Reload</button>
+                            <span id="msgTargetMyPending" class="small"></span>
+                        </div>
+                        <table>
+                            <thead><tr><th>TradeId</th><th>Item</th><th>Trader</th><th>Qty</th><th>Payment</th><th>Actions</th></tr></thead>
+                            <tbody id="tbTargetMyPending"></tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <h4>Incoming pending requests (target is seller)</h4>
+                        <div class="flex">
+                            <button type="button" id="btnReloadTargetIncomingPending">Reload</button>
+                            <span id="msgTargetIncomingPending" class="small"></span>
+                        </div>
+                        <table>
+                            <thead><tr><th>TradeId</th><th>Item</th><th>Requester</th><th>Qty</th><th>Payment</th><th>Actions</th></tr></thead>
+                            <tbody id="tbTargetIncomingPending"></tbody>
+                        </table>
+                        <div class="small">Accepting uses admin completion path (10% fee): <span class="mono">ocmAcceptTradeAsAdminV2</span>.</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
-        const WEB_APP_URL = window.WEB_APP_URL || '';
-        const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '';
-        const PRICE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/gviz/tq?tqx=out:json&gid=0';
+    <!-- EDIT LISTING DIALOG -->
+    <dialog id="dlgEditListing">
+        <form method="dialog" style="min-width:min(760px,95vw)">
+            <h3 style="margin-top:0;">Edit listing</h3>
+            <div class="small">Listing: <span id="editListingId" class="mono"></span></div>
+            <div id="editRejectedWarning" class="banner" style="display:none;">
+                <div><strong>Warning:</strong> This listing is <span class="pill pill-rejected">REJECTED</span>.</div>
+                <div class="small">Saving changes will <strong>activate it immediately</strong> (fix + approve).</div>
+            </div>
 
-        let googleIdToken = null;
-        let currentUser = null;
-        let playersCache = [];
-        let adminSheetItems = []; // {name,bundleSize,buyStack,sellStack,buyEach,sellEach}
+            <div class="details-grid" style="margin-top:10px;">
+                <div>
+                    <label>Quantity available (individual) <input id="editQty" type="number" min="1" value="1"></label>
+                    <label>Remaining quantity (optional restock override) <input id="editRemainingQty" type="number" min="0" step="1" placeholder="leave blank"></label>
+                    <div class="small">Quantities must be integers. Remaining is only needed for explicit restock/fix of invalid rows.</div>
+                    <label>Stack size <input id="editStack" type="number" min="1" value="1"></label>
 
-        function byId(id) { return document.getElementById(id); }
-        function fmt2(v) { v = Number(v) || 0; return v.toFixed(2); }
+                    <label>
+                        Listing mode
+                        <select id="editListingMode">
+                            <option value="STORE">STORE</option>
+                            <option value="HALF">HALF</option>
+                            <option value="FULL">FULL</option>
+                        </select>
+                    </label>
+                    <label>Item name <input id="editItemName" type="text"></label>
+                    <label>Source itemId <input id="editSourceItemId" type="text" placeholder="sheet:Name for store-linked"></label>
+                </div>
 
-        function initLogin() {
-            if (!window.google || !google.accounts || !google.accounts.id) return;
-            google.accounts.id.initialize({
-                client_id: OAUTH_CLIENT_ID,
-                callback: cred => onLogin(cred.credential),
-                ux_mode: 'popup'
-            });
-            google.accounts.id.renderButton(byId('loginBtnArea'), { theme: 'outline', size: 'medium' });
-        }
+                <div>
+                    <label>Pricing mode <select id="editPricingMode"><option value="PEG">PEG</option><option value="FIXED_BT">FIXED_BT</option></select></label>
 
-        function loadSheetItemsForOCM() {
-            fetch(PRICE_SHEET_URL).then(r => r.text()).then(txt => {
-                let payload = txt;
-                const s = payload.indexOf('('), e = payload.lastIndexOf(')');
-                if (s > -1 && e > s) payload = payload.slice(s + 1, e);
-                const json = JSON.parse(payload);
-                const rows = json?.table?.rows || [];
-                adminSheetItems = rows.map(row => {
-                    const c = row.c || [];
-                    const name = c[0]?.v || '';
-                    const buyStack = c[1]?.v || ''; const sellStack = c[2]?.v || '';
-                    const bundleSize = Number(c[4]?.v || 1) || 1;
-                    const buyEach = c[5]?.v || ''; const sellEach = c[6]?.v || '';
-                    if (!name) return null;
-                    return {
-                        name: String(name),
-                        bundleSize,
-                        buyStack: toNum(buyStack),
-                        sellStack: toNum(sellStack),
-                        buyEach: toNum(buyEach),
-                        sellEach: toNum(sellEach)
-                    };
-                }).filter(Boolean);
-                const dl = byId('sheetItemDatalist');
-                dl.innerHTML = '';
-                adminSheetItems.forEach(it => {
-                    const opt = document.createElement('option');
-                    opt.value = it.name;
-                    opt.label = `${it.name} (stk:${it.bundleSize})`;
-                    dl.appendChild(opt);
-                });
-            }).catch(() => { adminSheetItems = []; });
-        }
-        function toNum(v) { if (v === '' || v == null) return null; const n = Number(v); return isNaN(n) ? null : n; }
+                    <div id="editPegFields" class="peg-box">
+                        <div class="small"><strong>Pricing (PEG)</strong></div>
+                        <div id="editPegBox"></div>
+                        <div class="flex" style="margin-top:8px;">
+                            <button type="button" id="btnEditAddAlt">Add alternative peg</button>
+                            <span id="editPegWarn" class="small warn"></span>
+                        </div>
+                    </div>
 
-        /* Player search for on-behalf */
-        (function initOcmAdminPlayerSearch() {
-            const input = byId('ocmAdminPlayerInput');
-            const box = byId('ocmAdminPlayerSuggestions');
-            if (!input || !box) return;
-            input.addEventListener('input', () => {
-                const q = input.value.trim().toLowerCase();
-                if (!q || !playersCache.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
-                const hits = playersCache.map(p => {
-                    const n = (p.playerName || '').toLowerCase();
-                    let sc = 0;
-                    if (n.startsWith(q)) sc = 100 - (n.length - q.length);
-                    else {
-                        const idx = n.indexOf(q);
-                        if (idx >= 0) sc = 60 - idx;
-                    }
-                    return { p, sc };
-                }).filter(h => h.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, 25);
-                if (!hits.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
-                box.innerHTML = hits.map(h => `<div class="sugg" data-uid="${h.p.userId}" style="padding:2px 4px;cursor:pointer;border-radius:4px;">${h.p.playerName}</div>`).join('');
-                box.style.display = 'block';
-            });
-            box.addEventListener('click', ev => {
-                const d = ev.target.closest('.sugg'); if (!d) return;
-                const uid = d.dataset.uid;
-                const pl = playersCache.find(p => p.userId === uid);
-                if (pl) {
-                    input.value = pl.playerName || '';
-                    input.dataset.userId = pl.userId;
-                    box.style.display = 'none';
-                    box.innerHTML = '';
-                }
-            });
-        })();
+                    <div id="editFixedFields" style="display:none;">
+                        <label>Fixed BT per 1 unit <input id="editFixedBTVal" type="number" min="0.01" step="0.01" value="1"></label>
+                    </div>
+                </div>
 
-        let ocmAdminTargetUser = null;
-        let ocmAdminListings = [];
-        // Update read-only stack size when a sheet item is picked
-        function updateSheetListingStackSizeDisplay() {
-            const name = (byId('sheetListingItemInput').value || '').trim().toLowerCase();
-            const display = byId('sheetListingStackSizeDisplay');
-            const hidden = byId('sheetListingStackSizeHidden');
-            if (!name) {
-                if (display) display.textContent = '—';
-                if (hidden) hidden.value = 1;
-                return;
-            }
-            const item = adminSheetItems.find(i => String(i.name || '').trim().toLowerCase() === name);
-            const size = (item && Number(item.bundleSize)) ? Number(item.bundleSize) : 1;
-            if (display) display.textContent = String(size);
-            if (hidden) hidden.value = String(size);
-        }
+                <div>
+                    <label>Pause listing <input id="editPause" type="checkbox"></label>
+                    <div class="small">Paused listings are not public.</div>
+                </div>
+            </div>
 
-        // Hookup: call update when the sheet item input changes (call after elements exist)
-        (function hookupSheetListingStackSizeListener() {
-            const inp = byId('sheetListingItemInput');
-            if (!inp) return;
-            inp.addEventListener('input', updateSheetListingStackSizeDisplay);
-            inp.addEventListener('change', updateSheetListingStackSizeDisplay);
-            // ensure display initialized if adminSheetItems already loaded
-            // call once after small timeout to allow loadSheetItemsForOCM to populate datalist
-            setTimeout(updateSheetListingStackSizeDisplay, 250);
-        })();
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button type="button" id="btnSaveListing">Save</button>
+                <button type="button" id="btnCloseListing">Close</button>
+                <span id="editListingMsg" class="small"></span>
+            </div>
+        </form>
+    </dialog>
 
-        // Replaced createSheetListing: uses hidden stack-size from sheet item (non-editable)
-        async function createSheetListing() {
-            if (!ocmAdminTargetUser) { byId('sheetListingMsg').textContent = 'Select target first.'; return; }
-            const name = (byId('sheetListingItemInput').value || '').trim();
-            const qty = Number(byId('sheetListingQty').value || 0);
-            const hiddenStack = Number(byId('sheetListingStackSizeHidden').value || 1) || 1;
-            const rawPrice = Number(byId('sheetListingPrice').value || 0);
-            const mode = byId('sheetListingPriceStk').checked ? 'stk' : 'ind';
-            const type = byId('sheetListingType').value;
-            const msg = byId('sheetListingMsg');
+    <!-- RESTOCK ONLY DIALOG (Admin OCM) -->
+    <dialog id="dlgRestock">
+    <form method="dialog" style="min-width:min(520px,95vw)">
+    <h3 style="margin-top:0;">Restock listing</h3>
+    <div class="small">Listing: <span id="restockListingId" class="mono"></span></div>
+    <div class="details-grid" style="margin-top:10px;">
+    <div>
+    <label>
+    New stock value
+    <div class="inline-row">
+    <input id="restockQtyInput" type="number" min="0" step="1" value="0" style="width:140px;">
+    <select id="restockQtyMode">
+    <option value="IND" selected>individual</option>
+    <option value="STACK">stack</option>
+    </select>
+    </div>
+    </label>
+    <div class="small">Stored as IND using listing stack size.</div>
+    </div>
+    <div>
+    <div class="small">Note</div>
+    <div class="small">Admin restock applies immediately (auto-approve).</div>
+    </div>
+    </div>
+    <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <button type="button" id="btnSendRestock">Restock now</button>
+    <button type="button" id="btnCloseRestock">Close</button>
+    <span id="restockMsg" class="small"></span>
+    </div>
+    </form>
+    </dialog>
 
-            if (!name || qty <= 0 || rawPrice <= 0 || hiddenStack <= 0) { msg.textContent = 'Invalid input'; return; }
+    <!-- Account History (REPLACED with AccountHistory.html UI) -->
+    <div class="section" id="accountHistorySection" style="display:none;">
+        <h2>History (Target user)</h2>
 
-            // Ensure we pick bundle from sheet if available
-            const sheetItem = adminSheetItems.find(i => String(i.name || '').trim().toLowerCase() === name.toLowerCase());
-            const stackSize = (sheetItem && Number(sheetItem.bundleSize) > 0) ? Number(sheetItem.bundleSize) : hiddenStack;
+        <div id="adminHistoryNoTarget" class="banner" style="display:none;">
+            <div><strong>Select a target user first.</strong></div>
+            <div class="small">Go to the <span class="mono">Target User</span> tab and select a player, then return here.</div>
+        </div>
 
-            msg.textContent = 'Creating...';
-            try {
-                const r = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'createListing',
-                        idToken: googleIdToken,
-                        sellerUserId: ocmAdminTargetUser.userId,
-                        type,
-                        itemName: name,
-                        quantity: qty,
-                        price: rawPrice,
-                        priceUnit: mode,
-                        stackSize,
-                        sourceItemId: 'sheet:' + name, // mark referenced
-                        status: true
-                    })
-                });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'createListing failed');
-                msg.textContent = 'Created.';
-                // clear inputs and reset display/hidden
-                byId('sheetListingItemInput').value = '';
-                byId('sheetListingQty').value = '';
-                byId('sheetListingPrice').value = '';
-                byId('sheetListingStackSizeHidden').value = 1;
-                byId('sheetListingStackSizeDisplay').textContent = '—';
-                ocmAdminLoadListings();
-            } catch (e) {
-                msg.textContent = 'Error: ' + e.message;
-            }
-        }
-        function ocmAdminSelectPlayer() {
-            const input = byId('ocmAdminPlayerInput');
-            const uid = input.dataset.userId;
-            if (!uid) { byId('ocmAdminMsg').textContent = 'Select a player from suggestions first.'; return; }
-            ocmAdminTargetUser = playersCache.find(p => p.userId === uid);
-            if (!ocmAdminTargetUser) { byId('ocmAdminMsg').textContent = 'Player not found.'; return; }
-            byId('ocmAdminMsg').textContent = 'Loading listings...';
-            ocmAdminLoadListings();
-        }
-        async function ocmAdminLoadListings() {
-            try {
-                const r = await fetch(`${WEB_APP_URL}?action=adminListAllListings&idToken=${encodeURIComponent(googleIdToken)}&userId=${encodeURIComponent(ocmAdminTargetUser.userId)}`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'adminListAllListings failed');
-                ocmAdminListings = j.data.listings || [];
-            } catch (e) {
-                ocmAdminListings = [];
-                byId('ocmAdminMsg').textContent = 'Error: ' + e.message;
-                renderOcmAdminListings();
-                return;
-            }
-            byId('ocmAdminMsg').textContent = `Loaded ${ocmAdminListings.length} listings.`;
-            renderOcmAdminListings();
-        }
-        function renderOneRow(l) {
-            const qtyInd = (l.remainingQuantity === '' || l.remainingQuantity == null) ? 0 : Number(l.remainingQuantity || 0);
-            const ss = Number(l.stackSize || 1) || 1;
-            const qtyStacks = Math.floor(qtyInd / ss);
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                    <td class="mono">${l.listingId}</td>
-                    <td>${l.itemName}</td>
-                    <td>${l.type === 'SELL' ? '<span class="pill pill-sell">SELL</span>' : '<span class="pill pill-buy">BUY</span>'}</td>
-                    <td class="mono">${(l.priceInd || 0).toFixed(2)} / ${(l.priceInd * ss || 0).toFixed(2)}</td>
-                    <td class="mono">${qtyInd} / ${qtyStacks}</td>
-                    <td>${l.status ? 'OPEN' : 'CLOSED'}</td>
-                    <td>
-                      <button data-ocm-edit="${l.listingId}">Edit</button>
-                      <button data-ocm-toggle="${l.listingId}">${l.status ? 'Close' : 'Open'}</button>
-                      <button data-ocm-delete="${l.listingId}">Delete</button>
-                    </td>`;
-            return tr;
-        }
-        function renderOcmAdminListings() {
-            const bodyRef = byId('ocmAdminListingsBodyRef');
-            const bodyCustom = byId('ocmAdminListingsBodyCustom');
-            bodyRef.innerHTML = ''; bodyCustom.innerHTML = '';
-            const refList = ocmAdminListings.filter(x => String(x.sourceItemId || '').trim());
-            const customList = ocmAdminListings.filter(x => !String(x.sourceItemId || '').trim());
-            refList.forEach(l => bodyRef.appendChild(renderOneRow(l)));
-            customList.forEach(l => bodyCustom.appendChild(renderOneRow(l)));
-        }
-        document.addEventListener('click', ev => {
-            const t = ev.target;
-            if (t.dataset?.ocmEdit) ocmAdminOpenEdit(t.dataset.ocmEdit);
-            if (t.dataset?.ocmToggle) ocmAdminToggleListing(t.dataset.ocmToggle);
-            if (t.dataset?.ocmDelete) ocmAdminDeleteListing(t.dataset.ocmDelete);
-        });
-        let ocmEditingListing = null;
-        function ocmAdminOpenEdit(listingId) {
-            const l = ocmAdminListings.find(x => x.listingId === listingId);
-            if (!l) { alert('Listing not found'); return; }
-            ocmEditingListing = l;
-            byId('ocmEditPanel').style.display = 'block';
-            byId('ocmEditHeader').textContent = `Editing ${l.listingId} (${l.itemName})`;
-            byId('ocmEditQtyInd').value = l.remainingQuantity ?? l.quantity ?? 0;
-            byId('ocmEditStackSize').value = l.stackSize || 1;
-            byId('ocmEditPriceVal').value = (l.priceInd || 0).toFixed(2);
-            byId('ocmEditStatusOpen').checked = !!l.status;
-            byId('ocmEditModeInd').checked = true;
-            ocmAdminUpdateEditDerived();
-        }
-        function ocmAdminCancelEdit() { ocmEditingListing = null; byId('ocmEditPanel').style.display = 'none'; }
-        ['ocmEditQtyInd', 'ocmEditStackSize', 'ocmEditPriceVal', 'ocmEditModeInd', 'ocmEditModeStk'].forEach(id => {
-            const el = byId(id); if (el) { el.addEventListener('input', ocmAdminUpdateEditDerived); el.addEventListener('change', ocmAdminUpdateEditDerived); }
-        });
-        function ocmAdminUpdateEditDerived() {
-            const stackSize = Number(byId('ocmEditStackSize').value || 1) || 1;
-            const qtyInd = Number(byId('ocmEditQtyInd').value || 0) || 0;
-            const priceRaw = Number(byId('ocmEditPriceVal').value || 0) || 0;
-            const mode = byId('ocmEditModeStk').checked ? 'stk' : 'ind';
-            const priceInd = mode === 'stk' ? (priceRaw / stackSize) : priceRaw;
-            byId('ocmEditDerivedInd').textContent = isFinite(priceInd) ? priceInd.toFixed(4) : '0';
-            byId('ocmEditDerivedStk').textContent = isFinite(priceInd) ? (priceInd * stackSize).toFixed(2) : '0';
-            byId('ocmEditDerivedQtyStk').textContent = stackSize > 0 ? Math.floor(qtyInd / stackSize) : '0';
-        }
-        async function ocmAdminSaveEdit() {
-            if (!ocmEditingListing) return;
-            const listingId = ocmEditingListing.listingId;
-            const stackSize = Number(byId('ocmEditStackSize').value || 1) || 1;
-            const qtyInd = Number(byId('ocmEditQtyInd').value || 0) || 0;
-            const mode = byId('ocmEditModeStk').checked ? 'stk' : 'ind';
-            const priceRaw = Number(byId('ocmEditPriceVal').value || 0) || 0;
-            const status = byId('ocmEditStatusOpen').checked;
-            const msg = byId('ocmEditMsg');
-            if (priceRaw <= 0 || qtyInd <= 0 || stackSize <= 0) { msg.textContent = 'Invalid values'; return; }
-            msg.textContent = 'Saving...';
-            try {
-                const r = await fetch(WEB_APP_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'updateListing', idToken: googleIdToken, listingId, price: priceRaw, priceUnit: mode, quantity: qtyInd, stackSize, status })
-                });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'updateListing failed');
-                msg.textContent = 'Saved.';
-                await ocmAdminLoadListings();
-                ocmAdminOpenEdit(listingId);
-            } catch (e) { msg.textContent = 'Error: ' + e.message; }
-        }
-        async function ocmAdminToggleListing(listingId) {
-            const l = ocmAdminListings.find(x => x.listingId === listingId);
-            if (!l) return;
-            const targetStatus = !l.status;
-            try {
-                const r = await fetch(WEB_APP_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'toggleListingStatus', idToken: googleIdToken, listingId, status: targetStatus })
-                });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'toggleListingStatus failed');
-                ocmAdminLoadListings();
-                if (ocmEditingListing?.listingId === listingId) ocmAdminOpenEdit(listingId);
-            } catch (e) { alert(e.message); }
-        }
-        async function ocmAdminDeleteListing(listingId) {
-            if (!confirm('Delete listing ' + listingId + '?')) return;
-            try {
-                const r = await fetch(WEB_APP_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'deleteListing', idToken: googleIdToken, listingId })
-                });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'deleteListing failed');
-                ocmAdminLoadListings();
-                if (ocmEditingListing?.listingId === listingId) ocmAdminCancelEdit();
-            } catch (e) { alert(e.message); }
-        }
+        <div class="small">Selected user: <span id="adminHistoryUser">-</span></div>
 
-        function normalizePrice(mode, raw, stackSize) {
-            if (mode === 'stk') return Number((raw / stackSize).toFixed(4));
-            return Number(raw.toFixed(4));
-        }
+        <div class="row flex" style="margin-top:10px;">
+            <label>
+                Mode:
+                <select id="adminHistoryMode">
+                    <option value="ACCOUNT" selected>Account history</option>
+                    <option value="OCM">OCM trades history</option>
+                </select>
+            </label>
 
-        async function createSheetListing() {
-            if (!ocmAdminTargetUser) { byId('sheetListingMsg').textContent = 'Select target first.'; return; }
-            const name = byId('sheetListingItemInput').value.trim();
-            const qty = Number(byId('sheetListingQty').value || 0);
-            let stackSize = Number(byId('sheetListingStackSize').value || 1) || 1;
-            const rawPrice = Number(byId('sheetListingPrice').value || 0);
-            const mode = byId('sheetListingPriceStk').checked ? 'stk' : 'ind';
-            const type = byId('sheetListingType').value;
-            const msg = byId('sheetListingMsg');
-            if (!name || qty <= 0 || rawPrice <= 0 || stackSize <= 0) { msg.textContent = 'Invalid input'; return; }
-            const sheetItem = adminSheetItems.find(i => i.name.toLowerCase() === name.toLowerCase());
-            if (sheetItem && !isNaN(sheetItem.bundleSize) && sheetItem.bundleSize > 0) stackSize = stackSize || sheetItem.bundleSize;
-            msg.textContent = 'Creating...';
-            try {
-                const r = await fetch(WEB_APP_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'createListing',
-                        idToken: googleIdToken,
-                        sellerUserId: ocmAdminTargetUser.userId,
-                        type,
-                        itemName: name,
-                        quantity: qty,
-                        price: rawPrice,
-                        priceUnit: mode,
-                        stackSize,
-                        sourceItemId: 'sheet:' + name, // mark referenced
-                        status: true
-                    })
-                });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'createListing failed');
-                msg.textContent = 'Created.';
-                ['sheetListingItemInput', 'sheetListingQty', 'sheetListingStackSize', 'sheetListingPrice'].forEach(id => byId(id).value = '');
-                ocmAdminLoadListings();
-            } catch (e) { msg.textContent = 'Error: ' + e.message; }
-        }
+            <label>From: <input id="adminDtFrom" type="date"></label>
+            <label>To: <input id="adminDtTo" type="date"></label>
 
-        async function createCustomListing() {
-            if (!ocmAdminTargetUser) { byId('customListingMsg').textContent = 'Select target first.'; return; }
-            const name = byId('customListingItemName').value.trim();
-            const qty = Number(byId('customListingQty').value || 0);
-            let stackSize = Number(byId('customListingStackSize').value || 1) || 1;
-            const rawPrice = Number(byId('customListingPrice').value || 0);
-            const mode = byId('customListingPriceStk').checked ? 'stk' : 'ind';
-            const type = byId('customListingType').value;
-            const msg = byId('customListingMsg');
-            if (!name || qty <= 0 || rawPrice <= 0 || stackSize <= 0) { msg.textContent = 'Invalid input'; return; }
-            msg.textContent = 'Creating...';
-            try {
-                const r = await fetch(WEB_APP_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'createListing',
-                        idToken: googleIdToken,
-                        sellerUserId: ocmAdminTargetUser.userId,
-                        type,
-                        itemName: name,
-                        quantity: qty,
-                        price: rawPrice,
-                        priceUnit: mode,
-                        stackSize,
-                        sourceItemId: '', // custom
-                        status: true
-                    })
-                });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'createListing failed');
-                msg.textContent = 'Created.';
-                ['customListingItemName', 'customListingQty', 'customListingStackSize', 'customListingPrice'].forEach(id => byId(id).value = '');
-                ocmAdminLoadListings();
-            } catch (e) { msg.textContent = 'Error: ' + e.message; }
-        }
+            <label>
+                Page size:
+                <select id="adminPgSize">
+                    <option>20</option>
+                    <option selected>50</option>
+                    <option>100</option>
+                    <option>200</option>
+                    <option>500</option>
+                </select>
+            </label>
 
-        async function onLogin(token, silent = false) {
-            googleIdToken = token;
-            try {
-                const r = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(token)}`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'me failed');
-                currentUser = j.data.user;
-                currentUser.isAdmin = !!j.data.isAdmin;
-                if (!currentUser.isAdmin) { byId('authStatus').textContent = 'Not admin.'; return; }
-                byId('authStatus').textContent = `Admin: ${currentUser.email}`;
-                byId('logoutBtn').style.display = 'inline-block';
-                byId('loginBtnArea').style.display = 'none';
-                const ap = byId('adminPanelBtn'); if (ap) ap.style.display = 'inline';
-                loadPlayers();
-                loadPendingRequests();
-                loadPendingTrades();
-                loadSheetItemsForOCM();
-            } catch (e) { if (!silent) byId('authStatus').textContent = 'Auth failed: ' + e.message; }
-        }
-        function logout() {
-            googleIdToken = null; currentUser = null;
-            window.clearSavedIdToken && window.clearSavedIdToken();
-            byId('authStatus').textContent = 'Logged out.';
-            byId('logoutBtn').style.display = 'none';
-            byId('loginBtnArea').style.display = 'block';
-            byId('tbRequests').innerHTML = '';
-            byId('tbTrades').innerHTML = '';
-            playersCache = []; ocmAdminListings = []; adminSheetItems = [];
-            byId('playerList').innerHTML = '';
-            byId('ocmAdminListingsBodyRef').innerHTML = '';
-            byId('ocmAdminListingsBodyCustom').innerHTML = '';
-            byId('balancesInfo').textContent = 'Balances will appear here.';
-        }
-        async function loadPlayers() {
-            if (!googleIdToken) return;
-            try {
-                const r = await fetch(`${WEB_APP_URL}?action=adminListPlayers&idToken=${encodeURIComponent(googleIdToken)}`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'adminListPlayers failed');
-                playersCache = j.data;
-            } catch (e) { console.warn('loadPlayers', e.message); }
-        }
-        function fuzzyPlayers(q) {
-            q = q.trim().toLowerCase(); if (!q) return [];
-            return playersCache.map(p => {
-                const base = (p.playerName || '').toLowerCase();
-                let score = 0;
-                if (base.startsWith(q)) score = 100 - (base.length - q.length);
-                else { const idx = base.indexOf(q); if (idx >= 0) score = 60 - idx; }
-                return { ...p, _score: score };
-            }).filter(p => p._score > 0).sort((a, b) => b._score - a._score).slice(0, 30);
-        }
-        byId('playerSearch').addEventListener('input', () => {
-            const q = byId('playerSearch').value;
-            const arr = fuzzyPlayers(q);
-            const out = arr.map(p => `<div data-user="${p.userId}" class="player-row">${p.playerName || '(no name)'} <span class="small">(${(Number(p.balanceBT) || 0).toFixed(2)} BT)</span></div>`).join('');
-            byId('playerList').innerHTML = out || '<div class="small">No matches</div>';
-        });
-        byId('playerList').addEventListener('click', ev => {
-            const row = ev.target.closest('.player-row'); if (!row) return;
-            const userId = row.dataset.user;
-            const player = playersCache.find(p => p.userId === userId);
-            if (player) {
-                byId('balancesInfo').textContent = `Selected: ${player.playerName} | Balance: ${(Number(player.balanceBT) || 0).toFixed(2)} BT`;
-                byId('transferTarget').value = player.playerName || '';
-            }
-        });
+            <button id="adminBtnLoadHistory" type="button">Load</button>
+            <span id="adminHistoryMsg" class="small"></span>
+        </div>
 
-        async function loadPendingRequests() {
-            if (!googleIdToken) return;
-            byId('reqMsg').textContent = 'Loading...';
-            try {
-                const r = await fetch(`${WEB_APP_URL}?action=listPendingRequests&idToken=${encodeURIComponent(googleIdToken)}&status=PENDING`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'listPendingRequests failed');
-                const arr = j.data.requests || [];
-                renderRequests(arr);
-                byId('reqMsg').textContent = `Loaded ${arr.length}`;
-            } catch (e) { byId('reqMsg').textContent = 'Error: ' + e.message; }
-        }
-        function renderRequests(arr) {
-            const tb = byId('tbRequests'); tb.innerHTML = '';
-            arr.forEach(r => {
-                const net = Number(r.totals?.netBT || 0);
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                      <td><button data-detail="${r.requestId}">${r.requestId}</button></td>
-                      <td>${r.user?.playerName || ''}</td>
-                      <td><div class="mono">Buy: ${(Number(r.totals?.buyBT || 0)).toFixed(2)}</div><div class="mono">Sell: ${(Number(r.totals?.sellBT || 0)).toFixed(2)}</div></td>
-                      <td class="mono">${(Number(r.manualBalanceDeltaBT || 0)).toFixed(2)}</td>
-                      <td class="mono">${net.toFixed(2)}</td>
-                      <td>${r.createdAt || ''}</td>
-                      <td><button data-approve="${r.requestId}">Approve</button><button data-deny="${r.requestId}">Deny</button></td>`;
-                tb.appendChild(tr);
-            });
-        }
-        async function showRequestDetails(id) {
-            if (!googleIdToken) return;
-            byId('reqDetails').textContent = 'Loading details...';
-            try {
-                const r = await fetch(`${WEB_APP_URL}?action=getRequest&idToken=${encodeURIComponent(googleIdToken)}&requestId=${encodeURIComponent(id)}`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'getRequest failed');
-                const details = j.data.details || {};
-                const carts = details.carts || {};
-                const buy = (carts.buy || []).map(x => `${x.qty}×${x.name}@${x.priceBT}`).join(', ');
-                const sell = (carts.sell || []).map(x => `${x.qty}×${x.name}@${x.priceBT}`).join(', ');
-                byId('reqDetails').innerHTML = `<div><b>${id}</b></div><div>Buy: ${buy || '-'}</div><div>Sell: ${sell || '-'}</div><div>Net: ${(Number(details.totals?.netBT || 0)).toFixed(2)} BT</div>`;
-            } catch (e) { byId('reqDetails').textContent = 'Error: ' + e.message; }
-        }
-        async function approveRequest(id) {
-            if (!confirm('Approve request ' + id + '?')) return;
-            try {
-                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'approveRequest', idToken: googleIdToken, requestId: id }) });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'approveRequest failed');
-                loadPendingRequests();
-            } catch (e) { alert(e.message); }
-        }
-        async function denyRequest(id) {
-            if (!confirm('Deny request ' + id + '?')) return;
-            try {
-                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'denyRequest', idToken: googleIdToken, requestId: id }) });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'denyRequest failed');
-                loadPendingRequests();
-            } catch (e) { alert(e.message); }
-        }
+        <table>
+            <thead id="adminHistoryThead"></thead>
+            <tbody id="adminHistoryTb"></tbody>
+        </table>
 
-        async function loadPendingTrades() {
-            if (!googleIdToken) return;
-            byId('trMsg').textContent = 'Loading...';
-            try {
-                const r = await fetch(`${WEB_APP_URL}?action=listTrades&idToken=${encodeURIComponent(googleIdToken)}&status=PENDING`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'listTrades failed');
-                const arr = j.data.trades || [];
-                renderTrades(arr);
-                byId('trMsg').textContent = `Loaded ${arr.length}`;
-            } catch (e) { byId('trMsg').textContent = 'Error: ' + e.message; }
-        }
-        function renderTrades(arr) {
-            const tb = byId('tbTrades'); tb.innerHTML = '';
-            arr.forEach(t => {
-                const qty = Number(t.quantity || 0);
-                const priceInd = Number(t.price || 0);
-                const stackSize = Number(t.stackSize || 1) || 1;
-                const stkQty = Math.floor(qty / stackSize);
-                const total = qty * priceInd;
-                let details = {}; try { details = JSON.parse(t.detailsJson || '{}'); } catch { }
-                const listingType = (details.type || 'SELL').toUpperCase();
-                const sellerReceives = listingType === 'SELL' ? (total * 0.95) : total;
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                      <td>${t.tradeId}</td>
-                      <td>${t.listingId}</td>
-                      <td>${details.itemName || ''}</td>
-                      <td>${listingType === 'SELL' ? '<span class="pill pill-sell">SELL</span>' : '<span class="pill pill-buy">BUY</span>'}</td>
-                      <td>${qty} / ${stkQty}</td>
-                      <td>${priceInd.toFixed(2)} / ${(priceInd * stackSize).toFixed(2)}</td>
-                      <td>${total.toFixed(2)}</td>
-                      <td>${sellerReceives.toFixed(2)} ${listingType === 'SELL' ? '(95%)' : ''}</td>
-                      <td class="status-pending">${t.status}</td>
-                      <td>${t.updatedAt || ''}</td>
-                      <td><button data-tr-approve="${t.tradeId}">Approve</button><button data-tr-deny="${t.tradeId}">Deny</button></td>`;
-                tb.appendChild(tr);
-            });
-        }
+        <div class="row flex" style="margin-top:10px;">
+            <button id="adminPrevHistory" type="button">Prev</button>
+            <span id="adminHistoryPgInfo" class="small"></span>
+            <button id="adminNextHistory" type="button">Next</button>
+        </div>
+    </div>
 
-        async function adjustBalance() {
-            const userName = byId('playerSearch').value.trim();
-            const delta = Number(byId('adjAmount').value || 0);
-            const reason = byId('adjReason').value.trim();
-            if (!googleIdToken || !currentUser?.isAdmin) { byId('adjMsg').textContent = 'Admin login required'; return; }
-            if (!userName || !delta) { byId('adjMsg').textContent = 'Fill player and delta'; return; }
-            const target = playersCache.find(p => p.playerName && p.playerName.toLowerCase() === userName.toLowerCase());
-            if (!target) { byId('adjMsg').textContent = 'Player not found'; return; }
-            byId('adjMsg').textContent = 'Applying...';
-            try {
-                const r = await fetch(WEB_APP_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'adjustBalance', idToken: googleIdToken, userId: target.userId, deltaBT: delta, reason })
-                });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'adjustBalance failed');
-                byId('adjMsg').textContent = 'Done.';
-                loadPlayers();
-            } catch (e) { byId('adjMsg').textContent = 'Error: ' + e.message; }
-        }
+    <!-- Stock -->
+    <div class="section" id="stockSection" style="display:none;">
+        <h2>Stock Management</h2>
+        <div class="flex">
+            <input id="stockSearch" type="text" placeholder="Search item name" style="flex:1;max-width:320px;">
+            <button type="button" onclick="reloadStock()">Reload</button>
+            <span id="stockMsg" class="small"></span>
+        </div>
+        <table style="margin-top:8px;">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Raw stock (L)</th>
+                    <th>Target stock stack (J)</th>
+                    <th>Current stock stack (K)</th>
+                    <th>Bundle size (E)</th>
+                    <th>Adjust (Δ individuals)</th>
+                </tr>
+            </thead>
+            <tbody id="stockTableBody"></tbody>
+        </table>
+    </div>
 
-        async function transferBT() {
-            const targetName = byId('transferTarget').value.trim();
-            const amount = Number(byId('transferAmount').value || 0);
-            const note = byId('transferNote').value.trim();
-            if (!googleIdToken) { byId('transferMsg').textContent = 'Login required'; return; }
-            if (!targetName || !amount || amount < 0.01) { byId('transferMsg').textContent = 'Invalid input'; return; }
-            byId('transferMsg').textContent = 'Sending...';
-            try {
-                const r = await fetch(WEB_APP_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'transferBT', idToken: googleIdToken, targetPlayerName: targetName, amountBT: amount, note })
-                });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'transferBT failed');
-                byId('transferMsg').textContent = 'Transfer complete.';
-                loadPlayers();
-            } catch (e) { byId('transferMsg').textContent = 'Error: ' + e.message; }
-        }
-
-        document.addEventListener('click', ev => {
-            const t = ev.target;
-            if (t.dataset?.detail) showRequestDetails(t.dataset.detail);
-            if (t.dataset?.approve) approveRequest(t.dataset.approve);
-            if (t.dataset?.deny) denyRequest(t.dataset.deny);
-            if (t.dataset?.trApprove) approveTrade(t.dataset.trApprove);
-            if (t.dataset?.trDeny) denyTrade(t.dataset.trDeny);
-        });
-        byId('btnLoadRequests').onclick = loadPendingRequests;
-        byId('btnLoadTrades').onclick = loadPendingTrades;
-        byId('btnAdjust').onclick = adjustBalance;
-        byId('btnTransfer').onclick = transferBT;
-
-        window.onload = () => {
-            initLogin();
-            const saved = window.getSavedIdToken && window.getSavedIdToken();
-            if (saved) onLogin(saved, true);
-        };
-    </script>
+    <!-- Admin scripts (segmented) -->
+    <script src="admin_js/admin-core.js"></script>
+    <script src="admin_js/admin-players.js"></script>
+    <script src="admin_js/admin-requests.js"></script>
+    <script src="admin_js/admin-history.js"></script>
+    <script src="admin_js/admin-stock.js"></script>
+    <script src="admin_js/admin-ocm.js"></script>
+    <script src="admin_js/admin-trades.js"></script>
+    <script src="admin_js/admin-target-user.js"></script>
+    <script src="admin_js/admin-auth.js"></script>
+    <script src="admin_js/admin-tabs.js"></script>
+    <script src="admin_js/admin-players-transfer.js"></script>
+    <script src="admin_js/admin-boot.js"></script>
 </body>
 </html>

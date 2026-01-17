@@ -5,6 +5,7 @@
     <link rel="icon" href="favicon.ico">
     <script src="app-config.js"></script>
     <script src="auth-storage.js"></script>
+    <script src="api-client.js"></script>
     <script src="topbar.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <meta charset="UTF-8">
@@ -15,17 +16,37 @@
         body {
             font-family: Arial, sans-serif;
             padding: 20px;
-            max-width: 1200px;
+            max-width: 1300px;
             margin: auto;
         }
 
-        h1, h2 {
+            body.withTopBar {
+                padding-top: 72px;
+            }
+
+        h1, h2, h3 {
             margin-top: 0;
         }
 
         .small {
             font-size: 12px;
             color: #555;
+        }
+
+        .muted {
+            color: #666;
+        }
+
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width:860px) {
+            .grid2 {
+                grid-template-columns: 1fr;
+            }
         }
 
         table {
@@ -36,7 +57,7 @@
 
         th, td {
             border: 1px solid #ddd;
-            padding: 6px;
+            padding: 8px 6px;
             font-size: 13px;
             vertical-align: top;
         }
@@ -50,444 +71,269 @@
             font-size: 13px;
         }
 
-        .flex {
+        .toolbar {
             display: flex;
-            gap: 8px;
+            gap: 10px;
             flex-wrap: wrap;
             align-items: center;
+            margin: 8px 0;
         }
 
-        .badge-buy {
-            background: #e8f7ff;
+        .search {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .tabs {
+            display: none;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+            .tabs button {
+                border: 1px solid #ccc;
+                background: #fff;
+                border-radius: 8px;
+                padding: 8px 10px;
+                cursor: pointer;
+            }
+
+                .tabs button[aria-selected="true"] {
+                    background: #222;
+                    color: #fff;
+                    border-color: #222;
+                }
+
+        @media (max-width:860px) {
+            .tabs {
+                display: flex;
+            }
+        }
+
+        tr.clickable {
+            cursor: pointer;
+        }
+
+            tr.clickable:focus-within {
+                outline: 2px solid #1a73e8;
+            }
+
+        .details-row td {
+            background: #fafafa;
+        }
+
+        .details-box {
+            padding: 10px;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+            gap: 10px;
+        }
+
+        .field {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .field label {
+                display: flex;
+                gap: 6px;
+                align-items: center;
+            }
+
+        .pill {
+            display: inline-block;
             padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        .badge-sell {
-            background: #e9ffe8;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        .inactive {
-            opacity: .5;
-        }
-
-        .status-open {
-            color: #2e7d32;
-            font-weight: bold;
-        }
-
-        .status-closed {
-            color: #c62828;
-            font-weight: bold;
-        }
-
-        .qty-note {
+            border-radius: 999px;
             font-size: 11px;
-            color: #666;
+            background: #eee;
         }
 
-        .warn {
-            color: #c00;
-            font-size: 12px;
-            margin-left: 6px;
+        .pill-sell {
+            background: #e9ffe8;
         }
 
-        .toolbar {
-            margin-top: 8px;
+        .pill-buy {
+            background: #e8f7ff;
         }
 
         .mono {
             font-family: Consolas, monospace;
         }
 
-        .stack-col {
-            white-space: nowrap;
+        #authPanel {
+            margin-bottom: 10px;
         }
 
-        .truncate {
-            max-width: 180px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .footer-note {
-            margin-top: 30px;
-            font-size: 11px;
-            color: #777;
-        }
-        /* Shared top bar styling */
-        #topBar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 52px;
-            background: #222;
-            color: #fff;
+        #googleLoginArea {
             display: flex;
-            align-items: center;
-            padding: 0 20px;
-            z-index: 1000;
-            font-size: 14px;
-            gap: 12px;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 4px 0;
         }
 
-            #topBar a, #topBar button {
-                color: #fff;
-                text-decoration: none;
-                margin-right: 16px;
-                background: none;
-                border: none;
-                cursor: pointer;
-            }
-
-            #topBar .right {
-                margin-left: auto;
-                display: flex;
-                gap: 12px;
-                align-items: center;
-                flex-wrap: wrap;
-            }
-
-        body.withTopBar {
-            padding-top: 72px;
+        #googleBtn {
+            margin-top: 4px;
         }
 
-        .balance-chip {
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: rgba(255,255,255,0.08);
-            white-space: nowrap;
+        .login-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
         }
 
-        .balance-you.positive {
-            color: #2ecc71;
+        .fallback-login {
+            margin-top: 4px;
         }
 
-        .balance-you.negative {
-            color: #ff5252;
-        }
-
-        .balance-target {
-            color: #f0c200;
-        }
-
-        #orderPopup {
-            position: absolute;
-            top: 52px;
-            right: 100px;
+        .notice {
+            border: 1px solid #ddd;
             background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 6px;
+            border-radius: 8px;
             padding: 8px;
-            display: none;
-            min-width: 260px;
-            z-index: 1100;
-            color: #000;
-        }
-
-        #orderStatusBall {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #777;
-            cursor: pointer;
-        }
-
-        .status-pending {
-            background: #f0c200 !important;
-        }
-
-        .status-error {
-            background: #e74c3c !important;
-        }
-
-        .status-none {
-            background: #777 !important;
-        }
-
-        .order-link {
-            color: #66c;
-            text-decoration: underline;
-            cursor: pointer;
         }
     </style>
-    <script src="app-config.js"></script>
-    <script src="auth-storage.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script>
-        const WEB_APP_URL = window.WEB_APP_URL || 'https://yellow-king-52c6.vilhokettu1.workers.dev/exec';
-        const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '857098772457-kuvq861sa844esf2jc4b7av1pnlmnn1c.apps.googleusercontent.com';
 
-        let googleIdToken = null;
-        let currentUser = null;
-
-        function byId(id) { return document.getElementById(id); }
-        function fmt2(v) { v = Number(v) || 0; let s = v.toFixed(2); return s.replace(/\.?0+$/, ''); }
-        function fmt4(v) { v = Number(v) || 0; return v.toFixed(4).replace(/0+$/, '').replace(/\.$/, ''); }
-
-        function initLogin() {
-            if (!window.google || !google.accounts || !google.accounts.id) return;
-            google.accounts.id.initialize({
-                client_id: OAUTH_CLIENT_ID,
-                callback: cred => onLogin(cred.credential),
-                ux_mode: 'popup'
-            });
-            google.accounts.id.renderButton(byId('loginBtnArea'), { theme: 'outline', size: 'medium' });
-        }
-
-        async function restore() {
-            if (!window.initAuthFromStorage) return;
-            const res = await window.initAuthFromStorage();
-            if (res.ok) {
-                onLogin(res.idToken, true);
-            }
-        }
-
-        async function onLogin(idToken, silent = false) {
-            googleIdToken = idToken;
-            try {
-                const r = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(idToken)}`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'me failed');
-                currentUser = j.data.user;
-                currentUser.isAdmin = !!j.data.isAdmin;
-                byId('authStatus').textContent = `Logged as ${currentUser.email}`;
-                byId('logoutBtn').style.display = 'inline-block';
-                byId('loginBtnArea').style.display = 'none';
-                loadListings();
-                loadTrades();
-            } catch (e) {
-                if (!silent) byId('authStatus').textContent = 'Auth failed: ' + e.message;
-            }
-        }
-
-        function logout() {
-            googleIdToken = null;
-            currentUser = null;
-            window.clearSavedIdToken && window.clearSavedIdToken();
-            byId('authStatus').textContent = 'Logged out.';
-            byId('logoutBtn').style.display = 'none';
-            byId('loginBtnArea').style.display = 'block';
-            byId('tbListings').innerHTML = '';
-            byId('tbTrades').innerHTML = '';
-        }
-
-        function normalizeResult(j) {
-            return (j && j.result != null) ? j.result : (j && j.data != null ? j.data : j);
-        }
-
-        async function loadListings() {
-            const q = (byId('q').value || '').trim();
-            byId('msgList').textContent = 'Loading...';
-            try {
-                const r = await fetch(`${WEB_APP_URL}?action=listings&q=${encodeURIComponent(q)}`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'listings failed');
-                const arr = normalizeResult(j);
-                renderListings(Array.isArray(arr) ? arr : []);
-                byId('msgList').textContent = `Found ${arr.length}`;
-            } catch (e) {
-                byId('msgList').textContent = 'Error: ' + e.message;
-            }
-        }
-
-        function renderListings(arr) {
-            const tb = byId('tbListings'); tb.innerHTML = '';
-            arr.forEach(l => {
-                // Distinguish BUY vs SELL wording: SELL has stock; BUY has demand.
-                const isBuyListing = l.type === 'BUY';
-                const qtyInd = (l.qtyAvailable === '' || l.qtyAvailable == null) ? '∞' : Number(l.qtyAvailable || 0);
-                const stackSize = Number(l.stackSize || 1) || 1;
-                const qtyStacks = (qtyInd === '∞') ? '∞' : Math.floor(Number(qtyInd) / stackSize);
-                const sideLabel = isBuyListing ? 'Demand' : 'Stock';
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                            <td class="truncate">${l.itemName || ''}</td>
-                            <td>${l.type === 'SELL' ? '<span class="badge-sell">SELL</span>' : '<span class="badge-buy">BUY</span>'}</td>
-                            <td>
-                               <div class="mono">ind: ${fmt2(l.priceBT)}</div>
-                               <div class="mono">stk: ${fmt2(l.stackPriceBT)}</div>
-                            </td>
-                            <td>
-                               <div>${sideLabel} ind: ${qtyInd}</div>
-                               <div>${sideLabel} stk: ${qtyStacks}</div>
-                            </td>
-                            <td>${l.playerName || ''}</td>
-                            <td>
-                                <input type="number" min="1" value="1" style="width:70px" data-for="${l.listingId}">
-                                <div class="qty-note">Enter individuals</div>
-                            </td>
-                            <td>
-                                <button data-buy="${l.listingId}">${isBuyListing ? 'Sell to Listing' : 'Buy from Listing'}</button>
-                            </td>
-                        `;
-                tb.appendChild(tr);
-            });
-        }
-
-        async function createTrade(listingId) {
-            if (!googleIdToken) { alert('Login first'); return; }
-            const inp = document.querySelector(`input[data-for="${listingId}"]`);
-            const qty = Number(inp?.value || 0);
-            if (!qty || qty <= 0) return;
-            byId('msgList').textContent = 'Creating trade...';
-            try {
-                const body = { action: 'createTradeRequest', idToken: googleIdToken, listingId, quantity: qty };
-                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'createTradeRequest failed');
-                byId('msgList').textContent = 'Trade request created (pending approval).';
-                loadTrades();
-            } catch (e) {
-                byId('msgList').textContent = 'Error: ' + e.message;
-            }
-        }
-
-        async function loadTrades() {
-            if (!googleIdToken) { byId('msgTrades').textContent = 'Login first.'; return; }
-            byId('msgTrades').textContent = 'Loading...';
-            try {
-                const r = await fetch(`${WEB_APP_URL}?action=myOpenTrades&idToken=${encodeURIComponent(googleIdToken)}`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'myOpenTrades failed');
-                const d = normalizeResult(j);
-                const arr = Array.isArray(d.trades) ? d.trades : d;
-                renderTrades(arr || []);
-                byId('msgTrades').textContent = `Loaded ${arr.length}`;
-            } catch (e) {
-                byId('msgTrades').textContent = 'Error: ' + e.message;
-            }
-        }
-
-        function renderTrades(arr) {
-            const tb = byId('tbTrades'); tb.innerHTML = '';
-            arr.forEach(t => {
-                const stackSize = Number(t.stackSize || 1) || 1;
-                const totalBT = Number(t.quantity || 0) * Number(t.price || 0);
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                          <td>${t.tradeId || ''}</td>
-                          <td>${t.itemName || ''}</td>
-                          <td>${t.listingType || ''}</td>
-                          <td>
-                             <div>ind qty: ${t.quantity || 0}</div>
-                             <div>stk qty: ${Math.floor((Number(t.quantity || 0)) / stackSize)}</div>
-                          </td>
-                          <td>
-                             <div>ind price: ${fmt2(t.price || 0)}</div>
-                             <div>stk price: ${fmt2((t.price || 0) * stackSize)}</div>
-                          </td>
-                          <td>${fmt2(totalBT)} BT</td>
-                          <td>${t.status || ''}</td>
-                          <td>${t.createdAt || ''}</td>
-                        `;
-                tb.appendChild(tr);
-            });
-        }
-
-        document.addEventListener('click', (ev) => {
-            const t = ev.target;
-            if (t.dataset && t.dataset.buy) createTrade(t.dataset.buy);
-        });
-
-        window.onload = () => {
-            initLogin();
-            restore();
-            byId('btnSearch').onclick = loadListings;
-            byId('btnRefreshTrades').onclick = loadTrades;
-            // Basic saved token restore:
-            const saved = window.getSavedIdToken && window.getSavedIdToken();
-            if (saved) onLogin(saved, true);
-            loadListings();
-        };
-    </script>
+    <!-- OCMHome scripts (segmented) -->
+    <script src="OCMHome_js/ocmhome-core.js"></script>
+    <script src="OCMHome_js/ocmhome-catalog.js"></script>
+    <script src="OCMHome_js/ocmhome-ui.js"></script>
+    <script src="OCMHome_js/ocmhome-trades.js"></script>
+    <script src="OCMHome_js/ocmhome-auth.js"></script>
+    <script src="OCMHome_js/ocmhome-boot.js"></script>
 </head>
+
 <body>
-    <!-- Shared Top Bar -->
-    <div id="topBar">
-        <div><strong>Vak Store</strong></div>
-        <button onclick="navigateStore()">Store</button>
-        <button onclick="navigateHistory()">Account History</button>
-        <button onclick="navigateOCM()">OCM</button>
-        <button onclick="navigateMerchant()">OCM Merchant</button>
-        <button id="adminPanelBtn" style="display:none;" onclick="navigateAdmin()">Admin Panel</button>
-        <div class="right">
-            <button id="btnLogin" onclick="startLogin()">Login</button>
-            <div id="orderStatusBall" title="Orders status"></div>
-            <div id="orderPopup">
-                <div style="font-weight:bold;margin-bottom:6px;">Your open orders</div>
-                <div id="orderPopupBody" class="small"></div>
+    <div id="authPanel">
+        <div id="googleLoginArea">
+            <div id="googleBtn"></div>
+            <div class="login-hint">If the Google button does not appear, use fallback:</div>
+            <div class="fallback-login">
+                <button id="fallbackBtn" type="button" onclick="startFallbackLogin()">Fallback Google Login</button>
             </div>
-            <span id="topBalanceTarget" class="small balance-chip balance-target" style="display:none;"></span>
-            <span id="topBalance" class="small balance-chip balance-you" style="display:none;"></span>
-            <span id="topUser" class="small"></span>
-            <button id="btnLogout" style="display:none;" onclick="logout()">Logout</button>
+            <div id="loginStatus" class="small"></div>
         </div>
     </div>
-    <script>
-        // Minimal nav helpers (works even if topbar.js already offers them)
-        function navigateStore() { location.href = 'index.html'; }
-        function navigateHistory() { location.href = 'AccountHistory.html'; }
-        function navigateOCM() { location.href = 'OCMHome.html'; }
-        function navigateMerchant() { location.href = 'OCMUser.html'; }
-        function navigateAdmin() { location.href = 'Admin.html'; }
-        // Initialize shared top bar if helper exists
-        document.body.classList.add('withTopBar');
-        if (window.initSharedTopBar) { window.initSharedTopBar(); }
-    </script>
+
     <h1>OCM Marketplace</h1>
     <div id="authStatus" class="small">Not logged in.</div>
-    <div id="loginBtnArea"></div>
-    <button id="logoutBtn" style="display:none;" onclick="logout()">Logout</button>
 
-    <div class="flex toolbar">
-        <input id="q" type="text" placeholder="Search item name">
-        <button id="btnSearch">Search</button>
-        <span id="msgList" class="small"></span>
+    <div class="tabs" role="tablist" aria-label="Marketplace sections">
+        <button id="tabSell" role="tab" aria-selected="true" aria-controls="sellWrap" type="button">For sale / Supply</button>
+        <button id="tabBuy" role="tab" aria-selected="false" aria-controls="buyWrap" type="button">Buying / Demand</button>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Item</th>
-                <th>Type</th>
-                <th>Price</th>
-                <th>Stock / Demand</th>
-                <th>Owner</th>
-                <th>Qty (ind)</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="tbListings"></tbody>
-    </table>
+    <div class="small" id="msgTop"></div>
 
-    <h2>My Pending Trades</h2>
-    <div class="flex">
-        <button id="btnRefreshTrades">Refresh</button>
-        <span id="msgTrades" class="small"></span>
+    <div class="grid2">
+        <section id="sellWrap" aria-label="Supply listings">
+            <h2>For sale / Supply</h2>
+            <div class="toolbar">
+                <input id="qSell" class="search" type="text" placeholder="Search supply items">
+                <button id="btnSearchSell" type="button">Search</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Item price</th>
+                        <th>BT price</th>
+                        <th>Individual stock</th>
+                        <th>Stack size</th>
+                        <th>Seller</th>
+                        <th>Trade</th>
+                    </tr>
+                </thead>
+                <tbody id="tbSell"></tbody>
+            </table>
+        </section>
+
+        <section id="buyWrap" aria-label="Demand listings">
+            <h2>Buying / Demand</h2>
+            <div class="toolbar">
+                <input id="qBuy" class="search" type="text" placeholder="Search demand items">
+                <button id="btnSearchBuy" type="button">Search</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Item price</th>
+                        <th>BT price</th>
+                        <th>Individual demand</th>
+                        <th>Stack size</th>
+                        <th>Buyer</th>
+                        <th>Trade</th>
+                    </tr>
+                </thead>
+                <tbody id="tbBuy"></tbody>
+            </table>
+        </section>
     </div>
+
+    <h2>My pending trades</h2>
+    <div class="toolbar">
+        <button id="btnRefreshPending" type="button">Refresh</button>
+        <span id="msgPending" class="small"></span>
+    </div>
+
     <table>
         <thead>
             <tr>
                 <th>TradeId</th>
                 <th>Item</th>
-                <th>Listing Type</th>
-                <th>Quantity</th>
-                <th>Price</th>
-                <th>Total BT</th>
+                <th>Trader</th>
+                <th>Qty (individual)</th>
+                <th>Payment</th>
+                <th>Total (BT eq)</th>
                 <th>Status</th>
-                <th>Created</th>
+                <th>Actions</th>
             </tr>
         </thead>
-        <tbody id="tbTrades"></tbody>
+        <tbody id="tbMyPending"></tbody>
     </table>
 
-    <div class="footer-note">
-        Prices shown: per-ind (canonical) and derived per-stack. BUY shows Demand; SELL shows Stock.
-    </div>
+    <dialog id="editDlg">
+        <form method="dialog" style="min-width:min(560px,95vw)">
+            <h3 style="margin-top:0;">Edit pending trade</h3>
+            <div class="small">Trade: <span id="editTradeId" class="mono"></span></div>
+            <div class="small">Item: <span id="editItemName"></span> | Trader: <span id="editSellerName"></span></div>
+
+            <div style="margin-top:10px;" class="details-grid">
+                <div>
+                    <div class="small">Payment</div>
+                    <label><input id="editPayBT" type="radio" name="editPay" value="BT" checked> BT</label>
+                    <label><input id="editPayItem" type="radio" name="editPay" value="ITEM"> Item</label>
+
+                    <div style="margin-top:8px;">
+                        <div class="small">Payment peg (when paying with item)</div>
+                        <select id="editPayPeg" style="min-width:260px;"></select>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="small">Quantity</div>
+                    <label><input id="editQtyInd" type="radio" name="editQtyMode" value="IND" checked> individual</label>
+                    <label><input id="editQtyStack" type="radio" name="editQtyMode" value="STACK"> stack</label>
+                    <label style="display:block;margin-top:6px;">Amount <input id="editQtyVal" type="number" min="1" value="1" style="width:120px"></label>
+                </div>
+
+                <div>
+                    <div class="small">Estimate</div>
+                    <div id="editEstimate" class="mono">—</div>
+                </div>
+            </div>
+
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button id="btnSaveEdit" type="button">Save edit (creates new tradeId)</button>
+                <button id="btnCancelEdit" type="button">Close</button>
+                <span id="editMsg" class="small"></span>
+            </div>
+        </form>
+    </dialog>
 </body>
 </html>

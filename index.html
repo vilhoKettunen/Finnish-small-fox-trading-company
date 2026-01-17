@@ -412,30 +412,13 @@
         }
     </style>
     <script src="app-config.js"></script>
+    <script src="api-client.js"></script>
+    <script src="topbar.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
-    <div id="topBar">
-        <div><strong>Vak Store</strong></div>
-        <button onclick="navigateStore()">Store</button>
-        <button onclick="navigateHistory()">Account History</button>
-        <button onclick="navigateOCM()">OCM</button>
-        <button onclick="navigateMerchant()">OCM Merchant</button>
-        <button id="adminPanelBtn" style="display:none;" onclick="navigateAdmin()">Admin Panel</button>
-        <div class="right">
-            <button id="btnLogin" onclick="startLogin()">Login</button>
-            <div id="orderStatusBall" title="Orders status"></div>
-            <div id="orderPopup">
-                <div style="font-weight:bold;margin-bottom:6px;">Your open orders</div>
-                <div id="orderPopupBody" class="small"></div>
-            </div>
-            <span id="topBalanceTarget" class="small balance-chip balance-target" style="display:none;"></span>
-            <span id="topBalance" class="small balance-chip balance-you" style="display:none;"></span>
-            <span id="topUser" class="small"></span>
-            <button id="btnLogout" style="display:none;" onclick="logout()">Logout</button>
-        </div>
-    </div>
+    <!-- top bar injected by topbar.js -->
 
     <div id="authPanel">
         <div id="googleLoginArea">
@@ -1107,42 +1090,17 @@
             }
         }
 
-        /* ===== Auth UI ===== */
+        /* ===== Auth UI (top bar delegation) ===== */
         function updateTopBarAuth() {
-            document.getElementById('topUser').textContent = googleIdToken ? (currentUser?.email || '') : '';
-            document.getElementById('btnLogin').style.display = googleIdToken ? 'none' : 'inline-block';
-            document.getElementById('btnLogout').style.display = googleIdToken ? 'inline-block' : 'none';
             try { updateAccountBalanceUiVisibility(); } catch { }
             updateTopBarBalanceDom();
-        }
-        function updateAccountBalanceUiVisibility() {
-            const isAdmin = !!currentUser?.isAdmin;
-            const buyInput = document.getElementById('buyAccountBalanceInput');
-            if (buyInput) {
-                const buyLabel = buyInput.closest('label');
-                if (buyLabel) buyLabel.style.display = isAdmin ? '' : 'none';
-                const buyBtn = buyLabel ? buyLabel.nextElementSibling : null;
-                if (buyBtn && buyBtn.tagName === 'BUTTON') buyBtn.style.display = isAdmin ? '' : 'none';
-            }
-            const sellInput = document.getElementById('accountBalanceInput');
-            if (sellInput) {
-                const sellLabel = sellInput.closest('label');
-                if (sellLabel) sellLabel.style.display = isAdmin ? '' : 'none';
-                const sellBtn = sellLabel ? sellLabel.nextElementSibling : null;
-                if (sellBtn && sellBtn.tagName === 'BUTTON') sellBtn.style.display = isAdmin ? '' : 'none';
-            }
-            if (isAdmin) {
-                const hasPinned = sellCart.some(e => e.isAccountBalancePinned);
-                if (!hasPinned && Number(currentBalanceBT) !== 0) {
-                    upsertPinnedBalanceRow(currentBalanceBT);
-                }
-            } else {
-                const beforeBuy = buyCart.length, beforeSell = sellCart.length;
-                buyCart = buyCart.filter(e => !e.isBalance);
-                sellCart = sellCart.filter(e => !e.isBalance);
-                if (beforeBuy !== buyCart.length || beforeSell !== sellCart.length) {
-                    renderBuyList(); renderSellList(); calculateNet();
-                }
+            if (window.topbarSetAuthState) {
+                window.topbarSetAuthState({
+                    idToken: googleIdToken,
+                    user: currentUser,
+                    isAdmin: !!currentUser?.isAdmin,
+                    balanceBT: currentBalanceBT
+                });
             }
         }
 
@@ -1206,29 +1164,155 @@
             hideRecaptchaWidget();
             document.getElementById('requestGuard').style.display = 'none';
         }
+        function sanitizePlayerNameUi(raw) {
+            // UI-only: backend still enforces the real rules.
+            let s = String(raw || '').trim();
+            s = s.replace(/\s+/g, ' ');
+
+            // Keep only letters/numbers/space/_/-
+            // (UI filter is intentionally simple; backend is authoritative.)
+            s = s.replace(/[^A-Za-z0-9 _-]/g, '');
+            return s;
+        }
+
+        function formatMailboxUi(raw) {
+            // Goal output: "4A / 1A / F1"
+            // Accept partial typing; keep it pleasant.
+            let s = String(raw || '').toUpperCase();
+
+            // Keep only chars we care about during typing
+            s = s.replace(/[^0-9ABF/ ]/g, '');
+
+            // Remove spaces and normalize slashes
+            s = s.replace(/\s+/g, '');
+            s = s.replace(/\/+/g, '/');
+
+            // If user types segments without slashes, try to recover gently
+            // We build segments by scanning for patterns:
+            //  - segment1: digits + (A|B)
+            //  - segment2: digits + (A|B)
+            //  - segment3: F + digits
+            const segs = [];
+
+            // If they already used slashes, parse by it first
+            if (s.includes('/')) {
+                const parts = s.split('/').filter(Boolean);
+                for (const p of parts) segs.push(p);
+            } else {
+                // No slashes, just treat as a continuous stream
+                segs.push(s);
+            }
+
+            // Flatten and re-parse into canonical 3 parts
+            const flat = segs.join('');
+            let i = 0;
+
+            function readDigits() {
+                const start = i;
+                while (i < flat.length && /[0-9]/.test(flat[i])) i++;
+                return flat.slice(start, i);
+            }
+
+            // part 1: \d+ [A|B]
+            const n1 = readDigits();
+            const l1 = (i < flat.length && /[AB]/.test(flat[i])) ? flat[i++] : '';
+            // part 2: \d+ [A|B]
+            const n2 = readDigits();
+            const l2 = (i < flat.length && /[AB]/.test(flat[i])) ? flat[i++] : '';
+            // part 3: F \d+
+            const f = (i < flat.length && flat[i] === 'F') ? flat[i++] : '';
+            const fn = readDigits();
+
+            // Build display with " / " always present when enough data exists
+            // Allow partials while typing.
+            const p1 = (n1 || l1) ? (n1 + l1) : '';
+            const p2 = (n2 || l2) ? (n2 + l2) : '';
+            const p3 = (f || fn) ? ((f || 'F') + fn) : '';
+
+            // If user typed slashes, respect that they're separating parts,
+            // but normalize spacing.
+            const partsOut = [];
+            if (p1) partsOut.push(p1);
+            if (p2) partsOut.push(p2);
+            if (p3) partsOut.push(p3);
+
+            return partsOut.join(' / ');
+        }
+
+        function attachSetupInputHelpers() {
+            const pn = document.getElementById('setupPlayerName');
+            const mb = document.getElementById('setupMailbox');
+            if (pn) {
+                pn.addEventListener('input', () => {
+                    const next = sanitizePlayerNameUi(pn.value);
+                    if (pn.value !== next) pn.value = next;
+                });
+            }
+            if (mb) {
+                mb.setAttribute('inputmode', 'text');
+                mb.setAttribute('autocomplete', 'off');
+                mb.setAttribute('placeholder', '4A / 1A / F1');
+
+                mb.addEventListener('input', () => {
+                    const next = formatMailboxUi(mb.value);
+                    if (mb.value !== next) mb.value = next;
+                });
+
+                mb.addEventListener('blur', () => {
+                    // On blur, force final pretty normalization
+                    mb.value = formatMailboxUi(mb.value);
+                });
+            }
+        }
         async function submitSetup() {
-            const playerName = document.getElementById('setupPlayerName').value.trim();
-            const mailbox = document.getElementById('setupMailbox').value.trim();
             const statusEl = document.getElementById('setupMsg');
+            const pnEl = document.getElementById('setupPlayerName');
+            const mbEl = document.getElementById('setupMailbox');
+
+            if (!statusEl || !pnEl || !mbEl) {
+                alert('Setup form elements missing from DOM.');
+                return;
+            }
+
             if (!googleIdToken) { statusEl.textContent = 'Login first'; return; }
-            if (!playerName || !mailbox) { statusEl.textContent = 'Player name and mailbox required'; return; }
+
+            // UI normalization (backend still enforces the real rules)
+            pnEl.value = sanitizePlayerNameUi(pnEl.value);
+            mbEl.value = formatMailboxUi(mbEl.value);
+
+            const playerName = pnEl.value.trim();
+            const mailbox = mbEl.value.trim();
+
+            if (!playerName || !mailbox) {
+                statusEl.textContent = 'Player name and mailbox required';
+                return;
+            }
+
             const needCaptcha = !localStorage.getItem('vak_captcha_ok');
             let recaptchaToken = null;
+
             if (needCaptcha) {
-                try { recaptchaToken = await recaptchaWrap(); } catch (e) { statusEl.textContent = e.message; return; }
+                try { recaptchaToken = await recaptchaWrap(); }
+                catch (e) { statusEl.textContent = e.message; return; }
             }
+
             statusEl.textContent = 'Saving...';
+
             try {
-                const body = { action: 'linkPlayer', idToken: googleIdToken, payload: { playerName, mailbox } };
-                if (recaptchaToken) body.recaptchaToken = recaptchaToken;
-                const resp = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                const j = await resp.json();
-                if (!j.ok) throw new Error(j.error || 'linkPlayer failed');
-                const meResp = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
-                const meJson = await meResp.json();
-                if (!meJson.ok) throw new Error(meJson.error || 'me failed');
-                currentUser = normalizeUser(meJson.data.user || {}) || {};
-                currentUser.isAdmin = !!meJson.data.isAdmin;
+                // Uses apiPost -> will route to GET bypass because linkPlayer is in BYPASS_ACTIONS
+                await apiPost('linkPlayer', {
+                    idToken: googleIdToken,
+                    payload: { playerName, mailbox },
+                    recaptchaToken: recaptchaToken || undefined
+                });
+
+                // Refresh local user from backend
+                const me = await apiGet('me', { idToken: googleIdToken });
+                const d = me.data || me.result || me;
+
+                currentUser = normalizeUser(d.user || {}) || {};
+                currentUser.isAdmin = !!d.isAdmin;
+
                 if (currentUser.playerName && currentUser.captchaPassed) {
                     localStorage.setItem('vak_captcha_ok', '1');
                     hideSetupShowApp();
@@ -1236,6 +1320,7 @@
                     localStorage.removeItem('vak_captcha_ok');
                     showSetupOnly();
                 }
+
                 updateTopBarAuth();
                 statusEl.textContent = 'Setup complete.';
                 await refreshPinnedBalanceForActiveTarget();
@@ -1833,25 +1918,55 @@
             if (!googleIdToken) { alert('You need to login for this tool'); return; }
             copyTransactionData();
         }
+        /* ===== REPLACEMENT FUNCTION for index.html ===== */
+        /* ===== UPDATED: GET Bypass for Submit Request ===== */
+        /* ===== UPDATED: GET Bypass for Submit Request ===== */
         function submitPurchaseRequest() {
             const payload = buildRequestPayload();
             const skipCaptcha = currentUser && currentUser.captchaPassed;
-            const doPost = (tokenOrNull) => {
-                const body = { action: 'createRequest', idToken: googleIdToken, payload };
-                if (tokenOrNull) body.recaptchaToken = tokenOrNull;
-                if (currentUser?.isAdmin && window.submitForUser) body.onBehalfOf = payload.user;
-                return fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+
+            // We define the specific logic to send via GET
+            const doRequestViaGet = (tokenOrNull) => {
+                if (tokenOrNull) payload.recaptchaToken = tokenOrNull;
+
+                // 1. Prepare the URL
+                const url = new URL(WEB_APP_URL);
+                url.searchParams.append('action', 'createRequest');
+                url.searchParams.append('idToken', googleIdToken);
+
+                // 2. Pack the entire payload object into a string
+                // This puts the shopping cart onto the "Address Label"
+                url.searchParams.append('payload', JSON.stringify(payload));
+
+                // 3. Handle Admin "On Behalf Of"
+                if (currentUser?.isAdmin && window.submitForUser) {
+                    url.searchParams.append('onBehalfOf', JSON.stringify(payload.user));
+                }
+
+                // 4. Send as GET (No body, no redirect issues)
+                return fetch(url.toString(), {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'text/plain' }
+                });
             };
+
             (skipCaptcha ? Promise.resolve(null) : recaptchaWrap())
-                .then(token => doPost(token))
+                .then(token => doRequestViaGet(token))
                 .then(r => r.json())
                 .then(j => {
                     if (!j.ok) throw new Error(j.error);
-                    document.getElementById('requestMsg').textContent = 'Request submitted. ID: ' + (j.result.requestId || payload.requestId);
+
+                    const responseData = j.data || j.result || {};
+                    const finalId = responseData.requestId || payload.requestId;
+
+                    document.getElementById('requestMsg').textContent = 'Request submitted via GET. ID: ' + finalId;
                     window.editedFromRequestId = null;
                     refreshOpenOrders();
                 })
-                .catch(e => document.getElementById('requestMsg').textContent = 'Error: ' + e.message);
+                .catch(e => {
+                    console.error(e);
+                    document.getElementById('requestMsg').textContent = 'Error: ' + e.message;
+                });
         }
         function copyTransactionData() {
             const payload = buildRequestPayload();
@@ -1915,10 +2030,32 @@
                 if (!googleIdToken) return;
                 const r = await fetch(`${WEB_APP_URL}?action=adminListPlayers&idToken=${encodeURIComponent(googleIdToken)}`);
                 const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'adminListPlayers failed');
-                const arr = Array.isArray(j.data) ? j.data : (j.data?.players || []);
+
+                // Treat explicit ok:false as error; otherwise accept plain objects
+                if (j && j.ok === false) {
+                    throw new Error(j.error || 'adminListPlayers failed');
+                }
+
+                // Normalize shapes:
+                // - Cloudflare style: { ok:true, data:{ players:[...] } }
+                // - Plain GAS style: { players:[...] }
+                let arr = [];
+                if (Array.isArray(j.data)) {
+                    arr = j.data;
+                } else if (Array.isArray(j.players)) {
+                    arr = j.players;
+                } else if (j.data && Array.isArray(j.data.players)) {
+                    arr = j.data.players;
+                }
+
                 __playersCache.length = 0;
-                arr.forEach(p => __playersCache.push({ userId: p.userId, email: p.email, playerName: p.playerName, mailbox: p.mailbox }));
+                arr.forEach(p => __playersCache.push({
+                    userId: p.userId,
+                    email: p.email,
+                    playerName: p.playerName,
+                    mailbox: p.mailbox
+                }));
+
                 if (st) st.textContent = `Loaded ${__playersCache.length} players.`;
             } catch (e) {
                 if (st) st.textContent = 'Load players failed: ' + e.message;
@@ -2123,7 +2260,7 @@
                         source: it.source || 'STORE',
                         isBalance: !!it.isBalance
                     };
-                    if (String(it.side).toLowerCase() === 'buy') buyRows.push(row);
+                    if (String(it.side).toLowerCase() === 'buy') buyRows.push(row); 
                     else if (String(it.side).toLowerCase() === 'sell') sellRows.push(row);
                 });
             } else {
@@ -2166,8 +2303,7 @@
             updateAllDisplays();
         }
 
-        /* ===== Periodic open orders refresh ===== */
-        setInterval(() => { if (googleIdToken) refreshOpenOrders(); }, 15000);
+
 
         /* ===== Utilities ===== */
         function cryptoRandomId() { return (crypto.getRandomValues(new Uint32Array(4))).join('-'); }
@@ -2216,14 +2352,26 @@
             }
         }
 
+
+
+        /* ===== Init ===== */
         /* ===== Init ===== */
         window.onload = () => {
+            window.initSharedTopBar && window.initSharedTopBar();
+
             tryRestoreAuthOnLoad();
             document.body.classList.add('withTopBar');
+
+            // Hook up setup form helpers (playerName/mailbox formatting)
+            attachSetupInputHelpers();
+
             checkHashForIdToken();
             loadData();
-            addPayRow();
-            addConverterRow();
+
+            // Initialize dynamic rows
+            if (document.getElementById('payOptions')) addPayRow();
+            if (document.getElementById('converterOptions')) addConverterRow();
+
             initRecaptcha();
 
             const gsiWait = setInterval(() => {
@@ -2237,6 +2385,7 @@
             initCollapsibles();
             updateTopBarAuth();
             attachOnBehalfSearch();
+            refreshOpenOrders();
         };
     </script>
 </body>

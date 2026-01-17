@@ -1,21 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <!-- Top bar dependencies -->
-    <link rel="icon" href="favicon.ico">
+    <meta charset="UTF-8">
+    <title>OCM Merchant</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" href="data:,">
     <script src="app-config.js"></script>
     <script src="auth-storage.js"></script>
+    <script src="api-client.js"></script>
     <script src="topbar.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <meta charset="UTF-8">
-    <title>OCM Merchant Panel</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <link rel="icon" href="favicon.ico">
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
-            max-width: 1250px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+            body.withTopBar {
+                padding-top: 72px;
+            }
+
+        @supports (padding:max(0px)) {
+            body.withTopBar {
+                padding-top: max(72px, env(safe-area-inset-top));
+            }
         }
 
         h1, h2, h3 {
@@ -27,6 +37,41 @@
             color: #555;
         }
 
+        .muted {
+            color: #666;
+        }
+
+        .section {
+            margin: 18px0;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
+            gap: 10px;
+        }
+
+        label {
+            display: block;
+            margin: 6px0;
+        }
+
+        input, select, button {
+            padding: 6px;
+            font-size: 13px;
+        }
+
         table {
             border-collapse: collapse;
             width: 100%;
@@ -35,7 +80,7 @@
 
         th, td {
             border: 1px solid #ddd;
-            padding: 6px;
+            padding: 8px6px;
             font-size: 13px;
             vertical-align: top;
         }
@@ -44,725 +89,535 @@
             background: #f5f5f5;
         }
 
-        input, button, select {
-            padding: 6px;
-            font-size: 13px;
-        }
-
-        .radio-wrap {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .flex {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .section {
-            border: 1px solid #ccc;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 22px;
-            background: #fff;
-        }
-
-        .grid {
-            display: grid;
-            gap: 10px;
-            grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
-        }
-
         .mono {
             font-family: Consolas, monospace;
         }
 
-        .inactive {
-            opacity: .5;
-        }
-
-        .status-open {
-            color: #2e7d32;
-            font-weight: bold;
-        }
-
-        .status-closed {
-            color: #c62828;
-            font-weight: bold;
-        }
-
-        .warn {
-            color: #c00;
-            font-size: 12px;
-            margin-left: 6px;
-        }
-
-        .edit-panel {
-            background: #fcfcfc;
-            padding: 10px;
-            border: 1px solid #bbb;
-            border-radius: 6px;
-            margin-top: 6px;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .stack-note {
+        .pill {
+            display: inline-block;
+            padding: 2px6px;
+            border-radius: 999px;
             font-size: 11px;
-            color: #666;
+            background: #eee;
         }
 
-        .badge-sell {
+        .pill-active {
             background: #e9ffe8;
-            padding: 2px 6px;
-            border-radius: 4px;
         }
 
-        .badge-buy {
+        .pill-pending {
+            background: #fff8d0;
+        }
+
+        .pill-paused {
+            background: #eee;
+        }
+
+        .pill-restock {
             background: #e8f7ff;
-            padding: 2px 6px;
-            border-radius: 4px;
         }
 
-        .truncate {
-            max-width: 160px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .footer-note {
-            font-size: 11px;
-            color: #777;
-            margin-top: 30px;
-        }
-        /* Shared top bar styling */
-        #topBar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 52px;
-            background: #222;
-            color: #fff;
+        .tabs {
             display: flex;
-            align-items: center;
-            padding: 0 20px;
-            z-index: 1000;
-            font-size: 14px;
-            gap: 12px;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
-            #topBar a, #topBar button {
-                color: #fff;
-                text-decoration: none;
-                margin-right: 16px;
-                background: none;
-                border: none;
+            .tabs button {
+                padding: 8px10px;
+                border-radius: 8px;
+                border: 1px solid #ccc;
+                background: #fff;
                 cursor: pointer;
             }
 
-            #topBar .right {
-                margin-left: auto;
-                display: flex;
-                gap: 12px;
-                align-items: center;
-                flex-wrap: wrap;
-            }
+                .tabs button[aria-selected="true"] {
+                    background: #222;
+                    color: #fff;
+                    border-color: #222;
+                }
 
-        body.withTopBar {
-            padding-top: 72px;
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+            gap: 10px;
         }
 
-        .balance-chip {
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: rgba(255,255,255,0.08);
-            white-space: nowrap;
+        #authPanel {
+            margin-bottom: 10px;
         }
 
-        .balance-you.positive {
-            color: #2ecc71;
+        #googleLoginArea {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 4px0;
         }
 
-        .balance-you.negative {
-            color: #ff5252;
+        #googleBtn {
+            margin-top: 4px;
         }
 
-        .balance-target {
-            color: #f0c200;
+        .login-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
         }
 
-        #orderPopup {
+        .fallback-login {
+            margin-top: 4px;
+        }
+
+        /* ===== Store-style dropdown search ===== */
+        .dropdown-wrap {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .dropdown-input {
+            width: 100%;
+            max-width: 360px;
+            padding: 6px;
+        }
+
+        .dropdown-list {
             position: absolute;
-            top: 52px;
-            right: 100px;
+            top: 100%;
+            left: 0;
+            right: 0;
             background: #fff;
             border: 1px solid #ccc;
-            border-radius: 6px;
-            padding: 8px;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 500;
+            border-radius: 4px;
             display: none;
-            min-width: 260px;
-            z-index: 1100;
-            color: #000;
         }
 
-        #orderStatusBall {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #777;
+        .dropdown-item {
+            padding: 6px8px;
             cursor: pointer;
+            border-radius: 4px;
         }
 
-        .status-pending {
-            background: #f0c200 !important;
+            .dropdown-item:hover, .dropdown-item.active {
+                background: #f0f6ff;
+            }
+
+        .inline-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
-        .status-error {
-            background: #e74c3c !important;
+            .inline-row > * {
+                flex: 00 auto;
+            }
+
+        dialog::backdrop {
+            background: rgba(0,0,0,0.35);
         }
 
-        .status-none {
-            background: #777 !important;
+        .peg-box {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fafafa;
         }
 
-        .order-link {
-            color: #66c;
-            text-decoration: underline;
-            cursor: pointer;
+        .peg-row {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 8px;
+            background: #fff;
+            margin-top: 8px;
+        }
+
+        .peg-row-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .peg-row-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .warn {
+            color: #b45309;
+            font-weight: bold;
         }
     </style>
-    <script src="app-config.js"></script>
-    <script src="auth-storage.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script>
-        const WEB_APP_URL = window.WEB_APP_URL || 'https://yellow-king-52c6.vilhokettu1.workers.dev/exec';
-        const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '857098772457-kuvq861sa844esf2jc4b7av1pnlmnn1c.apps.googleusercontent.com';
-        const PRICE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/gviz/tq?tqx=out:json&gid=0";
-
-        let googleIdToken = null;
-        let currentUser = null;
-        let items = [];
-        let myListings = [];
-        let editingId = null;
-
-        function byId(i) { return document.getElementById(i); }
-        function fmt2(v) { v = Number(v) || 0; let s = v.toFixed(2); return s.replace(/\.?0+$/, ''); }
-        function fmt4(v) { v = Number(v) || 0; return v.toFixed(4); }
-
-        function initLogin() {
-            if (!window.google || !google.accounts || !google.accounts.id) return;
-            google.accounts.id.initialize({
-                client_id: OAUTH_CLIENT_ID,
-                callback: cred => onLogin(cred.credential),
-                ux_mode: 'popup'
-            });
-            google.accounts.id.renderButton(byId('loginBtnArea'), { theme: 'outline', size: 'medium' });
-        }
-
-        async function restore() {
-            if (!window.initAuthFromStorage) return;
-            const res = await window.initAuthFromStorage();
-            if (res.ok) onLogin(res.idToken, true);
-        }
-
-        async function onLogin(token, silent = false) {
-            googleIdToken = token;
-            try {
-                const r = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(token)}`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'me failed');
-                currentUser = j.data.user;
-                currentUser.isAdmin = !!j.data.isAdmin;
-                byId('authStatus').textContent = `Logged as ${currentUser.email}`;
-                byId('logoutBtn').style.display = 'inline-block';
-                byId('loginBtnArea').style.display = 'none';
-                await loadPriceSheet();
-                await loadMyListings();
-            } catch (e) {
-                if (!silent) byId('authStatus').textContent = 'Auth failed: ' + e.message;
-            }
-        }
-
-        function logout() {
-            googleIdToken = null; currentUser = null;
-            window.clearSavedIdToken && window.clearSavedIdToken();
-            byId('authStatus').textContent = 'Logged out.';
-            byId('logoutBtn').style.display = 'none';
-            byId('loginBtnArea').style.display = 'block';
-            byId('tbListings').innerHTML = '';
-        }
-
-        async function loadPriceSheet() {
-            byId('itemsStatus').textContent = 'Loading items...';
-            try {
-                const txt = await fetch(PRICE_SHEET_URL).then(r => r.text());
-                let payloadText = txt;
-                const start = payloadText.indexOf('('), end = payloadText.lastIndexOf(')');
-                if (start > -1 && end > start) payloadText = payloadText.slice(start + 1, end);
-                const json = JSON.parse(payloadText);
-                const rows = json?.table?.rows || [];
-                items = rows.map(row => {
-                    const c = row.c || [];
-                    const name = c[0]?.v ?? "";
-                    const bundleSize = Number(c[4]?.v ?? 1);
-                    if (!name) return null;
-                    return { name: String(name), bundleSize: bundleSize || 1 };
-                }).filter(Boolean);
-                byId('itemsStatus').textContent = `Loaded ${items.length} items.`;
-                rebuildItemSelect();
-            } catch (e) {
-                items = []; byId('itemsStatus').textContent = 'Item load error: ' + e.message;
-            }
-        }
-
-        function rebuildItemSelect() {
-            const sel = byId('refItemInput');
-            sel.setAttribute('list', 'refItemsDatalist');
-            const dl = byId('refItemsDatalist');
-            dl.innerHTML = '';
-            items.forEach(i => {
-                const opt = document.createElement('option');
-                opt.value = i.name;
-                dl.appendChild(opt);
-            });
-        }
-
-        async function loadMyListings() {
-            if (!googleIdToken) { byId('listingsMsg').textContent = 'Login first.'; return; }
-            byId('listingsMsg').textContent = 'Loading...';
-            try {
-                const r = await fetch(`${WEB_APP_URL}?action=listMyListings&idToken=${encodeURIComponent(googleIdToken)}`);
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'listMyListings failed');
-                const d = (j.data && j.data.listings) ? j.data.listings : [];
-                myListings = d;
-                renderMyListings();
-                byId('listingsMsg').textContent = `Loaded ${d.length}`;
-            } catch (e) {
-                byId('listingsMsg').textContent = 'Error: ' + e.message;
-            }
-        }
-
-        function renderMyListings() {
-            const tb = byId('tbListings'); tb.innerHTML = '';
-            myListings.forEach(l => {
-                const qtyInd = (l.remainingQuantity === '' || l.remainingQuantity == null) ? 0 : Number(l.remainingQuantity || 0);
-                const ss = Number(l.stackSize || 1) || 1;
-                const qtyStacks = Math.floor(qtyInd / ss);
-                const tr = document.createElement('tr');
-                tr.className = l.status ? '' : 'inactive';
-                tr.innerHTML = `
-                            <td class="truncate">${l.itemName || ''}</td>
-                            <td>${l.type === 'SELL' ? '<span class="badge-sell">SELL</span>' : '<span class="badge-buy">BUY</span>'}</td>
-                            <td>
-                               <div class="mono">stk: ${fmt2(l.priceStack)}</div>
-                               <div class="mono">ind: ${fmt2(l.priceInd)}</div>
-                               <div class="stack-note">stackSize=${ss}</div>
-                            </td>
-                            <td>
-                               <div>stk stock/demand: ${qtyStacks}</div>
-                               <div>ind stock/demand: ${qtyInd}</div>
-                            </td>
-                            <td>${l.status ? '<span class="status-open">OPEN</span>' : '<span class="status-closed">CLOSED</span>'}</td>
-                            <td>
-                               <button data-edit="${l.listingId}">Edit</button>
-                               <button data-toggle="${l.listingId}">${l.status ? 'Close' : 'Open'}</button>
-                               <button data-delete="${l.listingId}">Delete</button>
-                            </td>
-                        `;
-                tb.appendChild(tr);
-            });
-        }
-
-        function resetCreateForms() {
-            byId('refItemInput').value = '';
-            byId('refQtyInd').value = '';
-            byId('refPrice').value = '';
-            byId('refPriceModeInd').checked = true;
-            byId('refSideSell').checked = true;
-            byId('customName').value = '';
-            byId('customStackSize').value = '';
-            byId('customQtyInd').value = '';
-            byId('customPrice').value = '';
-            byId('customPriceModeInd').checked = true;
-            byId('customSideSell').checked = true;
-        }
-
-        async function createReferencedListing() {
-            if (!googleIdToken) { alert('Login first'); return; }
-            const itemName = byId('refItemInput').value.trim();
-            const qtyInd = Number(byId('refQtyInd').value || 0);
-            const priceRaw = Number(byId('refPrice').value || 0);
-            const priceMode = byId('refPriceModeStack').checked ? 'stk' : 'ind';
-            const side = byId('refSideBuy').checked ? 'BUY' : 'SELL';
-            if (!itemName || qtyInd <= 0 || priceRaw <= 0) { alert('Fill all fields'); return; }
-            const item = items.find(i => i.name.toLowerCase() === itemName.toLowerCase());
-            const stackSize = item ? Number(item.bundleSize || 1) || 1 : 1;
-            const body = {
-                action: 'createListing',
-                idToken: googleIdToken,
-                type: side,
-                itemName,
-                quantity: qtyInd,
-                price: priceRaw,
-                priceUnit: priceMode,
-                stackSize: stackSize,
-                sourceItemId: item ? item.name : '',
-                status: true
-            };
-            await postListing(body, 'Referenced listing created.');
-        }
-
-        async function createCustomListing() {
-            if (!googleIdToken) { alert('Login first'); return; }
-            const name = byId('customName').value.trim();
-            let stackSize = Number(byId('customStackSize').value || 0);
-            const qtyInd = Number(byId('customQtyInd').value || 0);
-            const priceRaw = Number(byId('customPrice').value || 0);
-            const priceMode = byId('customPriceModeStack').checked ? 'stk' : 'ind';
-            const side = byId('customSideBuy').checked ? 'BUY' : 'SELL';
-            if (!name || qtyInd <= 0 || priceRaw <= 0 || stackSize <= 0) { alert('Fill all fields'); return; }
-            stackSize = Math.max(1, Math.floor(stackSize));
-            const body = {
-                action: 'createListing',
-                idToken: googleIdToken,
-                type: side,
-                itemName: name,
-                quantity: qtyInd,
-                price: priceRaw,
-                priceUnit: priceMode,
-                stackSize: stackSize,
-                sourceItemId: '',
-                status: true
-            };
-            await postListing(body, 'Custom listing created.');
-        }
-
-        async function postListing(body, okMsg) {
-            const msg = byId('createMsg');
-            msg.textContent = 'Creating...';
-            try {
-                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'createListing failed');
-                msg.textContent = okMsg;
-                resetCreateForms();
-                loadMyListings();
-            } catch (e) {
-                msg.textContent = 'Error: ' + e.message;
-            }
-        }
-
-        function openEdit(listingId) {
-            const l = myListings.find(x => x.listingId === listingId);
-            if (!l) { alert('Listing not found'); return; }
-            editingId = listingId;
-            byId('editPanel').classList.remove('hidden');
-            byId('editItemName').textContent = l.itemName;
-            byId('editListingId').textContent = l.listingId;
-            byId('editSide').textContent = l.type;
-            byId('editStackSize').value = l.stackSize;
-            byId('editQtyInd').value = l.remainingQuantity ?? 0;
-            // Price input: show raw in chosen mode; default to individual
-            byId('editPriceModeInd').checked = true;
-            byId('editPriceValue').value = fmt2(l.priceInd);
-            byId('editStatusOpen').checked = !!l.status;
-            updateEditDerived();
-        }
-
-        function closeEdit() {
-            editingId = null;
-            byId('editPanel').classList.add('hidden');
-        }
-
-        function updateEditDerived() {
-            const stackSize = Number(byId('editStackSize').value || 1) || 1;
-            const qtyInd = Number(byId('editQtyInd').value || 0);
-            const mode = byId('editPriceModeStack').checked ? 'stk' : 'ind';
-            const priceInput = Number(byId('editPriceValue').value || 0);
-            const indPrice = mode === 'stk' ? (priceInput / stackSize) : priceInput;
-            byId('editDerivedPriceInd').textContent = isFinite(indPrice) ? fmt4(indPrice) : '0';
-            byId('editDerivedPriceStack').textContent = isFinite(indPrice) ? fmt2(indPrice * stackSize) : '0';
-            byId('editDerivedQtyStacks').textContent = stackSize > 0 ? Math.floor(qtyInd / stackSize) : 0;
-        }
-
-        async function saveEdit() {
-            if (!googleIdToken || !editingId) { alert('Nothing to save'); return; }
-            const listingId = editingId;
-            const stackSize = Number(byId('editStackSize').value || 1) || 1;
-            const qtyInd = Number(byId('editQtyInd').value || 0);
-            const mode = byId('editPriceModeStack').checked ? 'stk' : 'ind';
-            const priceRaw = Number(byId('editPriceValue').value || 0);
-            const status = byId('editStatusOpen').checked;
-            if (priceRaw <= 0 || qtyInd <= 0 || stackSize <= 0) { alert('Fill valid values'); return; }
-            const body = {
-                action: 'updateListing',
-                idToken: googleIdToken,
-                listingId,
-                price: priceRaw,
-                priceUnit: mode,
-                quantity: qtyInd,
-                stackSize,
-                status
-            };
-            const msg = byId('editMsg');
-            msg.textContent = 'Saving...';
-            try {
-                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'updateListing failed');
-                msg.textContent = 'Saved.';
-                await loadMyListings();
-                openEdit(listingId); // refresh panel values
-            } catch (e) {
-                msg.textContent = 'Error: ' + e.message;
-            }
-        }
-
-        async function toggleListing(listingId) {
-            if (!googleIdToken) { alert('Login first'); return; }
-            const l = myListings.find(x => x.listingId === listingId);
-            if (!l) return;
-            const body = { action: 'toggleListingStatus', idToken: googleIdToken, listingId, status: !l.status };
-            const msg = byId('listingsMsg');
-            msg.textContent = 'Toggling...';
-            try {
-                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'toggleListingStatus failed');
-                msg.textContent = 'Status toggled.';
-                loadMyListings();
-                if (editingId === listingId) openEdit(listingId);
-            } catch (e) {
-                msg.textContent = 'Error: ' + e.message;
-            }
-        }
-
-        async function deleteListing(listingId) {
-            if (!googleIdToken) { alert('Login first'); return; }
-            if (!confirm('Delete listing? This closes it and zeroes remaining quantity.')) return;
-            const body = { action: 'deleteListing', idToken: googleIdToken, listingId };
-            const msg = byId('listingsMsg');
-            msg.textContent = 'Deleting...';
-            try {
-                const r = await fetch(WEB_APP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-                const j = await r.json();
-                if (!j.ok) throw new Error(j.error || 'deleteListing failed');
-                msg.textContent = 'Deleted.';
-                if (editingId === listingId) closeEdit();
-                loadMyListings();
-            } catch (e) {
-                msg.textContent = 'Error: ' + e.message;
-            }
-        }
-
-        document.addEventListener('click', ev => {
-            const t = ev.target;
-            if (t.dataset && t.dataset.edit) openEdit(t.dataset.edit);
-            if (t.dataset && t.dataset.toggle) toggleListing(t.dataset.toggle);
-            if (t.dataset && t.dataset.delete) deleteListing(t.dataset.delete);
-        });
-
-        window.onload = () => {
-            initLogin();
-            restore();
-            const saved = window.getSavedIdToken && window.getSavedIdToken();
-            if (saved) onLogin(saved, true);
-            byId('refPriceModeInd').onchange = () => syncReferencedMode();
-            byId('refPriceModeStack').onchange = () => syncReferencedMode();
-            byId('customPriceModeInd').onchange = () => syncCustomMode();
-            byId('customPriceModeStack').onchange = () => syncCustomMode();
-            // Edit mode dynamic updates
-            ['editStackSize', 'editQtyInd', 'editPriceValue', 'editPriceModeInd', 'editPriceModeStack'].forEach(id => {
-                byId(id).addEventListener('input', updateEditDerived);
-                byId(id).addEventListener('change', updateEditDerived);
-            });
-            byId('btnCreateRef').onclick = createReferencedListing;
-            byId('btnCreateCustom').onclick = createCustomListing;
-            byId('btnSaveEdit').onclick = saveEdit;
-            byId('btnCancelEdit').onclick = closeEdit;
-        };
-
-        function syncReferencedMode() {
-            // Just visual; canonical price always per-ind stored after creation
-            const mode = byId('refPriceModeStack').checked ? 'stk' : 'ind';
-            byId('refPriceModeIndicator').textContent = mode === 'stk' ? 'Stack price' : 'Individual price';
-        }
-        function syncCustomMode() {
-            const mode = byId('customPriceModeStack').checked ? 'stk' : 'ind';
-            byId('customPriceModeIndicator').textContent = mode === 'stk' ? 'Stack price' : 'Individual price';
-        }
-    </script>
 </head>
 <body>
-    <!-- Shared Top Bar -->
-    <div id="topBar">
-        <div><strong>Vak Store</strong></div>
-        <button onclick="navigateStore()">Store</button>
-        <button onclick="navigateHistory()">Account History</button>
-        <button onclick="navigateOCM()">OCM</button>
-        <button onclick="navigateMerchant()">OCM Merchant</button>
-        <button id="adminPanelBtn" style="display:none;" onclick="navigateAdmin()">Admin Panel</button>
-        <div class="right">
-            <button id="btnLogin" onclick="startLogin()">Login</button>
-            <div id="orderStatusBall" title="Orders status"></div>
-            <div id="orderPopup">
-                <div style="font-weight:bold;margin-bottom:6px;">Your open orders</div>
-                <div id="orderPopupBody" class="small"></div>
+    <div id="authPanel">
+        <div id="googleLoginArea">
+            <div id="googleBtn"></div>
+            <div class="login-hint">If the Google button does not appear, use fallback:</div>
+            <div class="fallback-login">
+                <button id="fallbackBtn" type="button" onclick="startFallbackLogin()">Fallback Google Login</button>
             </div>
-            <span id="topBalanceTarget" class="small balance-chip balance-target" style="display:none;"></span>
-            <span id="topBalance" class="small balance-chip balance-you" style="display:none;"></span>
-            <span id="topUser" class="small"></span>
-            <button id="btnLogout" style="display:none;" onclick="logout()">Logout</button>
+            <div id="loginStatus" class="small"></div>
         </div>
     </div>
-    <script>
-        // Minimal nav helpers (works even if topbar.js already offers them)
-        function navigateStore() { location.href = 'index.html'; }
-        function navigateHistory() { location.href = 'AccountHistory.html'; }
-        function navigateOCM() { location.href = 'OCMHome.html'; }
-        function navigateMerchant() { location.href = 'OCMUser.html'; }
-        function navigateAdmin() { location.href = 'Admin.html'; }
-        // Initialize shared top bar if helper exists
-        document.body.classList.add('withTopBar');
-        if (window.initSharedTopBar) { window.initSharedTopBar(); }
-    </script>
-    <h1>OCM Merchant Panel</h1>
+
+    <h1>OCM Merchant</h1>
     <div id="authStatus" class="small">Not logged in.</div>
-    <div id="loginBtnArea"></div>
-    <button id="logoutBtn" style="display:none;" onclick="logout()">Logout</button>
 
-    <div class="section">
-        <h2>Create Referenced Listing</h2>
-        <div id="itemsStatus" class="small">Items not loaded yet.</div>
-        <div class="grid">
-            <div>
-                <label>Item (sheet): <input id="refItemInput" list="refItemsDatalist" placeholder="Search item"></label>
-                <datalist id="refItemsDatalist"></datalist>
-            </div>
-            <div>
-                <label>Quantity (ind): <input id="refQtyInd" type="number" min="1" placeholder="e.g. 128"></label>
-                <div class="stack-note">System derives stack count.</div>
-            </div>
-            <div>
-                <label>Price: <input id="refPrice" type="number" min="0.01" step="0.01" placeholder="e.g. 2.5"></label>
-                <div class="radio-wrap">
-                    <label><input type="radio" name="refPriceMode" id="refPriceModeInd" checked> ind price</label>
-                    <label><input type="radio" name="refPriceMode" id="refPriceModeStack"> stk price</label>
+    <section class="section" aria-label="Listing creation tool">
+        <h2>Listing creation tool</h2>
+        <div class="tabs" role="tablist" aria-label="Listing creation modes">
+            <button id="tabCreateStore" role="tab" aria-controls="panelCreateStore" aria-selected="true" type="button">Store search (recommended)</button>
+            <button id="tabCreateHalf" role="tab" aria-controls="panelCreateHalf" aria-selected="false" type="button">Half custom</button>
+            <button id="tabCreateFull" role="tab" aria-controls="panelCreateFull" aria-selected="false" type="button">Full custom</button>
+        </div>
+
+        <!-- STORE (PEG only) -->
+        <div id="panelCreateStore" role="tabpanel" aria-labelledby="tabCreateStore" style="margin-top:10px;">
+            <div class="grid">
+                <div>
+                    <label>
+                        Type
+                        <select id="createTypeStore">
+                            <option value="SELL">SELL (supply)</option>
+                            <option value="BUY">BUY (demand)</option>
+                        </select>
+                    </label>
+                    <label>Store item (must match catalog)</label>
+                    <div class="dropdown-wrap">
+                        <input id="createItemStore" class="dropdown-input" type="text" placeholder="Type to search store item" autocomplete="off">
+                        <div id="createItemStoreList" class="dropdown-list"></div>
+                    </div>
+
+                    <label>Quantity available</label>
+                    <div class="inline-row">
+                        <input id="createQtyUnitsStore" type="number" min="1" value="1">
+                        <select id="createQtyModeStore" aria-label="Quantity unit">
+                            <option value="IND" selected>individual</option>
+                            <option value="STACK">stack</option>
+                        </select>
+                    </div>
+                    <div class="small">Stack size locked to store catalog bundle size.</div>
                 </div>
-                <div class="stack-note" id="refPriceModeIndicator">Individual price</div>
-            </div>
-            <div>
-                <div class="radio-wrap">
-                    <label><input type="radio" name="refSide" id="refSideSell" checked> SELL (provide stock)</label>
-                    <label><input type="radio" name="refSide" id="refSideBuy"> BUY (provide demand)</label>
+
+                <div>
+                    <div class="peg-box">
+                        <div class="small"><strong>Pricing (PEG)</strong></div>
+                        <div class="small muted">Primary + up to 10 alternative pegs. Buyer can pay with BT or exactly one peg item.</div>
+
+                        <div id="createStorePegBox"></div>
+
+                        <div class="toolbar" style="margin-top:8px;">
+                            <button type="button" id="btnCreateStoreAddAlt">Add alternative peg</button>
+                            <span id="createStorePegWarn" class="small warn"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label>
+                        Status on create
+                        <select id="createStatusStore">
+                            <option value="PENDING_REVIEW" selected>Pending review</option>
+                        </select>
+                    </label>
+                    <button type="button" id="btnCreateStore" class="small">Create listing</button>
+                    <div id="createMsgStore" class="small"></div>
                 </div>
             </div>
         </div>
-        <button id="btnCreateRef">Create Referenced Listing</button>
-    </div>
 
-    <div class="section">
-        <h2>Create Fully Custom Listing</h2>
-        <div class="grid">
-            <div>
-                <label>Custom Name: <input id="customName" type="text" placeholder="Name"></label>
-            </div>
-            <div>
-                <label>Stack Size: <input id="customStackSize" type="number" min="1" placeholder="e.g. 64"></label>
-            </div>
-            <div>
-                <label>Quantity (ind): <input id="customQtyInd" type="number" min="1" placeholder="e.g. 64"></label>
-            </div>
-            <div>
-                <label>Price: <input id="customPrice" type="number" min="0.01" step="0.01" placeholder="e.g. 10"></label>
-                <div class="radio-wrap">
-                    <label><input type="radio" name="customPriceMode" id="customPriceModeInd" checked> ind price</label>
-                    <label><input type="radio" name="customPriceMode" id="customPriceModeStack"> stk price</label>
+        <!-- HALF (PEG only) -->
+        <div id="panelCreateHalf" role="tabpanel" aria-labelledby="tabCreateHalf" style="display:none;margin-top:10px;">
+            <div class="grid">
+                <div>
+                    <label>
+                        Type
+                        <select id="createTypeHalf">
+                            <option value="SELL">SELL</option>
+                            <option value="BUY">BUY</option>
+                        </select>
+                    </label>
+                    <label>
+                        Custom item name
+                        <input id="createItemHalf" type="text" placeholder="Custom item name">
+                    </label>
+                    <label>
+                        Stack size
+                        <input id="createStackHalf" type="number" min="1" value="1">
+                    </label>
+                    <label>Quantity available</label>
+                    <div class="inline-row">
+                        <input id="createQtyUnitsHalf" type="number" min="1" value="1">
+                        <select id="createQtyModeHalf" aria-label="Quantity unit">
+                            <option value="IND" selected>individual</option>
+                            <option value="STACK">stack</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="stack-note" id="customPriceModeIndicator">Individual price</div>
-            </div>
-            <div>
-                <div class="radio-wrap">
-                    <label><input type="radio" name="customSide" id="customSideSell" checked> SELL</label>
-                    <label><input type="radio" name="customSide" id="customSideBuy"> BUY</label>
+
+                <div>
+                    <div class="peg-box">
+                        <div class="small"><strong>Pricing (PEG)</strong></div>
+                        <div class="small muted">Peg items must be store-catalog items.</div>
+
+                        <div id="createHalfPegBox"></div>
+
+                        <div class="toolbar" style="margin-top:8px;">
+                            <button type="button" id="btnCreateHalfAddAlt">Add alternative peg</button>
+                            <span id="createHalfPegWarn" class="small warn"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <button type="button" id="btnCreateHalf" class="small">Create listing</button>
+                    <div id="createMsgHalf" class="small"></div>
                 </div>
             </div>
         </div>
-        <button id="btnCreateCustom">Create Custom Listing</button>
-        <div id="createMsg" class="small"></div>
-    </div>
 
-    <div class="section">
-        <h2>My Listings</h2>
-        <div class="small">Columns: Item / Price per stack & per ind / stk stock or demand / ind stock or demand / Status / Actions</div>
-        <span id="listingsMsg" class="small"></span>
+        <!-- FULL (FIXED_BT only) -->
+        <div id="panelCreateFull" role="tabpanel" aria-labelledby="tabCreateFull" style="display:none;margin-top:10px;">
+            <div class="grid">
+                <div>
+                    <label>
+                        Type
+                        <select id="createTypeFull"><option value="SELL">SELL</option><option value="BUY">BUY</option></select>
+                    </label>
+                    <label>
+                        Custom item name
+                        <input id="createItemFull" type="text" placeholder="Custom item name">
+                    </label>
+                    <label>
+                        Stack size
+                        <input id="createStackFull" type="number" min="1" value="1">
+                    </label>
+                    <label>
+                        Quantity available (individual units)
+                        <input id="createQtyUnitsFull" type="number" min="1" value="1">
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Fixed BT price per 1 unit (individual)
+                        <input id="createFixedBT" type="number" min="0.01" step="0.01" value="1">
+                    </label>
+                    <div class="small">No item payment supported for full custom listings.</div>
+                </div>
+                <div>
+                    <button type="button" id="btnCreateFull" class="small">Create listing</button>
+                    <div id="createMsgFull" class="small"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" aria-label="Listing editor">
+        <h2>Listing editor</h2>
+        <div class="small">Merchant edits set listing to <span class="pill pill-pending">PENDING_REVIEW</span> (invisible publicly) until admin approval.</div>
+
+        <h3>SELL listings</h3>
         <table>
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>Type</th>
-                    <th>Prices</th>
-                    <th>Stock / Demand</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="tbListings"></tbody>
+            <thead><tr><th>ListingId</th><th>Item</th><th>Status</th><th>Qty (ind)</th><th>Stack</th><th>Pricing</th><th>Actions</th></tr></thead>
+            <tbody id="tbSellListings"></tbody>
         </table>
-    </div>
 
-    <div id="editPanel" class="section hidden">
-        <h2>Edit Listing</h2>
-        <div><b>ListingId:</b> <span id="editListingId"></span></div>
-        <div><b>Item:</b> <span id="editItemName"></span></div>
-        <div><b>Type:</b> <span id="editSide"></span></div>
-        <div class="grid" style="margin-top:10px;">
+        <h3 style="margin-top:14px;">BUY listings</h3>
+        <table>
+            <thead><tr><th>ListingId</th><th>Item</th><th>Status</th><th>Qty (ind)</th><th>Stack</th><th>Pricing</th><th>Actions</th></tr></thead>
+            <tbody id="tbBuyListings"></tbody>
+        </table>
+
+        <h3 style="margin-top:14px;">Pending review (invisible to public)</h3>
+        <table>
+            <thead><tr><th>ListingId</th><th>Item</th><th>Type</th><th>Status</th><th>Updated</th><th>ApprovedBy</th><th>Kind</th></tr></thead>
+            <tbody id="tbPendingListings"></tbody>
+        </table>
+    </section>
+
+    <section class="section" aria-label="Pending requests">
+        <h2>Pending requests</h2>
+        <div class="grid">
             <div>
-                <label>Stack Size: <input id="editStackSize" type="number" min="1"></label>
-                <div class="stack-note">Changing stack size affects stack price display only.</div>
+                <h3>My pending requests</h3>
+                <div class="toolbar"><button type="button" id="btnReloadMine">Reload</button><span id="msgMine" class="small"></span></div>
+                <table>
+                    <thead><tr><th>TradeId</th><th>Item</th><th>Trader</th><th>Qty</th><th>Payment</th><th>Actions</th></tr></thead>
+                    <tbody id="tbMine"></tbody>
+                </table>
             </div>
             <div>
-                <label>Quantity (ind): <input id="editQtyInd" type="number" min="1"></label>
-                <div class="stack-note">Shows as stock (SELL) or demand (BUY).</div>
+                <h3>Others pending requests</h3>
+                <div class="toolbar"><button type="button" id="btnReloadIncoming">Reload</button><span id="msgIncoming" class="small"></span></div>
+                <table>
+                    <thead><tr><th>TradeId</th><th>Item</th><th>Requester</th><th>Qty</th><th>Payment</th><th>Actions</th></tr></thead>
+                    <tbody id="tbIncoming"></tbody>
+                </table>
+                <div class="small">Accepting here completes the trade as seller (0% fee).</div>
             </div>
-            <div>
-                <label>Price input: <input id="editPriceValue" type="number" min="0.0001" step="0.01"></label>
-                <div class="radio-wrap">
-                    <label><input type="radio" name="editPriceMode" id="editPriceModeInd" checked> ind price</label>
-                    <label><input type="radio" name="editPriceMode" id="editPriceModeStack"> stk price</label>
+        </div>
+    </section>
+
+    <!-- FULL EDIT DIALOG -->
+    <dialog id="dlgEditListing">
+        <form method="dialog" style="min-width:min(760px,95vw)">
+            <h3 style="margin-top:0;">Edit listing</h3>
+            <div class="small">Listing: <span id="editListingId" class="mono"></span></div>
+
+            <div class="details-grid" style="margin-top:10px;">
+                <div>
+                    <label>
+                        Listing mode
+                        <select id="editListingMode">
+                            <option value="STORE">STORE</option>
+                            <option value="HALF">HALF</option>
+                            <option value="FULL">FULL</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Type
+                        <select id="editType">
+                            <option value="SELL">SELL</option>
+                            <option value="BUY">BUY</option>
+                        </select>
+                    </label>
+
+                    <div id="editStoreItemBlock">
+                        <label>Store item</label>
+                        <div class="dropdown-wrap">
+                            <input id="editItemStore" class="dropdown-input" type="text" autocomplete="off" placeholder="Search store item">
+                            <div id="editItemStoreList" class="dropdown-list"></div>
+                        </div>
+                        <div class="small">Stack size locked to store bundle size.</div>
+                    </div>
+
+                    <div id="editCustomItemBlock" style="display:none;">
+                        <label>Custom item name <input id="editItemCustom" type="text"></label>
+                        <label>Stack size <input id="editStack" type="number" min="1" value="1"></label>
+                    </div>
+
+                    <label>Remaining quantity (IND) <input id="editQty" type="number" min="0" step="1" value="0"></label>
                 </div>
-                <div class="small">Canonical stored: per-ind (4 decimals). UI shows 2 decimals.</div>
-            </div>
-            <div>
-                <label>
-                    Status:
-                    <input type="checkbox" id="editStatusOpen"> Open
-                </label>
-            </div>
-        </div>
-        <div style="margin-top:10px;">
-            <b>Derived:</b>
-            <div>Per-ind price: <span id="editDerivedPriceInd" class="mono">0</span></div>
-            <div>Per-stack price: <span id="editDerivedPriceStack" class="mono">0</span></div>
-            <div>Stack count from quantity: <span id="editDerivedQtyStacks" class="mono">0</span></div>
-        </div>
-        <div style="margin-top:10px;">
-            <button id="btnSaveEdit">Save Changes</button>
-            <button id="btnCancelEdit" type="button">Cancel</button>
-            <span id="editMsg" class="small"></span>
-        </div>
-    </div>
 
-    <div class="footer-note">
-        Internal storage uses individual price & quantity; stack data derived for display. SELL = stock, BUY = demand. Fee (5%) applied on SELL trade approval (seller receives 95%).
-    </div>
+                <div>
+                    <label>
+                        Pricing mode
+                        <select id="editPricingMode">
+                            <option value="PEG">PEG</option>
+                            <option value="FIXED_BT">FIXED_BT</option>
+                        </select>
+                    </label>
+
+                    <div id="editPegBox" class="peg-box"></div>
+
+                    <div id="editFixedFields" style="display:none;">
+                        <label>Fixed BT per 1 unit (IND) <input id="editFixedBTVal" type="number" min="0.01" step="0.01" value="1"></label>
+                    </div>
+
+                    <div class="toolbar" style="margin-top:8px;">
+                        <button type="button" id="btnEditAddAlt">Add alternative peg</button>
+                        <span id="editPegWarn" class="small warn"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <label>Pause listing <input id="editPause" type="checkbox"></label>
+                    <div class="small">Paused listings are not public.</div>
+                    <div class="small">Submitting edits sends to PENDING_REVIEW (unless paused).</div>
+                </div>
+            </div>
+
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button type="button" id="btnSaveListing">Send FULL_EDIT for review</button>
+                <button type="button" id="btnCloseListing">Close</button>
+                <span id="editListingMsg" class="small"></span>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- RESTOCK ONLY DIALOG -->
+    <dialog id="dlgRestock">
+        <form method="dialog" style="min-width:min(520px,95vw)">
+            <h3 style="margin-top:0;">Restock listing</h3>
+            <div class="small">Listing: <span id="restockListingId" class="mono"></span></div>
+            <div class="details-grid" style="margin-top:10px;">
+                <div>
+                    <label>
+                        New stock value
+                        <div class="inline-row">
+                            <input id="restockQtyInput" type="number" min="0" step="1" value="0" style="width:140px;">
+                            <select id="restockQtyMode">
+                                <option value="IND" selected>individual</option>
+                                <option value="STACK">stack</option>
+                            </select>
+                        </div>
+                    </label>
+                    <div class="small">Stored as IND using listing stack size.</div>
+                </div>
+                <div>
+                    <div class="small">Note</div>
+                    <div class="small">Submits <span class="pill pill-restock">RESTOCK_ONLY</span> for admin clarity.</div>
+                </div>
+            </div>
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button type="button" id="btnSendRestock">Send RESTOCK_ONLY</button>
+                <button type="button" id="btnCloseRestock">Close</button>
+                <span id="restockMsg" class="small"></span>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Trade edit dialog stays minimal (merchant side) -->
+    <dialog id="dlgEditTrade">
+        <form method="dialog" style="min-width:min(560px,95vw)">
+            <h3 style="margin-top:0;">Edit pending trade</h3>
+            <div class="small">Trade: <span id="editTradeId" class="mono"></span></div>
+            <div class="details-grid" style="margin-top:10px">
+                <div>
+                    <div class="small">Payment</div>
+                    <label><input id="tradePayBT" type="radio" name="tradePay" value="BT" checked> BT</label>
+                    <label><input id="tradePayItem" type="radio" name="tradePay" value="ITEM"> Item</label>
+
+                    <div style="margin-top:8px;">
+                        <div class="small">Payment peg (when item)</div>
+                        <select id="tradePayPeg" style="min-width:240px;"></select>
+                    </div>
+                </div>
+                <div>
+                    <div class="small">Quantity</div>
+                    <label><input id="tradeQtyInd" type="radio" name="tradeQtyMode" value="IND" checked> individual</label>
+                    <label><input id="tradeQtyStack" type="radio" name="tradeQtyMode" value="STACK"> stack</label>
+                    <label style="display:block;margin-top:6px;">Amount <input id="tradeQtyVal" type="number" min="1" value="1" style="width:120px"></label>
+                </div>
+                <div>
+                    <div class="small">Note</div>
+                    <div class="small">Editing creates a new pending trade and cancels the old.</div>
+                </div>
+            </div>
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button type="button" id="btnSaveTrade">Save edit</button>
+                <button type="button" id="btnCloseTrade">Close</button>
+                <span id="editTradeMsg" class="small"></span>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- OCMUser scripts (segmented) -->
+    <script src="OCMUser_js/ocmuser-core.js"></script>
+    <script src="OCMUser_js/ocmuser-catalog.js"></script>
+    <script src="OCMUser_js/ocmuser-pegs.js"></script>
+    <script src="OCMUser_js/ocmuser-listings.js"></script>
+    <script src="OCMUser_js/ocmuser-trades.js"></script>
+    <script src="OCMUser_js/ocmuser-auth.js"></script>
+    <script src="OCMUser_js/ocmuser-boot.js"></script>
 </body>
 </html>
