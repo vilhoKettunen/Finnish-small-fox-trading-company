@@ -1,179 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="auth-storage.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Item Buy/Sell History</title>
+    <title>Item Market Tracker</title>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <script src="app-config.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="topbar.js"></script>
+
     <style>
         body {
-            font-family: system-ui, sans-serif;
+            font-family: system-ui, -apple-system, sans-serif;
             padding: 1rem;
             background: #fafafa;
+            color: #333;
         }
 
         h1 {
             margin-bottom: 1rem;
+            color: #222;
         }
 
+        /* --- CONTROLS BAR --- */
         #controls {
             display: flex;
             flex-wrap: wrap;
             gap: 1rem;
             align-items: center;
+            background: #fff;
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: #666;
         }
 
         select, input[list] {
-            padding: .4rem .6rem;
-        }
-
-        #itemImage {
-            height: 120px;
-            border-radius: 12px;
-            box-shadow: 0 0 4px rgba(0,0,0,.2);
-        }
-
-        /* sheet info strip above charts */
-        #sheetsInfo {
-            display: flex;
-            flex-direction: column;
-            gap: .5rem;
-            margin-top: 1rem;
-        }
-
-        .sheetItem {
-            background: white;
-            border-radius: 8px;
-            padding: .5rem .75rem;
-            box-shadow: 0 0 6px rgba(0,0,0,.04);
-        }
-
-        .sheetHeader {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: .75rem;
-        }
-
-        .sheetName {
-            font-weight: 600;
-        }
-
-        .moreInfoBtn {
-            background: transparent;
-            border: 1px solid rgba(0,0,0,.08);
-            padding: .25rem .5rem;
+            padding: .5rem .7rem;
+            border: 1px solid #ddd;
             border-radius: 6px;
-            cursor: pointer;
-            font-size: .9rem;
+            font-size: 0.95rem;
+            outline: none;
         }
 
-            .moreInfoBtn[aria-expanded="true"] {
-                background: rgba(0,0,0,.03);
+            select:focus, input:focus {
+                border-color: #007bff;
             }
 
-        .sheetInfo {
-            margin-top: .5rem;
-            color: #222;
-            font-size: .95rem;
-            line-height: 1.35;
-            display: none;
+        /* Image styling */
+        #itemImage {
+            height: 90px;
+            width: 90px;
+            object-fit: contain;
+            border-radius: 8px;
+            background: #fff;
+            margin-left: auto; /* Pushes image to the far right */
+            border: 1px solid #eee;
         }
 
-            .sheetInfo.visible {
-                display: block;
-            }
-
-        .sheetItem.active {
-            outline: 2px solid rgba(0,123,255,0.08);
-        }
-
-        /* container for two charts stacked vertically */
+        /* --- CHART CONTAINERS --- */
         #charts {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
-            margin-top: 1rem;
+            gap: 2rem;
         }
 
-            #charts canvas {
-                width: 100%;
-                background: white;
-                border-radius: 12px;
-                box-shadow: 0 0 6px rgba(0,0,0,.1);
-            }
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
 
-        /* label placed between the two charts */
-        .chartLabel {
-            background: #fff;
-            border-radius: 10px;
-            padding: .45rem .65rem;
+        .chart-header {
             display: flex;
-            align-items: flex-start;
             justify-content: space-between;
-            gap: .5rem;
-            box-shadow: 0 0 6px rgba(0,0,0,.06);
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
         }
 
-        .chartLabelHeader {
-            font-weight: 600;
-            font-size: 1rem;
+        .chart-title {
+            font-weight: 700;
+            color: #444;
+            font-size: 1.1rem;
         }
 
-        .chartLabelInfo {
-            margin-top: .45rem;
-            font-size: .95rem;
-            color: #333;
-            display: none;
-            line-height: 1.35;
+        .chart-meta {
+            font-size: 0.85rem;
+            color: #888;
         }
 
-            .chartLabelInfo.visible {
-                display: block;
-            }
-
-        .chartLabelBtn {
-            background: transparent;
-            border: 1px solid rgba(0,0,0,.08);
-            padding: .25rem .5rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: .9rem;
-            height: fit-content;
-            align-self: center;
+        /* --- THE FIX FOR INFINITE HEIGHT --- */
+        /* We wrap the canvas in a div with relative position and FIXED height */
+        .chart-wrapper {
+            position: relative;
+            height: 400px; /* Strict height limit */
+            width: 100%;
         }
 
-        /* keep responsive height */
         canvas {
-            max-width: 100%;
-            height: 420px;
+            display: block;
+            width: 100%;
+            height: 100%;
         }
     </style>
 </head>
 
 <body>
-    <h1>Item Buy/Sell Price History</h1>
+    <h1>Item Market History</h1>
 
     <div id="controls">
         <label>
-            Type:
+            Sheet (Buy/Sell):
             <select id="typeSelect">
-                <!-- swapped values so selecting the visible label maps to the correct sheet -->
-                <option value="SellHistory" selected>Buy</option>
-                <option value="BuyHistory">Sell</option>
+                <option value="SellHistory" selected>Buy Prices (SellHistory)</option>
+                <option value="BuyHistory">Sell Prices (BuyHistory)</option>
             </select>
         </label>
 
-        <label>
-            Item:
-            <input id="itemInput" list="itemDatalist" placeholder="Type to search items..." />
+        <label style="flex-grow: 1; max-width: 300px;">
+            Select Item:
+            <input id="itemInput" list="itemDatalist" placeholder="Search items..." />
             <datalist id="itemDatalist"></datalist>
         </label>
 
         <label>
-            Range:
+            Time Range:
             <select id="rangeSelect">
                 <option value="7">Last 7 days</option>
                 <option value="30">Last 30 days</option>
@@ -183,694 +149,352 @@
             </select>
         </label>
 
-        <img id="itemImage" src="" alt="" />
-    </div>
+        <label>
+            Bottom Chart Metric:
+            <select id="metricSelect">
+                <option value="stock" selected>Stock Amount</option>
+                <option value="change">Daily Price Change (+/-)</option>
+                <option value="valuation">Total Valuation</option>
+                <option value="goal">Goal Stock %</option>
+            </select>
+        </label>
 
-    <!-- Sheet names + more info buttons -->
-    <div id="sheetsInfo" aria-hidden="false">
-        <div class="sheetItem" data-sheet="SellHistory" id="sheet-SellHistory">
-            <div class="sheetHeader">
-                <div class="sheetName">Buy sheet — <small style="font-weight:400">SellHistory</small></div>
-                <button class="moreInfoBtn" aria-expanded="false" data-target="info-SellHistory">More info</button>
-            </div>
-            <div id="info-SellHistory" class="sheetInfo" role="region" aria-hidden="true">
-                This sheet (SellHistory) records the "Buy" visible feed. Each row holds:
-                Column A = timestamp (date/time), Column B = item name, Column C = price recorded,
-                Column D = stock amount (used for the Stock chart). Use this sheet to inspect recorded buy prices and available stock over time.
-            </div>
-        </div>
-
-        <div class="sheetItem" data-sheet="BuyHistory" id="sheet-BuyHistory">
-            <div class="sheetHeader">
-                <div class="sheetName">Sell sheet — <small style="font-weight:400">BuyHistory</small></div>
-                <button class="moreInfoBtn" aria-expanded="false" data-target="info-BuyHistory">More info</button>
-            </div>
-            <div id="info-BuyHistory" class="sheetInfo" role="region" aria-hidden="true">
-                This sheet (BuyHistory) records the "Sell" visible feed. Each row holds:
-                Column A = timestamp (date/time), Column B = item name, Column C = price recorded,
-                Column D = stock amount (used for the Stock chart). Use this sheet to inspect recorded sell prices and available stock over time.
-            </div>
-        </div>
+        <img id="itemImage" src="" alt="" onerror="this.style.display='none'" />
     </div>
 
     <div id="charts">
-        <canvas id="priceChart" width="900" height="450"></canvas>
-
-        <!-- label that belongs to the sell/stock chart underneath -->
-        <div id="sellChartLabel" class="chartLabel" aria-hidden="false">
-            <div>
-                <div id="sellChartTitle" class="chartLabelHeader">Sell — Stock chart</div>
-                <div id="sellChartInfo" class="chartLabelInfo" aria-hidden="true">
-                    The stock chart shows the recorded stock/amount (column D) for the selected item over the same timestamps as the price chart above.
-                </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <div class="chart-title">Price Trend</div>
+                <div class="chart-meta">History of recorded prices</div>
             </div>
-            <button id="sellChartMoreBtn" class="chartLabelBtn" aria-expanded="false" aria-controls="sellChartInfo">More info</button>
+            <div class="chart-wrapper">
+                <canvas id="priceChart"></canvas>
+            </div>
         </div>
 
-        <canvas id="stockChart" width="900" height="450"></canvas>
+        <div class="chart-card">
+            <div class="chart-header">
+                <div class="chart-title" id="bottomChartTitle">Stock History</div>
+                <div class="chart-meta" id="bottomChartDesc">Amount available</div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="secondaryChart"></canvas>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Use browser locale explicitly for formatting.
-        const USER_LOCALE = (navigator.languages && navigator.languages[0]) || navigator.language || navigator.userLanguage || 'en-US';
-
+        // 1. CONFIG
+        const USER_LOCALE = (navigator.languages && navigator.languages[0]) || 'en-GB'; // defaulting to UK (Day/Month)
         const SPREADSHEET_ID = "1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo";
 
-        // Build CSV URL for a sheet
+        // 2. HELPERS
         function csvUrl(sheet) {
             return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet)}`;
         }
 
-        // Robust CSV line parser (handles quoted fields with commas or semicolons)
-        function parseCSVLine(line) {
-            const res = [];
-            let cur = '';
-            let inQ = false;
-            for (let i = 0; i < line.length; i++) {
-                const ch = line[i];
-                if (ch === '"') {
-                    if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
-                    else inQ = !inQ;
-                } else if ((ch === ',' || ch === ';') && !inQ) {
-                    // allow both comma and semicolon as field separators (some CSVs use semicolon in locales)
-                    res.push(cur);
-                    cur = '';
+        // --- INTELLIGENT NUMBER PARSER (Handles 1.000,00 vs 1,000.00) ---
+        function parseLocalNum(str) {
+            if (!str) return null;
+            let clean = str.toString().trim().replace(/[^\d.,\-]/g, '');
+            if (!clean) return null;
+
+            // Detect format: If comma comes AFTER dot (1.000,50) -> European
+            if (clean.indexOf(',') > -1 && clean.indexOf('.') > -1) {
+                const lastComma = clean.lastIndexOf(',');
+                const lastDot = clean.lastIndexOf('.');
+                if (lastComma > lastDot) {
+                    clean = clean.replace(/\./g, '').replace(',', '.'); // 1.000,50 -> 1000.50
                 } else {
-                    cur += ch;
+                    clean = clean.replace(/,/g, ''); // 1,000.50 -> 1000.50
                 }
             }
-            res.push(cur);
-            return res.map(s => s.trim().replace(/^"|"$/g, ''));
+            // If ONLY comma (10,5) -> Swap to dot
+            else if (clean.indexOf(',') > -1) {
+                clean = clean.replace(',', '.');
+            }
+            // If ONLY dot (10.5) -> keep as is
+
+            const result = parseFloat(clean);
+            return isNaN(result) ? null : result;
         }
 
-        // Parse date values. IMPORTANT: CSV A column is dd/mm/yyyy or dd.mm.yyyy -> treat as day/month/year first.
-        function parseDateValue(v) {
-            if (v == null) return null;
+        // --- STRICT DATE PARSER (Forces Day/Month/Year) ---
+        function parseDateStrict(str) {
+            if (!str) return null;
+            const s = str.trim();
 
-            // numeric serial (Excel/Google)
-            if (typeof v === 'number' && !isNaN(v)) {
-                const serial = v;
-                const ms = Math.round(serial * 86400000);
-                return new Date(Date.UTC(1899, 11, 30) + ms);
-            }
+            // Check for standard separators: / or . or -
+            const parts = s.split(/[\/\-\.]/);
 
-            let sRaw = String(v).trim();
-            if (!sRaw) return null;
+            // If we have 3 parts (Day, Month, Year)
+            if (parts.length === 3) {
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10);
+                let year = parseInt(parts[2], 10);
 
-            // normalize non-breaking spaces
-            sRaw = sRaw.replace(/\u00A0/g, ' ');
-
-            // 1) Explicit dd/mm/yyyy, dd-mm-yyyy or dd.mm.yyyy (your CSV) — parse as day/month/year (unambiguous)
-            const explicitDM = sRaw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
-            if (explicitDM) {
-                let day = parseInt(explicitDM[1], 10);
-                let month = parseInt(explicitDM[2], 10);
-                let year = parseInt(explicitDM[3], 10);
+                // Handle 2-digit years (e.g., 24 -> 2024)
                 if (year < 100) year += 2000;
-                // sanity check and swap if month looks invalid
-                if (month < 1 || month > 12) {
-                    const t = month; month = day; day = t;
-                }
-                if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-                    return new Date(year, month - 1, day);
-                }
+
+                // JS Months are 0-indexed (0=Jan, 1=Feb)
+                return new Date(year, month - 1, day);
             }
 
-            // 2) Try "MonthName dd, yyyy"
-            const usMatch = sRaw.match(/^([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})$/);
-            if (usMatch) {
-                const monName = usMatch[1];
-                const day = parseInt(usMatch[2], 10);
-                const year = parseInt(usMatch[3], 10);
-                const mon = new Date(Date.parse(monName + " 1")).getMonth();
-                if (!isNaN(mon)) return new Date(year, mon, day);
-            }
-
-            // 3) If looks like a number, treat as serial
-            const n = Number(sRaw);
-            if (!isNaN(n)) {
-                const ms = Math.round(n * 86400000);
-                return new Date(Date.UTC(1899, 11, 30) + ms);
-            }
-
-            // 4) Last resort: Date parse (ISO etc.)
-            const d1 = new Date(sRaw);
-            if (!isNaN(d1.getTime())) return d1;
-
-            return null;
+            // Fallback: If it's a full ISO string (2024-05-02T...), try standard parse
+            const fallback = new Date(s);
+            return isNaN(fallback.getTime()) ? null : fallback;
         }
 
-        // Parse price strings robustly (allow currency symbols, comma decimals, thousands)
-        function parsePriceValue(v) {
-            if (v == null) return null;
-            let s = String(v).trim();
-            if (s === '') return null;
+        // 3. FETCH DATA
+        let CACHE = { main: [], valuation: [], goal: [] };
 
-            // normalize non-breaking spaces
-            s = s.replace(/\u00A0/g, '');
-
-            // remove currency and letters
-            s = s.replace(/[^\d\.,\-]/g, '');
-
-            if (s === '') return null;
-
-            // If string contains semicolon it's unlikely a price but strip if present
-            s = s.replace(/;/g, '');
-
-            // If there's a comma and no dot -> comma is decimal separator
-            if (s.indexOf(',') > -1 && s.indexOf('.') === -1) {
-                s = s.replace(/,/g, '.');
-            } else if (s.indexOf(',') > -1 && s.indexOf('.') > -1) {
-                // If both present, decide which is thousands vs decimal by last occurrence
-                if (s.lastIndexOf('.') > s.lastIndexOf(',')) {
-                    // dot is decimal, remove commas
-                    s = s.replace(/,/g, '');
-                } else {
-                    // comma is decimal, remove dots
-                    s = s.replace(/\./g, '').replace(/,/g, '.');
-                }
-            }
-
-            const n = parseFloat(s);
-            return isNaN(n) ? null : n;
-        }
-
-        // Parse stock/amount values (integers) robustly (allow thousand separators)
-        function parseStockValue(v) {
-            if (v == null) return null;
-            let s = String(v).trim();
-            if (s === '') return null;
-
-            s = s.replace(/\u00A0/g, '');
-            // keep digits, comma, dot, minus
-            s = s.replace(/[^\d\.,\-]/g, '');
-
-            if (s.indexOf(',') > -1 && s.indexOf('.') === -1) {
-                s = s.replace(/,/g, '.');
-            } else if (s.indexOf(',') > -1 && s.indexOf('.') > -1) {
-                // if ambiguous, remove thousands separators
-                if (s.lastIndexOf('.') > s.lastIndexOf(',')) {
-                    s = s.replace(/,/g, '');
-                } else {
-                    s = s.replace(/\./g, '').replace(/,/g, '.');
-                }
-            }
-
-            const n = parseFloat(s);
-            if (isNaN(n)) return null;
-            return Math.round(n);
-        }
-
-        // Fetch CSV and parse rows (now includes column D as stock amounts)
         async function fetchCSV(sheetName) {
-            const res = await fetch(csvUrl(sheetName));
-            if (!res.ok) {
-                console.error('Failed fetching CSV', res.status, res.statusText);
+            try {
+                const res = await fetch(csvUrl(sheetName));
+                if (!res.ok) throw new Error("Fetch failed");
+                const text = await res.text();
+                const lines = text.replace(/\r/g, '').split('\n').filter(l => l.trim() !== '');
+                if (lines.length <= 1) return [];
+
+                return lines.slice(1).map(line => {
+                    // Regex handles quoted CSV fields
+                    const parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.replace(/^"|"$/g, '').trim());
+
+                    const dateStr = parts[0];
+                    const item = parts[1];
+
+                    // PARSE VALUES
+                    const valCol = parseLocalNum(parts[2]);
+                    const stockCol = parseLocalNum(parts[3]);
+
+                    // PARSE DATE (STRICTLY DD/MM/YYYY)
+                    const ts = parseDateStrict(dateStr);
+
+                    if (sheetName.includes("Valuation") || sheetName.includes("Goal")) {
+                        return { ts, item, value: valCol };
+                    } else {
+                        return { ts, item, value: valCol, stock: stockCol };
+                    }
+                }).filter(r => r.item && r.ts); // Only keep rows with valid Item AND Date
+            } catch (e) {
+                console.error("Error loading sheet:", sheetName, e);
                 return [];
             }
-            const text = await res.text();
-            const lines = text.replace(/\r/g, '').split('\n').filter(l => l.trim() !== '');
-            if (lines.length <= 1) return [];
-
-            const data = [];
-            for (let i = 1; i < lines.length; i++) {
-                const parts = parseCSVLine(lines[i]);
-                if (!parts || parts.length < 2) continue;
-                const tsRaw = parts[0] ?? '';
-                const item = (parts[1] ?? '').trim();
-                const priceRaw = parts[2] ?? '';
-                const stockRaw = parts[3] ?? '';
-                if (!item) continue;
-                const ts = parseDateValue(tsRaw);
-                const price = parsePriceValue(priceRaw);
-                const stock = parseStockValue(stockRaw);
-                data.push({ ts, tsRaw, item, price, priceRaw, stock, stockRaw });
-            }
-            console.log(`fetchCSV(${sheetName}) parsed ${data.length} rows. sample:`, data.slice(0, 8));
-            return data;
         }
 
-        // Filter & sort chronologically: earliest (past) first, latest (present) last.
-        function filterData(data, item, rangeDays) {
+        // 4. DATA PROCESSING
+        function processData(item, rangeDays, metric) {
             const now = new Date();
-            return data
-                .filter(r => {
-                    if (r.item !== item) return false;
-                    if (rangeDays !== "all" && r.ts) {
-                        const cutoff = new Date(now - rangeDays * 24 * 60 * 60 * 1000);
-                        return r.ts >= cutoff;
-                    }
-                    return true;
-                })
-                .sort((a, b) => {
-                    // put rows without valid date at the end
-                    if (!a.ts && !b.ts) return 0;
-                    if (!a.ts) return 1;
-                    if (!b.ts) return -1;
-                    return a.ts.getTime() - b.ts.getTime();
-                });
-        }
+            const cutoff = rangeDays === 'all' ? new Date(0) : new Date(now - rangeDays * 24 * 60 * 60 * 1000);
 
-        function updateImage(item) {
-            const img = document.getElementById("itemImage");
-            img.src = `images/${item}.png`;
-            img.alt = item;
-        }
-
-        // Draw two charts: top = price, bottom = stock amounts
-        let priceChart = null;
-        let stockChart = null;
-
-        function drawCharts(rows, priceLabel, stockLabel) {
-            const sorted = rows.slice().sort((a, b) => {
-                if (!a.ts && !b.ts) return 0;
-                if (!a.ts) return 1;
-                if (!b.ts) return -1;
-                return a.ts.getTime() - b.ts.getTime();
-            });
-
-            const years = new Set(sorted.map(r => r.ts ? r.ts.getFullYear() : null));
-            const includeYear = years.size > 1;
-            const tickFormatOpts = includeYear
-                ? { day: 'numeric', month: 'short', year: 'numeric' }
-                : { day: 'numeric', month: 'short' };
-
-            const tickLabels = sorted.map(r => r.ts ? r.ts.toLocaleDateString(USER_LOCALE, tickFormatOpts) : '');
-            const tooltipDates = sorted.map(r => r.ts ? r.ts.toLocaleString(USER_LOCALE) : String(r.tsRaw || ''));
-            const timeTexts = sorted.map(r => {
-                if (r.tsRaw && String(r.tsRaw).trim() !== '') {
-                    const m = String(r.tsRaw).match(/(\d{1,2}:\d{2}(?::\d{2})?)/);
-                    if (m) return m[1];
-                    if (r.ts) return r.ts.toLocaleTimeString(USER_LOCALE);
-                    return String(r.tsRaw);
-                }
-                return (r.ts ? r.ts.toLocaleTimeString(USER_LOCALE) : '');
-            });
-
-            const prices = sorted.map(r => (r.price == null || isNaN(r.price)) ? null : r.price);
-            const stocks = sorted.map(r => (r.stock == null || isNaN(r.stock)) ? null : r.stock);
-
-            const priceCtx = document.getElementById("priceChart").getContext("2d");
-            const stockCtx = document.getElementById("stockChart").getContext("2d");
-
-            if (priceChart) priceChart.destroy();
-            if (stockChart) stockChart.destroy();
-
-            // plugin that draws an attached tooltip; now shows date, price, stock (in that order)
-            const attachedTooltipPlugin = {
-                id: 'attachedTooltip',
-                afterDraw(chartInstance, args, pluginOptions) {
-                    const active = (chartInstance._active && chartInstance._active.length) ? chartInstance._active[0] : null;
-                    if (!active) return;
-                    const idx = active.index;
-                    const dsIndex = active.datasetIndex;
-                    const meta = chartInstance.getDatasetMeta(dsIndex);
-                    const point = meta && meta.data ? meta.data[idx] : null;
-                    if (!point) return;
-
-                    const chartArea = chartInstance.chartArea;
-                    const x = point.x;
-                    const y = point.y;
-                    const ctx = chartInstance.ctx;
-
-                    const dateLine = (pluginOptions.dates && pluginOptions.dates[idx]) || '';
-                    const timeLine = (pluginOptions.times && pluginOptions.times[idx]) || '';
-
-                    const priceVal = (pluginOptions.prices && typeof pluginOptions.prices[idx] !== 'undefined') ? pluginOptions.prices[idx] : null;
-                    const stockVal = (pluginOptions.stocks && typeof pluginOptions.stocks[idx] !== 'undefined') ? pluginOptions.stocks[idx] : null;
-
-                    const priceLine = priceVal == null ? 'Price: N/A' : 'Price: ' + Number(priceVal).toLocaleString(USER_LOCALE);
-                    const stockLine = stockVal == null ? 'Stock: N/A' : 'Stock: ' + Number(stockVal).toLocaleString(USER_LOCALE);
-
-                    // required order: date, price, stock, (then optional time)
-                    const lines = [dateLine, priceLine, stockLine];
-                    if (timeLine) lines.push(timeLine);
-
-                    const font = pluginOptions.font || '12px system-ui';
-                    ctx.save();
-                    ctx.font = font;
-                    ctx.textBaseline = 'top';
-                    ctx.fillStyle = pluginOptions.textColor || '#111';
-
-                    const padding = pluginOptions.padding || 6;
-                    const lineHeight = (pluginOptions.lineHeight || 16);
-                    let maxWidth = 0;
-                    for (let i = 0; i < lines.length; i++) {
-                        const w = ctx.measureText(lines[i]).width;
-                        if (w > maxWidth) maxWidth = w;
-                    }
-                    const boxW = Math.round(maxWidth + padding * 2);
-                    const boxH = Math.round(lines.length * lineHeight + padding * 2);
-
-                    const pointRadius = (meta.data && meta.data[idx] && meta.data[idx].options && meta.data[idx].options.radius) ?
-                        meta.data[idx].options.radius : (pluginOptions.pointRadius || 5);
-                    const gap = pluginOptions.gap || 6;
-
-                    let boxX = x - boxW / 2;
-                    let boxY = y - (pointRadius + gap + boxH);
-                    if (boxX < chartArea.left + 4) boxX = chartArea.left + 4;
-                    if (boxX + boxW > chartArea.right - 4) boxX = chartArea.right - boxW - 4;
-                    if (boxY < chartArea.top + 4) {
-                        boxY = y + pointRadius + gap;
-                    }
-
-                    // rounded rect
-                    ctx.beginPath();
-                    ctx.fillStyle = pluginOptions.boxColor || 'rgba(255,255,255,0.98)';
-                    ctx.strokeStyle = pluginOptions.boxBorder || 'rgba(0,0,0,0.08)';
-                    ctx.lineWidth = pluginOptions.boxBorderWidth || 1;
-                    roundRect(ctx, boxX, boxY, boxW, boxH, pluginOptions.radius || 6);
-                    ctx.fill();
-                    ctx.stroke();
-                    ctx.closePath();
-
-                    // pointer triangle
-                    const triW = 10;
-                    const pointerX = Math.max(boxX + 8, Math.min(boxX + boxW - 8, x));
-                    ctx.beginPath();
-                    if (boxY < y) {
-                        ctx.moveTo(pointerX - triW / 2, boxY + boxH);
-                        ctx.lineTo(pointerX + triW / 2, boxY + boxH);
-                        ctx.lineTo(x, y - pointRadius / 2);
-                    } else {
-                        ctx.moveTo(pointerX - triW / 2, boxY);
-                        ctx.lineTo(pointerX + triW / 2, boxY);
-                        ctx.lineTo(x, y + pointRadius / 2);
-                    }
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
-
-                    // circle on point
-                    ctx.beginPath();
-                    const bubbleR = pluginOptions.bubbleRadius || Math.max(4, pointRadius);
-                    ctx.fillStyle = pluginOptions.bubbleColor || '#007bff';
-                    ctx.strokeStyle = pluginOptions.bubbleBorder || '#fff';
-                    ctx.lineWidth = pluginOptions.bubbleBorderWidth || 2;
-                    ctx.arc(x, y, bubbleR, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
-                    ctx.closePath();
-
-                    // text lines
-                    ctx.fillStyle = pluginOptions.textColor || '#111';
-                    for (let i = 0; i < lines.length; i++) {
-                        const tx = boxX + padding;
-                        const ty = boxY + padding + i * lineHeight;
-                        ctx.fillText(lines[i], tx, ty);
-                    }
-
-                    ctx.restore();
-
-                    function roundRect(ctx, x, y, width, height, radius) {
-                        if (radius === undefined) radius = 6;
-                        const r = Math.min(radius, width / 2, height / 2);
-                        ctx.beginPath();
-                        ctx.moveTo(x + r, y);
-                        ctx.arcTo(x + width, y, x + width, y + height, r);
-                        ctx.arcTo(x + width, y + height, x, y + height, r);
-                        ctx.arcTo(x, y + height, x, y, r);
-                        ctx.arcTo(x, y, x + width, y, r);
-                        ctx.closePath();
-                    }
-                }
+            const filterSort = (dataset) => {
+                return dataset
+                    .filter(r => r.item === item && r.ts && r.ts >= cutoff)
+                    .sort((a, b) => a.ts - b.ts);
             };
 
-            // Price chart (top) — pass both prices and stocks so tooltip shows date, price, stock
-            priceChart = new Chart(priceCtx, {
-                type: "line",
-                data: {
-                    labels: tickLabels,
-                    datasets: [{
-                        label: priceLabel,
-                        data: prices,
-                        borderWidth: 2,
-                        tension: 0.2,
-                        spanGaps: false,
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0,123,255,0.08)',
-                        pointRadius: 5,
-                        pointHoverRadius: 9,
-                        showLine: true
-                    }]
-                },
-                plugins: [attachedTooltipPlugin],
-                options: {
-                    interaction: {
-                        mode: 'nearest',
-                        intersect: false
-                    },
-                    scales: {
-                        x: {
-                            display: true,
-                            title: { display: false },
-                            ticks: {
-                                maxRotation: 0,
-                                autoSkip: true,
-                                callback: function (value, index, ticks) {
-                                    return tickLabels[index] || '';
-                                }
-                            }
-                        },
-                        y: { beginAtZero: false }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: false },
-                        attachedTooltip: {
-                            dates: tooltipDates,
-                            times: timeTexts,
-                            prices: prices,
-                            stocks: stocks,
-                            boxColor: 'rgba(255,255,255,0.98)',
-                            boxBorder: 'rgba(0,0,0,0.08)',
-                            bubbleColor: '#007bff',
-                            bubbleBorder: '#ffffff',
-                            bubbleRadius: 6,
-                            bubbleBorderWidth: 2,
-                            textColor: '#111',
-                            font: '12px system-ui',
-                            padding: 8,
-                            lineHeight: 16,
-                            gap: 8,
-                            radius: 6
-                        }
-                    }
-                }
-            });
+            const mainData = filterSort(CACHE.main);
 
-            // Stock chart (bottom) — also pass both prices and stocks
-            stockChart = new Chart(stockCtx, {
-                type: "line",
-                data: {
-                    labels: tickLabels,
-                    datasets: [{
-                        label: stockLabel,
-                        data: stocks,
-                        borderWidth: 2,
-                        tension: 0.2,
-                        spanGaps: false,
-                        borderColor: '#28a745',
-                        backgroundColor: 'rgba(40,167,69,0.08)',
-                        pointRadius: 5,
-                        pointHoverRadius: 9,
-                        showLine: true
-                    }]
-                },
-                plugins: [attachedTooltipPlugin],
-                options: {
-                    interaction: {
-                        mode: 'nearest',
-                        intersect: false
-                    },
-                    scales: {
-                        x: {
-                            display: true,
-                            title: { display: false },
-                            ticks: {
-                                maxRotation: 0,
-                                autoSkip: true,
-                                callback: function (value, index, ticks) {
-                                    return tickLabels[index] || '';
-                                }
-                            }
-                        },
-                        y: { beginAtZero: true }
-                    },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { enabled: false },
-                        attachedTooltip: {
-                            dates: tooltipDates,
-                            times: timeTexts,
-                            prices: prices,
-                            stocks: stocks,
-                            boxColor: 'rgba(255,255,255,0.98)',
-                            boxBorder: 'rgba(0,0,0,0.08)',
-                            bubbleColor: '#28a745',
-                            bubbleBorder: '#ffffff',
-                            bubbleRadius: 6,
-                            bubbleBorderWidth: 2,
-                            textColor: '#111',
-                            font: '12px system-ui',
-                            padding: 8,
-                            lineHeight: 16,
-                            gap: 8,
-                            radius: 6
-                        }
-                    }
-                }
-            });
-        }
+            // Top Chart
+            const labels = mainData.map(r => r.ts);
+            const prices = mainData.map(r => r.value);
 
-        // Fuzzy-ish resolver: exact match, then contains, else first
-        function resolveItem(inputValue, items) {
-            const v = (inputValue || "").trim();
-            if (!items || items.length === 0) return null;
-            if (!v) return items[0];
-            const lower = v.toLowerCase();
-            const exact = items.find(n => n.toLowerCase() === lower);
-            if (exact) return exact;
-            const contains = items.find(n => n.toLowerCase().includes(lower));
-            return contains || items[0];
-        }
+            // Bottom Chart
+            let secLabels = labels;
+            let secValues = [];
+            let chartType = 'line';
+            let color = '#28a745';
 
-        function populateItemsDatalist(uniqueItems) {
-            const dl = document.getElementById("itemDatalist");
-            dl.innerHTML = "";
-            uniqueItems.forEach(name => dl.appendChild(new Option(name, name)));
-        }
-
-        // Toggle sheet info visibility
-        function toggleSheetInfo(targetId, btn) {
-            const el = document.getElementById(targetId);
-            if (!el) return;
-            const isVisible = el.classList.toggle('visible');
-            btn.setAttribute('aria-expanded', String(isVisible));
-            el.setAttribute('aria-hidden', String(!isVisible));
-        }
-
-        // Toggle sell chart label info visibility
-        function toggleSellChartInfo() {
-            const info = document.getElementById('sellChartInfo');
-            const btn = document.getElementById('sellChartMoreBtn');
-            if (!info || !btn) return;
-            const isVisible = info.classList.toggle('visible');
-            info.setAttribute('aria-hidden', String(!isVisible));
-            btn.setAttribute('aria-expanded', String(isVisible));
-        }
-
-        // mark active sheet visually
-        function updateSheetActive(selectedSheet) {
-            const items = document.querySelectorAll('#sheetsInfo .sheetItem');
-            items.forEach(it => {
-                if (it.dataset.sheet === selectedSheet) it.classList.add('active');
-                else it.classList.remove('active');
-            });
-        }
-
-        // update the label text above sell/stock chart
-        function updateSellChartLabel(visibleLabel) {
-            const title = document.getElementById('sellChartTitle');
-            if (!title) return;
-            // visibleLabel is "Buy" or "Sell" depending on the Type select visible text
-            title.textContent = `${visibleLabel} — Stock chart`;
-            // update small description to reference the label
-            const info = document.getElementById('sellChartInfo');
-            if (info) {
-                info.textContent = `The ${visibleLabel.toLowerCase()} stock chart shows recorded stock/amount (column D) for the selected item, aligned to the timestamps used by the ${visibleLabel.toLowerCase()} price chart above.`;
-                // hide info by default when label changes
-                info.classList.remove('visible');
-                info.setAttribute('aria-hidden', 'true');
-                const btn = document.getElementById('sellChartMoreBtn');
-                if (btn) btn.setAttribute('aria-expanded', 'false');
+            if (metric === 'stock') {
+                secValues = mainData.map(r => r.stock);
             }
+            else if (metric === 'change') {
+                chartType = 'bar';
+                secValues = prices.map((price, i) => {
+                    if (i === 0) return 0;
+                    return parseFloat((price - prices[i - 1]).toFixed(2));
+                });
+            }
+            else if (metric === 'valuation') {
+                const valData = filterSort(CACHE.valuation);
+                secLabels = valData.map(r => r.ts);
+                secValues = valData.map(r => r.value);
+                color = '#6f42c1';
+            }
+            else if (metric === 'goal') {
+                const goalData = filterSort(CACHE.goal);
+                secLabels = goalData.map(r => r.ts);
+                secValues = goalData.map(r => r.value * 100);
+                color = '#fd7e14';
+            }
+
+            return { labels, prices, secLabels, secValues, chartType, color };
         }
 
-        // Initialize page
+        // 5. DRAWING
+        let priceChartInstance = null;
+        let secChartInstance = null;
+
+        function drawCharts(data, metric) {
+            const ctx1 = document.getElementById('priceChart').getContext('2d');
+            const ctx2 = document.getElementById('secondaryChart').getContext('2d');
+
+            // Format for display (Day Mon)
+            const dateFmt = (d) => d ? d.toLocaleDateString(USER_LOCALE, { day: 'numeric', month: 'short' }) : '';
+
+            // CHART 1
+            if (priceChartInstance) priceChartInstance.destroy();
+            priceChartInstance = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: data.labels.map(dateFmt),
+                    datasets: [{
+                        label: 'Price',
+                        data: data.prices,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0,123,255,0.1)',
+                        borderWidth: 2,
+                        tension: 0.2,
+                        fill: true,
+                        pointRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { intersect: false, mode: 'index' } },
+                    interaction: { mode: 'nearest', axis: 'x', intersect: false },
+                    scales: { y: { beginAtZero: false } }
+                }
+            });
+
+            // CHART 2
+            let bgColors = data.color;
+            let borderColors = data.color;
+
+            if (metric === 'change') {
+                bgColors = data.secValues.map(v => v >= 0 ? 'rgba(40, 167, 69, 0.6)' : 'rgba(220, 53, 69, 0.6)');
+                borderColors = data.secValues.map(v => v >= 0 ? '#28a745' : '#dc3545');
+            } else if (data.chartType === 'line') {
+                bgColors = data.color + '20';
+            }
+
+            if (secChartInstance) secChartInstance.destroy();
+            secChartInstance = new Chart(ctx2, {
+                type: data.chartType,
+                data: {
+                    labels: data.secLabels.map(dateFmt),
+                    datasets: [{
+                        label: 'Value',
+                        data: data.secValues,
+                        borderColor: borderColors,
+                        backgroundColor: bgColors,
+                        borderWidth: 1,
+                        tension: 0.2,
+                        fill: (data.chartType === 'line'),
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            intersect: false,
+                            mode: 'index',
+                            callbacks: {
+                                label: function (ctx) {
+                                    let v = ctx.parsed.y;
+                                    if (metric === 'change') return (v > 0 ? '+' : '') + v;
+                                    if (metric === 'goal') return v.toFixed(1) + '%';
+                                    if (metric === 'valuation') return Math.round(v).toLocaleString();
+                                    return v;
+                                }
+                            }
+                        }
+                    },
+                    scales: { y: { beginAtZero: (metric !== 'valuation') } }
+                }
+            });
+        }
+
+        // 6. INIT
+        let uniqueItems = [];
+
         async function init() {
             const typeSel = document.getElementById("typeSelect");
             const itemInput = document.getElementById("itemInput");
             const rangeSel = document.getElementById("rangeSelect");
+            const metricSel = document.getElementById("metricSelect");
+            const dl = document.getElementById("itemDatalist");
 
-            // wire up more info buttons
-            document.querySelectorAll('.moreInfoBtn').forEach(btn => {
-                const target = btn.dataset.target;
-                btn.addEventListener('click', () => toggleSheetInfo(target, btn));
-            });
-            // wire up sell-chart label button
-            const sellBtn = document.getElementById('sellChartMoreBtn');
-            if (sellBtn) sellBtn.addEventListener('click', toggleSellChartInfo);
-
-            itemInput.readOnly = false;
-            itemInput.removeAttribute("disabled");
-
-            let allData = await fetchCSV(typeSel.value);
-            let uniqueItems = [];
-
-            function rebuildItems() {
-                uniqueItems = [...new Set(allData.map(r => r.item))].sort();
-                populateItemsDatalist(uniqueItems);
-            }
-
-            rebuildItems();
-
-            // refresh: if commit=true we will set the input to resolved value
-            async function refresh(commit = false) {
+            async function loadData() {
                 const sheet = typeSel.value;
-                const range = rangeSel.value === "all" ? "all" : Number(rangeSel.value);
+                const [main, val, goal] = await Promise.all([
+                    fetchCSV(sheet),
+                    fetchCSV('ValuationHistory'),
+                    fetchCSV('GoalHistory')
+                ]);
+                CACHE.main = main;
+                CACHE.valuation = val;
+                CACHE.goal = goal;
 
-                updateSheetActive(sheet);
-
-                const candidate = resolveItem(itemInput.value, uniqueItems);
-                if (!candidate) {
-                    if (priceChart) priceChart.destroy();
-                    if (stockChart) stockChart.destroy();
-                    return;
-                }
-
-                if (commit && itemInput.value !== candidate) {
-                    itemInput.value = candidate;
-                }
-
-                const filtered = filterData(allData, candidate, range);
-                updateImage(candidate);
-
-                const visibleLabel = typeSel.options[typeSel.selectedIndex].text;
-                updateSellChartLabel(visibleLabel);
-                drawCharts(filtered, `${visibleLabel} Price`, `${visibleLabel} Stock`);
+                uniqueItems = [...new Set(main.map(r => r.item))].sort();
+                dl.innerHTML = "";
+                uniqueItems.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item;
+                    dl.appendChild(opt);
+                });
             }
 
-            typeSel.addEventListener("change", async () => {
-                allData = await fetchCSV(typeSel.value);
-                rebuildItems();
-                refresh(false);
-            });
+            function update() {
+                const item = itemInput.value;
+                const range = rangeSel.value;
+                const metric = metricSel.value;
+                const img = document.getElementById("itemImage");
 
-            itemInput.addEventListener("input", () => refresh(false));
-            itemInput.addEventListener("change", () => refresh(true));
-            itemInput.addEventListener("blur", () => refresh(true));
-            itemInput.addEventListener("keydown", (e) => {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    refresh(true);
-                    itemInput.blur();
+                if (item) {
+                    img.style.display = 'block';
+                    img.src = `images/${item}.png`;
+                } else {
+                    img.style.display = 'none';
                 }
-            });
 
-            rangeSel.addEventListener("change", () => refresh(false));
+                const titles = {
+                    'stock': 'Stock History',
+                    'change': 'Daily Price Volatility',
+                    'valuation': 'Total Asset Valuation',
+                    'goal': '% of Goal Reached'
+                };
+                document.getElementById('bottomChartTitle').textContent = titles[metric];
 
-            // initial active marker
-            updateSheetActive(typeSel.value);
+                if (!item || !uniqueItems.includes(item)) return;
 
-            // initial label
-            updateSellChartLabel(typeSel.options[typeSel.selectedIndex].text);
+                const processed = processData(item, range, metric);
+                drawCharts(processed, metric);
+            }
 
-            // initial render (preview)
-            refresh(false);
+            typeSel.addEventListener('change', async () => { await loadData(); update(); });
+            itemInput.addEventListener('change', update);
+            itemInput.addEventListener('input', update);
+            rangeSel.addEventListener('change', update);
+            metricSel.addEventListener('change', update);
+
+            await loadData();
+            if (uniqueItems.length > 0) {
+                itemInput.value = uniqueItems[0];
+                update();
+            }
         }
 
-        init();
-    </script>
+         window.onload = () => {
+  window.initSharedTopBar && window.initSharedTopBar();
+   init();
+  };
+  
+     </script>
 </body>
 </html>

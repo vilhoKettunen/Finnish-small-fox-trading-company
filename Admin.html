@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" href="favicon.ico">
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
+    <script src="api-client.js"></script>
+    <script src="topbar.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1300px;
+            margin: 20px auto;
+            padding: 0 16px;
+        }
+
+        h1, h2, h3, h4 {
+            margin: 0 0 12px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            font-size: 13px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f5f5f5;
+        }
+
+        button, input, select {
+            padding: 6px;
+            font-size: 13px;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #555;
+        }
+
+        .grid {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            margin-top: 8px;
+        }
+
+        .section {
+            border: 1px solid #ccc;
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 22px;
+        }
+
+        .mono {
+            font-family: Consolas, monospace;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: #eee;
+            font-size: 11px;
+            margin-right: 4px;
+            white-space: nowrap;
+        }
+
+        .pill-sell {
+            background: #e9ffe8;
+        }
+
+        .pill-buy {
+            background: #e8f7ff;
+        }
+
+        .pill-active {
+            background: #e9ffe8;
+        }
+
+        .pill-pending {
+            background: #fff8d0;
+        }
+
+        .pill-paused {
+            background: #eee;
+        }
+
+        .pill-rejected {
+            background: #ffe3e3;
+        }
+
+        .status-pending {
+            color: #f0a400;
+            font-weight: bold;
+        }
+
+        .flex {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        body.withTopBar {
+            padding-top: 72px;
+        }
+
+        @supports (padding:max(0px)) {
+            body.withTopBar {
+                padding-top: max(72px, env(safe-area-inset-top));
+            }
+        }
+
+        #topBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 52px;
+            background: #222;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
+            font-size: 14px;
+            gap: 12px;
+        }
+
+            #topBar a, #topBar button {
+                color: #fff;
+                text-decoration: none;
+                margin-right: 16px;
+                background: none;
+                border: none;
+                cursor: pointer;
+            }
+
+            #topBar .right {
+                margin-left: auto;
+                display: flex;
+                gap: 12px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+
+        .balance-chip {
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.08);
+            white-space: nowrap;
+        }
+
+        .balance-you.positive {
+            color: #2ecc71;
+        }
+
+        .balance-you.negative {
+            color: #ff5252;
+        }
+
+        .balance-target {
+            color: #f0c200;
+        }
+
+        #orderPopup {
+            position: absolute;
+            top: 52px;
+            right: 100px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 8px;
+            display: none;
+            min-width: 260px;
+            z-index: 1100;
+            color: #000;
+        }
+
+        #orderStatusBall {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #777;
+            cursor: pointer;
+        }
+
+        .admin-tabs {
+            display: flex;
+            gap: 8px;
+            margin: 12px 0;
+            flex-wrap: wrap;
+        }
+
+            .admin-tabs button {
+                padding: 6px 10px;
+                border-radius: 6px;
+                border: 1px solid #ccc;
+                background: #fff;
+                cursor: pointer;
+            }
+
+                .admin-tabs button.active {
+                    background: #222;
+                    color: #fff;
+                    border-color: #222;
+                }
+
+        .suggestions {
+            max-height: 160px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 4px;
+            display: none;
+            background: #fff;
+        }
+
+            .suggestions .sugg {
+                padding: 4px;
+                cursor: pointer;
+                border-radius: 4px;
+            }
+
+                .suggestions .sugg:hover {
+                    background: #f0f0f0;
+                }
+
+        /* Request pick list styles */
+        .picklist-container {
+            background: #fdfdfd;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .picklist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .mailbox-badge {
+            background: #222;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .picklist-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .picklist-col h4 {
+            margin-top: 0;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .picklist-col.give h4 {
+            border-color: #2ecc71;
+            color: #27ae60;
+        }
+
+        .picklist-col.take h4 {
+            border-color: #f39c12;
+            color: #d35400;
+        }
+
+        .picklist-item {
+            padding: 4px 0;
+            border-bottom: 1px dashed #eee;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+        }
+
+        .picklist-qty {
+            font-weight: bold;
+            margin-right: 6px;
+        }
+
+        .picklist-empty {
+            color: #aaa;
+            font-style: italic;
+            padding: 10px 0;
+        }
+
+        /* History details */
+        .history-details-row td {
+            background: #fafafa;
+        }
+
+        .history-details-box {
+            padding: 8px 6px;
+            font-size: 12px;
+        }
+
+        .history-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+            gap: 10px;
+        }
+
+        .history-details-col h4 {
+            margin: 0 0 4px;
+            font-size: 13px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .history-item-line {
+            border-bottom: 1px dashed #eee;
+            padding: 2px 0;
+        }
+
+            .history-item-line span.qty {
+                font-weight: bold;
+                margin-right: 4px;
+            }
+
+        .history-empty-msg {
+            font-style: italic;
+            color: #777;
+        }
+
+        .pill-lite {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: #eee;
+            font-size: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .picklist-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Trades tab sub-tabs */
+        .subtabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 8px 0 12px;
+        }
+
+            .subtabs button {
+                padding: 6px 10px;
+                border-radius: 999px;
+                border: 1px solid #ccc;
+                background: #fff;
+                cursor: pointer;
+            }
+
+                .subtabs button[aria-selected="true"] {
+                    background: #222;
+                    color: #fff;
+                    border-color: #222;
+                }
+
+        .details-row td {
+            background: #fafafa;
+        }
+
+        .details-box {
+            padding: 10px;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+            gap: 10px;
+        }
+
+        .warn {
+            color: #b45309;
+            font-weight: bold;
+        }
+
+        .banner {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+            padding: 10px;
+            margin-top: 10px;
+        }
+
+        .disabled {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        dialog::backdrop {
+            background: rgba(0,0,0,0.35);
+        }
+
+        /* ===== Store-style dropdown search (same pattern as OCMUser) ===== */
+        .dropdown-wrap {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .dropdown-input {
+            width: 100%;
+            max-width: 360px;
+            padding: 6px;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #ccc;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 500;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .dropdown-item {
+            padding: 6px 8px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+            .dropdown-item:hover, .dropdown-item.active {
+                background: #f0f6ff;
+            }
+
+        .inline-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .inline-row > * {
+                flex: 0 0 auto;
+            }
+
+        .peg-box {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fafafa;
+        }
+
+        .peg-row {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 8px;
+            background: #fff;
+            margin-top: 8px;
+        }
+
+        .peg-row-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .peg-row-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <!-- KEEP legacy top bar markup (do not remove) -->
+    <div id="topBar">
+        <div><strong>Vak Store</strong></div>
+        <button onclick="navigateStore()">Store</button>
+        <button onclick="navigateHistory()">Account History</button>
+        <button onclick="navigateOCM()">OCM</button>
+        <button onclick="navigateMerchant()">OCM Merchant</button>
+        <button id="adminPanelBtn" style="display:none;" onclick="navigateAdmin()">Admin Panel</button>
+        <div class="right">
+            <button id="btnLogin" onclick="startLogin()">Login</button>
+            <div id="orderStatusBall" title="Orders status"></div>
+            <div id="orderPopup">
+                <div style="font-weight:bold;margin-bottom:6px;">Your open orders</div>
+                <div id="orderPopupBody" class="small"></div>
+            </div>
+            <span id="topBalanceTarget" class="small balance-chip balance-target" style="display:none;"></span>
+            <span id="topBalance" class="small balance-chip balance-you" style="display:none;"></span>
+            <span id="topUser" class="small"></span>
+            <button id="btnLogout" style="display:none;" onclick="logout()">Logout</button>
+        </div>
+    </div>
+    <script>
+        function navigateStore() { location.href = 'index.html'; }
+        function navigateHistory() { location.href = 'AccountHistory.html'; }
+        function navigateOCM() { location.href = 'OCMHome.html'; }
+        function navigateMerchant() { location.href = 'OCMUser.html'; }
+        function navigateAdmin() { location.href = 'Admin.html'; }
+
+        document.body.classList.add('withTopBar');
+        if (window.initSharedTopBar) window.initSharedTopBar();
+    </script>
+
+    <h1>Admin Panel</h1>
+    <div id="authStatus" class="small">Not logged in.</div>
+    <div id="loginBtnArea"></div>
+    <button id="logoutBtn" style="display:none;" onclick="logout()">Logout</button>
+
+    <div class="admin-tabs" id="adminTabs">
+        <button id="tabTargetUser" class="active" onclick="showTab('targetUser')">Target User</button>
+        <button id="tabRequests" onclick="showTab('requests')">Requests</button>
+        <button id="tabTrades" onclick="showTab('trades')">Trades</button>
+        <button id="tabPlayers" onclick="showTab('players')">Players / Transfer</button>
+        <button id="tabOcm" onclick="showTab('ocmAdmin')">OCM Admin</button>
+        <button id="tabAccountHistory" onclick="showTab('accountHistory')">Account History</button>
+        <button id="tabStock" onclick="showTab('stock')">Stock</button>
+    </div>
+
+    <!-- Target User -->
+    <div class="section" id="targetUserSection">
+        <h2>Universal Target User (applies to OCM & History)</h2>
+        <div class="flex">
+            <input id="globalUserInput" type="text" placeholder="Start typing player name" style="flex:1;max-width:420px;">
+            <button onclick="clearGlobalTarget()">Clear</button>
+            <div id="globalUserSelected" class="small" style="margin-left:8px;">No user selected</div>
+        </div>
+        <div id="globalUserSuggestions" class="suggestions"></div>
+        <div id="globalPlayersCount" class="small" style="margin-top:6px;">Players loaded: 0</div>
+        <div class="small" style="margin-top:8px;">
+            Select a user here to make them the current inspection target. This affects OCM listing management, account history and other admin actions.
+        </div>
+    </div>
+
+    <!-- Requests -->
+    <div class="section" id="requestsSection" style="display:none;">
+        <h2>Pending Store Requests</h2>
+        <div class="flex">
+            <button id="btnLoadRequests">Reload</button>
+            <span id="reqMsg" class="small"></span>
+        </div>
+        <table>
+            <thead><tr><th>RequestId</th><th>User</th><th>Mailbox</th><th>Totals</th><th>Manual Bal Δ</th><th>Net</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody id="tbRequests"></tbody>
+        </table>
+        <div id="reqDetails" class="small" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- Trades -->
+    <div class="section" id="tradesSection" style="display:none;">
+        <h2>OCM Trades + Listing Review</h2>
+
+        <div class="subtabs" role="tablist" aria-label="Trades sub tabs">
+            <button id="subtabPendingTrades" type="button" role="tab" aria-selected="true" onclick="showTradesSubTab('pendingTrades')">Pending Trades Management</button>
+            <button id="subtabReviewQueue" type="button" role="tab" aria-selected="false" onclick="showTradesSubTab('reviewQueue')">Listing Review Queue</button>
+        </div>
+
+        <div id="panelPendingTrades" role="tabpanel" aria-labelledby="subtabPendingTrades">
+            <div class="small" style="margin-bottom:6px;">
+                Uses <span class="mono">ocmAdminListAllPendingTradesV2</span>. Mailboxes resolved live from players list (<span class="mono">adminListPlayers</span>).
+            </div>
+
+            <div class="flex">
+                <button type="button" id="btnReloadAllPendingTrades">Reload</button>
+                <button type="button" id="btnFilterPendingTradesToTarget">Filter to Target User</button>
+                <button type="button" id="btnClearPendingTradesFilter">Clear filter</button>
+                <span id="pendingTradesFilterIndicator" class="small"></span>
+                <span id="pendingTradesMsg" class="small"></span>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>TradeId</th>
+                        <th>Item</th>
+                        <th>Buyer</th>
+                        <th>Seller</th>
+                        <th>Qty</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tbAllPendingTrades"></tbody>
+            </table>
+        </div>
+
+        <div id="panelReviewQueue" role="tabpanel" aria-labelledby="subtabReviewQueue" style="display:none;">
+            <div class="small" style="margin-bottom:6px;">
+                Uses <span class="mono">ocmListListingReviewQueue</span>. Includes invalid-qty listings with warning.
+            </div>
+
+            <div class="flex">
+                <button type="button" id="btnReloadReviewQueue">Reload</button>
+                <button type="button" id="btnFilterReviewQueueToTarget">Filter to Target User</button>
+                <button type="button" id="btnClearReviewQueueFilter">Clear filter</button>
+                <span id="reviewQueueFilterIndicator" class="small"></span>
+                <span id="reviewQueueMsg" class="small"></span>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ListingId</th>
+                        <th>Item</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Qty</th>
+                        <th>Stack</th>
+                        <th>Seller</th>
+                        <th>Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tbReviewQueue"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Players/Transfer -->
+    <div class="section" id="playersSection" style="display:none;">
+        <h2>Players / Balances / Transfer</h2>
+        <div class="grid">
+            <div>
+                <label>Search player: <input id="playerSearch" type="text" placeholder="player name"></label>
+                <div id="playerList" class="small"></div>
+            </div>
+            <div>
+                <label>Adjust Balance (Δ BT): <input id="adjAmount" type="number" step="0.01"></label><br>
+                <label>Reason: <input id="adjReason" type="text"></label><br>
+                <button id="btnAdjust">Apply Adjustment</button>
+                <div id="adjMsg" class="small"></div>
+            </div>
+            <div>
+                <label>Transfer To (playerName): <input id="transferTarget" type="text"></label><br>
+                <label>Amount BT: <input id="transferAmount" type="number" step="0.01" min="0.01"></label><br>
+                <label>Note (optional): <input id="transferNote" type="text"></label><br>
+                <button id="btnTransfer">Send BT</button>
+                <div id="transferMsg" class="small"></div>
+            </div>
+            <div><div id="balancesInfo" class="small">Balances will appear here.</div></div>
+        </div>
+    </div>
+
+    <!-- OCM Admin -->
+    <div class="section" id="ocmAdminSection" style="display:none;">
+        <h2>OCM Admin — Acting as Target User</h2>
+        <div class="small">This tab uses dedicated admin V2 endpoints. Completion uses admin fee path (10%).</div>
+
+        <div id="ocmActingBanner" class="banner" style="display:none;"></div>
+        <div id="ocmActingNoTarget" class="banner">
+            <div><strong>Select a target user first.</strong></div>
+            <div class="small">Use the <span class="mono">Target User</span> tab to select a player. Actions here will be disabled until then.</div>
+        </div>
+
+        <div id="ocmActingContent" class="disabled">
+            <div class="section" style="margin-top:12px;">
+                <h3>Listing creation tool</h3>
+                <div class="subtabs" role="tablist" aria-label="Listing creation modes">
+                    <button id="tabCreateStore" type="button" role="tab" aria-selected="true" onclick="setAdminCreateTab('store')">Store search (recommended)</button>
+                    <button id="tabCreateHalf" type="button" role="tab" aria-selected="false" onclick="setAdminCreateTab('half')">Half custom</button>
+                    <button id="tabCreateFull" type="button" role="tab" aria-selected="false" onclick="setAdminCreateTab('full')">Full custom</button>
+                </div>
+
+                <!-- STORE -->
+                <div id="panelCreateStore" style="margin-top:10px;">
+                    <div class="grid">
+                        <div>
+                            <label>
+                                Type
+                                <select id="createTypeStore"><option value="SELL">SELL (supply)</option><option value="BUY">BUY (demand)</option></select>
+                            </label>
+
+                            <label>Store item (must match catalog)</label>
+                            <div class="dropdown-wrap">
+                                <input id="createItemStore" class="dropdown-input" type="text" placeholder="Type to search store item" autocomplete="off">
+                                <div id="createItemStoreList" class="dropdown-list"></div>
+                            </div>
+
+                            <label>Quantity available</label>
+                            <div class="inline-row">
+                                <input id="createQtyUnitsStore" type="number" min="1" value="1">
+                                <select id="createQtyModeStore" aria-label="Quantity unit">
+                                    <option value="IND" selected>individual</option>
+                                    <option value="STACK">stack</option>
+                                </select>
+                            </div>
+                            <div class="small">Stack size locked to store catalog bundle size.</div>
+                        </div>
+
+                        <div>
+                            <div class="peg-box">
+                                <div class="small"><strong>Pricing (PEG)</strong></div>
+                                <div class="small">Primary + up to 10 alternative pegs. Buyer can pay with BT or exactly one peg item.</div>
+                                <div id="createStorePegBox"></div>
+                                <div class="flex" style="margin-top:8px;">
+                                    <button type="button" id="btnCreateStoreAddAlt">Add alternative peg</button>
+                                    <span id="createStorePegWarn" class="small warn"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <button type="button" id="btnCreateStore">Create listing</button>
+                            <div id="createMsgStore" class="small"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HALF -->
+                <div id="panelCreateHalf" style="display:none;margin-top:10px;">
+                    <div class="grid">
+                        <div>
+                            <label>
+                                Type
+                                <select id="createTypeHalf"><option value="SELL">SELL</option><option value="BUY">BUY</option></select>
+                            </label>
+
+                            <label>Custom item name <input id="createItemHalf" type="text" placeholder="Custom item name"></label>
+                            <label>Stack size <input id="createStackHalf" type="number" min="1" value="1"></label>
+
+                            <label>Quantity available</label>
+                            <div class="inline-row">
+                                <input id="createQtyUnitsHalf" type="number" min="1" value="1">
+                                <select id="createQtyModeHalf" aria-label="Quantity unit">
+                                    <option value="IND" selected>individual</option>
+                                    <option value="STACK">stack</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="peg-box">
+                                <div class="small"><strong>Pricing (PEG)</strong></div>
+                                <div class="small">Peg items must be store-catalog items.</div>
+                                <div id="createHalfPegBox"></div>
+                                <div class="flex" style="margin-top:8px;">
+                                    <button type="button" id="btnCreateHalfAddAlt">Add alternative peg</button>
+                                    <span id="createHalfPegWarn" class="small warn"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <button type="button" id="btnCreateHalf">Create listing</button>
+                            <div id="createMsgHalf" class="small"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FULL -->
+                <div id="panelCreateFull" style="display:none;margin-top:10px;">
+                    <div class="grid">
+                        <div>
+                            <label>
+                                Type
+                                <select id="createTypeFull"><option value="SELL">SELL</option><option value="BUY">BUY</option></select>
+                            </label>
+                            <label>Custom item name <input id="createItemFull" type="text" placeholder="Custom item name"></label>
+                            <label>Stack size <input id="createStackFull" type="number" min="1" value="1"></label>
+                            <label>Quantity available (individual units) <input id="createQtyUnitsFull" type="number" min="1" value="1"></label>
+                        </div>
+                        <div>
+                            <label>Fixed BT price per 1 unit (individual) <input id="createFixedBT" type="number" min="0.01" step="0.01" value="1"></label>
+                            <div class="small">Full custom listings use fixed BT (no item payment).</div>
+                        </div>
+                        <div>
+                            <button type="button" id="btnCreateFull">Create listing</button>
+                            <div id="createMsgFull" class="small"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Listing editor (Target user)</h3>
+                <div class="flex">
+                    <button type="button" id="btnReloadTargetListings">Reload</button>
+                    <span id="msgTargetListings" class="small"></span>
+                </div>
+
+                <h4 style="margin-top:12px;">SELL listings</h4>
+                <table>
+                    <thead><tr><th>ListingId</th><th>Item</th><th>Status</th><th>Qty (ind)</th><th>Stack</th><th>Pricing</th><th>Actions</th></tr></thead>
+                    <tbody id="tbSellListings"></tbody>
+                </table>
+
+                <h4 style="margin-top:12px;">BUY listings</h4>
+                <table>
+                    <thead><tr><th>ListingId</th><th>Item</th><th>Status</th><th>Qty (ind)</th><th>Stack</th><th>Pricing</th><th>Actions</th></tr></thead>
+                    <tbody id="tbBuyListings"></tbody>
+                </table>
+
+                <h4 style="margin-top:12px;">Other statuses</h4>
+                <table>
+                    <thead><tr><th>ListingId</th><th>Item</th><th>Type</th><th>Status</th><th>Updated</th><th>ApprovedBy</th><th>Notes</th></tr></thead>
+                    <tbody id="tbOtherListings"></tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h3>Pending trades (Target user)</h3>
+                <div class="grid">
+                    <div>
+                        <h4>My pending requests (target is buyer)</h4>
+                        <div class="flex">
+                            <button type="button" id="btnReloadTargetMyPending">Reload</button>
+                            <span id="msgTargetMyPending" class="small"></span>
+                        </div>
+                        <table>
+                            <thead><tr><th>TradeId</th><th>Item</th><th>Trader</th><th>Qty</th><th>Payment</th><th>Actions</th></tr></thead>
+                            <tbody id="tbTargetMyPending"></tbody>
+                        </table>
+                    </div>
+                    <div>
+                        <h4>Incoming pending requests (target is seller)</h4>
+                        <div class="flex">
+                            <button type="button" id="btnReloadTargetIncomingPending">Reload</button>
+                            <span id="msgTargetIncomingPending" class="small"></span>
+                        </div>
+                        <table>
+                            <thead><tr><th>TradeId</th><th>Item</th><th>Requester</th><th>Qty</th><th>Payment</th><th>Actions</th></tr></thead>
+                            <tbody id="tbTargetIncomingPending"></tbody>
+                        </table>
+                        <div class="small">Accepting uses admin completion path (10% fee): <span class="mono">ocmAcceptTradeAsAdminV2</span>.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT LISTING DIALOG -->
+    <dialog id="dlgEditListing">
+        <form method="dialog" style="min-width:min(760px,95vw)">
+            <h3 style="margin-top:0;">Edit listing</h3>
+            <div class="small">Listing: <span id="editListingId" class="mono"></span></div>
+            <div id="editRejectedWarning" class="banner" style="display:none;">
+                <div><strong>Warning:</strong> This listing is <span class="pill pill-rejected">REJECTED</span>.</div>
+                <div class="small">Saving changes will <strong>activate it immediately</strong> (fix + approve).</div>
+            </div>
+
+            <div class="details-grid" style="margin-top:10px;">
+                <div>
+                    <label>Quantity available (individual) <input id="editQty" type="number" min="1" value="1"></label>
+                    <label>Remaining quantity (optional restock override) <input id="editRemainingQty" type="number" min="0" step="1" placeholder="leave blank"></label>
+                    <div class="small">Quantities must be integers. Remaining is only needed for explicit restock/fix of invalid rows.</div>
+                    <label>Stack size <input id="editStack" type="number" min="1" value="1"></label>
+
+                    <label>
+                        Listing mode
+                        <select id="editListingMode">
+                            <option value="STORE">STORE</option>
+                            <option value="HALF">HALF</option>
+                            <option value="FULL">FULL</option>
+                        </select>
+                    </label>
+                    <label>Item name <input id="editItemName" type="text"></label>
+                    <label>Source itemId <input id="editSourceItemId" type="text" placeholder="sheet:Name for store-linked"></label>
+                </div>
+
+                <div>
+                    <label>Pricing mode <select id="editPricingMode"><option value="PEG">PEG</option><option value="FIXED_BT">FIXED_BT</option></select></label>
+
+                    <div id="editPegFields" class="peg-box">
+                        <div class="small"><strong>Pricing (PEG)</strong></div>
+                        <div id="editPegBox"></div>
+                        <div class="flex" style="margin-top:8px;">
+                            <button type="button" id="btnEditAddAlt">Add alternative peg</button>
+                            <span id="editPegWarn" class="small warn"></span>
+                        </div>
+                    </div>
+
+                    <div id="editFixedFields" style="display:none;">
+                        <label>Fixed BT per 1 unit <input id="editFixedBTVal" type="number" min="0.01" step="0.01" value="1"></label>
+                    </div>
+                </div>
+
+                <div>
+                    <label>Pause listing <input id="editPause" type="checkbox"></label>
+                    <div class="small">Paused listings are not public.</div>
+                </div>
+            </div>
+
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button type="button" id="btnSaveListing">Save</button>
+                <button type="button" id="btnCloseListing">Close</button>
+                <span id="editListingMsg" class="small"></span>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- RESTOCK ONLY DIALOG (Admin OCM) -->
+    <dialog id="dlgRestock">
+    <form method="dialog" style="min-width:min(520px,95vw)">
+    <h3 style="margin-top:0;">Restock listing</h3>
+    <div class="small">Listing: <span id="restockListingId" class="mono"></span></div>
+    <div class="details-grid" style="margin-top:10px;">
+    <div>
+    <label>
+    New stock value
+    <div class="inline-row">
+    <input id="restockQtyInput" type="number" min="0" step="1" value="0" style="width:140px;">
+    <select id="restockQtyMode">
+    <option value="IND" selected>individual</option>
+    <option value="STACK">stack</option>
+    </select>
+    </div>
+    </label>
+    <div class="small">Stored as IND using listing stack size.</div>
+    </div>
+    <div>
+    <div class="small">Note</div>
+    <div class="small">Admin restock applies immediately (auto-approve).</div>
+    </div>
+    </div>
+    <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <button type="button" id="btnSendRestock">Restock now</button>
+    <button type="button" id="btnCloseRestock">Close</button>
+    <span id="restockMsg" class="small"></span>
+    </div>
+    </form>
+    </dialog>
+
+    <!-- Account History (REPLACED with AccountHistory.html UI) -->
+    <div class="section" id="accountHistorySection" style="display:none;">
+        <h2>History (Target user)</h2>
+
+        <div id="adminHistoryNoTarget" class="banner" style="display:none;">
+            <div><strong>Select a target user first.</strong></div>
+            <div class="small">Go to the <span class="mono">Target User</span> tab and select a player, then return here.</div>
+        </div>
+
+        <div class="small">Selected user: <span id="adminHistoryUser">-</span></div>
+
+        <div class="row flex" style="margin-top:10px;">
+            <label>
+                Mode:
+                <select id="adminHistoryMode">
+                    <option value="ACCOUNT" selected>Account history</option>
+                    <option value="OCM">OCM trades history</option>
+                </select>
+            </label>
+
+            <label>From: <input id="adminDtFrom" type="date"></label>
+            <label>To: <input id="adminDtTo" type="date"></label>
+
+            <label>
+                Page size:
+                <select id="adminPgSize">
+                    <option>20</option>
+                    <option selected>50</option>
+                    <option>100</option>
+                    <option>200</option>
+                    <option>500</option>
+                </select>
+            </label>
+
+            <button id="adminBtnLoadHistory" type="button">Load</button>
+            <span id="adminHistoryMsg" class="small"></span>
+        </div>
+
+        <table>
+            <thead id="adminHistoryThead"></thead>
+            <tbody id="adminHistoryTb"></tbody>
+        </table>
+
+        <div class="row flex" style="margin-top:10px;">
+            <button id="adminPrevHistory" type="button">Prev</button>
+            <span id="adminHistoryPgInfo" class="small"></span>
+            <button id="adminNextHistory" type="button">Next</button>
+        </div>
+    </div>
+
+    <!-- Stock -->
+    <div class="section" id="stockSection" style="display:none;">
+        <h2>Stock Management</h2>
+        <div class="flex">
+            <input id="stockSearch" type="text" placeholder="Search item name" style="flex:1;max-width:320px;">
+            <button type="button" onclick="reloadStock()">Reload</button>
+            <span id="stockMsg" class="small"></span>
+        </div>
+        <table style="margin-top:8px;">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Raw stock (L)</th>
+                    <th>Target stock stack (J)</th>
+                    <th>Current stock stack (K)</th>
+                    <th>Bundle size (E)</th>
+                    <th>Adjust (Δ individuals)</th>
+                </tr>
+            </thead>
+            <tbody id="stockTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Admin scripts (segmented) -->
+    <script src="admin_js/admin-core.js"></script>
+    <script src="admin_js/admin-players.js"></script>
+    <script src="admin_js/admin-requests.js"></script>
+    <script src="admin_js/admin-history.js"></script>
+    <script src="admin_js/admin-stock.js"></script>
+    <script src="admin_js/admin-ocm.js"></script>
+    <script src="admin_js/admin-trades.js"></script>
+    <script src="admin_js/admin-target-user.js"></script>
+    <script src="admin_js/admin-auth.js"></script>
+    <script src="admin_js/admin-tabs.js"></script>
+    <script src="admin_js/admin-players-transfer.js"></script>
+    <script src="admin_js/admin-boot.js"></script>
+</body>
+</html>

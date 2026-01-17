@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Account History</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .row {
+            margin: 8px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f5f5f5;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #555;
+        }
+
+        input, select, button {
+            padding: 6px;
+        }
+
+        .history-details-row td {
+            background: #fafafa;
+        }
+
+        .history-details-box {
+            padding: 8px 6px;
+            font-size: 12px;
+        }
+
+        .history-details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+        }
+
+        .history-details-col h4 {
+            margin: 0 0 4px 0;
+            font-size: 13px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .history-item-line {
+            border-bottom: 1px dashed #eee;
+            padding: 2px 0;
+        }
+
+            .history-item-line span.qty {
+                font-weight: bold;
+                margin-right: 4px;
+            }
+
+        .history-empty-msg {
+            font-style: italic;
+            color: #777;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background: #eee;
+            font-size: 12px;
+        }
+    </style>
+    <script src="app-config.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="topbar.js"></script>
+    <script src="api-client.js"></script>
+</head>
+<body>
+    <!-- Shared top bar injected by topbar.js -->
+
+    <div id="authPanel">
+        <div id="googleLoginArea">
+            <div id="googleBtn"></div>
+            <div class="login-hint">If the Google button does not appear, use fallback:</div>
+            <div class="fallback-login">
+                <button id="fallbackBtn" type="button" onclick="startFallbackLogin()">Fallback Google Login</button>
+            </div>
+            <div id="loginStatus" class="small"></div>
+        </div>
+    </div>
+
+    <h1>History</h1>
+    <div id="authStatus" class="small">Checking auth...</div>
+
+    <div class="row">
+        <label>
+            Mode:
+            <select id="historyMode">
+                <option value="ACCOUNT" selected>Account history</option>
+                <option value="OCM">OCM trades history</option>
+            </select>
+        </label>
+
+        <label>From: <input id="dtFrom" type="date"></label>
+        <label>To: <input id="dtTo" type="date"></label>
+
+        <label>
+            Page size:
+            <select id="pgSize">
+                <option>20</option>
+                <option selected>50</option>
+                <option>100</option>
+                <option>200</option>
+                <option>500</option>
+            </select>
+        </label>
+
+        <button id="btnLoad">Load</button>
+        <span id="msg" class="small"></span>
+    </div>
+
+    <table>
+        <thead id="thead"></thead>
+        <tbody id="tb"></tbody>
+    </table>
+
+    <div class="row">
+        <button id="prev">Prev</button>
+        <span id="pgInfo" class="small"></span>
+        <button id="next">Next</button>
+    </div>
+
+    <script>
+        let googleIdToken = null;
+        let page = 1;
+        const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '857098772457-kuvq861sa844esf2jc4b7av1pnlmnn1c.apps.googleusercontent.com';
+
+        function byId(x) { return document.getElementById(x); }
+        function fmt(n) { const v = Number(n) || 0; return v.toFixed(2).replace(/\.?0+$/, ''); }
+
+        function normalizeResult(j) {
+            // standardize to "data" first, then fall back
+            if (j && j.data != null) return j.data;
+            if (j && j.result != null) return j.result;
+            return j;
+        }
+
+        function formatDatePretty(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) return iso;
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mi = String(d.getMinutes()).padStart(2, '0');
+            return `${dd}-${mm}-${yyyy}, ${hh}:${mi}`;
+        }
+
+        function tryParseDetails(detailsJson) {
+            if (!detailsJson) return null;
+            try { return JSON.parse(detailsJson); } catch { return null; }
+        }
+
+        function buildItemsListHtml(items) {
+            if (!Array.isArray(items) || !items.length) {
+                return '<div class="history-empty-msg">Nothing</div>';
+            }
+            return items.map(it => {
+                const name = it.itemName || it.name || 'Unknown item';
+                const qty = Number(it.qty || it.quantity || 0);
+                const bundle = it.bundleSize && Number(it.bundleSize) > 1 ? `x${Number(it.bundleSize)}` : 'x';
+                const price = it.priceBT || it.price;
+                const qtyStr = `${qty}${bundle}`;
+                const priceStr = price != null ? ` (${price} BT)` : '';
+                return `<div class="history-item-line"><span class="qty">${qtyStr}</span>${name}<span class="small">${priceStr}</span></div>`;
+            }).join('');
+        }
+
+        function setHeaders() {
+            const mode = byId('historyMode').value;
+            const thead = byId('thead');
+
+            if (mode === 'OCM') {
+                thead.innerHTML = `
+                    <tr>
+                        <th>Date</th>
+                        <th>TradeId</th>
+                        <th>Trader</th>
+                        <th>Completed By</th>
+                        <th>Total Value (BT)</th>
+                        <th>Details</th>
+                    </tr>`;
+            } else {
+                thead.innerHTML = `
+                    <tr>
+                        <th>Date</th>
+                        <th>TxId</th>
+                        <th>Type</th>
+                        <th>Delta BT</th>
+                        <th>Balance After</th>
+                        <th>Details</th>
+                    </tr>`;
+            }
+        }
+
+        function renderDetailsRow(mainRow, html) {
+            const existing = mainRow.nextElementSibling;
+            if (existing && existing.classList.contains('history-details-row')) {
+                existing.remove();
+                const btn = mainRow.querySelector('button[data-details-toggle]');
+                if (btn) btn.textContent = 'See details';
+                return;
+            }
+
+            const detailsTr = document.createElement('tr');
+            detailsTr.className = 'history-details-row';
+            const td = document.createElement('td');
+            td.colSpan = 6;
+            td.innerHTML = html;
+            detailsTr.appendChild(td);
+            mainRow.parentNode.insertBefore(detailsTr, mainRow.nextSibling);
+
+            const btn = mainRow.querySelector('button[data-details-toggle]');
+            if (btn) btn.textContent = 'Hide details';
+        }
+
+        function renderAccountDetailsHtml(h) {
+            const d = tryParseDetails(h.detailsJson);
+            const hasStructured = d && (d.carts || d.totals || d.manualBalanceDeltaBT != null || d.kind);
+            if (!hasStructured) return '<div class="history-details-box"><div class="history-empty-msg">No detailed breakdown is available for this transaction.</div></div>';
+
+            const carts = d.carts || {};
+            const buy = carts.buy || [];
+            const sell = carts.sell || [];
+            const totals = d.totals || {};
+            const net = Number(totals.netBT || 0);
+            const manual = d.manualBalanceDeltaBT != null ? Number(d.manualBalanceDeltaBT) : null;
+
+            const deltaStr = fmt(h.deltaBT || 0);
+            const balStr = fmt(h.balanceAfterBT || 0);
+            const prettyAt = formatDatePretty(h.at || '');
+
+            return `<div class="history-details-box">
+                    <div class="small" style="margin-bottom:6px;">Date: <strong>${prettyAt || (h.at || '')}</strong></div>
+                    <div class="small" style="margin-bottom:6px;">Delta: <strong>${deltaStr} BT</strong> &nbsp;|&nbsp; Balance after: <strong>${balStr} BT</strong></div>
+                    <div class="history-details-grid">
+                      <div class="history-details-col">
+                        <h4>Items bought</h4>
+                        ${buildItemsListHtml(buy)}
+                      </div>
+                      <div class="history-details-col">
+                        <h4>Items sold</h4>
+                        ${buildItemsListHtml(sell)}
+                      </div>
+                    </div>
+                    <div class="small" style="margin-top:6px;">
+                      Net from items: <strong>${fmt(net)} BT</strong>${manual != null ? ` &nbsp;|&nbsp; Manual adj: <strong>${fmt(manual)} BT</strong>` : ''}
+                    </div>
+                </div>`;
+        }
+
+        function renderOcmDetailsHtml(h) {
+            const d = tryParseDetails(h.detailsJson);
+            if (!d) return '<div class="history-details-box"><div class="history-empty-msg">No details JSON.</div></div>';
+
+            const side = d.side || '';
+            const listing = d.listing || {};
+            const payment = d.payment || {};
+            const req = d.request || {};
+            const pricing = d.pricing || {};
+            const prettyAt = formatDatePretty(h.at || '');
+
+            return `<div class="history-details-box">
+                    <div class="small" style="margin-bottom:6px;">Date: <strong>${prettyAt || (h.at || '')}</strong> <span class="pill">${side}</span></div>
+                    <div class="small" style="margin-bottom:6px;">
+                      Item: <strong>${listing.itemName || ''}</strong> &nbsp;|&nbsp;
+                      Qty: <strong>${req.requestedUnits || ''}</strong> &nbsp;|&nbsp;
+                      Type: <strong>${listing.type || ''}</strong>
+                    </div>
+                    <div class="small" style="margin-bottom:6px;">
+                      Payment: <strong>${payment.method || 'BT'}</strong>
+                      ${payment.method === 'ITEM' ? ` (${payment.payItemQty} ${payment.payItemName})` : ''}
+                      &nbsp;|&nbsp; Total: <strong>${fmt(payment.payTotalBT || h.totalValueBT || 0)} BT</strong>
+                    </div>
+                    <div class="small">
+                      TradeValueBT (basis): <strong>${fmt(pricing.tradeValueBT || 0)} BT</strong>
+                    </div>
+                </div>`;
+        }
+
+        async function ensureAuth() {
+            const st = byId('authStatus');
+            const saved = window.getSavedIdToken && window.getSavedIdToken();
+            if (!saved) { st.textContent = 'Not logged in. Open index.html and login.'; throw new Error('no token'); }
+            googleIdToken = saved;
+            const me = await apiGet('me', { idToken: googleIdToken });
+            const d = normalizeResult(me);
+            st.textContent = 'Logged as ' + (d?.user?.email || '');
+        }
+
+        async function loadHistory() {
+            setHeaders();
+
+            const msg = byId('msg'); msg.textContent = 'Loading...';
+            const size = Number(byId('pgSize').value || 50);
+            const since = byId('dtFrom').value || '';
+            const until = byId('dtTo').value || '';
+            const mode = byId('historyMode').value;
+
+            const action = (mode === 'OCM') ? 'ocmGetHistory' : 'getHistory';
+
+            try {
+                const j = await apiGet(action, { idToken: googleIdToken, page, pageSize: size, since, until });
+                const d = normalizeResult(j);
+
+                const arr = d?.items || [];
+                const total = Number(d?.total || 0);
+
+                const tb = byId('tb'); tb.innerHTML = '';
+
+                arr.forEach(h => {
+                    const tr = document.createElement('tr');
+                    const prettyAt = formatDatePretty(h.at || '');
+
+                    if (mode === 'OCM') {
+                        const detailsRaw = h.detailsJson || '';
+                        const hasDetails = !!tryParseDetails(detailsRaw);
+
+                        tr.innerHTML = `
+                                <td>${prettyAt || (h.at || '')}</td>
+                                <td>${h.tradeId || ''}</td>
+                                <td>${h.traderName || ''}</td>
+                                <td>${h.completedBy || ''}</td>
+                                <td>${fmt(h.totalValueBT || 0)}</td>
+                                <td>${hasDetails ? `<button type="button" data-details-toggle="1">See details</button>` : `<span class="small">No details</span>`}</td>
+                            `;
+
+                        if (hasDetails) {
+                            tr.querySelector('button[data-details-toggle]').addEventListener('click', () => {
+                                renderDetailsRow(tr, renderOcmDetailsHtml(h));
+                            });
+                        }
+                    } else {
+                        const detailsRaw = h.detailsJson || '';
+                        const hasDetails = !!tryParseDetails(detailsRaw);
+
+                        tr.innerHTML = `
+                                <td>${prettyAt || (h.at || '')}</td>
+                                <td>${h.txId || ''}</td>
+                                <td>${h.type || ''}</td>
+                                <td>${fmt(h.deltaBT || 0)}</td>
+                                <td>${fmt(h.balanceAfterBT || 0)}</td>
+                                <td>${hasDetails ? `<button type="button" data-details-toggle="1">See details</button>` : `<span class="small">No details</span>`}</td>
+                            `;
+
+                        if (hasDetails) {
+                            tr.querySelector('button[data-details-toggle]').addEventListener('click', () => {
+                                renderDetailsRow(tr, renderAccountDetailsHtml(h));
+                            });
+                        }
+                    }
+
+                    tb.appendChild(tr);
+                });
+
+                const pages = total && size ? Math.ceil(total / size) : (arr.length < size ? page : page + 1);
+                byId('pgInfo').textContent = `Page ${page} / ${pages || '?'}`;
+                msg.textContent = `Loaded ${arr.length}.`;
+            } catch (e) {
+                msg.textContent = 'Error: ' + (e.message || e);
+            }
+        }
+
+        byId('historyMode').onchange = () => { page = 1; loadHistory(); };
+        byId('btnLoad').onclick = () => { page = 1; loadHistory(); };
+        byId('prev').onclick = () => { if (page > 1) { page--; loadHistory(); } };
+        byId('next').onclick = () => { page++; loadHistory(); };
+
+        (async () => { try { await ensureAuth(); loadHistory(); } catch { } })();
+
+        function initGoogleIdentity() {
+            if (!window.google || !google.accounts || !google.accounts.id) return;
+            google.accounts.id.initialize({
+                client_id: OAUTH_CLIENT_ID,
+                callback: handleCredentialResponse,
+                ux_mode: 'popup',
+                auto_select: false,
+                use_fedcm_for_prompt: true
+            });
+            google.accounts.id.renderButton(
+                document.getElementById('googleBtn'),
+                { theme: 'outline', size: 'large', type: 'standard', shape: 'rectangular', logo_alignment: 'left' }
+            );
+        }
+
+        function handleCredentialResponse(resp) { onGoogleSignIn(resp); }
+
+        function startFallbackLogin() {
+            const nonce = crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
+            const redirectUri = location.origin + location.pathname;
+            const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
+                + '?client_id=' + encodeURIComponent(OAUTH_CLIENT_ID)
+                + '&redirect_uri=' + encodeURIComponent(redirectUri)
+                + '&response_type=id_token'
+                + '&scope=' + encodeURIComponent('openid email profile')
+                + '&nonce=' + encodeURIComponent(nonce)
+                + '&prompt=select_account';
+            window.location.href = authUrl;
+        }
+
+        async function onGoogleSignIn(resp) {
+            const statusEl = byId('loginStatus');
+            googleIdToken = resp && resp.credential;
+            if (!googleIdToken) { statusEl.textContent = 'Login error: no credential'; return; }
+            statusEl.textContent = 'Verifying token...';
+            try {
+                const tResp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`);
+                if (!tResp.ok) throw new Error('tokeninfo failed ' + tResp.status);
+                const info = await tResp.json();
+                if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
+                window.saveIdToken && window.saveIdToken(googleIdToken);
+                statusEl.textContent = 'Loading profile...';
+                const meResp = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
+                const meJson = await meResp.json();
+                if (!meJson.ok) throw new Error(meJson.error || 'Backend error');
+                const user = meJson.data.user || {};
+                if (window.topbarSetAuthState) {
+                    window.topbarSetAuthState({
+                        idToken: googleIdToken,
+                        user,
+                        isAdmin: !!meJson.data.isAdmin,
+                        balanceBT: user.balanceBT || 0
+                    });
+                }
+                byId('authStatus').textContent = 'Logged as ' + (user.playerName || user.email || '');
+                page = 1;
+                loadHistory();
+                statusEl.textContent = 'Logged in.';
+            } catch (e) {
+                statusEl.textContent = 'Login error: ' + e.message;
+            }
+        }
+
+        window.onTopbarAuthChanged = function (info) {
+            googleIdToken = info.idToken;
+            if (!info.idToken) {
+                byId('authStatus').textContent = 'Not logged in.';
+                byId('tb').innerHTML = '';
+            } else {
+                byId('authStatus').textContent = 'Logged as ' + ((info.user && (info.user.playerName || info.user.email)) || '');
+                page = 1;
+                loadHistory();
+            }
+        };
+
+        window.onload = () => {
+            window.initSharedTopBar && window.initSharedTopBar();
+            const gsiWait = setInterval(() => {
+                if (window.google && google.accounts && google.accounts.id) {
+                    initGoogleIdentity();
+                    clearInterval(gsiWait);
+                }
+            }, 200);
+            setTimeout(() => clearInterval(gsiWait), 4000);
+        };
+    </script>
+</body>
+</html>

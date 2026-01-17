@@ -1,279 +1,498 @@
-﻿<!doctype html>
+<!doctype html>
+
 <html>
 <head>
-<meta charset="utf-8" />
-<title>BT Insurer — Metals Calculator</title>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<style>
-  :root{font-family:Inter,system-ui,Arial,sans-serif;color:#222}
-  body{max-width:1100px;margin:18px auto;padding:12px}
-  h1{margin:0 0 6px}
-  .lead{color:#444;margin-bottom:12px}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0}
-  input[type=text], input[type=number], select {padding:8px;border:1px solid #ddd;border-radius:6px}
-  button{padding:8px 12px;border-radius:6px;border:0;background:#1f8cff;color:#fff;cursor:pointer}
-  button.secondary{background:#6c757d}
-  .box{border:1px solid #e6e6e6;border-radius:8px;padding:12px;margin-top:12px;background:#fff}
-  .small{font-size:0.9rem;color:#666}
-  table{width:100%;border-collapse:collapse;margin-top:10px}
-  th,td{padding:8px;border:1px solid #eee;text-align:left}
-  th{background:#fafafa}
-  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:0.95rem}
-  .warn{color:#d97706;font-weight:600}
-  .error{color:#dc2626;font-weight:600}
-  @media (max-width:720px){ .row{flex-direction:column;align-items:stretch} }
-</style>
+    <!-- Top bar dependencies -->
+    <link rel="icon" href="favicon.ico">
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
+    <script src="topbar.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="auth-storage.js"></script>
+    <meta charset="utf-8" />
+    <title>BT Insurer — Metals Calculator</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        :root {
+            font-family: Inter,system-ui,Arial,sans-serif;
+            color: #222
+        }
+
+        body {
+            max-width: 1100px;
+            margin: 18px auto;
+            padding: 12px
+        }
+
+        h1 {
+            margin: 0 0 6px
+        }
+
+        .lead {
+            color: #444;
+            margin-bottom: 12px
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 8px 0
+        }
+
+        input[type=text], input[type=number], select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 6px
+        }
+
+        button {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 0;
+            background: #1f8cff;
+            color: #fff;
+            cursor: pointer
+        }
+
+            button.secondary {
+                background: #6c757d
+            }
+
+        .box {
+            border: 1px solid #e6e6e6;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 12px;
+            background: #fff
+        }
+
+        .small {
+            font-size: 0.9rem;
+            color: #666
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px
+        }
+
+        th, td {
+            padding: 8px;
+            border: 1px solid #eee;
+            text-align: left
+        }
+
+        th {
+            background: #fafafa
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.95rem
+        }
+
+        .warn {
+            color: #d97706;
+            font-weight: 600
+        }
+
+        .error {
+            color: #dc2626;
+            font-weight: 600
+        }
+
+        @media (max-width:720px) {
+            .row {
+                flex-direction: column;
+                align-items: stretch
+            }
+        }
+        /* Shared top bar styling */
+        #topBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 52px;
+            background: #222;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            z-index: 1000;
+            font-size: 14px;
+            gap: 12px;
+        }
+
+            #topBar a, #topBar button {
+                color: #fff;
+                text-decoration: none;
+                margin-right: 16px;
+                background: none;
+                border: none;
+                cursor: pointer;
+            }
+
+            #topBar .right {
+                margin-left: auto;
+                display: flex;
+                gap: 12px;
+                align-items: center;
+                flex-wrap: wrap;
+            }
+
+        body.withTopBar {
+            padding-top: 72px;
+        }
+
+        .balance-chip {
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.08);
+            white-space: nowrap;
+        }
+
+        .balance-you.positive {
+            color: #2ecc71;
+        }
+
+        .balance-you.negative {
+            color: #ff5252;
+        }
+
+        .balance-target {
+            color: #f0c200;
+        }
+
+        #orderPopup {
+            position: absolute;
+            top: 52px;
+            right: 100px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 8px;
+            display: none;
+            min-width: 260px;
+            z-index: 1100;
+            color: #000;
+        }
+
+        #orderStatusBall {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #777;
+            cursor: pointer;
+        }
+
+        .status-pending {
+            background: #f0c200 !important;
+        }
+
+        .status-error {
+            background: #e74c3c !important;
+        }
+
+        .status-none {
+            background: #777 !important;
+        }
+
+        .order-link {
+            color: #66c;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-  <h1>🔒 BT Insurer — Metals Calculator</h1>
-  <p class="lead">Enter a player, set BT amount to insure and the site will use your Price Sheet + Allocation sheet to calculate how many ingots & nuggets are needed per resource and compare against stock.</p>
+    <!-- Shared Top Bar -->
+    <div id="topBar">
+        <div><strong>Vak Store</strong></div>
+        <button onclick="navigateStore()">Store</button>
+        <button onclick="navigateHistory()">Account History</button>
+        <button onclick="navigateOCM()">OCM</button>
+        <button onclick="navigateMerchant()">OCM Merchant</button>
+        <button id="adminPanelBtn" style="display:none;" onclick="navigateAdmin()">Admin Panel</button>
+        <div class="right">
+            <button id="btnLogin" onclick="startLogin()">Login</button>
+            <div id="orderStatusBall" title="Orders status"></div>
+            <div id="orderPopup">
+                <div style="font-weight:bold;margin-bottom:6px;">Your open orders</div>
+                <div id="orderPopupBody" class="small"></div>
+            </div>
+            <span id="topBalanceTarget" class="small balance-chip balance-target" style="display:none;"></span>
+            <span id="topBalance" class="small balance-chip balance-you" style="display:none;"></span>
+            <span id="topUser" class="small"></span>
+            <button id="btnLogout" style="display:none;" onclick="logout()">Logout</button>
+        </div>
+    </div>
+    <script>
+        // Minimal nav helpers (works even if topbar.js already offers them)
+        function navigateStore() { location.href = 'index.html'; }
+        function navigateHistory() { location.href = 'AccountHistory.html'; }
+        function navigateOCM() { location.href = 'OCMHome.html'; }
+        function navigateMerchant() { location.href = 'OCMUser.html'; }
+        function navigateAdmin() { location.href = 'Admin.html'; }
+        // Initialize shared top bar if helper exists
+        document.body.classList.add('withTopBar');
+        if (window.initSharedTopBar) { window.initSharedTopBar(); }
+    </script>
+    <h1>🔒 BT Insurer — Metals Calculator</h1>
+    <p class="lead">Enter a player, set BT amount to insure and the site will use your Price Sheet + Allocation sheet to calculate how many ingots & nuggets are needed per resource and compare against stock.</p>
 
-  <div class="box">
-    <div class="row">
-      <label>Player
-        <input id="playerInput" list="playersList" placeholder="Type any part of the player's name" autocomplete="off">
-        <datalist id="playersList"></datalist>
-      </label>
+    <div class="box">
+        <div class="row">
+            <label>
+                Player
+                <input id="playerInput" list="playersList" placeholder="Type any part of the player's name" autocomplete="off">
+                <datalist id="playersList"></datalist>
+            </label>
 
-      <label>BT to insure
-        <input id="btInput" type="number" min="0" step="0.01" value="1500">
-      </label>
+            <label>
+                BT to insure
+                <input id="btInput" type="number" min="0" step="0.01" value="1500">
+            </label>
 
-      <label>Price mode
-        <select id="priceMode">
-          <option value="sell">SELL (use sheet sell prices)</option>
-          <option value="buy">BUY (use sheet buy prices)</option>
-        </select>
-      </label>
+            <label>
+                Price mode
+                <select id="priceMode">
+                    <option value="sell">SELL (use sheet sell prices)</option>
+                    <option value="buy">BUY (use sheet buy prices)</option>
+                </select>
+            </label>
 
-      <div style="display:flex;gap:8px;align-items:center">
-        <button id="calcBtn">Calculate</button>
-        <button id="reloadBtn" class="secondary">Reload Sheets</button>
-      </div>
+            <div style="display:flex;gap:8px;align-items:center">
+                <button id="calcBtn">Calculate</button>
+                <button id="reloadBtn" class="secondary">Reload Sheets</button>
+            </div>
+        </div>
+
+        <div id="status" class="small"></div>
+        <div class="small">If names don't appear, make sure the allocation sheet is published as CSV and public.</div>
     </div>
 
-    <div id="status" class="small"></div>
-    <div class="small">If names don't appear, make sure the allocation sheet is published as CSV and public.</div>
-  </div>
+    <div id="resultsWrap" class="box" style="display:none;">
+        <div class="row">
+            <div id="summary" class="mono"></div>
+        </div>
 
-  <div id="resultsWrap" class="box" style="display:none;">
-    <div class="row">
-      <div id="summary" class="mono"></div>
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th>Resource</th>
+                    <th>Stock</th>
+                    <th>%</th>
+                    <th>BT allocated</th>
+                    <th>Ingot price (BT)</th>
+                    <th>Ingots</th>
+                    <th>Nugget price (BT)</th>
+                    <th>Nuggets</th>
+                    <th>Insured (BT)</th>
+                    <th>Uninsured (BT)</th>
+                    <th>Warnings</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 
-    <table id="resultsTable">
-      <thead>
-        <tr>
-          <th>Resource</th>
-          <th>Stock</th>
-          <th>%</th>
-          <th>BT allocated</th>
-          <th>Ingot price (BT)</th>
-          <th>Ingots</th>
-          <th>Nugget price (BT)</th>
-          <th>Nuggets</th>
-          <th>Insured (BT)</th>
-          <th>Uninsured (BT)</th>
-          <th>Warnings</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+    <script>
+        const PRICE_SHEET_ID = "1ObWed3580CeI9m5sN3qPVTgU67WH8Qkg-cot6etPOr4";
+        const ALLOC_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSSCXCJIVrWOitr-0NxUJQ4f9T3mN3GtIXE4Zp5AC9pBPI_ndMBlRGl2-PFi46pQcHMegmYR_bXCUiq/pub?gid=0&single=true&output=csv";
+        const priceURL = `https://docs.google.com/spreadsheets/d/${PRICE_SHEET_ID}/gviz/tq?tqx=out:json`;
 
-<script>
-    const PRICE_SHEET_ID = "1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo";
-const ALLOC_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSSCXCJIVrWOitr-0NxUJQ4f9T3mN3GtIXE4Zp5AC9pBPI_ndMBlRGl2-PFi46pQcHMegmYR_bXCUiq/pub?gid=0&single=true&output=csv";
-const priceURL = `https://docs.google.com/spreadsheets/d/${PRICE_SHEET_ID}/gviz/tq?tqx=out:json`;
+        let priceItems = [];
+        let allocations = { header: [], players: [] };
 
-let priceItems = [];
-let allocations = { header: [], players: [] };
+        const el = {
+            playerInput: document.getElementById('playerInput'),
+            playersList: document.getElementById('playersList'),
+            btInput: document.getElementById('btInput'),
+            priceMode: document.getElementById('priceMode'),
+            calcBtn: document.getElementById('calcBtn'),
+            reloadBtn: document.getElementById('reloadBtn'),
+            status: document.getElementById('status'),
+            resultsWrap: document.getElementById('resultsWrap'),
+            summary: document.getElementById('summary'),
+            tableBody: document.querySelector('#resultsTable tbody')
+        };
 
-const el = {
-  playerInput: document.getElementById('playerInput'),
-  playersList: document.getElementById('playersList'),
-  btInput: document.getElementById('btInput'),
-  priceMode: document.getElementById('priceMode'),
-  calcBtn: document.getElementById('calcBtn'),
-  reloadBtn: document.getElementById('reloadBtn'),
-  status: document.getElementById('status'),
-  resultsWrap: document.getElementById('resultsWrap'),
-  summary: document.getElementById('summary'),
-  tableBody: document.querySelector('#resultsTable tbody')
-};
+        // ---- HELPERS ----
+        function parseGviz(text) {
+            const start = text.indexOf('(');
+            const json = JSON.parse(text.substring(start + 1, text.length - 2));
+            return json;
+        }
 
-// ---- HELPERS ----
-function parseGviz(text){
-  const start=text.indexOf('('); 
-  const json=JSON.parse(text.substring(start+1,text.length-2)); 
-  return json;
-}
+        function parsePriceSheet(json) {
+            const rows = json.table.rows || [];
+            priceItems = rows.map(r => {
+                const c = i => (r.c[i] && r.c[i].v !== undefined) ? r.c[i].v : null;
+                const name = c(0) ? String(c(0)).trim() : null;
+                if (!name) return null;
+                return {
+                    name,
+                    buyEach: parseFloat(c(5)) || null,
+                    sellEach: parseFloat(c(6)) || null,
+                    bundleSize: parseInt(c(4)) || 1,
+                    stock: parseFloat(c(7)) || 0   // Column H = index 7
+                };
+            }).filter(Boolean);
+        }
 
-function parsePriceSheet(json){
-  const rows=json.table.rows||[];
-  priceItems=rows.map(r=>{
-    const c=i=>(r.c[i]&&r.c[i].v!==undefined)?r.c[i].v:null;
-    const name=c(0)?String(c(0)).trim():null;
-    if(!name)return null;
-    return{
-      name,
-      buyEach:parseFloat(c(5))||null,
-      sellEach:parseFloat(c(6))||null,
-      bundleSize:parseInt(c(4))||1,
-      stock:parseFloat(c(7))||0   // Column H = index 7
-    };
-  }).filter(Boolean);
-}
+        function parseAllocCSV(text) {
+            const lines = text.trim().split(/\r?\n/);
+            const header = lines[2].split(',').map(x => x.trim());
+            const players = [];
+            for (let i = 3; i < lines.length; i++) {
+                const parts = lines[i].split(',');
+                const name = parts[0].trim();
+                if (!name) continue;
+                const percents = {};
+                for (let j = 1; j < header.length; j++) {
+                    percents[header[j]] = parseFloat(parts[j]) || 0;
+                }
+                players.push({ name, percents });
+            }
+            allocations = { header, players };
+        }
 
-function parseAllocCSV(text){
-  const lines=text.trim().split(/\r?\n/);
-  const header=lines[2].split(',').map(x=>x.trim());
-  const players=[];
-  for(let i=3;i<lines.length;i++){
-    const parts=lines[i].split(',');
-    const name=parts[0].trim();
-    if(!name)continue;
-    const percents={};
-    for(let j=1;j<header.length;j++){
-      percents[header[j]]=parseFloat(parts[j])||0;
-    }
-    players.push({name,percents});
-  }
-  allocations={header,players};
-}
+        function formatMoney(v) { return (isNaN(v) ? 0 : v).toFixed(2) + " BT"; }
+        function stackFormat(count, stackSize, label) {
+            if (!count || count <= 0) return "0 " + label;
+            const stacks = Math.floor(count / stackSize);
+            const remainder = count % stackSize;
+            let text = "";
+            if (stacks === 0) text = `${remainder} ${label}`;
+            else if (remainder === 0) text = `${stacks}×${stackSize} ${label}`;
+            else text = `${stacks}×${stackSize}+${remainder} ${label}`;
+            text += ` (${count})`;
+            return text;
+        }
 
-function formatMoney(v){return (isNaN(v)?0:v).toFixed(2)+" BT";}
-function stackFormat(count, stackSize, label) {
-  if (!count || count <= 0) return "0 " + label;
-  const stacks = Math.floor(count / stackSize);
-  const remainder = count % stackSize;
-  let text = "";
-  if (stacks === 0) text = `${remainder} ${label}`;
-  else if (remainder === 0) text = `${stacks}×${stackSize} ${label}`;
-  else text = `${stacks}×${stackSize}+${remainder} ${label}`;
-  text += ` (${count})`;
-  return text;
-}
+        function findPrice(resource) {
+            const lower = resource.toLowerCase();
+            const ingot = priceItems.find(it => it.name.toLowerCase().includes("ingot") && it.name.toLowerCase().includes(lower));
+            const nugget = priceItems.find(it => it.name.toLowerCase().includes("nugget") && it.name.toLowerCase().includes(lower));
+            const any = priceItems.find(it => it.name.toLowerCase().includes(lower));
+            return { ingot, nugget, any };
+        }
 
-function findPrice(resource){
-  const lower=resource.toLowerCase();
-  const ingot=priceItems.find(it=>it.name.toLowerCase().includes("ingot")&&it.name.toLowerCase().includes(lower));
-  const nugget=priceItems.find(it=>it.name.toLowerCase().includes("nugget")&&it.name.toLowerCase().includes(lower));
-  const any=priceItems.find(it=>it.name.toLowerCase().includes(lower));
-  return{ingot,nugget,any};
-}
+        // ---- MAIN RENDER ----
+        function renderResults(player, bt) {
+            el.resultsWrap.style.display = 'block';
+            el.tableBody.innerHTML = '';
+            el.summary.textContent = `Player: ${player.name} — ${bt} BT insured`;
+            let total = 0;
 
-// ---- MAIN RENDER ----
-function renderResults(player,bt){
-  el.resultsWrap.style.display='block';
-  el.tableBody.innerHTML='';
-  el.summary.textContent=`Player: ${player.name} — ${bt} BT insured`;
-  let total=0;
+            for (const [res, pct] of Object.entries(player.percents)) {
+                if (pct <= 0) continue;
+                const allocBT = (pct / 100) * bt;
+                const found = findPrice(res);
+                const mode = el.priceMode.value;
+                const ingotP = found.ingot ? found.ingot[mode + "Each"] : null;
+                const nuggetP = found.nugget ? found.nugget[mode + "Each"] : null;
+                const anyP = found.any ? found.any[mode + "Each"] : null;
+                const stock = found.ingot ? found.ingot.stock : (found.any ? found.any.stock : 0);
 
-  for(const [res,pct] of Object.entries(player.percents)){
-    if(pct<=0)continue;
-    const allocBT=(pct/100)*bt;
-    const found=findPrice(res);
-    const mode=el.priceMode.value;
-    const ingotP=found.ingot?found.ingot[mode+"Each"]:null;
-    const nuggetP=found.nugget?found.nugget[mode+"Each"]:null;
-    const anyP=found.any?found.any[mode+"Each"]:null;
-    const stock=found.ingot?found.ingot.stock:(found.any?found.any.stock:0);
+                let ingots = 0, nuggets = 0, insured = 0, leftover = allocBT;
+                let displayIngots = "", displayNuggets = "", warning = "";
+                let ingotStack = 16, nuggetStack = res.toLowerCase().includes("meteoric") ? 64 : 128;
 
-    let ingots=0,nuggets=0,insured=0,leftover=allocBT;
-    let displayIngots="",displayNuggets="",warning="";
-    let ingotStack=16,nuggetStack=res.toLowerCase().includes("meteoric")?64:128;
+                if (ingotP) {
+                    ingots = Math.floor(allocBT / ingotP);
+                    insured += ingots * ingotP;
+                    leftover = allocBT - insured;
+                    displayIngots = stackFormat(ingots, ingotStack, "ingots");
+                    if (nuggetP) {
+                        nuggets = Math.floor(leftover / nuggetP);
+                        insured += nuggets * nuggetP;
+                        leftover = allocBT - insured;
+                        displayNuggets = stackFormat(nuggets, nuggetStack, "nuggets");
+                    }
+                } else if (nuggetP) {
+                    nuggets = Math.floor(allocBT / nuggetP);
+                    insured += nuggets * nuggetP;
+                    leftover = allocBT - insured;
+                    displayNuggets = stackFormat(nuggets, nuggetStack, "nuggets");
+                } else if (anyP) {
+                    // Non-metal fallback (like RGs)
+                    const pieces = Math.floor(allocBT / anyP);
+                    insured = pieces * anyP;
+                    leftover = allocBT - insured;
+                    displayIngots = `${pieces} items (${pieces})`;
+                    displayNuggets = "—";
+                }
 
-    if(ingotP){
-      ingots=Math.floor(allocBT/ingotP);
-      insured+=ingots*ingotP;
-      leftover=allocBT-insured;
-      displayIngots=stackFormat(ingots,ingotStack,"ingots");
-      if(nuggetP){
-        nuggets=Math.floor(leftover/nuggetP);
-        insured+=nuggets*nuggetP;
-        leftover=allocBT-insured;
-        displayNuggets=stackFormat(nuggets,nuggetStack,"nuggets");
-      }
-    }else if(nuggetP){
-      nuggets=Math.floor(allocBT/nuggetP);
-      insured+=nuggets*nuggetP;
-      leftover=allocBT-insured;
-      displayNuggets=stackFormat(nuggets,nuggetStack,"nuggets");
-    }else if(anyP){
-      // Non-metal fallback (like RGs)
-      const pieces=Math.floor(allocBT/anyP);
-      insured=pieces*anyP;
-      leftover=allocBT-insured;
-      displayIngots=`${pieces} items (${pieces})`;
-      displayNuggets="—";
-    }
+                // --- Stock comparison ---
+                const totalRequired = ingots + nuggets; // approximate total items used
+                if (stock > 0) {
+                    if (totalRequired > stock) {
+                        warning = `<span class="error">Don't have stock that meets ${res}'s insuring</span>`;
+                    } else if (totalRequired > stock / 2) {
+                        warning = `<span class="warn">Might not be able to insure ${res}</span>`;
+                    } else {
+                        warning = "";
+                    }
+                }
 
-    // --- Stock comparison ---
-    const totalRequired = ingots + nuggets; // approximate total items used
-    if(stock > 0){
-      if(totalRequired > stock){
-        warning=`<span class="error">Don't have stock that meets ${res}'s insuring</span>`;
-      }else if(totalRequired > stock/2){
-        warning=`<span class="warn">Might not be able to insure ${res}</span>`;
-      }else{
-        warning="";
-      }
-    }
+                total += insured;
 
-    total+=insured;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+          <td>${res}</td>
+          <td>${stock || "0"}</td>
+          <td>${pct.toFixed(2)}%</td>
+          <td>${formatMoney(allocBT)}</td>
+          <td>${ingotP ? formatMoney(ingotP) : '—'}</td>
+          <td>${displayIngots || '—'}</td>
+          <td>${nuggetP ? formatMoney(nuggetP) : '—'}</td>
+          <td>${displayNuggets || '—'}</td>
+          <td>${formatMoney(insured)}</td>
+          <td>${formatMoney(leftover)}</td>
+          <td>${warning}</td>
+        `;
+                el.tableBody.appendChild(tr);
+            }
 
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
-      <td>${res}</td>
-      <td>${stock || "0"}</td>
-      <td>${pct.toFixed(2)}%</td>
-      <td>${formatMoney(allocBT)}</td>
-      <td>${ingotP?formatMoney(ingotP):'—'}</td>
-      <td>${displayIngots||'—'}</td>
-      <td>${nuggetP?formatMoney(nuggetP):'—'}</td>
-      <td>${displayNuggets||'—'}</td>
-      <td>${formatMoney(insured)}</td>
-      <td>${formatMoney(leftover)}</td>
-      <td>${warning}</td>
-    `;
-    el.tableBody.appendChild(tr);
-  }
+            const foot = document.createElement('tr');
+            foot.innerHTML = `<td><b>Total</b></td><td></td><td></td><td><b>${formatMoney(bt)}</b></td><td colspan="4"></td><td><b>${formatMoney(total)}</b></td><td><b>${formatMoney(bt - total)}</b></td><td></td>`;
+            el.tableBody.appendChild(foot);
+        }
 
-  const foot=document.createElement('tr');
-  foot.innerHTML=`<td><b>Total</b></td><td></td><td></td><td><b>${formatMoney(bt)}</b></td><td colspan="4"></td><td><b>${formatMoney(total)}</b></td><td><b>${formatMoney(bt-total)}</b></td><td></td>`;
-  el.tableBody.appendChild(foot);
-}
+        // ---- EVENTS ----
+        el.calcBtn.onclick = () => {
+            const name = el.playerInput.value.trim().toLowerCase();
+            const p = allocations.players.find(x => x.name.toLowerCase() === name);
+            if (!p) { alert("Player not found"); return; }
+            const bt = parseFloat(el.btInput.value || 0);
+            if (!bt) { alert("Enter BT amount"); return; }
+            renderResults(p, bt);
+        };
+        el.reloadBtn.onclick = loadSheets;
 
-// ---- EVENTS ----
-el.calcBtn.onclick=()=>{
-  const name=el.playerInput.value.trim().toLowerCase();
-  const p=allocations.players.find(x=>x.name.toLowerCase()===name);
-  if(!p){alert("Player not found");return;}
-  const bt=parseFloat(el.btInput.value||0);
-  if(!bt){alert("Enter BT amount");return;}
-  renderResults(p,bt);
-};
-el.reloadBtn.onclick=loadSheets;
-
-// ---- LOAD SHEETS ----
-async function loadSheets(){
-  el.status.textContent="Loading...";
-  try{
-    const [p,a]=await Promise.all([fetch(priceURL),fetch(ALLOC_CSV_URL)]);
-    const pText=await p.text(); const aText=await a.text();
-    const pJson=parseGviz(pText);
-    parsePriceSheet(pJson);
-    parseAllocCSV(aText);
-    el.playersList.innerHTML="";
-    allocations.players.forEach(p=>el.playersList.appendChild(new Option(p.name,p.name)));
-    el.status.textContent=`Loaded ${priceItems.length} prices & ${allocations.players.length} players.`;
-  }catch(e){
-    console.error(e);
-    el.status.textContent="Error loading sheets.";
-  }
-}
-loadSheets();
-</script>
+        // ---- LOAD SHEETS ----
+        async function loadSheets() {
+            el.status.textContent = "Loading...";
+            try {
+                const [p, a] = await Promise.all([fetch(priceURL), fetch(ALLOC_CSV_URL)]);
+                const pText = await p.text(); const aText = await a.text();
+                const pJson = parseGviz(pText);
+                parsePriceSheet(pJson);
+                parseAllocCSV(aText);
+                el.playersList.innerHTML = "";
+                allocations.players.forEach(p => el.playersList.appendChild(new Option(p.name, p.name)));
+                el.status.textContent = `Loaded ${priceItems.length} prices & ${allocations.players.length} players.`;
+            } catch (e) {
+                console.error(e);
+                el.status.textContent = "Error loading sheets.";
+            }
+        }
+        loadSheets();
+    </script>
 </body>
 </html>

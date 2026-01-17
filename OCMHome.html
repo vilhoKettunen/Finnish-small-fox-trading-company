@@ -1,0 +1,339 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <!-- Top bar dependencies -->
+    <link rel="icon" href="favicon.ico">
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
+    <script src="api-client.js"></script>
+    <script src="topbar.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <meta charset="UTF-8">
+    <title>OCM Marketplace</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" href="favicon.ico">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1300px;
+            margin: auto;
+        }
+
+            body.withTopBar {
+                padding-top: 72px;
+            }
+
+        h1, h2, h3 {
+            margin-top: 0;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #555;
+        }
+
+        .muted {
+            color: #666;
+        }
+
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width:860px) {
+            .grid2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 6px;
+            font-size: 13px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f5f5f5;
+        }
+
+        input, button, select {
+            padding: 6px;
+            font-size: 13px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 8px 0;
+        }
+
+        .search {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .tabs {
+            display: none;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+            .tabs button {
+                border: 1px solid #ccc;
+                background: #fff;
+                border-radius: 8px;
+                padding: 8px 10px;
+                cursor: pointer;
+            }
+
+                .tabs button[aria-selected="true"] {
+                    background: #222;
+                    color: #fff;
+                    border-color: #222;
+                }
+
+        @media (max-width:860px) {
+            .tabs {
+                display: flex;
+            }
+        }
+
+        tr.clickable {
+            cursor: pointer;
+        }
+
+            tr.clickable:focus-within {
+                outline: 2px solid #1a73e8;
+            }
+
+        .details-row td {
+            background: #fafafa;
+        }
+
+        .details-box {
+            padding: 10px;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+            gap: 10px;
+        }
+
+        .field {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .field label {
+                display: flex;
+                gap: 6px;
+                align-items: center;
+            }
+
+        .pill {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 999px;
+            font-size: 11px;
+            background: #eee;
+        }
+
+        .pill-sell {
+            background: #e9ffe8;
+        }
+
+        .pill-buy {
+            background: #e8f7ff;
+        }
+
+        .mono {
+            font-family: Consolas, monospace;
+        }
+
+        #authPanel {
+            margin-bottom: 10px;
+        }
+
+        #googleLoginArea {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 4px 0;
+        }
+
+        #googleBtn {
+            margin-top: 4px;
+        }
+
+        .login-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .fallback-login {
+            margin-top: 4px;
+        }
+
+        .notice {
+            border: 1px solid #ddd;
+            background: #fff;
+            border-radius: 8px;
+            padding: 8px;
+        }
+    </style>
+
+    <!-- OCMHome scripts (segmented) -->
+    <script src="OCMHome_js/ocmhome-core.js"></script>
+    <script src="OCMHome_js/ocmhome-catalog.js"></script>
+    <script src="OCMHome_js/ocmhome-ui.js"></script>
+    <script src="OCMHome_js/ocmhome-trades.js"></script>
+    <script src="OCMHome_js/ocmhome-auth.js"></script>
+    <script src="OCMHome_js/ocmhome-boot.js"></script>
+</head>
+
+<body>
+    <div id="authPanel">
+        <div id="googleLoginArea">
+            <div id="googleBtn"></div>
+            <div class="login-hint">If the Google button does not appear, use fallback:</div>
+            <div class="fallback-login">
+                <button id="fallbackBtn" type="button" onclick="startFallbackLogin()">Fallback Google Login</button>
+            </div>
+            <div id="loginStatus" class="small"></div>
+        </div>
+    </div>
+
+    <h1>OCM Marketplace</h1>
+    <div id="authStatus" class="small">Not logged in.</div>
+
+    <div class="tabs" role="tablist" aria-label="Marketplace sections">
+        <button id="tabSell" role="tab" aria-selected="true" aria-controls="sellWrap" type="button">For sale / Supply</button>
+        <button id="tabBuy" role="tab" aria-selected="false" aria-controls="buyWrap" type="button">Buying / Demand</button>
+    </div>
+
+    <div class="small" id="msgTop"></div>
+
+    <div class="grid2">
+        <section id="sellWrap" aria-label="Supply listings">
+            <h2>For sale / Supply</h2>
+            <div class="toolbar">
+                <input id="qSell" class="search" type="text" placeholder="Search supply items">
+                <button id="btnSearchSell" type="button">Search</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Item price</th>
+                        <th>BT price</th>
+                        <th>Individual stock</th>
+                        <th>Stack size</th>
+                        <th>Seller</th>
+                        <th>Trade</th>
+                    </tr>
+                </thead>
+                <tbody id="tbSell"></tbody>
+            </table>
+        </section>
+
+        <section id="buyWrap" aria-label="Demand listings">
+            <h2>Buying / Demand</h2>
+            <div class="toolbar">
+                <input id="qBuy" class="search" type="text" placeholder="Search demand items">
+                <button id="btnSearchBuy" type="button">Search</button>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Item price</th>
+                        <th>BT price</th>
+                        <th>Individual demand</th>
+                        <th>Stack size</th>
+                        <th>Buyer</th>
+                        <th>Trade</th>
+                    </tr>
+                </thead>
+                <tbody id="tbBuy"></tbody>
+            </table>
+        </section>
+    </div>
+
+    <h2>My pending trades</h2>
+    <div class="toolbar">
+        <button id="btnRefreshPending" type="button">Refresh</button>
+        <span id="msgPending" class="small"></span>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>TradeId</th>
+                <th>Item</th>
+                <th>Trader</th>
+                <th>Qty (individual)</th>
+                <th>Payment</th>
+                <th>Total (BT eq)</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="tbMyPending"></tbody>
+    </table>
+
+    <dialog id="editDlg">
+        <form method="dialog" style="min-width:min(560px,95vw)">
+            <h3 style="margin-top:0;">Edit pending trade</h3>
+            <div class="small">Trade: <span id="editTradeId" class="mono"></span></div>
+            <div class="small">Item: <span id="editItemName"></span> | Trader: <span id="editSellerName"></span></div>
+
+            <div style="margin-top:10px;" class="details-grid">
+                <div>
+                    <div class="small">Payment</div>
+                    <label><input id="editPayBT" type="radio" name="editPay" value="BT" checked> BT</label>
+                    <label><input id="editPayItem" type="radio" name="editPay" value="ITEM"> Item</label>
+
+                    <div style="margin-top:8px;">
+                        <div class="small">Payment peg (when paying with item)</div>
+                        <select id="editPayPeg" style="min-width:260px;"></select>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="small">Quantity</div>
+                    <label><input id="editQtyInd" type="radio" name="editQtyMode" value="IND" checked> individual</label>
+                    <label><input id="editQtyStack" type="radio" name="editQtyMode" value="STACK"> stack</label>
+                    <label style="display:block;margin-top:6px;">Amount <input id="editQtyVal" type="number" min="1" value="1" style="width:120px"></label>
+                </div>
+
+                <div>
+                    <div class="small">Estimate</div>
+                    <div id="editEstimate" class="mono">—</div>
+                </div>
+            </div>
+
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button id="btnSaveEdit" type="button">Save edit (creates new tradeId)</button>
+                <button id="btnCancelEdit" type="button">Close</button>
+                <span id="editMsg" class="small"></span>
+            </div>
+        </form>
+    </dialog>
+</body>
+</html>

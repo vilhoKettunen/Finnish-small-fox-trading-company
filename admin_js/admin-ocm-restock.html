@@ -1,0 +1,33 @@
+<!-- Admin OCM Restock dialog (shared IDs so admin_js can reuse logic) -->
+<dialog id="dlgRestock">
+ <form method="dialog" style="min-width:min(520px,95vw)">
+ <h3 style="margin-top:0;">Restock listing</h3>
+ <div class="small">Listing: <span id="restockListingId" class="mono"></span></div>
+
+ <div class="details-grid" style="margin-top:10px;">
+ <div>
+ <label>
+ New stock value
+ <div class="inline-row">
+ <input id="restockQtyInput" type="number" min="0" step="1" value="0" style="width:140px;">
+ <select id="restockQtyMode">
+ <option value="IND" selected>individual</option>
+ <option value="STACK">stack</option>
+ </select>
+ </div>
+ </label>
+ <div class="small">Stored as IND using listing stack size.</div>
+ </div>
+ <div>
+ <div class="small">Note</div>
+ <div class="small">Admin restock applies immediately (auto-approve).</div>
+ </div>
+ </div>
+
+ <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+ <button type="button" id="btnSendRestock">Restock now</button>
+ <button type="button" id="btnCloseRestock">Close</button>
+ <span id="restockMsg" class="small"></span>
+ </div>
+ </form>
+</dialog>

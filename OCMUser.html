@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>OCM Merchant</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" href="data:,">
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
+    <script src="api-client.js"></script>
+    <script src="topbar.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+
+            body.withTopBar {
+                padding-top: 72px;
+            }
+
+        @supports (padding:max(0px)) {
+            body.withTopBar {
+                padding-top: max(72px, env(safe-area-inset-top));
+            }
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #555;
+        }
+
+        .muted {
+            color: #666;
+        }
+
+        .section {
+            margin: 18px0;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
+            gap: 10px;
+        }
+
+        label {
+            display: block;
+            margin: 6px0;
+        }
+
+        input, select, button {
+            padding: 6px;
+            font-size: 13px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px6px;
+            font-size: 13px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f5f5f5;
+        }
+
+        .mono {
+            font-family: Consolas, monospace;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 2px6px;
+            border-radius: 999px;
+            font-size: 11px;
+            background: #eee;
+        }
+
+        .pill-active {
+            background: #e9ffe8;
+        }
+
+        .pill-pending {
+            background: #fff8d0;
+        }
+
+        .pill-paused {
+            background: #eee;
+        }
+
+        .pill-restock {
+            background: #e8f7ff;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+            .tabs button {
+                padding: 8px10px;
+                border-radius: 8px;
+                border: 1px solid #ccc;
+                background: #fff;
+                cursor: pointer;
+            }
+
+                .tabs button[aria-selected="true"] {
+                    background: #222;
+                    color: #fff;
+                    border-color: #222;
+                }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+            gap: 10px;
+        }
+
+        #authPanel {
+            margin-bottom: 10px;
+        }
+
+        #googleLoginArea {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 4px0;
+        }
+
+        #googleBtn {
+            margin-top: 4px;
+        }
+
+        .login-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .fallback-login {
+            margin-top: 4px;
+        }
+
+        /* ===== Store-style dropdown search ===== */
+        .dropdown-wrap {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .dropdown-input {
+            width: 100%;
+            max-width: 360px;
+            padding: 6px;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #ccc;
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 500;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .dropdown-item {
+            padding: 6px8px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+            .dropdown-item:hover, .dropdown-item.active {
+                background: #f0f6ff;
+            }
+
+        .inline-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+            .inline-row > * {
+                flex: 00 auto;
+            }
+
+        dialog::backdrop {
+            background: rgba(0,0,0,0.35);
+        }
+
+        .peg-box {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fafafa;
+        }
+
+        .peg-row {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 8px;
+            background: #fff;
+            margin-top: 8px;
+        }
+
+        .peg-row-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .peg-row-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .warn {
+            color: #b45309;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="authPanel">
+        <div id="googleLoginArea">
+            <div id="googleBtn"></div>
+            <div class="login-hint">If the Google button does not appear, use fallback:</div>
+            <div class="fallback-login">
+                <button id="fallbackBtn" type="button" onclick="startFallbackLogin()">Fallback Google Login</button>
+            </div>
+            <div id="loginStatus" class="small"></div>
+        </div>
+    </div>
+
+    <h1>OCM Merchant</h1>
+    <div id="authStatus" class="small">Not logged in.</div>
+
+    <section class="section" aria-label="Listing creation tool">
+        <h2>Listing creation tool</h2>
+        <div class="tabs" role="tablist" aria-label="Listing creation modes">
+            <button id="tabCreateStore" role="tab" aria-controls="panelCreateStore" aria-selected="true" type="button">Store search (recommended)</button>
+            <button id="tabCreateHalf" role="tab" aria-controls="panelCreateHalf" aria-selected="false" type="button">Half custom</button>
+            <button id="tabCreateFull" role="tab" aria-controls="panelCreateFull" aria-selected="false" type="button">Full custom</button>
+        </div>
+
+        <!-- STORE (PEG only) -->
+        <div id="panelCreateStore" role="tabpanel" aria-labelledby="tabCreateStore" style="margin-top:10px;">
+            <div class="grid">
+                <div>
+                    <label>
+                        Type
+                        <select id="createTypeStore">
+                            <option value="SELL">SELL (supply)</option>
+                            <option value="BUY">BUY (demand)</option>
+                        </select>
+                    </label>
+                    <label>Store item (must match catalog)</label>
+                    <div class="dropdown-wrap">
+                        <input id="createItemStore" class="dropdown-input" type="text" placeholder="Type to search store item" autocomplete="off">
+                        <div id="createItemStoreList" class="dropdown-list"></div>
+                    </div>
+
+                    <label>Quantity available</label>
+                    <div class="inline-row">
+                        <input id="createQtyUnitsStore" type="number" min="1" value="1">
+                        <select id="createQtyModeStore" aria-label="Quantity unit">
+                            <option value="IND" selected>individual</option>
+                            <option value="STACK">stack</option>
+                        </select>
+                    </div>
+                    <div class="small">Stack size locked to store catalog bundle size.</div>
+                </div>
+
+                <div>
+                    <div class="peg-box">
+                        <div class="small"><strong>Pricing (PEG)</strong></div>
+                        <div class="small muted">Primary + up to 10 alternative pegs. Buyer can pay with BT or exactly one peg item.</div>
+
+                        <div id="createStorePegBox"></div>
+
+                        <div class="toolbar" style="margin-top:8px;">
+                            <button type="button" id="btnCreateStoreAddAlt">Add alternative peg</button>
+                            <span id="createStorePegWarn" class="small warn"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label>
+                        Status on create
+                        <select id="createStatusStore">
+                            <option value="PENDING_REVIEW" selected>Pending review</option>
+                        </select>
+                    </label>
+                    <button type="button" id="btnCreateStore" class="small">Create listing</button>
+                    <div id="createMsgStore" class="small"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HALF (PEG only) -->
+        <div id="panelCreateHalf" role="tabpanel" aria-labelledby="tabCreateHalf" style="display:none;margin-top:10px;">
+            <div class="grid">
+                <div>
+                    <label>
+                        Type
+                        <select id="createTypeHalf">
+                            <option value="SELL">SELL</option>
+                            <option value="BUY">BUY</option>
+                        </select>
+                    </label>
+                    <label>
+                        Custom item name
+                        <input id="createItemHalf" type="text" placeholder="Custom item name">
+                    </label>
+                    <label>
+                        Stack size
+                        <input id="createStackHalf" type="number" min="1" value="1">
+                    </label>
+                    <label>Quantity available</label>
+                    <div class="inline-row">
+                        <input id="createQtyUnitsHalf" type="number" min="1" value="1">
+                        <select id="createQtyModeHalf" aria-label="Quantity unit">
+                            <option value="IND" selected>individual</option>
+                            <option value="STACK">stack</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="peg-box">
+                        <div class="small"><strong>Pricing (PEG)</strong></div>
+                        <div class="small muted">Peg items must be store-catalog items.</div>
+
+                        <div id="createHalfPegBox"></div>
+
+                        <div class="toolbar" style="margin-top:8px;">
+                            <button type="button" id="btnCreateHalfAddAlt">Add alternative peg</button>
+                            <span id="createHalfPegWarn" class="small warn"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <button type="button" id="btnCreateHalf" class="small">Create listing</button>
+                    <div id="createMsgHalf" class="small"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FULL (FIXED_BT only) -->
+        <div id="panelCreateFull" role="tabpanel" aria-labelledby="tabCreateFull" style="display:none;margin-top:10px;">
+            <div class="grid">
+                <div>
+                    <label>
+                        Type
+                        <select id="createTypeFull"><option value="SELL">SELL</option><option value="BUY">BUY</option></select>
+                    </label>
+                    <label>
+                        Custom item name
+                        <input id="createItemFull" type="text" placeholder="Custom item name">
+                    </label>
+                    <label>
+                        Stack size
+                        <input id="createStackFull" type="number" min="1" value="1">
+                    </label>
+                    <label>
+                        Quantity available (individual units)
+                        <input id="createQtyUnitsFull" type="number" min="1" value="1">
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        Fixed BT price per 1 unit (individual)
+                        <input id="createFixedBT" type="number" min="0.01" step="0.01" value="1">
+                    </label>
+                    <div class="small">No item payment supported for full custom listings.</div>
+                </div>
+                <div>
+                    <button type="button" id="btnCreateFull" class="small">Create listing</button>
+                    <div id="createMsgFull" class="small"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" aria-label="Listing editor">
+        <h2>Listing editor</h2>
+        <div class="small">Merchant edits set listing to <span class="pill pill-pending">PENDING_REVIEW</span> (invisible publicly) until admin approval.</div>
+
+        <h3>SELL listings</h3>
+        <table>
+            <thead><tr><th>ListingId</th><th>Item</th><th>Status</th><th>Qty (ind)</th><th>Stack</th><th>Pricing</th><th>Actions</th></tr></thead>
+            <tbody id="tbSellListings"></tbody>
+        </table>
+
+        <h3 style="margin-top:14px;">BUY listings</h3>
+        <table>
+            <thead><tr><th>ListingId</th><th>Item</th><th>Status</th><th>Qty (ind)</th><th>Stack</th><th>Pricing</th><th>Actions</th></tr></thead>
+            <tbody id="tbBuyListings"></tbody>
+        </table>
+
+        <h3 style="margin-top:14px;">Pending review (invisible to public)</h3>
+        <table>
+            <thead><tr><th>ListingId</th><th>Item</th><th>Type</th><th>Status</th><th>Updated</th><th>ApprovedBy</th><th>Kind</th></tr></thead>
+            <tbody id="tbPendingListings"></tbody>
+        </table>
+    </section>
+
+    <section class="section" aria-label="Pending requests">
+        <h2>Pending requests</h2>
+        <div class="grid">
+            <div>
+                <h3>My pending requests</h3>
+                <div class="toolbar"><button type="button" id="btnReloadMine">Reload</button><span id="msgMine" class="small"></span></div>
+                <table>
+                    <thead><tr><th>TradeId</th><th>Item</th><th>Trader</th><th>Qty</th><th>Payment</th><th>Actions</th></tr></thead>
+                    <tbody id="tbMine"></tbody>
+                </table>
+            </div>
+            <div>
+                <h3>Others pending requests</h3>
+                <div class="toolbar"><button type="button" id="btnReloadIncoming">Reload</button><span id="msgIncoming" class="small"></span></div>
+                <table>
+                    <thead><tr><th>TradeId</th><th>Item</th><th>Requester</th><th>Qty</th><th>Payment</th><th>Actions</th></tr></thead>
+                    <tbody id="tbIncoming"></tbody>
+                </table>
+                <div class="small">Accepting here completes the trade as seller (0% fee).</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FULL EDIT DIALOG -->
+    <dialog id="dlgEditListing">
+        <form method="dialog" style="min-width:min(760px,95vw)">
+            <h3 style="margin-top:0;">Edit listing</h3>
+            <div class="small">Listing: <span id="editListingId" class="mono"></span></div>
+
+            <div class="details-grid" style="margin-top:10px;">
+                <div>
+                    <label>
+                        Listing mode
+                        <select id="editListingMode">
+                            <option value="STORE">STORE</option>
+                            <option value="HALF">HALF</option>
+                            <option value="FULL">FULL</option>
+                        </select>
+                    </label>
+
+                    <label>
+                        Type
+                        <select id="editType">
+                            <option value="SELL">SELL</option>
+                            <option value="BUY">BUY</option>
+                        </select>
+                    </label>
+
+                    <div id="editStoreItemBlock">
+                        <label>Store item</label>
+                        <div class="dropdown-wrap">
+                            <input id="editItemStore" class="dropdown-input" type="text" autocomplete="off" placeholder="Search store item">
+                            <div id="editItemStoreList" class="dropdown-list"></div>
+                        </div>
+                        <div class="small">Stack size locked to store bundle size.</div>
+                    </div>
+
+                    <div id="editCustomItemBlock" style="display:none;">
+                        <label>Custom item name <input id="editItemCustom" type="text"></label>
+                        <label>Stack size <input id="editStack" type="number" min="1" value="1"></label>
+                    </div>
+
+                    <label>Remaining quantity (IND) <input id="editQty" type="number" min="0" step="1" value="0"></label>
+                </div>
+
+                <div>
+                    <label>
+                        Pricing mode
+                        <select id="editPricingMode">
+                            <option value="PEG">PEG</option>
+                            <option value="FIXED_BT">FIXED_BT</option>
+                        </select>
+                    </label>
+
+                    <div id="editPegBox" class="peg-box"></div>
+
+                    <div id="editFixedFields" style="display:none;">
+                        <label>Fixed BT per 1 unit (IND) <input id="editFixedBTVal" type="number" min="0.01" step="0.01" value="1"></label>
+                    </div>
+
+                    <div class="toolbar" style="margin-top:8px;">
+                        <button type="button" id="btnEditAddAlt">Add alternative peg</button>
+                        <span id="editPegWarn" class="small warn"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <label>Pause listing <input id="editPause" type="checkbox"></label>
+                    <div class="small">Paused listings are not public.</div>
+                    <div class="small">Submitting edits sends to PENDING_REVIEW (unless paused).</div>
+                </div>
+            </div>
+
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button type="button" id="btnSaveListing">Send FULL_EDIT for review</button>
+                <button type="button" id="btnCloseListing">Close</button>
+                <span id="editListingMsg" class="small"></span>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- RESTOCK ONLY DIALOG -->
+    <dialog id="dlgRestock">
+        <form method="dialog" style="min-width:min(520px,95vw)">
+            <h3 style="margin-top:0;">Restock listing</h3>
+            <div class="small">Listing: <span id="restockListingId" class="mono"></span></div>
+            <div class="details-grid" style="margin-top:10px;">
+                <div>
+                    <label>
+                        New stock value
+                        <div class="inline-row">
+                            <input id="restockQtyInput" type="number" min="0" step="1" value="0" style="width:140px;">
+                            <select id="restockQtyMode">
+                                <option value="IND" selected>individual</option>
+                                <option value="STACK">stack</option>
+                            </select>
+                        </div>
+                    </label>
+                    <div class="small">Stored as IND using listing stack size.</div>
+                </div>
+                <div>
+                    <div class="small">Note</div>
+                    <div class="small">Submits <span class="pill pill-restock">RESTOCK_ONLY</span> for admin clarity.</div>
+                </div>
+            </div>
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button type="button" id="btnSendRestock">Send RESTOCK_ONLY</button>
+                <button type="button" id="btnCloseRestock">Close</button>
+                <span id="restockMsg" class="small"></span>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Trade edit dialog stays minimal (merchant side) -->
+    <dialog id="dlgEditTrade">
+        <form method="dialog" style="min-width:min(560px,95vw)">
+            <h3 style="margin-top:0;">Edit pending trade</h3>
+            <div class="small">Trade: <span id="editTradeId" class="mono"></span></div>
+            <div class="details-grid" style="margin-top:10px">
+                <div>
+                    <div class="small">Payment</div>
+                    <label><input id="tradePayBT" type="radio" name="tradePay" value="BT" checked> BT</label>
+                    <label><input id="tradePayItem" type="radio" name="tradePay" value="ITEM"> Item</label>
+
+                    <div style="margin-top:8px;">
+                        <div class="small">Payment peg (when item)</div>
+                        <select id="tradePayPeg" style="min-width:240px;"></select>
+                    </div>
+                </div>
+                <div>
+                    <div class="small">Quantity</div>
+                    <label><input id="tradeQtyInd" type="radio" name="tradeQtyMode" value="IND" checked> individual</label>
+                    <label><input id="tradeQtyStack" type="radio" name="tradeQtyMode" value="STACK"> stack</label>
+                    <label style="display:block;margin-top:6px;">Amount <input id="tradeQtyVal" type="number" min="1" value="1" style="width:120px"></label>
+                </div>
+                <div>
+                    <div class="small">Note</div>
+                    <div class="small">Editing creates a new pending trade and cancels the old.</div>
+                </div>
+            </div>
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button type="button" id="btnSaveTrade">Save edit</button>
+                <button type="button" id="btnCloseTrade">Close</button>
+                <span id="editTradeMsg" class="small"></span>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- OCMUser scripts (segmented) -->
+    <script src="OCMUser_js/ocmuser-core.js"></script>
+    <script src="OCMUser_js/ocmuser-catalog.js"></script>
+    <script src="OCMUser_js/ocmuser-pegs.js"></script>
+    <script src="OCMUser_js/ocmuser-listings.js"></script>
+    <script src="OCMUser_js/ocmuser-trades.js"></script>
+    <script src="OCMUser_js/ocmuser-auth.js"></script>
+    <script src="OCMUser_js/ocmuser-boot.js"></script>
+</body>
+</html>
