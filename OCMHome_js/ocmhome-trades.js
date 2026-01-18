@@ -240,6 +240,7 @@
  <div class="mono" data-estimate>—</div>
  <div class="small muted" data-value-lines>—</div>
  <div class="small" data-fee-note>Fee:0% if seller completes,10% if admin completes.</div>
+ <div class="trade-favor" data-trade-favor style="display:none;"></div>
  </div>
  </div>
 
@@ -260,6 +261,7 @@
  const msgEl = td.querySelector('[data-msg]');
  const estEl = td.querySelector('[data-estimate]');
  const valueEl = td.querySelector('[data-value-lines]');
+ const favorEl = td.querySelector('[data-trade-favor]');
  const payPegSel = td.querySelector('select[data-pay-peg]');
 
  function getPaymentChoice() {
@@ -275,7 +277,12 @@
  function showEstimate() {
  const qtyMode = getQtyMode();
  const u = computeUnits_(td, listing);
- if (!u) { estEl.textContent = '—'; valueEl.textContent = '—'; return; }
+ if (!u) {
+ estEl.textContent = '—';
+ valueEl.textContent = '—';
+ if (favorEl) favorEl.style.display = 'none';
+ return;
+ }
 
  const paymentChoice = getPaymentChoice();
  const payPegName = getPayPegName();
@@ -284,11 +291,17 @@
  if (stackOnly && qtyMode !== 'STACK') {
  estEl.textContent = 'This listing is stack-priced. Choose stack quantity.';
  valueEl.textContent = '—';
+ if (favorEl) favorEl.style.display = 'none';
  return;
  }
 
  const est = computeEstimate_(listing, u, paymentChoice, payPegName, primaryPeg, altPegs);
- if (!est) { estEl.textContent = '—'; valueEl.textContent = '—'; return; }
+ if (!est) {
+ estEl.textContent = '—';
+ valueEl.textContent = '—';
+ if (favorEl) favorEl.style.display = 'none';
+ return;
+ }
 
  const parts = [];
 
@@ -314,6 +327,55 @@
 
  const v = computeValueLinesForTrade_(listing, u, chosenPegName, chosenRatio);
  valueEl.innerHTML = `${O.escapeHtml_(v.buy)}<br>${O.escapeHtml_(v.sell)}`;
+
+ // ===== Trade favor/disfavor (customer perspective) =====
+ // Per requirement:
+ // pct = (1 - (selectedPegBuyTotalBT / tradedItemSellTotalBT)) *100
+ // Where these totals match the value lines shown:
+ // - selectedPegBuyTotalBT comes from the BUY line's right side (peg item)
+ // - tradedItemSellTotalBT comes from the SELL line's left side (traded item)
+ try {
+ const listingName = String(listing?.itemName || '').trim();
+ const pegName = String(chosenPegName || '').trim();
+
+ // Quantities (must match computeValueLinesForTrade_)
+ const leftQty = u.units;
+ const rightQty = Math.ceil((Number(chosenRatio ||0) * u.units) -1e-12);
+
+ function perInd(name, side) {
+ const it = O.findCatalogItem(name);
+ if (!it) return null;
+ const each = O.getStoreEachPrice_(it, side);
+ if (each != null) return each;
+ const stk = O.getStoreStackPrice_(it, side);
+ const bs = Number(it.bundleSize ||1) ||1;
+ if (stk != null) return stk / bs;
+ return null;
+ }
+
+ const tradedSellPer = listingName ? perInd(listingName, 'SELL') : null;
+ const pegBuyPer = pegName ? perInd(pegName, 'BUY') : null;
+
+ const tradedSellTotal = (tradedSellPer != null) ? (leftQty * tradedSellPer) : null;
+ const pegBuyTotal = (pegBuyPer != null) ? (rightQty * pegBuyPer) : null;
+
+ if (favorEl && tradedSellTotal != null && pegBuyTotal != null && isFinite(tradedSellTotal) && tradedSellTotal >0 && isFinite(pegBuyTotal)) {
+ const pct = (1 - (Number(pegBuyTotal) / Number(tradedSellTotal))) *100;
+ const magTxt = Math.abs(pct).toFixed(1);
+ const good = pct >=0;
+ const label = good ? 'Trade favor' : 'Trade disfavor';
+ const word = good ? 'cheeper' : 'more expensive';
+
+ favorEl.classList.remove('good', 'bad');
+ favorEl.classList.add(good ? 'good' : 'bad');
+ favorEl.textContent = `${label}: ${magTxt}% ${word} compared to store`;
+ favorEl.style.display = '';
+ } else if (favorEl) {
+ favorEl.style.display = 'none';
+ }
+ } catch {
+ if (favorEl) favorEl.style.display = 'none';
+ }
  }
 
  calcBtn.addEventListener('click', () => {

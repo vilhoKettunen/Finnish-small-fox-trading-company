@@ -1387,8 +1387,8 @@
                         const name = c[0]?.v ?? "";
                         const buyStack = c[1]?.v ?? "";
                         const sellStack = c[2]?.v ?? "";
-                        const stackStock = Number(c[3]?.v ?? 0);       // D (kept for display only)
-                        const bundleSize = Number(c[4]?.v ?? 1);       // E
+                        const stackStock = Number(c[3]?.v ?? 0);
+                        const bundleSize = Number(c[4]?.v ?? 1);
                         const buyEach = c[5]?.v ?? "";
                         const sellEach = c[6]?.v ?? "";
                         const indivStock = Number(c[7]?.v ?? 0);
@@ -2388,8 +2388,5 @@
             refreshOpenOrders();
         };
     </script>
-
-    <!-- Load GSI last -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>

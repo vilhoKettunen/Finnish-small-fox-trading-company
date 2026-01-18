@@ -103,7 +103,7 @@
  </td>
  `;
 
- row.querySelector('button[data-more]')?.addEventListener('click', () => {
+ row.querySelector('button[data-more]')?.addEventListener('click', async () => {
  const snapObj = sum.snap || safeJsonParse(tr.detailsJson || '{}', {}) || {};
 
  const b = resolveNameMailbox_(tr.buyerUserId, snapObj?.buyer?.playerName);
@@ -112,14 +112,24 @@
  const buyerLabel = `${b?.name || ''} (Mailbox ${b?.mailbox || 'N/A'})`;
  const sellerLabel = `${s?.name || ''} (Mailbox ${s?.mailbox || 'N/A'})`;
 
- if (window.TradeMoreInfo && window.TradeMoreInfo.toggleDetailsRow) {
- window.TradeMoreInfo.toggleDetailsRow(row, snapObj, buyerLabel, sellerLabel,6);
- } else {
- // fallback to the local renderer if shared isn't loaded
- const buyer = { name: b?.name || '', mailbox: b?.mailbox || 'N/A' };
- const seller = { name: s?.name || '', mailbox: s?.mailbox || 'N/A' };
- tradeDetailsToggleCleanLocal_(row, snapObj, buyer, seller,6);
+ const tmi = window.TradeMoreInfo;
+ if (!tmi || typeof tmi.toggleDetailsRow !== 'function') {
+ const marker = window.__TradeMoreInfoLoaded ? 'script executed but window.TradeMoreInfo missing' : 'script likely not loaded';
+ alert('TradeMoreInfo helper is not loaded (' + marker + '). Check Network tab for shared/trade-more-info.js and Console for errors.');
+ return;
  }
+
+ // Ensure catalog lookup is available before rendering so pay-item bundle sizes come from catalog
+ try {
+ if (O && typeof O.ensureCatalogLoaded === 'function') {
+ try { await O.ensureCatalogLoaded(); } catch (e) { /* ignore */ }
+ }
+ if (typeof tmi.setCatalogLookup === 'function' && typeof O.findCatalogItem === 'function') {
+ try { tmi.setCatalogLookup(O.findCatalogItem); } catch { }
+ }
+ } catch { /* ignore */ }
+
+ tmi.toggleDetailsRow(row, snapObj, buyerLabel, sellerLabel,6);
  });
 
  if (mine) {
@@ -146,136 +156,7 @@
  });
  }
 
- // ===== Existing local renderer (kept as fallback) =====
- function tradeDetailsToggleCleanLocal_(mainRow, snapObj, buyer, seller, colSpanOverride) {
- const nxt = mainRow.nextElementSibling;
- if (nxt && nxt.classList.contains('details-row')) { nxt.remove(); return; }
- const detailsTr = document.createElement('tr');
- detailsTr.className = 'details-row';
- const td = document.createElement('td');
- td.colSpan = Number(colSpanOverride ||6);
- const buyerLabel = `${buyer?.name || ''} (Mailbox ${buyer?.mailbox || 'N/A'})`;
- const sellerLabel = `${seller?.name || ''} (Mailbox ${seller?.mailbox || 'N/A'})`;
- td.innerHTML = renderTradeNiceHtml_Local_(snapObj || {}, buyerLabel, sellerLabel);
- detailsTr.appendChild(td);
- mainRow.parentNode.insertBefore(detailsTr, mainRow.nextSibling);
- hookRawToggle_Local_(td);
- }
-
- function renderTradeNiceHtml_Local_(snap, buyerLabel, sellerLabel) {
- const listing = snap?.listing || {};
- const request = snap?.request || {};
- const payment = snap?.payment || {};
- const pricing = snap?.pricing || {};
-
- const listingType = String(listing.type || '').toUpperCase();
- const itemName = sanitizeItemName_Local(listing.itemName || '');
- const stackSize = Number(listing.stackSize ||1) ||1;
- const requestedUnits = Number(request.requestedUnits ||0) ||0;
-
- const merchantLabel = (listingType === 'SELL') ? (sellerLabel || '') : (buyerLabel || '');
- const customerLabel = (listingType === 'SELL') ? (buyerLabel || '') : (sellerLabel || '');
-
- const leftLines = [];
- const rightLines = [];
-
- const tradedLine = `${esc(normQty_Local_(requestedUnits, stackSize))} ${esc(itemName)}`;
- if (listingType === 'SELL' || listingType === 'BUY') leftLines.push(tradedLine);
-
- const method = String(payment.method || 'BT').toUpperCase();
- if (method === 'ITEM') {
- const payItemName = sanitizeItemName_Local(payment.payItemName || payment.payItem || '');
- const payItemQty = payment.payItemQty || payment.pegQtyPerInd ||0;
- rightLines.push(`${esc(payItemQty)} ${esc(payItemName)}`);
- } else {
- const bt = Number(payment.canonicalBT ?? payment.payTotalBT ??0) ||0;
- rightLines.push(`${bt.toFixed(2)} BT`);
- }
-
- const leftHeader = (listingType === 'BUY') ? 'Merchant takes' : 'Merchant gives';
- const rightHeader = (listingType === 'BUY') ? 'Customer receives' : 'Customer pays';
-
- const primaryBasis = esc(String(pricing.pricingBasis || ''));
- const canonicalBT = payment.canonicalBT != null ? Number(payment.canonicalBT ||0) : null;
- const selectedPegBT = payment.selectedPegBT != null ? Number(payment.selectedPegBT ||0) : null;
-
- const listHtml = (arr) => arr.length
- ? `<div>${arr.map(x => `<div class="picklist-item">${x}</div>`).join('')}</div>`
- : `<div class="picklist-empty">Nothing</div>`;
-
- const rawToggle = renderRawJsonToggleHtml_Local_(snap, 'trade_raw_' + Math.random().toString(36).slice(2));
-
- return `
- <div class="details-box">
- <div class="small"><strong>Trade summary</strong></div>
- <div class="small" style="margin-top:6px;">
- <span class="pill-lite">${esc(listingType || '—')}</span>
- <span class="pill-lite">Payment: ${esc(method)}</span>
- ${primaryBasis ? `<span class="pill-lite">Basis: ${primaryBasis}</span>` : ''}
- </div>
-
- <div class="details-grid" style="margin-top:10px;">
- <div class="picklist-col give">
- <h4>${esc(leftHeader)}</h4>
- <div class="small">Merchant: ${esc(merchantLabel)}</div>
- ${listHtml(leftLines)}
- </div>
- <div class="picklist-col take">
- <h4>${esc(rightHeader)}</h4>
- <div class="small">Customer: ${esc(customerLabel)}</div>
- ${listHtml(rightLines)}
- </div>
- </div>
-
- <div class="small" style="margin-top:10px;">
- ${canonicalBT != null ? `Canonical BT: <strong>${canonicalBT.toFixed(2)} BT</strong>` : ''}
- ${selectedPegBT != null ? ` &nbsp;|&nbsp; Selected-peg BT: <strong>${selectedPegBT.toFixed(2)} BT</strong>` : ''}
- </div>
-
- ${rawToggle}
- </div>
- `;
- }
-
- function renderRawJsonToggleHtml_Local_(obj, toggleId) {
- const tid = toggleId || ('raw_' + Math.random().toString(36).slice(2));
- const bodyId = tid + '_body';
- const raw = esc(typeof obj === 'string' ? obj : JSON.stringify(obj || {}, null,2));
- return `
- <div style="margin-top:10px;">
- <button type="button" data-raw-toggle="${esc(tid)}">Show raw details</button>
- <div id="${esc(bodyId)}" style="display:none; margin-top:8px;">
- <pre class="mono" style="white-space:pre-wrap;margin:0;">${raw}</pre>
- </div>
- </div>
- `;
- }
-
- function hookRawToggle_Local_(container) {
- container.querySelectorAll('button[data-raw-toggle]').forEach(btn => {
- btn.addEventListener('click', () => {
- const tid = btn.getAttribute('data-raw-toggle');
- const body = container.querySelector('#' + tid + '_body');
- if (!body) return;
- const open = body.style.display !== 'none';
- body.style.display = open ? 'none' : 'block';
- btn.textContent = open ? 'Show raw details' : 'Hide raw details';
- });
- });
- }
-
- function normQty_Local_(units, stackSize) {
- const u = Number(units ||0);
- if (!isFinite(u)) return '0';
- const ss = Number(stackSize ||1) ||1;
- if (ss >1) return `${u} (${Math.ceil(u / ss)} stack @${ss})`;
- return String(u);
- }
-
- function sanitizeItemName_Local(name) {
- if (name == null) return '';
- try { return String(name).replace(/\uFFFD/g, '').replace(/�/g, '').replace(/\s+/g, ' ').trim(); } catch (e) { return String(name || '').trim(); }
- }
+ // ===== Existing local renderer removed: shared TradeMoreInfo is required =====
 
  // ===== Trade edit dialog =====
  function openEditTrade(tr, summary) {

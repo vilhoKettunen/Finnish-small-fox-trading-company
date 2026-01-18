@@ -108,6 +108,13 @@
  O.ensureCatalogLoaded().then(() => {
  O.initCreatorPegUIs_();
 
+ // Register OCMUser catalog lookup for shared trade-more-info renderer (More info details)
+ try {
+ if (window.TradeMoreInfo && typeof window.TradeMoreInfo.setCatalogLookup === 'function' && typeof O.findCatalogItem === 'function') {
+ window.TradeMoreInfo.setCatalogLookup(O.findCatalogItem);
+ }
+ } catch { /* ignore */ }
+
  on(byId('createItemStore'), 'input', () => O.validatePegSet_(O.state.createState.store.primary, O.state.createState.store.alts, byId('createStorePegWarn')));
  on(byId('createItemHalf'), 'input', () => O.validatePegSet_(O.state.createState.half.primary, O.state.createState.half.alts, byId('createHalfPegWarn')));
  on(byId('createStackHalf'), 'input', () => O.validatePegSet_(O.state.createState.half.primary, O.state.createState.half.alts, byId('createHalfPegWarn')));

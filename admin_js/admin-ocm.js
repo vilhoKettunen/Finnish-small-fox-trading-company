@@ -43,7 +43,7 @@
  // Only show More info for actionable pending trades
  function isActionablePendingTrade_(tr) {
  const s = String(tr?.status || '').toUpperCase();
- const bad = new Set(['CANCELLED', 'CANCELED', 'EXPIRED', 'COMPLETE', 'COMPLETED', 'DENIED', 'REJECTED', 'FAILED']);
+ const bad = new Set(['CANCELLED', 'CANCELED', 'EXPIRED', 'COMplete', 'COMPLETED', 'DENIED', 'REJECTED', 'FAILED']);
  if (!s) return true;
  if (bad.has(s)) return false;
  return s.includes('PENDING');
@@ -130,6 +130,15 @@
  }
 
  window.attachStoreDropdown('createItemStore', 'createItemStoreList');
+
+ // Register admin catalog lookup for shared TradeMoreInfo renderer.
+ try {
+ if (window.TradeMoreInfo && typeof window.TradeMoreInfo.setCatalogLookup === 'function') {
+ // findCatalogItem is defined in this module
+ window.TradeMoreInfo.setCatalogLookup(findCatalogItem);
+ }
+ } catch { /* ignore */ }
+
  };
 
  function findCatalogItem(name) {
