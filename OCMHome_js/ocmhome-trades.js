@@ -329,11 +329,10 @@
  valueEl.innerHTML = `${O.escapeHtml_(v.buy)}<br>${O.escapeHtml_(v.sell)}`;
 
  // ===== Trade favor/disfavor (customer perspective) =====
- // Per requirement:
- // pct = (1 - (selectedPegBuyTotalBT / tradedItemSellTotalBT)) *100
- // Where these totals match the value lines shown:
- // - selectedPegBuyTotalBT comes from the BUY line's right side (peg item)
- // - tradedItemSellTotalBT comes from the SELL line's left side (traded item)
+ // Rules:
+ // - ITEM payment: pct = (1 - (peg BUY total / traded SELL total)) *100
+ // - BT payment: pct = (1 - (peg SELL total / traded SELL total)) *100
+ // Totals match the value lines shown.
  try {
  const listingName = String(listing?.itemName || '').trim();
  const pegName = String(chosenPegName || '').trim();
@@ -355,12 +354,16 @@
 
  const tradedSellPer = listingName ? perInd(listingName, 'SELL') : null;
  const pegBuyPer = pegName ? perInd(pegName, 'BUY') : null;
+ const pegSellPer = pegName ? perInd(pegName, 'SELL') : null;
 
  const tradedSellTotal = (tradedSellPer != null) ? (leftQty * tradedSellPer) : null;
  const pegBuyTotal = (pegBuyPer != null) ? (rightQty * pegBuyPer) : null;
+ const pegSellTotal = (pegSellPer != null) ? (rightQty * pegSellPer) : null;
 
- if (favorEl && tradedSellTotal != null && pegBuyTotal != null && isFinite(tradedSellTotal) && tradedSellTotal >0 && isFinite(pegBuyTotal)) {
- const pct = (1 - (Number(pegBuyTotal) / Number(tradedSellTotal))) *100;
+ const numerator = (paymentChoice === 'ITEM') ? pegBuyTotal : pegSellTotal;
+
+ if (favorEl && tradedSellTotal != null && numerator != null && isFinite(tradedSellTotal) && tradedSellTotal >0 && isFinite(numerator)) {
+ const pct = (1 - (Number(numerator) / Number(tradedSellTotal))) *100;
  const magTxt = Math.abs(pct).toFixed(1);
  const good = pct >=0;
  const label = good ? 'Trade favor' : 'Trade disfavor';
