@@ -142,4 +142,8 @@
 
  inputEl.value = OCMUser.sanitizeLettersOnly_(inputEl.value, { trim: false });
  };
+
+ // ensure placeholder so other modules can attach
+ // NOTE: do not stub OCMUser.loadPendingRequests here; it is defined in `ocmuser-trades.js`.
+ // Leaving a stub would overwrite the real function if this core file loads after trades.
 })();
