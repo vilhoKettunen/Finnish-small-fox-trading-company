@@ -367,7 +367,7 @@
 
             .subtabs button {
                 padding: 6px 10px;
-                border-radius: 999px;
+                border-rounded: 999px;
                 border: 1px solid #ccc;
                 background: #fff;
                 cursor: pointer;
@@ -539,6 +539,7 @@
         <button id="tabPlayers" onclick="showTab('players')">Players / Transfer</button>
         <button id="tabOcm" onclick="showTab('ocmAdmin')">OCM Admin</button>
         <button id="tabAccountHistory" onclick="showTab('accountHistory')">Account History</button>
+        <button id="tabAccountEdit" onclick="showTab('accountEdit')">Account Editing</button>
         <button id="tabStock" onclick="showTab('stock')">Stock</button>
     </div>
 
@@ -654,14 +655,14 @@
             <div>
                 <label>Adjust Balance (Δ BT): <input id="adjAmount" type="number" step="0.01"></label><br>
                 <label>Reason: <input id="adjReason" type="text"></label><br>
-                <button id="btnAdjust">Apply Adjustment</button>
+                <button id="btnAdjust" onclick="adjustBalance()">Apply Adjustment</button>
                 <div id="adjMsg" class="small"></div>
             </div>
             <div>
                 <label>Transfer To (playerName): <input id="transferTarget" type="text"></label><br>
                 <label>Amount BT: <input id="transferAmount" type="number" step="0.01" min="0.01"></label><br>
                 <label>Note (optional): <input id="transferNote" type="text"></label><br>
-                <button id="btnTransfer">Send BT</button>
+                <button id="btnTransfer" onclick="sendTransfer()">Send BT</button>
                 <div id="transferMsg" class="small"></div>
             </div>
             <div><div id="balancesInfo" class="small">Balances will appear here.</div></div>
@@ -855,6 +856,49 @@
         </div>
     </div>
 
+    <!-- Account Editing (Target user) -->
+    <div class="section" id="accountEditSection" style="display:none;">
+        <h2>Account Editing (Target user)</h2>
+
+        <div id="adminAccountEditNoTarget" class="banner" style="display:none;">
+            <div><strong>Select a target user first.</strong></div>
+            <div class="small">Use the <span class="mono">Target User</span> tab, then come back here.</div>
+        </div>
+
+        <div class="small">Selected user: <span id="adminAccountEditUserLabel">-</span></div>
+
+        <div class="grid" style="margin-top:10px;">
+            <div>
+                <label>
+                    Player Name
+                    <input id="adminEditPlayerName" type="text" placeholder="Player name">
+                </label>
+                <div class="small">Allowed: letters, numbers, spaces, "_" and "-". 2-32 chars.</div>
+            </div>
+
+            <div>
+                <label>
+                    Mailbox (standard)
+                    <input id="adminEditMailbox" type="text" placeholder="4A /1A / F1">
+                </label>
+                <div class="small">Format: <span class="mono">4A /1A / F1</span></div>
+            </div>
+
+            <div>
+                <label>
+                    Mall mailbox
+                    <input id="adminEditMallMailbox" type="text" placeholder="M1A / M1A / F1">
+                </label>
+                <div class="small">Format: <span class="mono">M#A|B / M#A|B / F#</span> (the <span class="mono">M</span> is locked).</div>
+            </div>
+
+            <div>
+                <button type="button" id="btnSaveAccountEdit">Save</button>
+                <div id="adminAccountEditMsg" class="small"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- EDIT LISTING DIALOG -->
     <dialog id="dlgEditListing">
         <form method="dialog" style="min-width:min(760px,95vw)">
@@ -917,34 +961,34 @@
 
     <!-- RESTOCK ONLY DIALOG (Admin OCM) -->
     <dialog id="dlgRestock">
-    <form method="dialog" style="min-width:min(520px,95vw)">
-    <h3 style="margin-top:0;">Restock listing</h3>
-    <div class="small">Listing: <span id="restockListingId" class="mono"></span></div>
-    <div class="details-grid" style="margin-top:10px;">
-    <div>
-    <label>
-    New stock value
-    <div class="inline-row">
-    <input id="restockQtyInput" type="number" min="0" step="1" value="0" style="width:140px;">
-    <select id="restockQtyMode">
-    <option value="IND" selected>individual</option>
-    <option value="STACK">stack</option>
-    </select>
-    </div>
-    </label>
-    <div class="small">Stored as IND using listing stack size.</div>
-    </div>
-    <div>
-    <div class="small">Note</div>
-    <div class="small">Admin restock applies immediately (auto-approve).</div>
-    </div>
-    </div>
-    <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-    <button type="button" id="btnSendRestock">Restock now</button>
-    <button type="button" id="btnCloseRestock">Close</button>
-    <span id="restockMsg" class="small"></span>
-    </div>
-    </form>
+        <form method="dialog" style="min-width:min(520px,95vw)">
+            <h3 style="margin-top:0;">Restock listing</h3>
+            <div class="small">Listing: <span id="restockListingId" class="mono"></span></div>
+            <div class="details-grid" style="margin-top:10px;">
+                <div>
+                    <label>
+                        New stock value
+                        <div class="inline-row">
+                            <input id="restockQtyInput" type="number" min="0" step="1" value="0" style="width:140px;">
+                            <select id="restockQtyMode">
+                                <option value="IND" selected>individual</option>
+                                <option value="STACK">stack</option>
+                            </select>
+                        </div>
+                    </label>
+                    <div class="small">Stored as IND using listing stack size.</div>
+                </div>
+                <div>
+                    <div class="small">Note</div>
+                    <div class="small">Admin restock applies immediately (auto-approve).</div>
+                </div>
+            </div>
+            <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <button type="button" id="btnSendRestock">Restock now</button>
+                <button type="button" id="btnCloseRestock">Close</button>
+                <span id="restockMsg" class="small"></span>
+            </div>
+        </form>
     </dialog>
 
     <!-- Account History (REPLACED with AccountHistory.html UI) -->
@@ -1020,14 +1064,19 @@
         </table>
     </div>
 
+
     <!-- Admin scripts (segmented) -->
+    <script src="shared/trade-more-info.js"></script>
+    <script src="shared/listing-more-info.js"></script>
     <script src="admin_js/admin-core.js"></script>
     <script src="admin_js/admin-players.js"></script>
     <script src="admin_js/admin-requests.js"></script>
     <script src="admin_js/admin-history.js"></script>
     <script src="admin_js/admin-stock.js"></script>
-    <script src="admin_js/admin-ocm.js"></script>
-    <script src="admin_js/admin-trades.js"></script>
+    <script src="admin_js/admin-trades.js?v=moreinfo4"></script>
+    <script src="admin_js/admin-ocm.js?v=moreinfo7"></script>
+    <script src="admin_js/admin-account-edits.js"></script>
+    <script src="admin_js/admin-target-hooks.js"></script>
     <script src="admin_js/admin-target-user.js"></script>
     <script src="admin_js/admin-auth.js"></script>
     <script src="admin_js/admin-tabs.js"></script>

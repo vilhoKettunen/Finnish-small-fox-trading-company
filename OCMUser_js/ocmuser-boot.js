@@ -5,66 +5,74 @@
  const O = window.OCMUser;
  const byId = O.byId;
 
+ function on(el, ev, fn) {
+ if (el && el.addEventListener) el.addEventListener(ev, fn);
+ }
+
  window.onload = () => {
  // Enforce letters-only custom item names (HALF + FULL + EDIT)
- O.enforceLettersOnlyInput_(byId('createItemHalf'));
- O.enforceLettersOnlyInput_(byId('createItemFull'));
- O.enforceLettersOnlyInput_(byId('editItemCustom'));
+ try { O.enforceLettersOnlyInput_(byId('createItemHalf')); } catch { }
+ try { O.enforceLettersOnlyInput_(byId('createItemFull')); } catch { }
+ try { O.enforceLettersOnlyInput_(byId('editItemCustom')); } catch { }
 
  try { window.initSharedTopBar && window.initSharedTopBar(); } catch (e) { console.warn('topbar init failed', e); }
  document.body.classList.add('withTopBar');
 
- byId('tabCreateStore').addEventListener('click', () => O.setCreationTab('store'));
- byId('tabCreateHalf').addEventListener('click', () => O.setCreationTab('half'));
- byId('tabCreateFull').addEventListener('click', () => O.setCreationTab('full'));
+ on(byId('tabCreateStore'), 'click', () => O.setCreationTab('store'));
+ on(byId('tabCreateHalf'), 'click', () => O.setCreationTab('half'));
+ on(byId('tabCreateFull'), 'click', () => O.setCreationTab('full'));
 
- byId('btnCreateStore').addEventListener('click', O.createListingStore);
- byId('btnCreateHalf').addEventListener('click', O.createListingHalf);
- byId('btnCreateFull').addEventListener('click', O.createListingFull);
+ on(byId('btnCreateStore'), 'click', O.createListingStore);
+ on(byId('btnCreateHalf'), 'click', O.createListingHalf);
+ on(byId('btnCreateFull'), 'click', O.createListingFull);
 
- byId('btnCreateStoreAddAlt').addEventListener('click', () => O.addAltPeg_('store'));
- byId('btnCreateHalfAddAlt').addEventListener('click', () => O.addAltPeg_('half'));
+ on(byId('btnCreateStoreAddAlt'), 'click', () => O.addAltPeg_('store'));
+ on(byId('btnCreateHalfAddAlt'), 'click', () => O.addAltPeg_('half'));
 
- byId('editListingMode').addEventListener('change', () => {
+ on(byId('editListingMode'), 'change', () => {
  O.syncEditModeUI_();
  const soldNameGetter = () => {
- const lm = byId('editListingMode').value;
- return (lm === 'STORE') ? (byId('editItemStore').value.trim() || 'ITEM') : (byId('editItemCustom').value.trim() || 'ITEM');
+ const lm = byId('editListingMode')?.value;
+ return (lm === 'STORE') ? (byId('editItemStore')?.value.trim() || 'ITEM') : (byId('editItemCustom')?.value.trim() || 'ITEM');
  };
  const soldStackGetter = () => {
- const lm = byId('editListingMode').value;
+ const lm = byId('editListingMode')?.value;
  if (lm === 'STORE') {
- const it = O.findCatalogItem(byId('editItemStore').value.trim());
+ const it = O.findCatalogItem(byId('editItemStore')?.value.trim());
  return Number(it?.bundleSize ||1) ||1;
  }
- return Number(byId('editStack').value ||1) ||1;
+ return Number(byId('editStack')?.value ||1) ||1;
  };
  O.renderEditPegBox_(soldNameGetter, soldStackGetter);
  });
 
- byId('editPricingMode').addEventListener('change', O.syncEditModeUI_);
+ on(byId('editPricingMode'), 'change', O.syncEditModeUI_);
 
- byId('btnEditAddAlt').addEventListener('click', () => {
- if (O.state.editState.alts.length >=10) { byId('editPegWarn').textContent = 'Max10 alternative pegs.'; return; }
+ on(byId('btnEditAddAlt'), 'click', () => {
+ if (O.state.editState.alts.length >=10) {
+ const w = byId('editPegWarn');
+ if (w) w.textContent = 'Max10 alternative pegs.';
+ return;
+ }
 
  const soldNameGetter = () => {
- const lm = byId('editListingMode').value;
- return (lm === 'STORE') ? (byId('editItemStore').value.trim() || 'ITEM') : (byId('editItemCustom').value.trim() || 'ITEM');
+ const lm = byId('editListingMode')?.value;
+ return (lm === 'STORE') ? (byId('editItemStore')?.value.trim() || 'ITEM') : (byId('editItemCustom')?.value.trim() || 'ITEM');
  };
  const soldStackGetter = () => {
- const lm = byId('editListingMode').value;
+ const lm = byId('editListingMode')?.value;
  if (lm === 'STORE') {
- const it = O.findCatalogItem(byId('editItemStore').value.trim());
+ const it = O.findCatalogItem(byId('editItemStore')?.value.trim());
  return Number(it?.bundleSize ||1) ||1;
  }
- return Number(byId('editStack').value ||1) ||1;
+ return Number(byId('editStack')?.value ||1) ||1;
  };
 
  const idx = O.state.editState.alts.length +1;
  const row = O.makePegRowDom_({
  title: `Alternative peg #${idx}`,
  canRemove: true,
- defaultRow: { itemName:'', ui:{ priceBasis:'IND', pegQtyBasis:'IND', pegQtyInput:1 } },
+ defaultRow: { itemName: '', ui: { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput:1 } },
  getSoldName: soldNameGetter,
  getSoldStackSize: soldStackGetter,
  onRemove: () => {
@@ -77,31 +85,35 @@
  });
 
  O.state.editState.alts.push(row);
- byId('editPegBox').appendChild(row);
+ const box = byId('editPegBox');
+ if (box) box.appendChild(row);
  O.validatePegSet_(O.state.editState.primary, O.state.editState.alts, byId('editPegWarn'));
  });
 
- byId('btnSaveListing').addEventListener('click', O.saveListingEdit);
- byId('btnCloseListing').addEventListener('click', () => byId('dlgEditListing').close());
+ on(byId('btnSaveListing'), 'click', O.saveListingEdit);
+ on(byId('btnCloseListing'), 'click', () => byId('dlgEditListing')?.close());
 
- byId('btnSendRestock').addEventListener('click', O.sendRestock);
- byId('btnCloseRestock').addEventListener('click', () => byId('dlgRestock').close());
+ on(byId('btnSendRestock'), 'click', O.sendRestock);
+ on(byId('btnCloseRestock'), 'click', () => byId('dlgRestock')?.close());
 
- byId('btnReloadMine').addEventListener('click', O.loadPendingRequests);
- byId('btnReloadIncoming').addEventListener('click', O.loadPendingRequests);
+ // Reload helpers
+ on(byId('btnReloadMine'), 'click', O.loadMyListings);
+ on(byId('btnReloadMineTrades'), 'click', O.loadPendingRequests);
+ on(byId('btnReloadIncoming'), 'click', O.loadPendingRequests);
 
- byId('btnSaveTrade').addEventListener('click', O.saveTradeEdit);
- byId('btnCloseTrade').addEventListener('click', () => byId('dlgEditTrade').close());
+ on(byId('btnSaveTrade'), 'click', O.saveTradeEdit);
+ on(byId('btnCloseTrade'), 'click', () => byId('dlgEditTrade')?.close());
 
  // Creator peg UI init after catalog loads
  O.ensureCatalogLoaded().then(() => {
  O.initCreatorPegUIs_();
 
- byId('createItemStore').addEventListener('input', () => O.validatePegSet_(O.state.createState.store.primary, O.state.createState.store.alts, byId('createStorePegWarn')));
- byId('createItemHalf').addEventListener('input', () => O.validatePegSet_(O.state.createState.half.primary, O.state.createState.half.alts, byId('createHalfPegWarn')));
- byId('createStackHalf').addEventListener('input', () => O.validatePegSet_(O.state.createState.half.primary, O.state.createState.half.alts, byId('createHalfPegWarn')));
- });
+ on(byId('createItemStore'), 'input', () => O.validatePegSet_(O.state.createState.store.primary, O.state.createState.store.alts, byId('createStorePegWarn')));
+ on(byId('createItemHalf'), 'input', () => O.validatePegSet_(O.state.createState.half.primary, O.state.createState.half.alts, byId('createHalfPegWarn')));
+ on(byId('createStackHalf'), 'input', () => O.validatePegSet_(O.state.createState.half.primary, O.state.createState.half.alts, byId('createHalfPegWarn')));
+ }).catch(e => console.warn('catalog init failed', e));
 
- O.bootAuth_();
+ // Always boot auth last (must not be blocked by missing sections)
+ try { O.bootAuth_(); } catch (e) { console.warn('auth boot failed', e); }
  };
 })();

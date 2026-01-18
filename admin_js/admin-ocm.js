@@ -8,6 +8,52 @@
  const fmt2 = Admin.fmt2;
  const safeJsonParse = Admin.safeJsonParse;
 
+    // Insert this small helper block near the top of admin-ocm.js (immediately after
+    // the `safeJsonParse`/helper declarations) so the functions exist before they're called.
+
+    function assertIntegerQty_(val, fieldLabel, allowZero) {
+        const n = Number(val);
+        if (!isFinite(n)) throw new Error(`${fieldLabel} must be a number`);
+        if (!Number.isInteger(n)) throw new Error(`${fieldLabel} must be an integer`);
+        if (!allowZero && n <= 0) throw new Error(`${fieldLabel} must be > 0`);
+        if (allowZero && n < 0) throw new Error(`${fieldLabel} must be >= 0`);
+        return n;
+    }
+
+    function syncEditPricingModeUI_() {
+        const mEl = byId('editPricingMode');
+        const lmEl = byId('editListingMode');
+
+        const m = mEl ? String(mEl.value || 'PEG').toUpperCase() : 'PEG';
+        if (byId('editPegFields')) byId('editPegFields').style.display = (m === 'PEG') ? '' : 'none';
+        if (byId('editFixedFields')) byId('editFixedFields').style.display = (m === 'FIXED_BT') ? '' : 'none';
+
+        const lm = lmEl ? String(lmEl.value || '').toUpperCase() : '';
+        if (lm === 'FULL') {
+            if (mEl) { mEl.value = 'FIXED_BT'; mEl.disabled = true; }
+            if (byId('editPegFields')) byId('editPegFields').style.display = 'none';
+            if (byId('editFixedFields')) byId('editFixedFields').style.display = '';
+        } else {
+            if (mEl) mEl.disabled = false;
+        }
+    }
+
+    // optional: expose for boot wiring (older admin-boot expects Admin._syncEditPricingModeUI_)
+    if (window.Admin) window.Admin._syncEditPricingModeUI_ = syncEditPricingModeUI_;
+ // Only show More info for actionable pending trades
+ function isActionablePendingTrade_(tr) {
+ const s = String(tr?.status || '').toUpperCase();
+ const bad = new Set(['CANCELLED', 'CANCELED', 'EXPIRED', 'COMPLETE', 'COMPLETED', 'DENIED', 'REJECTED', 'FAILED']);
+ if (!s) return true;
+ if (bad.has(s)) return false;
+ return s.includes('PENDING');
+ }
+
+ function labelFromUserId_(uid) {
+ const r = window.resolveNameMailbox_ ? window.resolveNameMailbox_(uid) : { name: String(uid || ''), mailbox: 'N/A' };
+ return `${r?.name || ''} (Mailbox ${r?.mailbox || 'N/A'})`;
+ }
+
  // Robust BT number parser (handles "," decimals and thousands separators)
  function parseBtNumber_(v) {
  if (v == null || v === '') return null;
@@ -228,7 +274,7 @@
  qtyInput.type = 'number';
  qtyInput.min = '1';
  qtyInput.step = '1';
- qtyInput.value = String(Math.max(1, Math.round(Number(row.ui?.pegQtyInput ||1) ||1)));
+ qtyInput.value = String(Math.round(Number(row.ui?.pegQtyInput ||1) ||1));
 
  const qtyBasis = document.createElement('select');
  qtyBasis.innerHTML = `<option value="IND">IND</option><option value="STACK">STACK</option>`;
@@ -343,7 +389,7 @@
    if (!findCatalogItem(p.itemName)) { warnEl.textContent = 'Primary peg item not found in catalog.'; return false; }
         allNames.push(p.itemName.toLowerCase());
 
-    for (let i = 0; i < altRows.length; i++) {
+    for (let i =0; i < altRows.length; i++) {
       const a = altRows[i].getValue();
       if (!a.itemName) continue;
        if (!findCatalogItem(a.itemName)) { warnEl.textContent = `Alt peg "${a.itemName}" not found in catalog.`; return false; }
@@ -352,7 +398,7 @@
   allNames.push(key);
     }
 
-        if (altRows.length > 10) { warnEl.textContent = 'Too many alternative pegs (max 10).'; return false; }
+        if (altRows.length >10) { warnEl.textContent = 'Too many alternative pegs (max10).'; return false; }
    return true;
     };
 
@@ -363,467 +409,129 @@
 }
 
     window.initCreatorPegUIs_ = function initCreatorPegUIs_() {
-    const createState = Admin.state.createState;
+ const createState = Admin.state.createState;
 
-        const storeBox = byId('createStorePegBox');
-   storeBox.innerHTML = '';
-  createState.store.alts = [];
+ const storeBox = byId('createStorePegBox');
+ storeBox.innerHTML = '';
+ createState.store.alts = [];
 
-   createState.store.primary = window.makePegRowDom_({
+ createState.store.primary = window.makePegRowDom_({
  title: 'Primary peg (required)',
  canRemove: false,
-      defaultRow: { itemName: '', ui: { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput: 1 } },
-      getSoldName: () => byId('createItemStore').value.trim() || 'ITEM',
-        getSoldStackSize: () => {
-      const it = findCatalogItem(byId('createItemStore').value.trim());
-       return Number(it?.bundleSize || 1) || 1;
-        },
-   onChange: () => window.validatePegSet_(createState.store.primary, createState.store.alts, byId('createStorePegWarn'))
-  });
-        storeBox.appendChild(createState.store.primary);
-
-        const halfBox = byId('createHalfPegBox');
-    halfBox.innerHTML = '';
-    createState.half.alts = [];
-
-  createState.half.primary = window.makePegRowDom_({
-  title: 'Primary peg (required)',
-        canRemove: false,
-        defaultRow: { itemName: '', ui: { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput: 1 } },
-   getSoldName: () => byId('createItemHalf').value.trim() || 'ITEM',
-       getSoldStackSize: () => Number(byId('createStackHalf').value || 1) || 1,
-   onChange: () => window.validatePegSet_(createState.half.primary, createState.half.alts, byId('createHalfPegWarn'))
-        });
-   halfBox.appendChild(createState.half.primary);
-    };
-
-    window.addAltPeg_ = function addAltPeg_(mode) {
-   const createState = Admin.state.createState;
-    const st = createState[mode];
-        const warn = byId(mode === 'store' ? 'createStorePegWarn' : 'createHalfPegWarn');
-        const box = byId(mode === 'store' ? 'createStorePegBox' : 'createHalfPegBox');
-
-        if (st.alts.length >= 10) { warn.textContent = 'Max 10 alternative pegs.'; return; }
-
-    const idx = st.alts.length + 1;
-  const row = window.makePegRowDom_({
-  title: `Alternative peg #${idx}`,
-        canRemove: true,
-        onRemove: () => {
-       const i = st.alts.indexOf(row);
- if (i >= 0) st.alts.splice(i, 1);
-      row.remove();
-      window.validatePegSet_(st.primary, st.alts, warn);
-   },
-       defaultRow: { itemName: '', ui: { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput: 1 } },
-       getSoldName: mode === 'store'
- ? () => byId('createItemStore').value.trim() || 'ITEM'
-       : () => byId('createItemHalf').value.trim() || 'ITEM',
-  getSoldStackSize: mode === 'store'
-       ? () => {
-     const it = findCatalogItem(byId('createItemStore').value.trim());
-     return Number(it?.bundleSize || 1) || 1;
- }
-       : () => Number(byId('createStackHalf').value || 1) || 1,
-        onChange: () => window.validatePegSet_(st.primary, st.alts, warn)
-    });
-
-    st.alts.push(row);
-    box.appendChild(row);
-    window.validatePegSet_(st.primary, st.alts, warn);
-    };
-
-    function statusPill(statusRaw) {
-   const s = String(statusRaw || '').toUpperCase();
-    if (s === 'ACTIVE') return '<span class="pill pill-active">ACTIVE</span>';
-    if (s === 'PENDING_REVIEW') return '<span class="pill pill-pending">PENDING_REVIEW</span>';
-  if (s === 'PAUSED') return '<span class="pill pill-paused">PAUSED</span>';
-        if (s === 'REJECTED') return '<span class="pill pill-rejected">REJECTED</span>';
-  if (s === 'DELETED') return '<span class="pill">DELETED</span>';
-  return `<span class="pill">${esc(s || '—')}</span>`;
-    }
-
-    function pricingLabel(l) {
-  const p = l.pricing || {};
-  if (p.mode === 'FIXED_BT') return `FIXED ${fmt2(p.fixedBTPerUnit)} BT/unit`;
-
-  const prim = p.primaryPeg || (p.pegItemName ? { itemName: p.pegItemName, pegQtyPerInd: p.pegQtyPerUnit, ui: { priceBasis: p.pricingBasis || 'IND' } } : null);
-  if (!prim || !prim.itemName) return '—';
-
-  const alts = Array.isArray(p.altPegs) ? p.altPegs : [];
-    const altCount = alts.length;
-        const basis = String(prim.ui?.priceBasis || p.pricingBasis || 'IND').toUpperCase();
-  const basisLabel = basis === 'STACK' ? 'STACK' : 'IND';
-    return `${fmt2(Number(prim.pegQtyPerInd || 0))} ${prim.itemName} (${basisLabel}${altCount ? ` +${altCount} alts` : ''})`;
-    }
-
-    window.updateOcmActingUI = function updateOcmActingUI() {
-  const hasTarget = !!Admin.state.globalTargetUser;
-        const banner = byId('ocmActingBanner');
-        const noTarget = byId('ocmActingNoTarget');
-   const content = byId('ocmActingContent');
-
-    if (!hasTarget) {
-  banner.style.display = 'none';
-  noTarget.style.display = 'block';
-  content.classList.add('disabled');
-   return;
-   }
-
-   const { name, mailbox } = window.resolveNameMailbox_(Admin.state.globalTargetUser.userId);
-    banner.style.display = 'block';
-  banner.innerHTML = `<div><strong>Acting as:</strong> ${esc(name)} <span class="small">(mailbox ${esc(mailbox)})</span></div>`;
-        noTarget.style.display = 'none';
-  content.classList.remove('disabled');
-    };
-
-    window.setAdminCreateTab = function setAdminCreateTab(which) {
-    const map = {
-      store: { tab: 'tabCreateStore', panel: 'panelCreateStore' },
- half: { tab: 'tabCreateHalf', panel: 'panelCreateHalf' },
-   full: { tab: 'tabCreateFull', panel: 'panelCreateFull' }
-        };
-  Object.keys(map).forEach(k => {
- byId(map[k].panel).style.display = (k === which) ? 'block' : 'none';
-        byId(map[k].tab).setAttribute('aria-selected', (k === which) ? 'true' : 'false');
-    });
-    };
-
-    function assertIntegerQty_(val, fieldLabel, allowZero) {
-        const n = Number(val);
-    if (!isFinite(n)) throw new Error(`${fieldLabel} must be a number`);
-    if (!Number.isInteger(n)) throw new Error(`${fieldLabel} must be an integer`);
-    if (!allowZero && n <= 0) throw new Error(`${fieldLabel} must be > 0`);
-   if (allowZero && n < 0) throw new Error(`${fieldLabel} must be >= 0`);
-  return n;
-    }
-
-    // ===== Create listings =====
-    window.adminCreateListingStore = async function adminCreateListingStore() {
- if (!Admin.state.googleIdToken) return;
- if (!Admin.state.globalTargetUser) { byId('createMsgStore').textContent = 'Select a target user first.'; return; }
- const msg = byId('createMsgStore');
- msg.textContent = 'Creating...';
-
- try {
- await window.ensureOcmCatalogLoaded();
-
- const type = byId('createTypeStore').value;
- const listingMode = 'STORE';
-
- const itemName = byId('createItemStore').value.trim();
- const item = findCatalogItem(itemName);
- if (!item) throw new Error('Store item not found in catalog');
-
- const stackSize = Number(item.bundleSize ||1) ||1;
-
- const qtyIn = Number(byId('createQtyUnitsStore').value ||0);
- const qtyMode = byId('createQtyModeStore').value;
- const quantityUnits = computeQtyUnitsFromInput(qtyIn, qtyMode, stackSize);
- assertIntegerQty_(quantityUnits, 'Quantity', false);
-
- const createState = Admin.state.createState;
- if (!window.validatePegSet_(createState.store.primary, createState.store.alts, byId('createStorePegWarn'))) throw new Error('Fix peg inputs');
- const pegPayload = buildPegPayload_(createState.store.primary, createState.store.alts);
-
- const r = await window.apiPost('ocmAdminCreateListingV2', {
- idToken: Admin.state.googleIdToken,
- userId: Admin.state.globalTargetUser.userId,
- listingMode,
- type,
- itemName,
- sourceItemId: 'sheet:' + item.name,
- stackSize,
- quantityUnits,
- pricingMode: 'PEG',
- primaryPeg: pegPayload.primaryPeg,
- altPegs: pegPayload.altPegs,
- approveNow: true
+ defaultRow: { itemName: '', ui: { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput:1 } },
+ getSoldName: () => byId('createItemStore').value.trim() || 'ITEM',
+ getSoldStackSize: () => {
+ const it = findCatalogItem(byId('createItemStore').value.trim());
+ return Number(it?.bundleSize ||1) ||1;
+ },
+ onChange: () => window.validatePegSet_(createState.store.primary, createState.store.alts, byId('createStorePegWarn'))
  });
+ storeBox.appendChild(createState.store.primary);
 
- const d = r?.data || r?.result || r;
- const listingId = d?.listingId || d?.id || d?.listing?.listingId;
- if (!listingId) {
- const err = d?.error || d?.message || d?.details || 'No listingId returned from server.';
- throw new Error(String(err));
- }
+ const halfBox = byId('createHalfPegBox');
+ halfBox.innerHTML = '';
+ createState.half.alts = [];
 
- msg.textContent = 'Created. ListingId: ' + listingId;
- await window.loadAdminTargetListings();
- } catch (e) {
- msg.textContent = 'Error: ' + (e?.message || e);
- }
- };
-
- window.adminCreateListingHalf = async function adminCreateListingHalf() {
- if (!Admin.state.googleIdToken) return;
- if (!Admin.state.globalTargetUser) { byId('createMsgHalf').textContent = 'Select a target user first.'; return; }
- const msg = byId('createMsgHalf');
- msg.textContent = 'Creating...';
-
- try {
- await window.ensureOcmCatalogLoaded();
-
- const type = byId('createTypeHalf').value;
- const listingMode = 'HALF';
-
- const itemName = byId('createItemHalf').value.trim();
- if (!itemName) throw new Error('Item name required');
-
- const stackSize = assertIntegerQty_(byId('createStackHalf').value, 'Stack size', false);
-
- const qtyIn = Number(byId('createQtyUnitsHalf').value ||0);
- const qtyMode = byId('createQtyModeHalf').value;
- const quantityUnits = computeQtyUnitsFromInput(qtyIn, qtyMode, stackSize);
- assertIntegerQty_(quantityUnits, 'Quantity', false);
-
- const createState = Admin.state.createState;
- if (!window.validatePegSet_(createState.half.primary, createState.half.alts, byId('createHalfPegWarn'))) throw new Error('Fix peg inputs');
- const pegPayload = buildPegPayload_(createState.half.primary, createState.half.alts);
-
- const r = await window.apiPost('ocmAdminCreateListingV2', {
- idToken: Admin.state.googleIdToken,
- userId: Admin.state.globalTargetUser.userId,
- listingMode,
- type,
- itemName,
- sourceItemId: '',
- stackSize,
- quantityUnits,
- pricingMode: 'PEG',
- primaryPeg: pegPayload.primaryPeg,
- altPegs: pegPayload.altPegs,
- approveNow: true
+ createState.half.primary = window.makePegRowDom_({
+ title: 'Primary peg (required)',
+ canRemove: false,
+ defaultRow: { itemName: '', ui: { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput:1 } },
+ getSoldName: () => byId('createItemHalf').value.trim() || 'ITEM',
+ getSoldStackSize: () => Number(byId('createStackHalf').value ||1) ||1,
+ onChange: () => window.validatePegSet_(createState.half.primary, createState.half.alts, byId('createHalfPegWarn'))
  });
-
- const d = r?.data || r?.result || r;
- const listingId = d?.listingId || d?.id || d?.listing?.listingId;
- if (!listingId) {
- const err = d?.error || d?.message || d?.details || 'No listingId returned from server.';
- throw new Error(String(err));
- }
- msg.textContent = 'Created. ListingId: ' + listingId;
- await window.loadAdminTargetListings();
- } catch (e) {
- msg.textContent = 'Error: ' + (e?.message || e);
- }
+ halfBox.appendChild(createState.half.primary);
  };
 
- window.adminCreateListingFull = async function adminCreateListingFull() {
- if (!Admin.state.googleIdToken) return;
- if (!Admin.state.globalTargetUser) { byId('createMsgFull').textContent = 'Select a target user first.'; return; }
- const msg = byId('createMsgFull');
- msg.textContent = 'Creating...';
+ // ===== Edit dialog =====
+ function renderEditPegBox_(soldNameGetter, soldStackGetter) {
+ const box = byId('editPegBox');
+ box.innerHTML = '';
 
- try {
- const type = byId('createTypeFull').value;
- const listingMode = 'FULL';
+ const editState = Admin.state.editState;
+ editState.alts = [];
 
- const itemName = byId('createItemFull').value.trim();
- if (!itemName) throw new Error('Item name required');
-
- const stackSize = assertIntegerQty_(byId('createStackFull').value, 'Stack size', false);
- const quantityUnits = assertIntegerQty_(byId('createQtyUnitsFull').value, 'Quantity', false);
-
- const fixedBTPerUnit = Number(byId('createFixedBT').value ||0);
- if (!isFinite(fixedBTPerUnit) || fixedBTPerUnit <=0) throw new Error('Fixed BT per unit must be >0');
-
- const r = await window.apiPost('ocmAdminCreateListingV2', {
- idToken: Admin.state.googleIdToken,
- userId: Admin.state.globalTargetUser.userId,
- listingMode,
- type,
- itemName,
- sourceItemId: '',
- stackSize,
- quantityUnits,
- pricingMode: 'FIXED_BT',
- fixedBTPerUnit,
- approveNow: true
- });
-
- const d = r?.data || r?.result || r;
- const listingId = d?.listingId || d?.id || d?.listing?.listingId;
- if (!listingId) {
- const err = d?.error || d?.message || d?.details || 'No listingId returned from server.';
- throw new Error(String(err));
- }
- msg.textContent = 'Created. ListingId: ' + listingId;
- await window.loadAdminTargetListings();
- } catch (e) {
- msg.textContent = 'Error: ' + (e?.message || e);
- }
- };
-
-    // ===== Listing management =====
- function renderListingRow_(tb, l) {
- const tr = document.createElement('tr');
- tr.innerHTML = `
- <td class="mono">${esc(l.listingId)}</td>
- <td>${esc(l.itemName || '')}</td>
- <td>${statusPill(l.statusRaw || l.status)}</td>
- <td class="mono">${(l.qtyAvailable == null ? '' : esc(l.qtyAvailable))}</td>
- <td class="mono">${esc(Number(l.stackSize ||1) ||1)}</td>
- <td class="mono">${esc(pricingLabel(l))}</td>
- <td>
- <button type="button" data-edit="1">Edit</button>
- <button type="button" data-restock="1">Restock</button>
- </td>
- `;
- tr.querySelector('button[data-edit]')?.addEventListener('click', () => window.openAdminEditListing_(l));
- tr.querySelector('button[data-restock]')?.addEventListener('click', () => window.openAdminRestock_(l));
- tb.appendChild(tr);
- }
-
- // ===== Restock dialog (admin, activates immediately) =====
- window.openAdminRestock_ = function openAdminRestock_(l) {
- Admin.state.ocmRestockingListing = l;
- byId('restockListingId').textContent = l.listingId;
- const current = (l.remainingQuantity == null || l.remainingQuantity === '') ? (l.qtyAvailable ??0) : l.remainingQuantity;
- byId('restockQtyInput').value = String(Math.max(0, Math.round(Number(current ||0) ||0)));
- byId('restockQtyMode').value = 'IND';
- byId('restockMsg').textContent = '';
- byId('dlgRestock').showModal();
- };
-
- window.sendAdminRestock_ = async function sendAdminRestock_() {
- if (!Admin.state.ocmRestockingListing) return;
- if (!Admin.state.googleIdToken) return;
- if (!Admin.state.globalTargetUser) return;
-
- const msg = byId('restockMsg');
- msg.textContent = 'Saving...';
-
- try {
- const listingId = Admin.state.ocmRestockingListing.listingId;
- const qtyIn = assertIntegerQty_(byId('restockQtyInput').value, 'New stock value', true);
- const mode = byId('restockQtyMode').value;
- const ss = Number(Admin.state.ocmRestockingListing.stackSize ||1) ||1;
- const remainingQuantity = computeQtyUnitsFromInput(qtyIn, mode, ss);
-
- // Admin restock should activate immediately.
- await window.apiPost('ocmAdminUpdateListingV2', {
- idToken: Admin.state.googleIdToken,
- userId: Admin.state.globalTargetUser.userId,
- listingId,
- approveNow: true,
- remainingQuantity,
- quantityUnits: remainingQuantity
- });
-
- msg.textContent = 'Restocked and activated.';
- await window.loadAdminTargetListings();
- setTimeout(() => byId('dlgRestock').close(),350);
- } catch (e) {
- msg.textContent = 'Error: ' + (e?.message || e);
- }
- };
-
-    // ===== Edit dialog =====
-    function syncEditPricingModeUI_() {
-        const m = byId('editPricingMode').value;
-    byId('editPegFields').style.display = (m === 'PEG') ? '' : 'none';
-   byId('editFixedFields').style.display = (m === 'FIXED_BT') ? '' : 'none';
-
-    const lm = byId('editListingMode').value;
-   if (lm === 'FULL') {
-       byId('editPricingMode').value = 'FIXED_BT';
-   byId('editPricingMode').disabled = true;
-  byId('editPegFields').style.display = 'none';
-  byId('editFixedFields').style.display = '';
-   } else {
-  byId('editPricingMode').disabled = false;
-   }
-    }
-
-    function renderEditPegBox_(soldNameGetter, soldStackGetter) {
-    const box = byId('editPegBox');
-        box.innerHTML = '';
-
-    const editState = Admin.state.editState;
-   editState.alts = [];
-
-   editState.primary = window.makePegRowDom_({
-        title: 'Primary peg (required)',
-   canRemove: false,
-   defaultRow: editState.primary || { itemName: '', ui: { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput: 1 } },
-      getSoldName: soldNameGetter,
-       getSoldStackSize: soldStackGetter,
-      onChange: () => window.validatePegSet_(editState.primary, editState.alts, byId('editPegWarn'))
-  });
-        box.appendChild(editState.primary);
-
-  const existingAlts = (editState._initialAltRows || []);
-    editState._initialAltRows = null;
-
-    existingAlts.forEach((a, i) => {
-        const row = window.makePegRowDom_({
- title: `Alternative peg #${i + 1}`,
-      canRemove: true,
-       defaultRow: a,
-       getSoldName: soldNameGetter,
+ editState.primary = window.makePegRowDom_({
+ title: 'Primary peg (required)',
+ canRemove: false,
+ defaultRow: editState.primary || { itemName: '', ui: { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput:1 } },
+ getSoldName: soldNameGetter,
  getSoldStackSize: soldStackGetter,
-      onRemove: () => {
-     const idx = editState.alts.indexOf(row);
-     if (idx >= 0) editState.alts.splice(idx, 1);
-row.remove();
-     window.validatePegSet_(editState.primary, editState.alts, byId('editPegWarn'));
-      },
-       onChange: () => window.validatePegSet_(editState.primary, editState.alts, byId('editPegWarn'))
-       });
- editState.alts.push(row);
-   box.appendChild(row);
-   });
+ onChange: () => window.validatePegSet_(editState.primary, editState.alts, byId('editPegWarn'))
+ });
+ box.appendChild(editState.primary);
 
-   window.validatePegSet_(editState.primary, editState.alts, byId('editPegWarn'));
-    }
+ const existingAlts = (editState._initialAltRows || []);
+ editState._initialAltRows = null;
+
+ existingAlts.forEach((a, i) => {
+ const row = window.makePegRowDom_({
+ title: `Alternative peg #${i +1}`,
+ canRemove: true,
+ defaultRow: a,
+ getSoldName: soldNameGetter,
+ getSoldStackSize: soldStackGetter,
+ onRemove: () => {
+ const idx = editState.alts.indexOf(row);
+ if (idx >=0) editState.alts.splice(idx,1);
+ row.remove();
+ window.validatePegSet_(editState.primary, editState.alts, byId('editPegWarn'));
+ },
+ onChange: () => window.validatePegSet_(editState.primary, editState.alts, byId('editPegWarn'))
+ });
+ editState.alts.push(row);
+ box.appendChild(row);
+ });
+
+ window.validatePegSet_(editState.primary, editState.alts, byId('editPegWarn'));
+ }
 
     window.openAdminEditListing_ = function openAdminEditListing_(l) {
-  Admin.state.ocmEditingListing = l;
+ Admin.state.ocmEditingListing = l;
 
-  byId('editListingId').textContent = l.listingId;
-  byId('editQty').value = String(Number(l.quantity ?? l.qtyAvailable ?? 1) || 1);
-        byId('editRemainingQty').value = (l.remainingQuantity == null || l.remainingQuantity === '') ? '' : String(l.remainingQuantity);
-  byId('editStack').value = String(Number(l.stackSize || 1) || 1);
+ byId('editListingId').textContent = l.listingId;
+ byId('editQty').value = String(Number(l.quantity ?? l.qtyAvailable ??1) ||1);
+ byId('editRemainingQty').value = (l.remainingQuantity == null || l.remainingQuantity === '') ? '' : String(l.remainingQuantity);
+ byId('editStack').value = String(Number(l.stackSize ||1) ||1);
 
-        const listingMode = String(l.pricing?.listingMode || (safeJsonParse(l.extraJson || '{}') || {}).listingMode || '').toUpperCase() || (String(l.sourceItemId || '').startsWith('sheet:') ? 'STORE' : 'HALF');
-    byId('editListingMode').value = (listingMode === 'FULL') ? 'FULL' : (listingMode === 'STORE' ? 'STORE' : 'HALF');
+ const listingMode = String(l.pricing?.listingMode || (safeJsonParse(l.extraJson || '{}') || {}).listingMode || '').toUpperCase() || (String(l.sourceItemId || '').startsWith('sheet:') ? 'STORE' : 'HALF');
+ byId('editListingMode').value = (listingMode === 'FULL') ? 'FULL' : (listingMode === 'STORE' ? 'STORE' : 'HALF');
 
-   byId('editItemName').value = l.itemName || '';
-    byId('editSourceItemId').value = l.sourceItemId || '';
+ byId('editItemName').value = l.itemName || '';
+ byId('editSourceItemId').value = l.sourceItemId || '';
 
-        const mode = String(l.pricing?.mode || 'PEG').toUpperCase();
-    byId('editPricingMode').value = (mode === 'FIXED_BT') ? 'FIXED_BT' : 'PEG';
-        byId('editFixedBTVal').value = String(l.pricing?.fixedBTPerUnit ?? 1);
+ const mode = String(l.pricing?.mode || 'PEG').toUpperCase();
+ byId('editPricingMode').value = (mode === 'FIXED_BT') ? 'FIXED_BT' : 'PEG';
+ byId('editFixedBTVal').value = String(l.pricing?.fixedBTPerUnit ??1);
 
-   const prim = l.pricing?.primaryPeg || (l.pricing?.pegItemName ? {
-       itemName: l.pricing.pegItemName,
+ const prim = l.pricing?.primaryPeg || (l.pricing?.pegItemName ? {
+ itemName: l.pricing.pegItemName,
  ui: {
-      priceBasis: l.pricing.pricingBasis || 'IND',
+ priceBasis: l.pricing.pricingBasis || 'IND',
  pegQtyBasis: 'IND',
-     pegQtyInput: Math.max(1, Math.round(Number(l.pricing.pegQtyPerUnit || 1) || 1))
-  }
-  } : null);
+ pegQtyInput: Math.max(1, Math.round(Number(l.pricing.pegQtyPerUnit ||1) ||1))
+ }
+ } : null);
 
-    const editState = Admin.state.editState;
-        editState.primary = prim || { itemName: '', ui: { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput: 1 } };
-   editState._initialAltRows = (Array.isArray(l.pricing?.altPegs) ? l.pricing.altPegs : []).map(a => ({
-  itemName: a.itemName,
-   ui: a.ui || { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput: 1 }
-        }));
+ const editState = Admin.state.editState;
+ editState.primary = prim || { itemName: '', ui: { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput:1 } };
+ editState._initialAltRows = (Array.isArray(l.pricing?.altPegs) ? l.pricing.altPegs : []).map(a => ({
+ itemName: a.itemName,
+ ui: a.ui || { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput:1 }
+ }));
 
-  const soldNameGetter = () => byId('editItemName').value.trim() || 'ITEM';
-    const soldStackGetter = () => Number(byId('editStack').value || 1) || 1;
+ const soldNameGetter = () => byId('editItemName').value.trim() || 'ITEM';
+ const soldStackGetter = () => Number(byId('editStack').value ||1) ||1;
 
-  renderEditPegBox_(soldNameGetter, soldStackGetter);
+ renderEditPegBox_(soldNameGetter, soldStackGetter);
 
-    byId('editPause').checked = String(l.statusRaw || l.status || '').toUpperCase() === 'PAUSED';
-        byId('editRejectedWarning').style.display = (String(l.statusRaw || l.status || '').toUpperCase() === 'REJECTED') ? 'block' : 'none';
-   byId('editListingMsg').textContent = '';
+ byId('editPause').checked = String(l.statusRaw || l.status || '').toUpperCase() === 'PAUSED';
+ byId('editRejectedWarning').style.display = (String(l.statusRaw || l.status || '').toUpperCase() === 'REJECTED') ? 'block' : 'none';
+ byId('editListingMsg').textContent = '';
 
-  syncEditPricingModeUI_();
-    byId('dlgEditListing').showModal();
-    };
+ syncEditPricingModeUI_();
+ byId('dlgEditListing').showModal();
+ };
 
     window.saveAdminListingEdit_ = async function saveAdminListingEdit_() {
     if (!Admin.state.ocmEditingListing) return;
@@ -919,8 +627,8 @@ row.remove();
  }
  };
 
-    // ===== Target pending trades =====
-    window.loadAdminTargetPendingTrades = async function loadAdminTargetPendingTrades() {
+ // ===== Target pending trades =====
+ window.loadAdminTargetPendingTrades = async function loadAdminTargetPendingTrades() {
     await window.loadAdminTargetMyPendingTrades_();
     await window.loadAdminTargetIncomingPendingTrades_();
     };
@@ -954,48 +662,142 @@ row.remove();
     };
 
     function renderTargetPendingTradesTable_(tb, arr, mine) {
-        tb.innerHTML = '';
-   (arr || []).forEach(tr => {
-        const snap = safeJsonParse(tr.detailsJson || '{}') || {};
-      const item = snap.listing?.itemName || '';
-       const counterparty = mine ? (snap.seller?.playerName || '') : (snap.buyer?.playerName || '');
+ tb.innerHTML = '';
+ (arr || []).forEach(tr => {
+ const snap = safeJsonParse(tr.detailsJson || '{}') || {};
+ const item = snap.listing?.itemName || '';
+ const counterparty = mine ? (snap.seller?.playerName || '') : (snap.buyer?.playerName || '');
  const payment = snap.payment?.method || '';
-       const qty = Number(snap.request?.requestedUnits || tr.quantity || 0);
+ const qty = Number(snap.request?.requestedUnits || tr.quantity ||0);
 
-        const row = document.createElement('tr');
-      row.innerHTML = `
-      <td class="mono">${esc(tr.tradeId)}</td>
-      <td>${esc(item)}</td>
-     <td>${esc(counterparty)}</td>
+ const actionable = isActionablePendingTrade_(tr);
+
+ const row = document.createElement('tr');
+ row.innerHTML = `
+ <td class="mono">${esc(tr.tradeId)}</td>
+ <td>${esc(item)}</td>
+ <td>${esc(counterparty)}</td>
  <td class="mono">${esc(qty)}</td>
-       <td class="mono">${esc(payment)}</td>
+ <td class="mono">${esc(payment)}</td>
  <td>
+ ${actionable ? '<button type="button" data-more="1">More info</button> ' : ''}
  ${mine
-     ? '<span class="small">Read-only in admin UI</span>'
-    : '<button type="button" data-accept="1">Accept (Admin 10%)</button> <button type="button" data-deny="1">Deny</button>'}
-      </td>
-   `;
+ ? '<span class="small">Read-only in admin UI</span>'
+ : (actionable
+ ? '<button type="button" data-accept="1">Accept (Admin10%)</button> <button type="button" data-deny="1">Deny</button>'
+ : '<span class="small">Not actionable</span>')}
+ </td>
+ `;
 
- if (!mine) {
+ if (actionable) {
+ row.querySelector('button[data-more]')?.addEventListener('click', () => {
+ const tmi = window.TradeMoreInfo;
+ if (!tmi || typeof tmi.toggleDetailsRow !== 'function') {
+ const marker = window.__TradeMoreInfoLoaded ? 'script executed but window.TradeMoreInfo missing' : 'script likely not loaded';
+ alert('TradeMoreInfo helper is not loaded (' + marker + '). Check Network tab for shared/trade-more-info.js and Console for errors.');
+ return;
+ }
+
+ const buyerLabel = labelFromUserId_(tr.buyerUserId);
+ const sellerLabel = labelFromUserId_(tr.sellerUserId);
+ tmi.toggleDetailsRow(row, snap || {}, buyerLabel, sellerLabel,6);
+ });
+ }
+
+ if (!mine && actionable) {
  row.querySelector('button[data-accept]')?.addEventListener('click', async () => {
-     if (!confirm(`Accept trade ${tr.tradeId} as admin? (10% fee)`)) return;
-     try { await window.apiPost('ocmAcceptTradeAsAdminV2', { idToken: Admin.state.googleIdToken, tradeId: tr.tradeId }); await window.loadAdminTargetPendingTrades(); }
+ if (!confirm(`Accept trade ${tr.tradeId} as admin? (10% fee)`)) return;
+ try { await window.apiPost('ocmAcceptTradeAsAdminV2', { idToken: Admin.state.googleIdToken, tradeId: tr.tradeId }); await window.loadAdminTargetPendingTrades(); }
  catch (e) { alert(e.message); }
  });
 
-     row.querySelector('button[data-deny]')?.addEventListener('click', async () => {
-     if (!confirm(`Deny trade ${tr.tradeId}?`)) return;
-     try { await window.apiPost('ocmDenyTradeV2', { idToken: Admin.state.googleIdToken, tradeId: tr.tradeId }); await window.loadAdminTargetPendingTrades(); }
+ row.querySelector('button[data-deny]')?.addEventListener('click', async () => {
+ if (!confirm(`Deny trade ${tr.tradeId}?`)) return;
+ try { await window.apiPost('ocmDenyTradeV2', { idToken: Admin.state.googleIdToken, tradeId: tr.tradeId }); await window.loadAdminTargetPendingTrades(); }
  catch (e) { alert(e.message); }
  });
-   }
+ }
 
-       tb.appendChild(row);
-        });
+ tb.appendChild(row);
+ });
+ }
+    // Helper: visual status pill used in listing rows
+    function statusPill(statusRaw) {
+        const s = String(statusRaw || '').toUpperCase();
+        if (s === 'ACTIVE') return '<span class="pill pill-active">ACTIVE</span>';
+        if (s === 'PENDING_REVIEW') return '<span class="pill pill-pending">PENDING_REVIEW</span>';
+        if (s === 'PAUSED') return '<span class="pill pill-paused">PAUSED</span>';
+        if (s === 'REJECTED') return '<span class="pill pill-rejected">REJECTED</span>';
+        if (s === 'DELETED') return '<span class="pill">DELETED</span>';
+        return `<span class="pill">${esc(s || '—')}</span>`;
     }
 
-    // expose for boot wiring
-    Admin._syncEditPricingModeUI_ = syncEditPricingModeUI_;
+    // Helper: short pricing summary shown in listing rows
+    function pricingLabel(l) {
+        const p = l.pricing || {};
+        if (p.mode === 'FIXED_BT') return `FIXED ${fmt2(p.fixedBTPerUnit)} BT/unit`;
+
+        const prim = p.primaryPeg || (p.pegItemName ? {
+            itemName: p.pegItemName,
+            pegQtyPerInd: p.pegQtyPerUnit,
+            ui: { priceBasis: p.pricingBasis || 'IND' }
+        } : null);
+
+        if (!prim || !prim.itemName) return '—';
+
+        const alts = Array.isArray(p.altPegs) ? p.altPegs : [];
+        const altCount = alts.length;
+        const basis = String(prim.ui?.priceBasis || p.pricingBasis || 'IND').toUpperCase();
+        const basisLabel = (basis === 'STACK') ? 'STACK' : 'IND';
+        return `${fmt2(Number(prim.pegQtyPerInd || 0))} ${esc(prim.itemName)} (${basisLabel}${altCount ? ` +${altCount} alts` : ''})`;
+    }
+
+    // Full renderListingRow_ used by the listing editor tables.
+    // Place this function in `admin_js/admin-ocm.js` above `renderAdminTargetListings_` or
+    // anywhere before it's referenced.
+    function renderListingRow_(tb, l) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+<td class="mono">${esc(l.listingId)}</td>
+<td>${esc(l.itemName || '')}</td>
+<td>${statusPill(l.statusRaw || l.status)}</td>
+<td class="mono">${(l.qtyAvailable == null ? '' : esc(l.qtyAvailable))}</td>
+<td class="mono">${esc(Number(l.stackSize || 1) || 1)}</td>
+<td class="mono">${esc(pricingLabel(l))}</td>
+<td>
+    <button type="button" data-edit="1">Edit</button>
+    <button type="button" data-restock="1">Restock</button>
+</td>
+`.trim();
+
+        // Wire Edit -> opens edit dialog (if available)
+        const editBtn = tr.querySelector('button[data-edit]');
+        if (editBtn) {
+            editBtn.addEventListener('click', () => {
+                if (typeof window.openAdminEditListing_ === 'function') {
+                    window.openAdminEditListing_(l);
+                } else {
+                    console.warn('openAdminEditListing_ is not available');
+                }
+            });
+        }
+
+        // Wire Restock -> opens restock dialog (if available)
+        const restockBtn = tr.querySelector('button[data-restock]');
+        if (restockBtn) {
+            restockBtn.addEventListener('click', () => {
+                if (typeof window.openAdminRestock_ === 'function') {
+                    window.openAdminRestock_(l);
+                } else {
+                    console.warn('openAdminRestock_ is not available');
+                }
+            });
+        }
+
+        tb.appendChild(tr);
+    }
+ // expose for boot wiring
+ Admin._syncEditPricingModeUI_ = syncEditPricingModeUI_;
 
  function renderAdminTargetListings_() {
  // Scope to OCM admin section to avoid collisions with same IDs in other tabs/pages
@@ -1052,5 +854,39 @@ row.remove();
  if (msgEl) msgEl.textContent = 'Error: ' + (e?.message || e);
  }
  };
+
+ // Enable/disable OCM Admin tools based on selected target user
+ window.updateOcmActingUI = function updateOcmActingUI() {
+ const banner = byId('ocmActingBanner');
+ const noTarget = byId('ocmActingNoTarget');
+ const content = byId('ocmActingContent');
+ if (!banner || !noTarget || !content) return;
+
+ const hasTarget = !!Admin.state.globalTargetUser;
+
+ if (!hasTarget) {
+ banner.style.display = 'none';
+ noTarget.style.display = 'block';
+ content.classList.add('disabled');
+ return;
+ }
+
+ // Prefer the same mailbox resolver path used in the old working version
+ const uid = Admin.state.globalTargetUser.userId;
+ let name = Admin.state.globalTargetUser.playerName || Admin.state.globalTargetUser.email || String(uid || '');
+ let mailbox = Admin.state.globalTargetUser.mailbox || 'N/A';
+ try {
+ if (typeof window.resolveNameMailbox_ === 'function') {
+ const r = window.resolveNameMailbox_(uid) || {};
+ name = r.name || name;
+ mailbox = r.mailbox || mailbox;
+ }
+ } catch { /* ignore */ }
+
+ banner.style.display = 'block';
+ banner.innerHTML = `<div><strong>Acting as:</strong> ${esc(name)} <span class="small">(mailbox ${esc(mailbox)})</span></div>`;
+ noTarget.style.display = 'none';
+ content.classList.remove('disabled');
+};
 
 })();

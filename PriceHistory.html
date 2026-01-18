@@ -154,6 +154,7 @@
             <select id="metricSelect">
                 <option value="stock" selected>Stock Amount</option>
                 <option value="change">Daily Price Change (+/-)</option>
+                <option value="changePct">Daily Price Change (%)</option>
                 <option value="valuation">Total Valuation</option>
                 <option value="goal">Goal Stock %</option>
             </select>
@@ -316,6 +317,16 @@
                     return parseFloat((price - prices[i - 1]).toFixed(2));
                 });
             }
+            else if (metric === 'changePct') {
+                chartType = 'bar';
+                secValues = prices.map((price, i) => {
+                    if (i === 0) return 0;
+                    const prev = prices[i - 1];
+                    if (prev === 0 || prev == null || price == null) return 0;
+                    const pct = ((price - prev) / prev) * 100;
+                    return parseFloat(pct.toFixed(2));
+                });
+            }
             else if (metric === 'valuation') {
                 const valData = filterSort(CACHE.valuation);
                 secLabels = valData.map(r => r.ts);
@@ -373,7 +384,7 @@
             let bgColors = data.color;
             let borderColors = data.color;
 
-            if (metric === 'change') {
+            if (metric === 'change' || metric === 'changePct') {
                 bgColors = data.secValues.map(v => v >= 0 ? 'rgba(40, 167, 69, 0.6)' : 'rgba(220, 53, 69, 0.6)');
                 borderColors = data.secValues.map(v => v >= 0 ? '#28a745' : '#dc3545');
             } else if (data.chartType === 'line') {
@@ -408,6 +419,7 @@
                                 label: function (ctx) {
                                     let v = ctx.parsed.y;
                                     if (metric === 'change') return (v > 0 ? '+' : '') + v;
+                                    if (metric === 'changePct') return (v > 0 ? '+' : '') + v.toFixed(2) + '%';
                                     if (metric === 'goal') return v.toFixed(1) + '%';
                                     if (metric === 'valuation') return Math.round(v).toLocaleString();
                                     return v;
@@ -415,7 +427,17 @@
                             }
                         }
                     },
-                    scales: { y: { beginAtZero: (metric !== 'valuation') } }
+                    scales: {
+                        y: {
+                            beginAtZero: (metric !== 'valuation'),
+                            ticks: {
+                                callback: function (value) {
+                                    if (metric === 'changePct') return value + '%';
+                                    return value;
+                                }
+                            }
+                        }
+                    }
                 }
             });
         }
@@ -466,6 +488,7 @@
                 const titles = {
                     'stock': 'Stock History',
                     'change': 'Daily Price Volatility',
+                    'changePct': 'Daily Price Volatility (%)',
                     'valuation': 'Total Asset Valuation',
                     'goal': '% of Goal Reached'
                 };

@@ -18,6 +18,9 @@
         // Account setup (NEW)
         'linkPlayer',
 
+        // Admin account editing
+        'adminUpdateUserProfile',
+
         // OCM v2 (new)
         'ocmCreateListingV2', 'ocmUpdateListingV2',
         'ocmCreateTradeRequestV2', 'ocmUpdateTradeRequestV2', 'ocmCancelTradeRequestV2',
@@ -25,7 +28,11 @@
         'ocmAcceptTradeAsSellerV2', 'ocmAcceptTradeAsAdminV2', 'ocmDenyTradeV2','ocmAdminCreateListingV2',
 
         // Admin OCM v2
-        'ocmAdminUpdateListingV2'
+        'ocmAdminUpdateListingV2',
+
+        // Optional: mailbox/details enrichment endpoints (add these actions on backend if you implement them)
+        'ocmEnrichTradeDetailsMailboxesV2',
+        'ocmRepairTradeDetailsMailboxesV2'
     ];
 
     function normalize(j) {
