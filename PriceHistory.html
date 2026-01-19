@@ -157,6 +157,7 @@
                 <option value="changePct">Daily Price Change (%)</option>
                 <option value="valuation">Total Valuation</option>
                 <option value="goal">Goal Stock %</option>
+                <option value="targetStock">Target stock stack</option>
             </select>
         </label>
 
@@ -248,7 +249,7 @@
         }
 
         // 3. FETCH DATA
-        let CACHE = { main: [], valuation: [], goal: [] };
+        let CACHE = { main: [], valuation: [], goal: [], targetStock: [] };
 
         async function fetchCSV(sheetName) {
             try {
@@ -338,6 +339,12 @@
                 secLabels = goalData.map(r => r.ts);
                 secValues = goalData.map(r => r.value * 100);
                 color = '#fd7e14';
+            }
+            else if (metric === 'targetStock') {
+                const tData = filterSort(CACHE.targetStock);
+                secLabels = tData.map(r => r.ts);
+                secValues = tData.map(r => r.value);
+                color = '#0dcaf0';
             }
 
             return { labels, prices, secLabels, secValues, chartType, color };
@@ -454,14 +461,16 @@
 
             async function loadData() {
                 const sheet = typeSel.value;
-                const [main, val, goal] = await Promise.all([
+                const [main, val, goal, targetStock] = await Promise.all([
                     fetchCSV(sheet),
                     fetchCSV('ValuationHistory'),
-                    fetchCSV('GoalHistory')
+                    fetchCSV('GoalHistory'),
+                    fetchCSV('TargetStockHistory')
                 ]);
                 CACHE.main = main;
                 CACHE.valuation = val;
                 CACHE.goal = goal;
+                CACHE.targetStock = targetStock;
 
                 uniqueItems = [...new Set(main.map(r => r.item))].sort();
                 dl.innerHTML = "";
@@ -490,7 +499,8 @@
                     'change': 'Daily Price Volatility',
                     'changePct': 'Daily Price Volatility (%)',
                     'valuation': 'Total Asset Valuation',
-                    'goal': '% of Goal Reached'
+                    'goal': '% of Goal Reached',
+                    'targetStock': 'Target Stock Stack History'
                 };
                 document.getElementById('bottomChartTitle').textContent = titles[metric];
 
