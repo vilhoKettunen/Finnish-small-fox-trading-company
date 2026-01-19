@@ -25,7 +25,7 @@ window.editedFromRequestId = window.editedFromRequestId || null;
 window.submitForUser = window.submitForUser || null;
 window.__playersCache = window.__playersCache || [];
 
-window.currentBalanceBT = window.currentBalanceBT ||0;
+window.currentBalanceBT = window.currentBalanceBT || 0;
 
 /* Top bar balance state */
 window.topBalanceSelfBT = window.topBalanceSelfBT ?? null;
@@ -39,22 +39,22 @@ window.BASE_CURRENCY = BASE_CURRENCY;
 window.sheetURL = sheetURL;
 
 window.cryptoRandomId = window.cryptoRandomId || function cryptoRandomId() {
- return (crypto.getRandomValues(new Uint32Array(4))).join('-');
+    return (crypto.getRandomValues(new Uint32Array(4))).join('-');
 };
 
 window.scrollIntoViewSmooth = window.scrollIntoViewSmooth || function scrollIntoViewSmooth(id) {
- const el = document.getElementById(id);
- if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 };
 
 window.updateAllDisplays = window.updateAllDisplays || function updateAllDisplays() {
- try { window.renderBuyList && window.renderBuyList(); } catch { }
- try { window.renderSellList && window.renderSellList(); } catch { }
- try { window.calculateNet && window.calculateNet(); } catch { }
+    try { window.renderBuyList && window.renderBuyList(); } catch { }
+    try { window.renderSellList && window.renderSellList(); } catch { }
+    try { window.calculateNet && window.calculateNet(); } catch { }
 };
 
 window.toggleInfo = window.toggleInfo || function toggleInfo(id) {
- const el = document.getElementById(id);
+    const el = document.getElementById(id);
     if (el) el.style.display = el.style.display === 'block' ? 'none' : 'block';
     // Compatibility shim: legacy code expects `window.updateTopBarAuth()`.
     // `topbar.js` owns the real state via `window.topbarSetAuthState(...)`.
@@ -74,12 +74,12 @@ window.toggleInfo = window.toggleInfo || function toggleInfo(id) {
 // Compatibility shim: legacy code expects `window.updateTopBarAuth()`.
 // `topbar.js` owns the real state via `window.topbarSetAuthState(...)`.
 window.updateTopBarAuth = window.updateTopBarAuth || function updateTopBarAuth() {
- if (typeof window.topbarSetAuthState === 'function') {
- window.topbarSetAuthState({
- idToken: window.googleIdToken,
- user: window.currentUser,
- isAdmin: !!window.currentUser?.isAdmin,
- balanceBT: window.currentBalanceBT
- });
- }
+    if (typeof window.topbarSetAuthState === 'function') {
+        window.topbarSetAuthState({
+            idToken: window.googleIdToken,
+            user: window.currentUser,
+            isAdmin: !!window.currentUser?.isAdmin,
+            balanceBT: window.currentBalanceBT
+        });
+    }
 };

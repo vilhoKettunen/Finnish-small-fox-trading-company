@@ -436,9 +436,9 @@
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
- <!-- top bar injected by topbar.js -->
+    <!-- top bar injected by topbar.js -->
 
- <div id="authPanel">
+    <div id="authPanel">
         <div id="googleLoginArea">
             <div id="googleBtn"></div>
             <div class="login-hint">If the Google button does not appear, use fallback:</div>
@@ -745,16 +745,16 @@
     </div>
 
     <div id="onBehalfSection" class="section" style="display:none;">
- <h2>👤 Submit on behalf of (Admin)</h2>
- <div class="small">Search a player and set them as the target for the next submission. The request will be recorded in their history.</div>
- <div class="dropdown-wrap" style="margin-top:6px;">
- <input id="obPlayerSearchInput" class="dropdown-input" placeholder="Type player name or email">
- <div id="obPlayerSearchList" class="dropdown-list" style="display:none;"></div>
- </div>
- <button id="btnSetOnBehalf" type="button" onclick="setOnBehalfTarget()">Set as target</button>
- <button id="btnClearOnBehalf" type="button" onclick="clearOnBehalfTarget()">Clear</button>
- <div id="onBehalfStatus" class="small"></div>
- </div>
+        <h2>👤 Submit on behalf of (Admin)</h2>
+        <div class="small">Search a player and set them as the target for the next submission. The request will be recorded in their history.</div>
+        <div class="dropdown-wrap" style="margin-top:6px;">
+            <input id="obPlayerSearchInput" class="dropdown-input" placeholder="Type player name or email">
+            <div id="obPlayerSearchList" class="dropdown-list" style="display:none;"></div>
+        </div>
+        <button id="btnSetOnBehalf" type="button" onclick="setOnBehalfTarget()">Set as target</button>
+        <button id="btnClearOnBehalf" type="button" onclick="clearOnBehalfTarget()">Clear</button>
+        <div id="onBehalfStatus" class="small"></div>
+    </div>
 
     <div class="section links-section" id="usefulLinks">
         <h2>🔗 Useful Links</h2>
@@ -775,35 +775,35 @@
     <script src="pay-converter.js"></script>
 
     <script>
- // Boot only. All feature logic is in `index_js/*`.
- window.onload = () => {
- window.initSharedTopBar && window.initSharedTopBar();
+        // Boot only. All feature logic is in `index_js/*`.
+        window.onload = () => {
+            window.initSharedTopBar && window.initSharedTopBar();
 
- window.tryRestoreAuthOnLoad && window.tryRestoreAuthOnLoad();
- document.body.classList.add('withTopBar');
+            window.tryRestoreAuthOnLoad && window.tryRestoreAuthOnLoad();
+            document.body.classList.add('withTopBar');
 
- window.attachSetupInputHelpers && window.attachSetupInputHelpers();
- window.checkHashForIdToken && window.checkHashForIdToken();
- window.loadData && window.loadData();
+            window.attachSetupInputHelpers && window.attachSetupInputHelpers();
+            window.checkHashForIdToken && window.checkHashForIdToken();
+            window.loadData && window.loadData();
 
- if (document.getElementById('payOptions')) window.addPayRow && window.addPayRow();
- if (document.getElementById('converterOptions')) window.addConverterRow && window.addConverterRow();
+            if (document.getElementById('payOptions')) window.addPayRow && window.addPayRow();
+            if (document.getElementById('converterOptions')) window.addConverterRow && window.addConverterRow();
 
- window.initRecaptcha && window.initRecaptcha();
+            window.initRecaptcha && window.initRecaptcha();
 
- const gsiWait = setInterval(() => {
- if (window.google && google.accounts && google.accounts.id) {
- window.initGoogleIdentity && window.initGoogleIdentity();
- clearInterval(gsiWait);
- }
- },200);
- setTimeout(() => clearInterval(gsiWait),4000);
+            const gsiWait = setInterval(() => {
+                if (window.google && google.accounts && google.accounts.id) {
+                    window.initGoogleIdentity && window.initGoogleIdentity();
+                    clearInterval(gsiWait);
+                }
+            }, 200);
+            setTimeout(() => clearInterval(gsiWait), 4000);
 
- window.initCollapsibles && window.initCollapsibles();
- window.updateTopBarAuth && window.updateTopBarAuth();
- window.attachOnBehalfSearch && window.attachOnBehalfSearch();
- window.refreshOpenOrders && window.refreshOpenOrders();
- };
- </script>
+            window.initCollapsibles && window.initCollapsibles();
+            window.updateTopBarAuth && window.updateTopBarAuth();
+            window.attachOnBehalfSearch && window.attachOnBehalfSearch();
+            window.refreshOpenOrders && window.refreshOpenOrders();
+        };
+    </script>
 </body>
 </html>
