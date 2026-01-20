@@ -240,7 +240,8 @@
  <div class="mono" data-estimate>—</div>
  <div class="small muted" data-value-lines>—</div>
  <div class="small" data-fee-note>Fee:0% if seller completes,10% if admin completes.</div>
- <div class="trade-favor" data-trade-favor style="display:none;"></div>
+ <div class="trade-favor" data-favor-customer style="display:none;"></div>
+ <div class="trade-favor" data-favor-merchant style="display:none;"></div>
  </div>
  </div>
 
@@ -261,7 +262,8 @@
  const msgEl = td.querySelector('[data-msg]');
  const estEl = td.querySelector('[data-estimate]');
  const valueEl = td.querySelector('[data-value-lines]');
- const favorEl = td.querySelector('[data-trade-favor]');
+ const customerFavorEl = td.querySelector('[data-favor-customer]');
+ const merchantFavorEl = td.querySelector('[data-favor-merchant]');
  const payPegSel = td.querySelector('select[data-pay-peg]');
 
  function getPaymentChoice() {
@@ -280,7 +282,8 @@
  if (!u) {
  estEl.textContent = '—';
  valueEl.textContent = '—';
- if (favorEl) favorEl.style.display = 'none';
+ if (customerFavorEl) customerFavorEl.style.display = 'none';
+ if (merchantFavorEl) merchantFavorEl.style.display = 'none';
  return;
  }
 
@@ -291,7 +294,8 @@
  if (stackOnly && qtyMode !== 'STACK') {
  estEl.textContent = 'This listing is stack-priced. Choose stack quantity.';
  valueEl.textContent = '—';
- if (favorEl) favorEl.style.display = 'none';
+ if (customerFavorEl) customerFavorEl.style.display = 'none';
+ if (merchantFavorEl) merchantFavorEl.style.display = 'none';
  return;
  }
 
@@ -299,7 +303,8 @@
  if (!est) {
  estEl.textContent = '—';
  valueEl.textContent = '—';
- if (favorEl) favorEl.style.display = 'none';
+ if (customerFavorEl) customerFavorEl.style.display = 'none';
+ if (merchantFavorEl) merchantFavorEl.style.display = 'none';
  return;
  }
 
@@ -328,11 +333,13 @@
  const v = computeValueLinesForTrade_(listing, u, chosenPegName, chosenRatio);
  valueEl.innerHTML = `${O.escapeHtml_(v.buy)}<br>${O.escapeHtml_(v.sell)}`;
 
- // ===== Trade favor/disfavor (customer perspective) =====
- // Rules:
+ // ===== Customer favor / Merchant favor =====
+ // Totals match the value lines shown.
+ // Customer rules:
  // - ITEM payment: pct = (1 - (peg BUY total / traded SELL total)) *100
  // - BT payment: pct = (1 - (peg SELL total / traded SELL total)) *100
- // Totals match the value lines shown.
+ // Merchant rules (same for ITEM and BT):
+ // - pct = (1 - (peg SELL total / traded BUY total)) *100
  try {
  const listingName = String(listing?.itemName || '').trim();
  const pegName = String(chosenPegName || '').trim();
@@ -352,32 +359,52 @@
  return null;
  }
 
+ const tradedBuyPer = listingName ? perInd(listingName, 'BUY') : null;
  const tradedSellPer = listingName ? perInd(listingName, 'SELL') : null;
  const pegBuyPer = pegName ? perInd(pegName, 'BUY') : null;
  const pegSellPer = pegName ? perInd(pegName, 'SELL') : null;
 
+ const tradedBuyTotal = (tradedBuyPer != null) ? (leftQty * tradedBuyPer) : null;
  const tradedSellTotal = (tradedSellPer != null) ? (leftQty * tradedSellPer) : null;
  const pegBuyTotal = (pegBuyPer != null) ? (rightQty * pegBuyPer) : null;
  const pegSellTotal = (pegSellPer != null) ? (rightQty * pegSellPer) : null;
 
- const numerator = (paymentChoice === 'ITEM') ? pegBuyTotal : pegSellTotal;
-
- if (favorEl && tradedSellTotal != null && numerator != null && isFinite(tradedSellTotal) && tradedSellTotal >0 && isFinite(numerator)) {
- const pct = (1 - (Number(numerator) / Number(tradedSellTotal))) *100;
+ // --- Customer favor line ---
+ const customerNumerator = (paymentChoice === 'ITEM') ? pegBuyTotal : pegSellTotal;
+ if (customerFavorEl && tradedSellTotal != null && customerNumerator != null && isFinite(tradedSellTotal) && tradedSellTotal >0 && isFinite(customerNumerator)) {
+ const pct = (1 - (Number(customerNumerator) / Number(tradedSellTotal))) *100;
  const magTxt = Math.abs(pct).toFixed(1);
  const good = pct >=0;
- const label = good ? 'Trade favor' : 'Trade disfavor';
- const word = good ? 'cheeper' : 'more expensive';
+ const label = good ? 'Customer favor' : 'Customer disfavor';
+ const word = good ? 'cheaper' : 'more expensive';
 
- favorEl.classList.remove('good', 'bad');
- favorEl.classList.add(good ? 'good' : 'bad');
- favorEl.textContent = `${label}: ${magTxt}% ${word} compared to store`;
- favorEl.style.display = '';
- } else if (favorEl) {
- favorEl.style.display = 'none';
+ customerFavorEl.classList.remove('good', 'bad');
+ customerFavorEl.classList.add(good ? 'good' : 'bad');
+ customerFavorEl.textContent = `${label}: ${magTxt}% ${word} compared to store`;
+ customerFavorEl.style.display = '';
+ } else if (customerFavorEl) {
+ customerFavorEl.style.display = 'none';
+ }
+
+ // --- Merchant favor line ---
+ if (merchantFavorEl && tradedBuyTotal != null && pegSellTotal != null && isFinite(tradedBuyTotal) && tradedBuyTotal >0 && isFinite(pegSellTotal)) {
+ // Per requirement: (1 - (pegSellTotal / tradedBuyTotal)) *100
+ const pct = (1 - (Number(tradedBuyTotal) / Number(pegSellTotal))) * 100;
+ const magTxt = Math.abs(pct).toFixed(1);
+ const good = pct >= 0;
+ const label = good ? 'Merchant favor' : 'Merchant disfavor';
+ const word = good ? 'cheaper' : 'more expensive';
+
+ merchantFavorEl.classList.remove('good', 'bad');
+ merchantFavorEl.classList.add(good ? 'good' : 'bad');
+ merchantFavorEl.textContent = `${label}: ${magTxt}% ${word} compared to store`;
+ merchantFavorEl.style.display = '';
+ } else if (merchantFavorEl) {
+ merchantFavorEl.style.display = 'none';
  }
  } catch {
- if (favorEl) favorEl.style.display = 'none';
+ if (customerFavorEl) customerFavorEl.style.display = 'none';
+ if (merchantFavorEl) merchantFavorEl.style.display = 'none';
  }
  }
 
