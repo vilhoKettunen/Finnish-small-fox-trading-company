@@ -1,4 +1,4 @@
-// OCM helpers + listing create/edit UI
+ï»¿// OCM helpers + listing create/edit UI
 (function () {
  'use strict';
 
@@ -38,7 +38,7 @@
         }
     }
 
-    // optional: expose for boot wiring (older admin-boot expects Admin._syncEditPricingModeUI_)
+    // optional: expose for boot wiring (older admin-boot expects Admin._syncEditPricingMode)
     if (window.Admin) window.Admin._syncEditPricingModeUI_ = syncEditPricingModeUI_;
  // Only show More info for actionable pending trades
  function isActionablePendingTrade_(tr) {
@@ -264,7 +264,7 @@
  const priceInfo = document.createElement('div');
  priceInfo.className = 'small';
  priceInfo.style.color = '#666';
- priceInfo.textContent = '—';
+ priceInfo.textContent = 'â€”';
  itemWrap.appendChild(priceInfo);
 
  grid.appendChild(itemWrap);
@@ -306,7 +306,7 @@
  const statement = document.createElement('div');
  statement.className = 'small';
  statement.style.marginTop = '6px';
- statement.textContent = '—';
+ statement.textContent = 'â€”';
 
  wrap.appendChild(head);
  wrap.appendChild(grid);
@@ -314,7 +314,7 @@
 
  function updatePriceInfo_() {
  const it = findCatalogItem(input.value);
- if (!it) { priceInfo.textContent = '—'; return; }
+ if (!it) { priceInfo.textContent = 'â€”'; return; }
  const bs = Number(it.bundleSize ||1) ||1;
  const parts = [];
  if (it.buyEach != null) parts.push(`buyEach:${fmt2(it.buyEach)}`);
@@ -324,41 +324,90 @@
  priceInfo.textContent = `${parts.join(', ')} (bs:${bs})`;
  }
 
- function updateStatement_(getSoldName, getSoldStackSize) {
- const soldName = getSoldName ? getSoldName() : 'ITEM';
- const soldSS = Number(getSoldStackSize ? getSoldStackSize() :1) || 1;
- const pb = String(priceBasis.value || 'IND').toUpperCase();
- const pegName = input.value || 'PEG';
- const q = Math.max(1, Math.round(Number(qtyInput.value ||1) ||1));
- const qb = String(qtyBasis.value || 'IND').toUpperCase();
- const pegBS = bundleSizeOfName(pegName);
- const pegQtyInd = (qb === 'STACK') ? (q * pegBS) : q;
+     function updateStatement_(getSoldName, getSoldStackSize) {
+         const soldName = getSoldName ? getSoldName() : 'ITEM';
+         const soldSS = Number(getSoldStackSize ? getSoldStackSize() :1) ||1;
+         const pb = String(priceBasis.value || 'IND').toUpperCase();
+         const pegName = input.value || 'PEG';
+         const q = Math.max(1, Math.round(Number(qtyInput.value || 1) || 1));
+         const qb = String(qtyBasis.value || 'IND').toUpperCase();
+         const pegBS = bundleSizeOfName(pegName);
+         const pegQtyInd = (qb === 'STACK') ? (q * pegBS) : q;
 
- // Equation quantities
- const leftQtyInd = (pb === 'STACK') ? soldSS :1;
- const rightQtyInd = pegQtyInd;
+         // Equation quantities
+         const leftQtyInd = (pb === 'STACK') ? soldSS :1;
+         const rightQtyInd = pegQtyInd;
 
- const eqLine = (pb === 'STACK')
- ? `${leftQtyInd} x ${soldName} = ${rightQtyInd} x ${pegName}`
- : `1 x ${soldName} = ${rightQtyInd} x ${pegName}`;
+         const eqLine = (pb === 'STACK')
+             ? `${leftQtyInd} x ${soldName} = ${rightQtyInd} x ${pegName}`
+             : `1 x ${soldName} = ${rightQtyInd} x ${pegName}`;
 
- const soldBuy = perIndPriceFromCatalogSide_(soldName, 'BUY');
- const soldSell = perIndPriceFromCatalogSide_(soldName, 'SELL');
- const pegBuy = perIndPriceFromCatalogSide_(pegName, 'BUY');
- const pegSell = perIndPriceFromCatalogSide_(pegName, 'SELL');
+         const soldBuy = perIndPriceFromCatalogSide_(soldName, 'BUY');
+         const soldSell = perIndPriceFromCatalogSide_(soldName, 'SELL');
+         const pegBuy = perIndPriceFromCatalogSide_(pegName, 'BUY');
+         const pegSell = perIndPriceFromCatalogSide_(pegName, 'SELL');
 
- function line(label, l, r) {
- if (l == null || r == null) return `${label}: — (missing catalog price)`;
- const leftBt = leftQtyInd * l;
- const rightBt = rightQtyInd * r;
- return `${label}: ${fmt2(leftBt)} BT (${soldName}) | ${fmt2(rightBt)} BT (${pegName})`;
- }
+         function line(label, l, r) {
+             if (l == null || r == null) return `${label}:  (missing catalog price)`;
+             const leftBt = leftQtyInd * l;
+             const rightBt = rightQtyInd * r;
+             return `${label}: ${fmt2(leftBt)} BT (${soldName}) | ${fmt2(rightBt)} BT (${pegName})`;
+         }
 
- const buyLine = line('BUY', soldBuy, pegBuy);
- const sellLine = line('SELL', soldSell, pegSell);
+         const buyLine = line('BUY', soldBuy, pegBuy);
+         const sellLine = line('SELL', soldSell, pegSell);
 
- statement.innerHTML = `${esc(eqLine)}<br><span class="muted">${esc(buyLine)}</span><br><span class="muted">${esc(sellLine)}</span>`;
- }
+         // ----- Favor calculations (match OCMUser behavior) -----
+         function pctLine_(who, pct) {
+             if (pct == null || !isFinite(pct)) return '';
+             const p = Number(pct);
+             const abs = Math.abs(p).toFixed(1);
+             if (p >=0) {
+                 return `<span class="trade-favor good">${esc(who)} favor: ${esc(abs)}% cheaper compared to store</span>`;
+             }
+             return `<span class="trade-favor bad">${esc(who)} disfavor: ${esc(abs)}% more expensive compared to store</span>`;
+         }
+
+         let customerPctRaw = null;
+         let merchantPctRaw = null;
+         try {
+             const soldBuyTotal = (soldBuy == null) ? null : (leftQtyInd * soldBuy);
+             const soldSellTotal = (soldSell == null) ? null : (leftQtyInd * soldSell);
+             const pegBuyTotal = (pegBuy == null) ? null : (rightQtyInd * pegBuy);
+             const pegSellTotal = (pegSell == null) ? null : (rightQtyInd * pegSell);
+
+             const listingType = String((cfg.getListingType && cfg.getListingType()) || (cfg.listingType || 'SELL')).toUpperCase();
+
+             if (listingType === 'BUY') {
+                 // BUY (PEG statement uses ITEM-style formulas by requirement)
+                 // Customer: (1 - (soldBuyTotal / pegSellTotal))*100
+                 if (soldBuyTotal != null && pegSellTotal != null && isFinite(soldBuyTotal) && isFinite(pegSellTotal) && pegSellTotal >0) {
+                     customerPctRaw = (1 - (Number(soldBuyTotal) / Number(pegSellTotal))) *100;
+                 }
+
+                 // Merchant: (1 - (pegBuyTotal / soldSellTotal))*100
+                 if (pegBuyTotal != null && soldSellTotal != null && isFinite(pegBuyTotal) && isFinite(soldSellTotal) && soldSellTotal >0) {
+                     merchantPctRaw = (1 - (Number(pegBuyTotal) / Number(soldSellTotal))) *100;
+                 }
+             } else {
+                 // SELL (keep existing behavior)
+                 // Customer: (1 - (pegBuyTotal / soldSellTotal))*100
+                 if (soldSellTotal != null && pegBuyTotal != null && isFinite(soldSellTotal) && soldSellTotal >0 && isFinite(pegBuyTotal)) {
+                     customerPctRaw = (1 - (Number(pegBuyTotal) / Number(soldSellTotal))) *100;
+                 }
+
+                 // Merchant: (1 - (soldBuyTotal / pegSellTotal))*100
+                 if (soldBuyTotal != null && pegSellTotal != null && isFinite(pegSellTotal) && pegSellTotal >0 && isFinite(soldBuyTotal)) {
+                     merchantPctRaw = (1 - (Number(soldBuyTotal) / Number(pegSellTotal))) *100;
+                 }
+             }
+         } catch { customerPctRaw = null; merchantPctRaw = null; }
+
+         const customerHtml = pctLine_('Customer', customerPctRaw);
+         const merchantHtml = pctLine_('Merchant', merchantPctRaw);
+
+         statement.innerHTML = `${esc(eqLine)}<br><span class="muted">${esc(buyLine)}</span><br><span class="muted">${esc(sellLine)}</span>${customerHtml ? `<br>${customerHtml}` : ''}${merchantHtml ? `<br>${merchantHtml}` : ''}`;
+     }
 
  window.attachStoreDropdown(input, list, (it) => {
  input.value = it.name;
@@ -374,6 +423,9 @@
 
  updatePriceInfo_();
  updateStatement_(cfg.getSoldName, cfg.getSoldStackSize);
+
+// Expose refresh hook so sold-side inputs can trigger recompute
+ wrap.refreshStatement = () => updateStatement_(cfg.getSoldName, cfg.getSoldStackSize);
 
  wrap.getValue = () => {
  const itemName = String(input.value || '').trim();
@@ -433,6 +485,7 @@
  const it = findCatalogItem(byId('createItemStore').value.trim());
  return Number(it?.bundleSize ||1) ||1;
  },
+ getListingType: () => byId('createTypeStore')?.value || 'SELL',
  onChange: () => window.validatePegSet_(createState.store.primary, createState.store.alts, byId('createStorePegWarn'))
  });
  storeBox.appendChild(createState.store.primary);
@@ -447,9 +500,27 @@
  defaultRow: { itemName: '', ui: { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput:1 } },
  getSoldName: () => byId('createItemHalf').value.trim() || 'ITEM',
  getSoldStackSize: () => Number(byId('createStackHalf').value ||1) ||1,
+ getListingType: () => byId('createTypeHalf')?.value || 'SELL',
  onChange: () => window.validatePegSet_(createState.half.primary, createState.half.alts, byId('createHalfPegWarn'))
  });
  halfBox.appendChild(createState.half.primary);
+
+ // Ensure type dropdown changes refresh PEG statements (favor labels are type-dependent)
+ try {
+ const hookType = (el, modeKey) => {
+ if (!el || el._ocmPegTypeRefreshHooked) return;
+ el._ocmPegTypeRefreshHooked = true;
+ el.addEventListener('change', () => {
+ try {
+ const st = Admin.state?.createState?.[modeKey];
+ if (st?.primary?.refreshStatement) st.primary.refreshStatement();
+ (st?.alts || []).forEach(r => r?.refreshStatement && r.refreshStatement());
+ } catch { /* ignore */ }
+ });
+ };
+ hookType(byId('createTypeStore'), 'store');
+ hookType(byId('createTypeHalf'), 'half');
+ } catch { /* ignore */ }
  };
 
  // ===== Edit dialog =====
@@ -466,6 +537,11 @@
  defaultRow: editState.primary || { itemName: '', ui: { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput:1 } },
  getSoldName: soldNameGetter,
  getSoldStackSize: soldStackGetter,
+ getListingType: () => {
+ // In admin editor, Type is stored on the listing being edited (source of truth)
+ const t = String(Admin.state?.ocmEditingListing?.type || '').toUpperCase();
+ return t || 'SELL';
+ },
  onChange: () => window.validatePegSet_(editState.primary, editState.alts, byId('editPegWarn'))
  });
  box.appendChild(editState.primary);
@@ -480,6 +556,10 @@
  defaultRow: a,
  getSoldName: soldNameGetter,
  getSoldStackSize: soldStackGetter,
+ getListingType: () => {
+ const t = String(Admin.state?.ocmEditingListing?.type || '').toUpperCase();
+ return t || 'SELL';
+ },
  onRemove: () => {
  const idx = editState.alts.indexOf(row);
  if (idx >=0) editState.alts.splice(idx,1);
@@ -495,7 +575,7 @@
  window.validatePegSet_(editState.primary, editState.alts, byId('editPegWarn'));
  }
 
-    window.openAdminEditListing_ = function openAdminEditListing_(l) {
+ window.openAdminEditListing_ = function openAdminEditListing_(l) {
  Admin.state.ocmEditingListing = l;
 
  byId('editListingId').textContent = l.listingId;
@@ -533,6 +613,25 @@
  const soldStackGetter = () => Number(byId('editStack').value ||1) ||1;
 
  renderEditPegBox_(soldNameGetter, soldStackGetter);
+
+ // NEW: sold-side changes should refresh peg statements (favor lines depend on sold-side)
+ try {
+ const editItem = byId('editItemName');
+ const editStack = byId('editStack');
+ const hookEdit = (el) => {
+ if (!el || el._ocmPegRefreshHooked) return;
+ el._ocmPegRefreshHooked = true;
+ el.addEventListener('input', () => {
+ try {
+ const st = Admin.state.editState;
+ if (st?.primary?.refreshStatement) st.primary.refreshStatement();
+ (st?.alts || []).forEach(r => r?.refreshStatement && r.refreshStatement());
+ } catch { /* ignore */ }
+ });
+ };
+ hookEdit(editItem);
+ hookEdit(editStack);
+ } catch { /* ignore */ }
 
  byId('editPause').checked = String(l.statusRaw || l.status || '').toUpperCase() === 'PAUSED';
  byId('editRejectedWarning').style.display = (String(l.statusRaw || l.status || '').toUpperCase() === 'REJECTED') ? 'block' : 'none';
@@ -738,7 +837,7 @@
         if (s === 'PAUSED') return '<span class="pill pill-paused">PAUSED</span>';
         if (s === 'REJECTED') return '<span class="pill pill-rejected">REJECTED</span>';
         if (s === 'DELETED') return '<span class="pill">DELETED</span>';
-        return `<span class="pill">${esc(s || '—')}</span>`;
+        return `<span class="pill">${esc(s || 'â€”')}</span>`;
     }
 
     // Helper: short pricing summary shown in listing rows
@@ -752,7 +851,7 @@
             ui: { priceBasis: p.pricingBasis || 'IND' }
         } : null);
 
-        if (!prim || !prim.itemName) return '—';
+        if (!prim || !prim.itemName) return 'â€”';
 
         const alts = Array.isArray(p.altPegs) ? p.altPegs : [];
         const altCount = alts.length;
@@ -897,5 +996,281 @@
  noTarget.style.display = 'none';
  content.classList.remove('disabled');
 };
+
+ // ===== Create peg UI helpers (ensure globals exist) =====
+ // These must be inside this module scope so they can see `byId`.
+ window.addAltPeg_ = function addAltPeg_(mode) {
+ const createState = Admin.state.createState;
+ const st = createState?.[mode];
+ const warn = byId(mode === 'store' ? 'createStorePegWarn' : 'createHalfPegWarn');
+ const box = byId(mode === 'store' ? 'createStorePegBox' : 'createHalfPegBox');
+
+ if (!st || !warn || !box) return;
+ if (st.alts.length >=10) { warn.textContent = 'Max10 alternative pegs.'; return; }
+
+ const idx = st.alts.length +1;
+ const row = window.makePegRowDom_({
+ title: `Alternative peg #${idx}`,
+ canRemove: true,
+ defaultRow: { itemName: '', ui: { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput:1 } },
+ getSoldName: mode === 'store'
+ ? () => byId('createItemStore').value.trim() || 'ITEM'
+ : () => byId('createItemHalf').value.trim() || 'ITEM',
+ getSoldStackSize: mode === 'store'
+ ? () => {
+ const it = findCatalogItem(byId('createItemStore').value.trim());
+ return Number(it?.bundleSize ||1) ||1;
+ }
+ : () => Number(byId('createStackHalf').value ||1) ||1,
+ getListingType: mode === 'store'
+ ? () => byId('createTypeStore')?.value || 'SELL'
+ : () => byId('createTypeHalf')?.value || 'SELL',
+ onRemove: () => {
+ const i = st.alts.indexOf(row);
+ if (i >=0) st.alts.splice(i,1);
+ row.remove();
+ window.validatePegSet_(st.primary, st.alts, warn);
+ },
+ onChange: () => window.validatePegSet_(st.primary, st.alts, warn)
+ });
+
+ st.alts.push(row);
+ box.appendChild(row);
+ window.validatePegSet_(st.primary, st.alts, warn);
+ };
+
+ // ===== Restock dialog (Admin OCM) =====
+ window.openAdminRestock_ = function openAdminRestock_(l) {
+ Admin.state.ocmRestockingListing = l;
+ byId('restockListingId').textContent = l.listingId;
+ const current = (l.remainingQuantity == null || l.remainingQuantity === '') ? (l.qtyAvailable ??0) : l.remainingQuantity;
+ byId('restockQtyInput').value = String(Math.max(0, Math.round(Number(current ||0) ||0)));
+ byId('restockQtyMode').value = 'IND';
+ byId('restockMsg').textContent = '';
+ byId('dlgRestock')?.showModal();
+ };
+
+ window.sendAdminRestock_ = async function sendAdminRestock_() {
+ if (!Admin.state.ocmRestockingListing) return;
+ if (!Admin.state.googleIdToken) return;
+ if (!Admin.state.globalTargetUser) return;
+
+ const msg = byId('restockMsg');
+ msg.textContent = 'Saving...';
+
+ try {
+ const listingId = Admin.state.ocmRestockingListing.listingId;
+ const qtyIn = assertIntegerQty_(byId('restockQtyInput').value, 'New stock value', true);
+ const mode = byId('restockQtyMode').value;
+ const ss = Number(Admin.state.ocmRestockingListing.stackSize ||1) ||1;
+ const remainingQuantity = computeQtyUnitsFromInput(qtyIn, mode, ss);
+
+ await window.apiPost('ocmAdminUpdateListingV2', {
+ idToken: Admin.state.googleIdToken,
+ userId: Admin.state.globalTargetUser.userId,
+ listingId,
+ approveNow: true,
+ remainingQuantity,
+ quantityUnits: remainingQuantity
+ });
+
+ msg.textContent = 'Restocked and activated.';
+ await window.loadAdminTargetListings();
+ setTimeout(() => byId('dlgRestock')?.close(),350);
+ } catch (e) {
+ msg.textContent = 'Error: ' + (e?.message || e);
+ }
+ };
+
+ // ===== Create tab switching (admin) =====
+ // Admin.html uses inline onclick="setAdminCreateTab('store'|'half'|'full')".
+ // If this function is missing, the create UI feels "dead" (no console error because inline handler resolves late).
+ window.setAdminCreateTab = function setAdminCreateTab(which) {
+ const map = {
+ store: { tab: 'tabCreateStore', panel: 'panelCreateStore' },
+ half: { tab: 'tabCreateHalf', panel: 'panelCreateHalf' },
+ full: { tab: 'tabCreateFull', panel: 'panelCreateFull' }
+ };
+ Object.keys(map).forEach(k => {
+ const p = byId(map[k].panel);
+ const t = byId(map[k].tab);
+ if (p) p.style.display = (k === which) ? 'block' : 'none';
+ if (t) t.setAttribute('aria-selected', (k === which) ? 'true' : 'false');
+ });
+ };
+
+ // ===== Create listings (Admin -> on behalf of target user) =====
+ // These are wired from `admin_js/admin-boot.js` to the Create buttons.
+
+ function extractListingId_(resp) {
+ const d = resp?.data || resp?.result || resp;
+ return d?.listingId || d?.id || d?.listing?.listingId || null;
+ }
+
+ window.adminCreateListingStore = async function adminCreateListingStore() {
+ if (!Admin.state.googleIdToken) return;
+ if (!Admin.state.globalTargetUser) {
+ const m = byId('createMsgStore');
+ if (m) m.textContent = 'Select a target user first.';
+ return;
+ }
+
+ const msg = byId('createMsgStore');
+ if (msg) msg.textContent = 'Creating...';
+
+ try {
+ await window.ensureOcmCatalogLoaded();
+
+ const type = byId('createTypeStore')?.value || 'SELL';
+ const listingMode = 'STORE';
+
+ const itemName = String(byId('createItemStore')?.value || '').trim();
+ const item = findCatalogItem(itemName);
+ if (!item) throw new Error('Store item not found in catalog');
+
+ const stackSize = Number(item.bundleSize ||1) ||1;
+
+ const qtyIn = Number(byId('createQtyUnitsStore')?.value ||0);
+ const qtyMode = byId('createQtyModeStore')?.value || 'IND';
+ const quantityUnits = computeQtyUnitsFromInput(qtyIn, qtyMode, stackSize);
+ assertIntegerQty_(quantityUnits, 'Quantity', false);
+
+ const createState = Admin.state.createState;
+ if (!window.validatePegSet_(createState.store.primary, createState.store.alts, byId('createStorePegWarn'))) {
+ throw new Error('Fix peg inputs');
+ }
+ const pegPayload = buildPegPayload_(createState.store.primary, createState.store.alts);
+
+ const r = await window.apiPost('ocmAdminCreateListingV2', {
+ idToken: Admin.state.googleIdToken,
+ userId: Admin.state.globalTargetUser.userId,
+ listingMode,
+ type,
+ itemName,
+ sourceItemId: 'sheet:' + item.name,
+ stackSize,
+ quantityUnits,
+ pricingMode: 'PEG',
+ primaryPeg: pegPayload.primaryPeg,
+ altPegs: pegPayload.altPegs,
+ // This is the key requirement: create and approve immediately (bypass review-queue).
+ approveNow: true
+ });
+
+ const listingId = extractListingId_(r);
+ if (!listingId) throw new Error('No listingId returned from server.');
+
+ if (msg) msg.textContent = 'Created. ListingId: ' + listingId;
+ await window.loadAdminTargetListings();
+ } catch (e) {
+ if (msg) msg.textContent = 'Error: ' + (e?.message || e);
+ }
+ };
+
+ window.adminCreateListingHalf = async function adminCreateListingHalf() {
+ if (!Admin.state.googleIdToken) return;
+ if (!Admin.state.globalTargetUser) {
+ const m = byId('createMsgHalf');
+ if (m) m.textContent = 'Select a target user first.';
+ return;
+ }
+
+ const msg = byId('createMsgHalf');
+ if (msg) msg.textContent = 'Creating...';
+
+ try {
+ await window.ensureOcmCatalogLoaded();
+
+ const type = byId('createTypeHalf')?.value || 'SELL';
+ const listingMode = 'HALF';
+
+ const itemName = String(byId('createItemHalf')?.value || '').trim();
+ if (!itemName) throw new Error('Item name required');
+
+ const stackSize = assertIntegerQty_(byId('createStackHalf')?.value, 'Stack size', false);
+
+ const qtyIn = Number(byId('createQtyUnitsHalf')?.value ||0);
+ const qtyMode = byId('createQtyModeHalf')?.value || 'IND';
+ const quantityUnits = computeQtyUnitsFromInput(qtyIn, qtyMode, stackSize);
+ assertIntegerQty_(quantityUnits, 'Quantity', false);
+
+ const createState = Admin.state.createState;
+ if (!window.validatePegSet_(createState.half.primary, createState.half.alts, byId('createHalfPegWarn'))) {
+ throw new Error('Fix peg inputs');
+ }
+ const pegPayload = buildPegPayload_(createState.half.primary, createState.half.alts);
+
+ const r = await window.apiPost('ocmAdminCreateListingV2', {
+ idToken: Admin.state.googleIdToken,
+ userId: Admin.state.globalTargetUser.userId,
+ listingMode,
+ type,
+ itemName,
+ sourceItemId: '',
+ stackSize,
+ quantityUnits,
+ pricingMode: 'PEG',
+ primaryPeg: pegPayload.primaryPeg,
+ altPegs: pegPayload.altPegs,
+ approveNow: true
+ });
+
+ const listingId = extractListingId_(r);
+ if (!listingId) throw new Error('No listingId returned from server.');
+
+ if (msg) msg.textContent = 'Created. ListingId: ' + listingId;
+ await window.loadAdminTargetListings();
+ } catch (e) {
+ if (msg) msg.textContent = 'Error: ' + (e?.message || e);
+ }
+ };
+
+ window.adminCreateListingFull = async function adminCreateListingFull() {
+ if (!Admin.state.googleIdToken) return;
+ if (!Admin.state.globalTargetUser) {
+ const m = byId('createMsgFull');
+ if (m) m.textContent = 'Select a target user first.';
+ return;
+ }
+
+ const msg = byId('createMsgFull');
+ if (msg) msg.textContent = 'Creating...';
+
+ try {
+ const type = byId('createTypeFull')?.value || 'SELL';
+ const listingMode = 'FULL';
+
+ const itemName = String(byId('createItemFull')?.value || '').trim();
+ if (!itemName) throw new Error('Item name required');
+
+ const stackSize = assertIntegerQty_(byId('createStackFull')?.value, 'Stack size', false);
+ const quantityUnits = assertIntegerQty_(byId('createQtyUnitsFull')?.value, 'Quantity', false);
+
+ const fixedBTPerUnit = Number(byId('createFixedBT')?.value ||0);
+ if (!isFinite(fixedBTPerUnit) || fixedBTPerUnit <=0) throw new Error('Fixed BT per unit must be >0');
+
+ const r = await window.apiPost('ocmAdminCreateListingV2', {
+ idToken: Admin.state.googleIdToken,
+ userId: Admin.state.globalTargetUser.userId,
+ listingMode,
+ type,
+ itemName,
+ sourceItemId: '',
+ stackSize,
+ quantityUnits,
+ pricingMode: 'FIXED_BT',
+ fixedBTPerUnit,
+ approveNow: true
+ });
+
+ const listingId = extractListingId_(r);
+ if (!listingId) throw new Error('No listingId returned from server.');
+
+ if (msg) msg.textContent = 'Created. ListingId: ' + listingId;
+ await window.loadAdminTargetListings();
+ } catch (e) {
+ if (msg) msg.textContent = 'Error: ' + (e?.message || e);
+ }
+ };
 
 })();

@@ -13,9 +13,9 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 1300px;
-            margin: 20px auto;
-            padding: 0 16px;
+            max-width:1300px;
+            margin:20px auto;
+            padding:016px;
         }
 
         h1, h2, h3, h4 {
@@ -489,9 +489,14 @@
         .peg-row-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px,1fr));
-            gap: 8px;
-            margin-top: 8px;
+            gap:8px;
+            margin-top:8px;
         }
+
+        /* ===== Favor lines (match OCMHome/OCMUser) ===== */
+        .trade-favor { font-weight: bold; display: block; margin-top:4px; }
+        .trade-favor.good { color: #2e7d32; }
+        .trade-favor.bad { color: #c62828; }
     </style>
 </head>
 <body>
@@ -980,7 +985,7 @@
                 </div>
                 <div>
                     <div class="small">Note</div>
-                    <div class="small">Admin restock applies immediately (auto-approve).</div>
+                    <div class="small">Restock updates listing stock only (does not change store stock).</div>
                 </div>
             </div>
             <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
@@ -1074,7 +1079,7 @@
     <script src="admin_js/admin-history.js"></script>
     <script src="admin_js/admin-stock.js"></script>
     <script src="admin_js/admin-trades.js?v=moreinfo4"></script>
-    <script src="admin_js/admin-ocm.js?v=moreinfo7"></script>
+    <script src="admin_js/admin-ocm.js?v=moreinfo9"></script>
     <script src="admin_js/admin-account-edits.js"></script>
     <script src="admin_js/admin-target-hooks.js"></script>
     <script src="admin_js/admin-target-user.js"></script>

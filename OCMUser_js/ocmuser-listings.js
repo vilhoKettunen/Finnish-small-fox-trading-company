@@ -278,6 +278,7 @@
  defaultRow: S.editState.primary || { itemName:'', ui:{ priceBasis:'IND', pegQtyBasis:'IND', pegQtyInput:1 } },
  getSoldName: soldNameGetter,
  getSoldStackSize: soldStackGetter,
+ getListingType: () => byId('editType')?.value || 'SELL',
  onChange: () => O.validatePegSet_(S.editState.primary, S.editState.alts, byId('editPegWarn'))
  });
  box.appendChild(S.editState.primary);
@@ -292,6 +293,7 @@
  defaultRow: a,
  getSoldName: soldNameGetter,
  getSoldStackSize: soldStackGetter,
+ getListingType: () => byId('editType')?.value || 'SELL',
  onRemove: () => {
  const idx = S.editState.alts.indexOf(row);
  if (idx >=0) S.editState.alts.splice(idx,1);
@@ -362,6 +364,21 @@
 
  renderEditPegBox_(soldNameGetter, soldStackGetter);
  syncEditModeUI_();
+
+ // Refresh PEG statement favor labels when Type dropdown changes
+ try {
+ const typeEl = byId('editType');
+ if (typeEl && !typeEl._ocmPegTypeRefreshHooked) {
+ typeEl._ocmPegTypeRefreshHooked = true;
+ typeEl.addEventListener('change', () => {
+ try {
+ if (S.editState?.primary?.refreshStatement) S.editState.primary.refreshStatement();
+ (S.editState?.alts || []).forEach(r => r?.refreshStatement && r.refreshStatement());
+ } catch { /* ignore */ }
+ });
+ }
+ } catch { /* ignore */ }
+
  byId('dlgEditListing').showModal();
  }
 

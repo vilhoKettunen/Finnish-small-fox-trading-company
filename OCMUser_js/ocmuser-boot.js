@@ -182,9 +182,32 @@
                 }
             } catch { /* ignore */ }
 
+            // Existing sold-side hooks
             on(byId('createItemStore'), 'input', () => (O && O.validatePegSet_) ? O.validatePegSet_(O.state.createState.store.primary, O.state.createState.store.alts, byId('createStorePegWarn')) : null);
             on(byId('createItemHalf'), 'input', () => (O && O.validatePegSet_) ? O.validatePegSet_(O.state.createState.half.primary, O.state.createState.half.alts, byId('createHalfPegWarn')) : null);
             on(byId('createStackHalf'), 'input', () => (O && O.validatePegSet_) ? O.validatePegSet_(O.state.createState.half.primary, O.state.createState.half.alts, byId('createHalfPegWarn')) : null);
+
+            // NEW: type dropdown changes must refresh PEG statements immediately (favor labels swap for BUY)
+            try {
+                const hookTypeRefresh = (typeEl, modeKey, warnId) => {
+                    if (!typeEl || typeEl._ocmTypePegRefreshHooked) return;
+                    typeEl._ocmTypePegRefreshHooked = true;
+                    on(typeEl, 'change', () => {
+                        try {
+                            const st = O.state?.createState?.[modeKey];
+                            if (st?.primary?.refreshStatement) st.primary.refreshStatement();
+                            (st?.alts || []).forEach(r => r?.refreshStatement && r.refreshStatement());
+                            // keep existing validation behavior
+                            if (O && O.validatePegSet_ && warnId) {
+                                O.validatePegSet_(st.primary, st.alts, byId(warnId));
+                            }
+                        } catch { /* ignore */ }
+                    });
+                };
+
+                hookTypeRefresh(byId('createTypeStore'), 'store', 'createStorePegWarn');
+                hookTypeRefresh(byId('createTypeHalf'), 'half', 'createHalfPegWarn');
+            } catch { /* ignore */ }
         }).catch(e => console.warn('catalog init failed', e));
 
         // Always boot auth last (must not be blocked by missing sections)

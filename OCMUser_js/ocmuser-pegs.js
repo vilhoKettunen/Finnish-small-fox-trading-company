@@ -168,6 +168,8 @@
                 return `<span class="trade-favor ${cls}">${esc(label)}: ${esc(magTxt)}% ${esc(word)} compared to store</span>`;
             }
 
+            let customerPctRaw = null;
+            let merchantPctRaw = null;
             let customerFavorHtml = '';
             let merchantFavorHtml = '';
 
@@ -177,17 +179,35 @@
                 customerFavorHtml = `<span class="muted">missing catalog price</span>`;
                 merchantFavorHtml = '';
             } else {
-                // Customer pct = (1 - (pegBuyTotal / soldSellTotal))*100
-                if (pegBuyTotal != null && soldSellTotal != null && isFinite(pegBuyTotal) && isFinite(soldSellTotal) && soldSellTotal > 0) {
-                    const pct = (1 - (Number(pegBuyTotal) / Number(soldSellTotal))) * 100;
-                    customerFavorHtml = favorLineHtml_('Customer', pct);
+                // Listing type decides which formula set to use.
+                const listingType = String(cfg.getListingType ? cfg.getListingType() : (cfg.listingType || 'SELL')).toUpperCase();
+
+                if (listingType === 'BUY') {
+                    // BUY PEG statement uses ITEM-style BUY formulas (per clarified requirement)
+                    // Customer: (1 - (soldBuyTotal / pegSellTotal))*100
+                    if (soldBuyTotal != null && pegSellTotal != null && isFinite(soldBuyTotal) && isFinite(pegSellTotal) && pegSellTotal > 0) {
+                        customerPctRaw = (1 - (Number(soldBuyTotal) / Number(pegSellTotal))) * 100;
+                    }
+
+                    // Merchant: (1 - (pegBuyTotal / soldSellTotal))*100
+                    if (pegBuyTotal != null && soldSellTotal != null && isFinite(pegBuyTotal) && isFinite(soldSellTotal) && soldSellTotal > 0) {
+                        merchantPctRaw = (1 - (Number(pegBuyTotal) / Number(soldSellTotal))) * 100;
+                    }
+                } else {
+                    // SELL formulas (keep existing behavior)
+                    // Customer: (1 - (pegBuyTotal / soldSellTotal))*100
+                    if (pegBuyTotal != null && soldSellTotal != null && isFinite(pegBuyTotal) && isFinite(soldSellTotal) && soldSellTotal > 0) {
+                        customerPctRaw = (1 - (Number(pegBuyTotal) / Number(soldSellTotal))) * 100;
+                    }
+
+                    // Merchant: (1 - (soldBuyTotal / pegSellTotal))*100
+                    if (soldBuyTotal != null && pegSellTotal != null && isFinite(soldBuyTotal) && isFinite(pegSellTotal) && pegSellTotal > 0) {
+                        merchantPctRaw = (1 - (Number(soldBuyTotal) / Number(pegSellTotal))) * 100;
+                    }
                 }
 
-                // Merchant pct = (1 - (soldBuyTotal / pegSellTotal))*100 (per your final confirmation)
-                if (soldBuyTotal != null && pegSellTotal != null && isFinite(soldBuyTotal) && isFinite(pegSellTotal) && pegSellTotal > 0) {
-                    const pct = (1 - (Number(soldBuyTotal) / Number(pegSellTotal))) * 100;
-                    merchantFavorHtml = favorLineHtml_('Merchant', pct);
-                }
+                if (customerPctRaw != null && isFinite(customerPctRaw)) customerFavorHtml = favorLineHtml_('Customer', customerPctRaw);
+                if (merchantPctRaw != null && isFinite(merchantPctRaw)) merchantFavorHtml = favorLineHtml_('Merchant', merchantPctRaw);
             }
 
             // Render statement: equation + BUY/SELL + favors (when computable)
@@ -225,6 +245,9 @@
             };
             return { itemName, ui };
         };
+
+        // Expose refresh hook so sold-side inputs can trigger recompute
+        wrap.refreshStatement = () => updateStatement_();
 
         return wrap;
     }
@@ -272,6 +295,7 @@
                 const it = O.findCatalogItem(byId('createItemStore').value.trim());
                 return Number(it?.bundleSize || 1) || 1;
             },
+            getListingType: () => byId('createTypeStore')?.value || 'SELL',
             onChange: () => validatePegSet_(S.createState.store.primary, S.createState.store.alts, byId('createStorePegWarn'))
         });
         storeBox.appendChild(S.createState.store.primary);
@@ -287,9 +311,27 @@
             defaultRow: { itemName: '', ui: { priceBasis: 'IND', pegQtyBasis: 'IND', pegQtyInput: 1 } },
             getSoldName: () => byId('createItemHalf').value.trim() || 'ITEM',
             getSoldStackSize: () => Number(byId('createStackHalf').value || 1) || 1,
+            getListingType: () => byId('createTypeHalf')?.value || 'SELL',
             onChange: () => validatePegSet_(S.createState.half.primary, S.createState.half.alts, byId('createHalfPegWarn'))
         });
         halfBox.appendChild(S.createState.half.primary);
+
+        // Ensure type dropdown changes refresh PEG statements (favor lines are type-dependent)
+        try {
+            const hookType = (el, modeKey) => {
+                if (!el || el._ocmPegTypeRefreshHooked) return;
+                el._ocmPegTypeRefreshHooked = true;
+                el.addEventListener('change', () => {
+                    try {
+                        const st = S.createState?.[modeKey];
+                        if (st?.primary?.refreshStatement) st.primary.refreshStatement();
+                        (st?.alts || []).forEach(r => r?.refreshStatement && r.refreshStatement());
+                    } catch { /* ignore */ }
+                });
+            };
+            hookType(byId('createTypeStore'), 'store');
+            hookType(byId('createTypeHalf'), 'half');
+        } catch { /* ignore */ }
     }
 
     function addAltPeg_(mode) {
@@ -319,6 +361,9 @@
                     return Number(it?.bundleSize || 1) || 1;
                 }
                 : () => Number(byId('createStackHalf').value || 1) || 1,
+            getListingType: mode === 'store'
+                ? () => byId('createTypeStore')?.value || 'SELL'
+                : () => byId('createTypeHalf')?.value || 'SELL',
             onChange: () => validatePegSet_(st.primary, st.alts, warn)
         });
 

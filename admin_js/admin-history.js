@@ -6,6 +6,9 @@
     const byId = Admin.byId;
     const esc = Admin.esc;
 
+    // OCM catalog cache for stk/ind display
+    let ocmCatalog = null;
+
     function adminNormalizeResult(j) {
     if (j && j.data != null) return j.data;
     if (j && j.result != null) return j.result;
@@ -17,7 +20,7 @@
     const d = new Date(iso);
    if (isNaN(d.getTime())) return iso;
    const dd = String(d.getDate()).padStart(2, '0');
-   const mm = String(d.getMonth() + 1).padStart(2, '0');
+   const mm = String(d.getMonth() +1).padStart(2, '0');
    const yyyy = d.getFullYear();
     const hh = String(d.getHours()).padStart(2, '0');
     const mi = String(d.getMinutes()).padStart(2, '0');
@@ -29,12 +32,50 @@
   try { return JSON.parse(detailsJson); } catch { return null; }
     }
 
-function buildItemsListHtml(items) {
+function formatQtyStkInd_(qty, stackSize) {
+ const qRaw = Number(qty ||0);
+ const q = isFinite(qRaw) ? Math.max(0, Math.round(qRaw)) :0;
+ const ssRaw = Number(stackSize ||1);
+ const ss = (isFinite(ssRaw) && ssRaw >1) ? Math.round(ssRaw) :1;
+
+ if (ss <=1) return `${q} ind`;
+
+ const stk = Math.floor(q / ss);
+ const ind = q % ss;
+ if (stk >0 && ind >0) return `${stk} stk + ${ind} ind`;
+ if (stk >0 && ind ===0) return `${stk} stk`;
+ return `${ind} ind`;
+}
+
+ async function ensureOcmCatalogLoadedForAdminHistory_() {
+ if (Array.isArray(ocmCatalog) && ocmCatalog.length) return;
+ try {
+ const r = await window.apiGet('ocmGetCatalogSnapshot', {});
+ const d = adminNormalizeResult(r);
+ const items = d?.items || [];
+ ocmCatalog = items.map(x => ({
+ name: String(x?.name || '').trim(),
+ bundleSize: Number(x?.bundleSize ||1) ||1
+ }));
+ } catch {
+ ocmCatalog = [];
+ }
+ }
+
+ function getBundleSizeFromCatalog_(name) {
+ const q = String(name || '').trim().toLowerCase();
+ if (!q || !Array.isArray(ocmCatalog)) return null;
+ const it = ocmCatalog.find(i => String(i.name || '').trim().toLowerCase() === q);
+ const bs = Number(it?.bundleSize ||0) ||0;
+ return bs >1 ? bs : null;
+ }
+
+    function buildItemsListHtml(items) {
     if (!Array.isArray(items) || !items.length) return '<div class="history-empty-msg">Nothing</div>';
    return items.map(it => {
       const name = it.itemName || it.name || 'Unknown item';
-   const qty = Number(it.qty || it.quantity || 0);
-   const bundle = it.bundleSize && Number(it.bundleSize) > 1 ? `x${Number(it.bundleSize)}` : 'x';
+   const qty = Number(it.qty || it.quantity ||0);
+   const bundle = it.bundleSize && Number(it.bundleSize) >1 ? `x${Number(it.bundleSize)}` : 'x';
  const price = it.priceBT || it.price;
   const qtyStr = `${qty}${bundle}`;
         const priceStr = price != null ? ` (${price} BT)` : '';
@@ -133,17 +174,36 @@ function buildItemsListHtml(items) {
     const pricing = d.pricing || {};
     const prettyAt = formatDatePretty(h.at || '');
 
-  return `<div class="history-details-box">
+    const tradedItemName = String(listing.itemName || '').trim();
+ const tradedQty = Number(req.requestedUnits ||0) ||0;
+
+ // Traded item: always use catalog bundleSize when possible; if custom item not in catalog use listing.stackSize; else1
+ const tradedCatalogBs = getBundleSizeFromCatalog_(tradedItemName);
+ const tradedFallbackSs = Number(listing.stackSize ||1) ||1;
+ const tradedStackSize = (tradedCatalogBs && tradedCatalogBs >1) ? tradedCatalogBs : (tradedFallbackSs >1 ? tradedFallbackSs :1);
+ const tradedQtyLabel = formatQtyStkInd_(tradedQty, tradedStackSize);
+
+ // Payment item: always catalog bundleSize (default1)
+ let payItemPart = '';
+ if (String(payment.method || '').toUpperCase() === 'ITEM') {
+ const payName = String(payment.payItemName || payment.payItem || '').trim();
+ const payQty = Number(payment.payItemQty ||0) ||0;
+ const payBs = getBundleSizeFromCatalog_(payName) ||1;
+ const payQtyLabel = formatQtyStkInd_(payQty, payBs);
+ payItemPart = ` (${esc(payQtyLabel)} ${esc(payName)})`;
+ }
+
+ return `<div class="history-details-box">
        <div class="small" style="margin-bottom:6px;">Date: <strong>${esc(prettyAt || (h.at || ''))}</strong> <span class="pill-lite">${esc(side)}</span></div>
   <div class="small" style="margin-bottom:6px;">
-       Item: <strong>${esc(listing.itemName || '')}</strong> &nbsp;|&nbsp;
-      Qty: <strong>${esc(req.requestedUnits || '')}</strong> &nbsp;|&nbsp;
+       Item: <strong>${esc(tradedItemName)}</strong> &nbsp;|&nbsp;
+      Qty: <strong>${esc(tradedQtyLabel)}</strong> &nbsp;|&nbsp;
  Type: <strong>${esc(listing.type || '')}</strong>
         </div>
    <div class="small" style="margin-bottom:6px;">
  Payment: <strong>${esc(payment.method || 'BT')}</strong>
- ${payment.method === 'ITEM' ? ` (${esc(payment.payItemQty)} ${esc(payment.payItemName)})` : ''}
-       &nbsp;|&nbsp; Total: <strong>${(Number(payment.canonicalBT ?? payment.payTotalBT ?? h.totalValueBT ?? 0)).toFixed(2)} BT</strong>
+ ${payItemPart}
+       &nbsp;|&nbsp; Total: <strong>${(Number(payment.canonicalBT ?? payment.payTotalBT ?? h.totalValueBT ??0)).toFixed(2)} BT</strong>
   </div>
    <div class="small">
  Pricing basis: <strong>${esc(pricing.pricingBasis || '')}</strong>
@@ -180,7 +240,11 @@ window.adminLoadHistory = async function adminLoadHistory() {
         const since = byId('adminDtFrom').value || '';
         const until = byId('adminDtTo').value || '';
     const mode = byId('adminHistoryMode').value;
-  const action = (mode === 'OCM') ? 'ocmGetHistory' : 'getHistory';
+
+ // Ensure catalog present if admin is in OCM mode
+ if (mode === 'OCM') await ensureOcmCatalogLoadedForAdminHistory_();
+
+    const action = (mode === 'OCM') ? 'ocmGetHistory' : 'getHistory';
 
     try {
         const r = await window.apiGet(action, {

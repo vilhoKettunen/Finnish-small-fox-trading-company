@@ -311,7 +311,27 @@
  const parts = [];
 
  if (est.paymentChoice === 'ITEM') {
- parts.push(`You ${verbMain} ~${est.payItems} ${est.payPegName} (rounded up).`);
+ // Render stk/ind breakdown for payment item using catalog bundle size (if available)
+ let payQtyLabel = `~${est.payItems}`;
+ try {
+ const payName = String(est.payPegName || '').trim();
+ const it = payName ? O.findCatalogItem(payName) : null;
+ const bs = Number(it?.bundleSize ||1) ||1;
+ const n = Math.max(0, Math.round(Number(est.payItems ||0) ||0));
+ if (bs >1 && n >0) {
+ const stk = Math.floor(n / bs);
+ const ind = n % bs;
+ const partsQty = [];
+ if (stk >0) partsQty.push(`${stk} stk`);
+ if (ind >0) partsQty.push(`${ind} ind`);
+ if (partsQty.length) payQtyLabel = partsQty.join(' + ');
+ else payQtyLabel = `${n} ind`;
+ } else if (n >0) {
+ payQtyLabel = `${n} ind`;
+ }
+ } catch { /* ignore */ }
+
+ parts.push(`You ${verbMain} ${payQtyLabel} ${est.payPegName} (rounded up).`);
  if (est.canonicalBT != null) parts.push(`Canonical BT (primary-based): ${fmt2(est.canonicalBT)} BT.`);
  if (est.selectedPegBT != null) parts.push(`BT eq (selected-peg store price): ${fmt2(est.selectedPegBT)} BT.`);
  if (est.tradedBT != null) parts.push(`Traded item store BT: ${fmt2(est.tradedBT)} BT.`);
@@ -335,11 +355,12 @@
 
  // ===== Customer favor / Merchant favor =====
  // Totals match the value lines shown.
- // Customer rules:
- // - ITEM payment: pct = (1 - (peg BUY total / traded SELL total)) *100
- // - BT payment: pct = (1 - (peg SELL total / traded SELL total)) *100
- // Merchant rules (same for ITEM and BT):
- // - pct = (1 - (peg SELL total / traded BUY total)) *100
+ // SELL listings: keep existing behavior.
+ // BUY listings: use new rules:
+ // - Customer:
+ // * ITEM: (1 - traded BUY total / peg SELL total)*100
+ // * BT: (1 - traded BUY total / peg BUY total)*100
+ // - Merchant (both): (1 - peg BUY total / traded SELL total)*100
  try {
  const listingName = String(listing?.itemName || '').trim();
  const pegName = String(chosenPegName || '').trim();
@@ -369,39 +390,49 @@
  const pegBuyTotal = (pegBuyPer != null) ? (rightQty * pegBuyPer) : null;
  const pegSellTotal = (pegSellPer != null) ? (rightQty * pegSellPer) : null;
 
- // --- Customer favor line ---
+ const listingType = String(listing?.type || '').toUpperCase();
+
+ let customerPct = null;
+ let merchantPct = null;
+
+ if (listingType === 'BUY') {
+ // BUY rules
+ const denomCustomer = (paymentChoice === 'ITEM') ? pegSellTotal : pegBuyTotal;
+
+ if (tradedBuyTotal != null && denomCustomer != null && isFinite(tradedBuyTotal) && isFinite(denomCustomer) && denomCustomer >0) {
+ customerPct = (1 - (Number(tradedBuyTotal) / Number(denomCustomer))) *100;
+ }
+
+ if (pegBuyTotal != null && tradedSellTotal != null && isFinite(pegBuyTotal) && isFinite(tradedSellTotal) && tradedSellTotal >0) {
+ merchantPct = (1 - (Number(pegBuyTotal) / Number(tradedSellTotal))) *100;
+ }
+ } else {
+ // SELL rules (keep existing behavior)
  const customerNumerator = (paymentChoice === 'ITEM') ? pegBuyTotal : pegSellTotal;
- if (customerFavorEl && tradedSellTotal != null && customerNumerator != null && isFinite(tradedSellTotal) && tradedSellTotal >0 && isFinite(customerNumerator)) {
- const pct = (1 - (Number(customerNumerator) / Number(tradedSellTotal))) *100;
- const magTxt = Math.abs(pct).toFixed(1);
+ if (tradedSellTotal != null && customerNumerator != null && isFinite(tradedSellTotal) && tradedSellTotal >0 && isFinite(customerNumerator)) {
+ customerPct = (1 - (Number(customerNumerator) / Number(tradedSellTotal))) *100;
+ }
+
+ if (tradedBuyTotal != null && pegSellTotal != null && isFinite(tradedBuyTotal) && tradedBuyTotal >0 && isFinite(pegSellTotal)) {
+ merchantPct = (1 - (Number(tradedBuyTotal) / Number(pegSellTotal))) *100;
+ }
+ }
+
+ function renderFavorLine_(el, who, pct) {
+ if (!el || pct == null || !isFinite(pct)) { if (el) el.style.display = 'none'; return; }
  const good = pct >=0;
- const label = good ? 'Customer favor' : 'Customer disfavor';
+ const label = good ? `${who} favor` : `${who} disfavor`;
  const word = good ? 'cheaper' : 'more expensive';
-
- customerFavorEl.classList.remove('good', 'bad');
- customerFavorEl.classList.add(good ? 'good' : 'bad');
- customerFavorEl.textContent = `${label}: ${magTxt}% ${word} compared to store`;
- customerFavorEl.style.display = '';
- } else if (customerFavorEl) {
- customerFavorEl.style.display = 'none';
- }
-
- // --- Merchant favor line ---
- if (merchantFavorEl && tradedBuyTotal != null && pegSellTotal != null && isFinite(tradedBuyTotal) && tradedBuyTotal >0 && isFinite(pegSellTotal)) {
- // Per requirement: (1 - (pegSellTotal / tradedBuyTotal)) *100
- const pct = (1 - (Number(tradedBuyTotal) / Number(pegSellTotal))) * 100;
  const magTxt = Math.abs(pct).toFixed(1);
- const good = pct >= 0;
- const label = good ? 'Merchant favor' : 'Merchant disfavor';
- const word = good ? 'cheaper' : 'more expensive';
 
- merchantFavorEl.classList.remove('good', 'bad');
- merchantFavorEl.classList.add(good ? 'good' : 'bad');
- merchantFavorEl.textContent = `${label}: ${magTxt}% ${word} compared to store`;
- merchantFavorEl.style.display = '';
- } else if (merchantFavorEl) {
- merchantFavorEl.style.display = 'none';
+ el.classList.remove('good', 'bad');
+ el.classList.add(good ? 'good' : 'bad');
+ el.textContent = `${label}: ${magTxt}% ${word} compared to store`;
+ el.style.display = '';
  }
+
+ renderFavorLine_(customerFavorEl, 'Customer', customerPct);
+ renderFavorLine_(merchantFavorEl, 'Merchant', merchantPct);
  } catch {
  if (customerFavorEl) customerFavorEl.style.display = 'none';
  if (merchantFavorEl) merchantFavorEl.style.display = 'none';

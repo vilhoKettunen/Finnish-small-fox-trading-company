@@ -30,8 +30,16 @@
         byId('btnCreateHalf')?.addEventListener('click', window.adminCreateListingHalf);
         byId('btnCreateFull')?.addEventListener('click', window.adminCreateListingFull);
 
-        byId('btnCreateStoreAddAlt')?.addEventListener('click', () => window.addAltPeg_('store'));
-        byId('btnCreateHalfAddAlt')?.addEventListener('click', () => window.addAltPeg_('half'));
+        byId('btnCreateStoreAddAlt')?.addEventListener('click', () => {
+            const fn = window.addAltPeg_;
+    if (typeof fn === 'function') fn('store');
+        else console.warn('addAltPeg_ is not available (admin-ocm.js not loaded / cached old version)');
+    });
+    byId('btnCreateHalfAddAlt')?.addEventListener('click', () => {
+        const fn = window.addAltPeg_;
+  if (typeof fn === 'function') fn('half');
+ else console.warn('addAltPeg_ is not available (admin-ocm.js not loaded / cached old version)');
+  });
 
         // OCM listings & target pending
         byId('btnReloadTargetListings')?.addEventListener('click', window.loadAdminTargetListings);
@@ -42,8 +50,12 @@
         byId('btnSaveAccountEdit')?.addEventListener('click', window.adminSaveAccountEdit);
 
         // OCM restock dialog
-        byId('btnSendRestock')?.addEventListener('click', window.sendAdminRestock_);
-        byId('btnCloseRestock')?.addEventListener('click', () => byId('dlgRestock')?.close());
+        byId('btnSendRestock')?.addEventListener('click', () => {
+   const fn = window.sendAdminRestock_;
+       if (typeof fn === 'function') fn();
+      else console.warn('sendAdminRestock_ is not available (admin-ocm.js not loaded / cached old version)');
+   });
+   byId('btnCloseRestock')?.addEventListener('click', () => byId('dlgRestock')?.close());
 
         // OCM edit dialog
         byId('editPricingMode')?.addEventListener('change', Admin._syncEditPricingModeUI_);
