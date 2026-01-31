@@ -15,13 +15,17 @@
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
-            padding: 1rem;
+            padding:1rem;
             background: #fafafa;
             color: #333;
         }
 
+        body.withTopBar {
+            padding-top:72px;
+        }
+
         h1 {
-            margin-bottom: 1rem;
+            margin-bottom:1rem;
             color: #222;
         }
 
@@ -29,93 +33,92 @@
         #controls {
             display: flex;
             flex-wrap: wrap;
-            gap: 1rem;
+            gap:1rem;
             align-items: center;
             background: #fff;
-            padding: 1rem;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            margin-bottom: 1.5rem;
+            padding:1rem;
+            border-radius:12px;
+            box-shadow:02px8px rgba(0,0,0,0.05);
+            margin-bottom:1.5rem;
         }
 
         label {
             display: flex;
             flex-direction: column;
-            gap: 0.3rem;
-            font-weight: 500;
-            font-size: 0.85rem;
+            gap:0.3rem;
+            font-weight:500;
+            font-size:0.85rem;
             color: #666;
         }
 
         select, input[list] {
             padding: .5rem .7rem;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 0.95rem;
+            border:1px solid #ddd;
+            border-radius:6px;
+            font-size:0.95rem;
             outline: none;
         }
 
-            select:focus, input:focus {
-                border-color: #007bff;
-            }
+        select:focus, input:focus {
+            border-color: #007bff;
+        }
 
         /* Image styling */
         #itemImage {
-            height: 90px;
-            width: 90px;
+            height:90px;
+            width:90px;
             object-fit: contain;
-            border-radius: 8px;
+            border-radius:8px;
             background: #fff;
             margin-left: auto; /* Pushes image to the far right */
-            border: 1px solid #eee;
+            border:1px solid #eee;
         }
 
         /* --- CHART CONTAINERS --- */
         #charts {
             display: flex;
             flex-direction: column;
-            gap: 2rem;
+            gap:2rem;
         }
 
         .chart-card {
             background: white;
-            border-radius: 12px;
-            padding: 1rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-radius:12px;
+            padding:1rem;
+            box-shadow:04px12px rgba(0,0,0,0.08);
         }
 
         .chart-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.75rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #eee;
+            margin-bottom:0.75rem;
+            padding-bottom:0.5rem;
+            border-bottom:1px solid #eee;
         }
 
         .chart-title {
-            font-weight: 700;
+            font-weight:700;
             color: #444;
-            font-size: 1.1rem;
+            font-size:1.1rem;
         }
 
         .chart-meta {
-            font-size: 0.85rem;
+            font-size:0.85rem;
             color: #888;
         }
 
         /* --- THE FIX FOR INFINITE HEIGHT --- */
-        /* We wrap the canvas in a div with relative position and FIXED height */
         .chart-wrapper {
             position: relative;
-            height: 400px; /* Strict height limit */
-            width: 100%;
+            height:400px; /* Strict height limit */
+            width:100%;
         }
 
         canvas {
             display: block;
-            width: 100%;
-            height: 100%;
+            width:100%;
+            height:100%;
         }
     </style>
 </head>
@@ -132,7 +135,7 @@
             </select>
         </label>
 
-        <label style="flex-grow: 1; max-width: 300px;">
+        <label style="flex-grow:1; max-width:300px;">
             Select Item:
             <input id="itemInput" list="itemDatalist" placeholder="Search items..." />
             <datalist id="itemDatalist"></datalist>
@@ -141,16 +144,16 @@
         <label>
             Time Range:
             <select id="rangeSelect">
-                <option value="7">Last 7 days</option>
-                <option value="30">Last 30 days</option>
-                <option value="180">Last 6 months</option>
+                <option value="7">Last7 days</option>
+                <option value="30">Last30 days</option>
+                <option value="180">Last6 months</option>
                 <option value="365">Last year</option>
                 <option value="all" selected>All history</option>
             </select>
         </label>
 
         <label>
-            Bottom Chart Metric:
+            Middle Chart Metric:
             <select id="metricSelect">
                 <option value="stock" selected>Stock Amount</option>
                 <option value="change">Daily Price Change (+/-)</option>
@@ -158,6 +161,15 @@
                 <option value="valuation">Total Valuation</option>
                 <option value="goal">Goal Stock %</option>
                 <option value="targetStock">Target stock stack</option>
+            </select>
+        </label>
+
+        <label>
+            Inflation Index Category:
+            <select id="indexSelect">
+                <option value="median" selected>Median Item Inflation Index (Weighted)</option>
+                <option value="metals">Metal Index (Weighted)</option>
+                <option value="common">Common Items Index (Weighted)</option>
             </select>
         </label>
 
@@ -177,46 +189,85 @@
 
         <div class="chart-card">
             <div class="chart-header">
-                <div class="chart-title" id="bottomChartTitle">Stock History</div>
-                <div class="chart-meta" id="bottomChartDesc">Amount available</div>
+                <div>
+                    <div class="chart-title" id="middleChartTitle">Stock History</div>
+                    <div class="chart-meta" id="middleChartDesc">Amount available</div>
+                </div>
             </div>
             <div class="chart-wrapper">
-                <canvas id="secondaryChart"></canvas>
+                <canvas id="metricChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title" id="inflationChartTitle">Inflation Index (base=100)</div>
+                    <div class="chart-meta" id="inflationChartDesc">
+                        Weighted median of per-item price inflation factors. Weight = stock value (BT)/1000 (prefers ValuationHistory; falls back to stock*price).
+                    </div>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="inflationChart"></canvas>
             </div>
         </div>
     </div>
 
     <script>
-        // 1. CONFIG
-        const USER_LOCALE = (navigator.languages && navigator.languages[0]) || 'en-GB'; // defaulting to UK (Day/Month)
+        //1) CONFIG
+        const USER_LOCALE = (navigator.languages && navigator.languages[0]) || 'en-GB';
         const SPREADSHEET_ID = "1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo";
 
-        // 2. HELPERS
+        // Toggle for debugging “flat line” investigations. Keep false for normal use.
+        const DEBUG_INFLATION = true;
+
+        // Inflation index category allowlists (case-insensitive exact match after normalization)
+        const INFLATION_LISTS = {
+            metalsCsv: "SILVER INGOT,GOLD INGOT,STEEL INGOT,COPPER INGOT,IRON INGOT,TIN INGOT,ZINK INGOT,BISMUTH INGOT,NICKEL INGOT,LEAD INGOT,meteoric iron INGOT",
+            commonCsv: "(RG) RUSTY GEARS,FLAX TWINE,Beeswax,Candles,Fat,Leather,Linen,Resin,BLUE CLAY,FIRE CLAY,RED CLAY,charcoal"
+        };
+
+        //2) HELPERS
         function csvUrl(sheet) {
             return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet)}`;
         }
 
-        // --- INTELLIGENT NUMBER PARSER (Handles 1.000,00 vs 1,000.00) ---
+        // Normalize names for matching:
+        // - trim
+        // - lowercase
+        // - collapse internal whitespace
+        function normalizeName(name) {
+            return String(name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+        }
+
+        function csvToNormalizedSet(csv) {
+            const out = new Set();
+            String(csv || '')
+                .split(',')
+                .map(s => s.trim())
+                .filter(Boolean)
+                .forEach(s => out.add(normalizeName(s)));
+            return out;
+        }
+
+        // --- INTELLIGENT NUMBER PARSER (Handles1.000,00 vs1,000.00) ---
         function parseLocalNum(str) {
             if (!str) return null;
             let clean = str.toString().trim().replace(/[^\d.,\-]/g, '');
             if (!clean) return null;
 
-            // Detect format: If comma comes AFTER dot (1.000,50) -> European
-            if (clean.indexOf(',') > -1 && clean.indexOf('.') > -1) {
+            if (clean.includes(',') && clean.includes('.')) {
                 const lastComma = clean.lastIndexOf(',');
                 const lastDot = clean.lastIndexOf('.');
                 if (lastComma > lastDot) {
-                    clean = clean.replace(/\./g, '').replace(',', '.'); // 1.000,50 -> 1000.50
+                    clean = clean.replace(/\./g, '').replace(',', '.');
                 } else {
-                    clean = clean.replace(/,/g, ''); // 1,000.50 -> 1000.50
+                    clean = clean.replace(/,/g, '');
                 }
-            }
-            // If ONLY comma (10,5) -> Swap to dot
-            else if (clean.indexOf(',') > -1) {
+            } else if (clean.includes(',')) {
                 clean = clean.replace(',', '.');
             }
-            // If ONLY dot (10.5) -> keep as is
 
             const result = parseFloat(clean);
             return isNaN(result) ? null : result;
@@ -227,28 +278,20 @@
             if (!str) return null;
             const s = str.trim();
 
-            // Check for standard separators: / or . or -
             const parts = s.split(/[\/\-\.]/);
-
-            // If we have 3 parts (Day, Month, Year)
-            if (parts.length === 3) {
-                const day = parseInt(parts[0], 10);
-                const month = parseInt(parts[1], 10);
-                let year = parseInt(parts[2], 10);
-
-                // Handle 2-digit years (e.g., 24 -> 2024)
-                if (year < 100) year += 2000;
-
-                // JS Months are 0-indexed (0=Jan, 1=Feb)
-                return new Date(year, month - 1, day);
+            if (parts.length ===3) {
+                const day = parseInt(parts[0],10);
+                const month = parseInt(parts[1],10);
+                let year = parseInt(parts[2],10);
+                if (year <100) year +=2000;
+                return new Date(year, month -1, day);
             }
 
-            // Fallback: If it's a full ISO string (2024-05-02T...), try standard parse
             const fallback = new Date(s);
             return isNaN(fallback.getTime()) ? null : fallback;
         }
 
-        // 3. FETCH DATA
+        //3) FETCH DATA
         let CACHE = { main: [], valuation: [], goal: [], targetStock: [] };
 
         async function fetchCSV(sheetName) {
@@ -257,20 +300,18 @@
                 if (!res.ok) throw new Error("Fetch failed");
                 const text = await res.text();
                 const lines = text.replace(/\r/g, '').split('\n').filter(l => l.trim() !== '');
-                if (lines.length <= 1) return [];
+                if (lines.length <=1) return [];
 
                 return lines.slice(1).map(line => {
-                    // Regex handles quoted CSV fields
-                    const parts = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.replace(/^"|"$/g, '').trim());
+                    const parts = line
+                        .split(/,(?=(?:(?:[^\"]*\"){2})*[^\"]*$)/)
+                        .map(s => s.replace(/^\"|\"$/g, '').trim());
 
                     const dateStr = parts[0];
                     const item = parts[1];
 
-                    // PARSE VALUES
                     const valCol = parseLocalNum(parts[2]);
                     const stockCol = parseLocalNum(parts[3]);
-
-                    // PARSE DATE (STRICTLY DD/MM/YYYY)
                     const ts = parseDateStrict(dateStr);
 
                     if (sheetName.includes("Valuation") || sheetName.includes("Goal")) {
@@ -278,104 +319,438 @@
                     } else {
                         return { ts, item, value: valCol, stock: stockCol };
                     }
-                }).filter(r => r.item && r.ts); // Only keep rows with valid Item AND Date
+                }).filter(r => r.item && r.ts);
             } catch (e) {
                 console.error("Error loading sheet:", sheetName, e);
                 return [];
             }
         }
 
-        // 4. DATA PROCESSING
-        function processData(item, rangeDays, metric) {
+        //4) DATA PROCESSING
+        function computeCutoff(rangeDays) {
             const now = new Date();
-            const cutoff = rangeDays === 'all' ? new Date(0) : new Date(now - rangeDays * 24 * 60 * 60 * 1000);
+            return rangeDays === 'all' ? new Date(0) : new Date(now - rangeDays *24 *60 *60 *1000);
+        }
 
-            const filterSort = (dataset) => {
-                return dataset
-                    .filter(r => r.item === item && r.ts && r.ts >= cutoff)
-                    .sort((a, b) => a.ts - b.ts);
+        function filterSortItem(dataset, item, cutoff) {
+            return (dataset || [])
+                .filter(r => r.item === item && r.ts && r.ts >= cutoff)
+                .sort((a, b) => a.ts - b.ts);
+        }
+
+        function processPriceSeries(item, rangeDays) {
+            const cutoff = computeCutoff(rangeDays);
+            const mainData = filterSortItem(CACHE.main, item, cutoff);
+            return {
+                labels: mainData.map(r => r.ts),
+                prices: mainData.map(r => r.value)
             };
+        }
 
-            const mainData = filterSort(CACHE.main);
+        function processMiddleMetricSeries(item, rangeDays, metric) {
+            const cutoff = computeCutoff(rangeDays);
+            const mainData = filterSortItem(CACHE.main, item, cutoff);
 
-            // Top Chart
             const labels = mainData.map(r => r.ts);
             const prices = mainData.map(r => r.value);
 
-            // Bottom Chart
-            let secLabels = labels;
-            let secValues = [];
+            let midLabels = labels;
+            let midValues = [];
             let chartType = 'line';
             let color = '#28a745';
 
             if (metric === 'stock') {
-                secValues = mainData.map(r => r.stock);
+                midValues = mainData.map(r => r.stock);
             }
             else if (metric === 'change') {
                 chartType = 'bar';
-                secValues = prices.map((price, i) => {
-                    if (i === 0) return 0;
-                    return parseFloat((price - prices[i - 1]).toFixed(2));
+                midValues = prices.map((price, i) => {
+                    if (i ===0) return 0;
+                    return parseFloat((price - prices[i -1]).toFixed(2));
                 });
             }
             else if (metric === 'changePct') {
                 chartType = 'bar';
-                secValues = prices.map((price, i) => {
-                    if (i === 0) return 0;
-                    const prev = prices[i - 1];
-                    if (prev === 0 || prev == null || price == null) return 0;
-                    const pct = ((price - prev) / prev) * 100;
+                midValues = prices.map((price, i) => {
+                    if (i ===0) return 0;
+                    const prev = prices[i -1];
+                    if (prev ===0 || prev == null || price == null) return 0;
+                    const pct = ((price - prev) / prev) *100;
                     return parseFloat(pct.toFixed(2));
                 });
             }
             else if (metric === 'valuation') {
-                const valData = filterSort(CACHE.valuation);
-                secLabels = valData.map(r => r.ts);
-                secValues = valData.map(r => r.value);
+                const valData = filterSortItem(CACHE.valuation, item, cutoff);
+                midLabels = valData.map(r => r.ts);
+                midValues = valData.map(r => r.value);
                 color = '#6f42c1';
             }
             else if (metric === 'goal') {
-                const goalData = filterSort(CACHE.goal);
-                secLabels = goalData.map(r => r.ts);
-                secValues = goalData.map(r => r.value * 100);
+                const goalData = filterSortItem(CACHE.goal, item, cutoff);
+                midLabels = goalData.map(r => r.ts);
+                midValues = goalData.map(r => r.value *100);
                 color = '#fd7e14';
             }
             else if (metric === 'targetStock') {
-                const tData = filterSort(CACHE.targetStock);
-                secLabels = tData.map(r => r.ts);
-                secValues = tData.map(r => r.value);
+                const tData = filterSortItem(CACHE.targetStock, item, cutoff);
+                midLabels = tData.map(r => r.ts);
+                midValues = tData.map(r => r.value);
                 color = '#0dcaf0';
             }
 
-            return { labels, prices, secLabels, secValues, chartType, color };
+            return { midLabels, midValues, chartType, color };
         }
 
-        // 5. DRAWING
+        function groupByItemNormalized(rows) {
+            const m = new Map();
+            for (const r of rows || []) {
+                const key = normalizeName(r.item);
+                if (!key) continue;
+                if (!m.has(key)) m.set(key, []);
+                m.get(key).push(r);
+            }
+            for (const arr of m.values()) {
+                arr.sort((a, b) => a.ts - b.ts);
+            }
+            return m;
+        }
+
+        function pickDisplayNameForKey(key, mainByItem) {
+            const rows = mainByItem.get(key);
+            if (rows && rows.length) return String(rows[0].item || '').trim();
+            return key;
+        }
+
+        // Fill-forward "as-of" lookup: for each axis date, use most recent row with ts <= date.
+        function buildAsOfSeries(rowsSorted, axisDates, selectorFn) {
+            const out = new Array(axisDates.length).fill(null);
+            if (!rowsSorted || rowsSorted.length ===0) return out;
+
+            let j =0;
+            let cur = null;
+            for (let i =0; i < axisDates.length; i++) {
+                const d = axisDates[i];
+                while (j < rowsSorted.length && rowsSorted[j].ts <= d) {
+                    cur = rowsSorted[j];
+                    j++;
+                }
+                out[i] = cur ? selectorFn(cur) : null;
+            }
+            return out;
+        }
+
+        /**
+         * WEIGHTED MEDIAN
+         *
+         * Definition used:
+         * - Sort x ascending.
+         * - Walk cumulative weight until reaching >=50% of total weight.
+         * - That x is the weighted median.
+         */
+         function weightedMedian(pairs) {
+         const valid = (pairs || []).filter(p => p && isFinite(p.x) && isFinite(p.w) && p.w >0);
+         if (!valid.length) return null;
+
+         valid.sort((a, b) => a.x - b.x);
+         const totalW = valid.reduce((s, p) => s + p.w,0);
+         if (!isFinite(totalW) || totalW <=0) return null;
+
+         const half = totalW /2;
+         let cum =0;
+         for (const p of valid) {
+         cum += p.w;
+         if (cum >= half) return p.x;
+         }
+         return valid[valid.length -1].x;
+         }
+         function weightedMedianWithPivot(pairs) {
+         const valid = (pairs || []).filter(p => p && isFinite(p.x) && isFinite(p.w) && p.w >0);
+         if (!valid.length) return { median: null, pivot: null, totalW:0 };
+
+         valid.sort((a, b) => a.x - b.x);
+         const totalW = valid.reduce((s, p) => s + p.w,0);
+         if (!isFinite(totalW) || totalW <=0) return { median: null, pivot: null, totalW:0 };
+
+         const half = totalW /2;
+         let cum =0;
+         for (const p of valid) {
+         cum += p.w;
+         if (cum >= half) return { median: p.x, pivot: p, totalW };
+         }
+
+         const last = valid[valid.length -1];
+         return { median: last.x, pivot: last, totalW };
+         }
+
+        // Weighted mean factor (uses ALL items by their weights)
+        function weightedMeanWithPivot(pairs) {
+         const valid = (pairs || []).filter(p => p && isFinite(p.x) && isFinite(p.w) && p.w >0);
+         if (!valid.length) return { mean: null, pivot: null, totalW:0 };
+
+         const totalW = valid.reduce((s, p) => s + p.w,0);
+         if (!isFinite(totalW) || totalW <=0) return { mean: null, pivot: null, totalW:0 };
+
+         const weightedSum = valid.reduce((s, p) => s + (p.x * p.w),0);
+         const mean = weightedSum / totalW;
+         if (!isFinite(mean) || mean <=0) return { mean: null, pivot: null, totalW };
+
+         // "pivot" for mean isn't mathematically special; keep the top-weight item for debugging.
+         const pivot = valid.slice().sort((a, b) => b.w - a.w)[0] || null;
+         return { mean, pivot, totalW };
+        }
+
+        function processInflationIndexSeries(rangeDays, categoryKey, debugInfo) {
+            const cutoff = computeCutoff(rangeDays);
+
+            // Filter to range first (baseline is per-item first appearance in-range)
+            const mainRows = (CACHE.main || []).filter(r => r.ts && r.ts >= cutoff);
+            const valRows = (CACHE.valuation || []).filter(r => r.ts && r.ts >= cutoff);
+
+            // Axis = union of dates from main + valuation (keeps valuation-only dates)
+            const axisMsSet = new Set();
+            for (const r of mainRows) axisMsSet.add(+r.ts);
+            for (const r of valRows) axisMsSet.add(+r.ts);
+            const axisDates = [...axisMsSet].sort((a, b) => a - b).map(ms => new Date(ms));
+
+            const mainByItem = groupByItemNormalized(mainRows);
+            const valByItem = groupByItemNormalized(valRows);
+
+            const metalsSet = csvToNormalizedSet(INFLATION_LISTS.metalsCsv);
+            const commonSet = csvToNormalizedSet(INFLATION_LISTS.commonCsv);
+
+            const includedSet = (() => {
+                if (categoryKey === 'metals') return metalsSet;
+                if (categoryKey === 'common') return commonSet;
+                return null; // median => all items present in mainRows
+            })();
+
+            // Candidates = all items that have prices in mainRows
+            const candidateKeys = [...new Set(mainRows.map(r => normalizeName(r.item)).filter(Boolean))];
+
+            // Denominator for missing count: only category items that exist in THIS sheet & range.
+            // (Confirmed by user: use B)
+            const existingCategoryKeys = (() => {
+                if (!includedSet) return null;
+                const keys = [];
+                includedSet.forEach(k => {
+                    if (mainByItem.has(k)) keys.push(k);
+                });
+                return keys;
+            })();
+
+            const indexValues = new Array(axisDates.length).fill(null);
+            const contributingCounts = new Array(axisDates.length).fill(0);
+            const totalWeightPerDay = new Array(axisDates.length).fill(0);
+            const top5ByWeightPerDay = new Array(axisDates.length).fill(null);
+            const missingCountByDay = new Array(axisDates.length).fill(null);
+            const missingNamesByDay = new Array(axisDates.length).fill(null);
+            const medianFactorPerDay = new Array(axisDates.length).fill(null);
+
+            // Precompute per-item as-of arrays once
+            const perItemCache = new Map();
+
+            function getPerItemSeries(key) {
+                if (perItemCache.has(key)) return perItemCache.get(key);
+
+                const priceRows = mainByItem.get(key) || [];
+                const valuationRows = valByItem.get(key) || [];
+
+                const priceAsOf = buildAsOfSeries(priceRows, axisDates, r => r.value);
+                const stockAsOf = buildAsOfSeries(priceRows, axisDates, r => r.stock);
+                const valuationAsOf = buildAsOfSeries(valuationRows, axisDates, r => r.value);
+
+                // Per-item baseline: first price within range
+                let baselinePrice = null;
+                for (const p of priceAsOf) {
+                    if (p != null && isFinite(p) && p >0) {
+                        baselinePrice = p;
+                        break;
+                    }
+                }
+
+                const v = { priceAsOf, stockAsOf, valuationAsOf, baselinePrice };
+                perItemCache.set(key, v);
+                return v;
+            }
+
+            // For each day k, create pairs + also track weights by item for tooltip.
+            for (let k =0; k < axisDates.length; k++) {
+                /** @type {Array<{x:number,w:number,key:string}>} */
+                const pairs = [];
+
+                const iterKeys = includedSet ? existingCategoryKeys : candidateKeys;
+                for (const key of (iterKeys || [])) {
+                    // If includedSet exists and key not included, skip (safety)
+                    if (includedSet && !includedSet.has(key)) continue;
+
+                    const s = getPerItemSeries(key);
+
+                    const baseline = s.baselinePrice;
+                    if (baseline == null || !isFinite(baseline) || baseline <=0) continue;
+
+                    const price = s.priceAsOf[k];
+                    if (price == null || !isFinite(price) || price <=0) continue;
+
+                    const factor = price / baseline;
+                    if (!isFinite(factor) || factor <=0) continue;
+
+                    // Weight: prefer valuation, else fallback stock*price.
+                    // IMPORTANT: treat0 or missing stock/valuation as "no weight" (skip that item for that day).
+                    let stockValueBT = s.valuationAsOf[k];
+                    if (stockValueBT == null || !isFinite(stockValueBT) || stockValueBT <=0) {
+                        const stockStacks = s.stockAsOf[k];
+                        if (stockStacks != null && isFinite(stockStacks) && stockStacks >0) {
+                            stockValueBT = stockStacks * price;
+                        } else {
+                            stockValueBT = null;
+                        }
+                    }
+
+                    if (stockValueBT == null || !isFinite(stockValueBT) || stockValueBT <=0) continue;
+
+                    const w = stockValueBT /1000;
+                    if (!isFinite(w) || w <=0) continue;
+
+                    pairs.push({ x: factor, w, key });
+                }
+
+                // NEW: compute weighted MEAN
+                const meanInfo = weightedMeanWithPivot(pairs);
+                const mean = meanInfo.mean;
+
+                // Optional debug: show the top-weight item as a "pivot"
+                if (DEBUG_INFLATION && categoryKey === 'common') {
+                    if (meanInfo.pivot) {
+                        const pivotName = pickDisplayNameForKey(meanInfo.pivot.key, mainByItem);
+                        console.log('Common mean debug', axisDates[k], {
+                            index: mean *100,
+                            topWeightItem: pivotName,
+                            topWeightFactor: meanInfo.pivot.x,
+                            topWeight: meanInfo.pivot.w,
+                            totalWeight: meanInfo.totalW,
+                            contributors: pairs.length
+                        });
+                    } else {
+                        console.log('Common mean debug', axisDates[k], { index: null, contributors: pairs.length });
+                    }
+                }
+
+                if (mean == null) {
+                    indexValues[k] = null;
+                    medianFactorPerDay[k] = null;
+                    contributingCounts[k] =0;
+                    totalWeightPerDay[k] =0;
+                    top5ByWeightPerDay[k] = [];
+                } else {
+                    indexValues[k] = mean *100;
+                    // keep the same property name for tooltips/back-compat, but it's now mean factor
+                    medianFactorPerDay[k] = mean;
+                    contributingCounts[k] = pairs.length;
+
+                    const totalWDay = pairs.reduce((s, p) => s + p.w,0);
+                    totalWeightPerDay[k] = isFinite(totalWDay) ? totalWDay :0;
+
+                    const top = pairs
+                        .slice()
+                        .sort((a, b) => b.w - a.w)
+                        .slice(0,5)
+                        .map(p => {
+                            const name = pickDisplayNameForKey(p.key, mainByItem);
+                            const sharePct = totalWDay >0 ? (p.w / totalWDay) *100 :0;
+                            return { name, weight: p.w, sharePct };
+                        });
+
+                    top5ByWeightPerDay[k] = top;
+                }
+
+                // Missing-data indicator for list-based categories
+                if (includedSet && Array.isArray(existingCategoryKeys)) {
+                    const present = new Set(pairs.map(p => p.key));
+                    const missingKeys = existingCategoryKeys.filter(key => !present.has(key));
+
+                    missingCountByDay[k] = missingKeys.length;
+                    missingNamesByDay[k] = missingKeys
+                        .slice(0,5)
+                        .map(k2 => pickDisplayNameForKey(k2, mainByItem));
+                } else {
+                    missingCountByDay[k] = null;
+                    missingNamesByDay[k] = null;
+                }
+            }
+
+            // Debug logging summary (no references to per-day variables)
+            if (DEBUG_INFLATION && debugInfo && (categoryKey === 'common' || categoryKey === 'metals')) {
+                try {
+                    const counts = contributingCounts.slice();
+                    const min = counts.length ? Math.min(...counts) :0;
+                    const max = counts.length ? Math.max(...counts) :0;
+                    const avg = counts.length ? (counts.reduce((s, n) => s + n,0) / counts.length) :0;
+
+                    const cleanVals = indexValues.filter(v => v != null && isFinite(v));
+                    const firstVal = cleanVals.length ? cleanVals[0] : null;
+                    let constantCount =0;
+                    if (firstVal != null) {
+                        for (const v of cleanVals) {
+                            if (Math.abs(v - firstVal) <0.0001) constantCount++;
+                        }
+                    }
+
+                    const existsKeys = existingCategoryKeys || [];
+                    const missingFromMain = (includedSet ? [...includedSet].filter(k => !mainByItem.has(k)) : []);
+
+                    console.log('[Inflation DEBUG]', {
+                        sheet: debugInfo.sheet,
+                        range: debugInfo.range,
+                        category: categoryKey,
+                        axisDays: axisDates.length,
+                        contributors: { min, avg, max },
+                        daysWithNoPairs: counts.filter(x => x ===0).length,
+                        constantCountAgainstFirst: constantCount,
+                        existingCategoryDenominator: existsKeys.length,
+                        missingFromMainByItem: missingFromMain.map(k => k)
+                    });
+                } catch (e) {
+                    console.warn('Inflation DEBUG failed', e);
+                }
+            }
+
+            return {
+                axisDates,
+                indexValues,
+                contributingCounts,
+                totalWeightPerDay,
+                top5ByWeightPerDay,
+                missingCountByDay,
+                missingNamesByDay,
+                existingCategoryCount: existingCategoryKeys ? existingCategoryKeys.length : null,
+                medianFactorPerDay
+            };
+        }
+
+        //5) DRAWING
         let priceChartInstance = null;
-        let secChartInstance = null;
+        let middleChartInstance = null;
+        let inflationChartInstance = null;
 
-        function drawCharts(data, metric) {
-            const ctx1 = document.getElementById('priceChart').getContext('2d');
-            const ctx2 = document.getElementById('secondaryChart').getContext('2d');
+        // Format for display
+        const dateFmt = (d) => d ? d.toLocaleDateString(USER_LOCALE, { day: 'numeric', month: 'short' }) : '';
 
-            // Format for display (Day Mon)
-            const dateFmt = (d) => d ? d.toLocaleDateString(USER_LOCALE, { day: 'numeric', month: 'short' }) : '';
-
-            // CHART 1
+        function drawPriceChart(labels, prices) {
+            const ctx = document.getElementById('priceChart').getContext('2d');
             if (priceChartInstance) priceChartInstance.destroy();
-            priceChartInstance = new Chart(ctx1, {
+            priceChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: data.labels.map(dateFmt),
+                    labels: labels.map(dateFmt),
                     datasets: [{
                         label: 'Price',
-                        data: data.prices,
+                        data: prices,
                         borderColor: '#007bff',
                         backgroundColor: 'rgba(0,123,255,0.1)',
-                        borderWidth: 2,
-                        tension: 0.2,
+                        borderWidth:2,
+                        tension:0.2,
                         fill: true,
-                        pointRadius: 4,
+                        pointRadius:4,
                     }]
                 },
                 options: {
@@ -386,32 +761,35 @@
                     scales: { y: { beginAtZero: false } }
                 }
             });
+        }
 
-            // CHART 2
-            let bgColors = data.color;
-            let borderColors = data.color;
+        function drawMiddleChart(midLabels, midValues, chartType, metric, color) {
+            const ctx = document.getElementById('metricChart').getContext('2d');
+
+            let bgColors = color;
+            let borderColors = color;
 
             if (metric === 'change' || metric === 'changePct') {
-                bgColors = data.secValues.map(v => v >= 0 ? 'rgba(40, 167, 69, 0.6)' : 'rgba(220, 53, 69, 0.6)');
-                borderColors = data.secValues.map(v => v >= 0 ? '#28a745' : '#dc3545');
-            } else if (data.chartType === 'line') {
-                bgColors = data.color + '20';
+                bgColors = midValues.map(v => v >=0 ? 'rgba(40,167,69,0.6)' : 'rgba(220,53,69,0.6)');
+                borderColors = midValues.map(v => v >=0 ? '#28a745' : '#dc3545');
+            } else if (chartType === 'line') {
+                bgColors = color + '20';
             }
 
-            if (secChartInstance) secChartInstance.destroy();
-            secChartInstance = new Chart(ctx2, {
-                type: data.chartType,
+            if (middleChartInstance) middleChartInstance.destroy();
+            middleChartInstance = new Chart(ctx, {
+                type: chartType,
                 data: {
-                    labels: data.secLabels.map(dateFmt),
+                    labels: midLabels.map(dateFmt),
                     datasets: [{
                         label: 'Value',
-                        data: data.secValues,
+                        data: midValues,
                         borderColor: borderColors,
                         backgroundColor: bgColors,
-                        borderWidth: 1,
-                        tension: 0.2,
-                        fill: (data.chartType === 'line'),
-                        pointRadius: 4
+                        borderWidth:1,
+                        tension:0.2,
+                        fill: (chartType === 'line'),
+                        pointRadius:4
                     }]
                 },
                 options: {
@@ -425,8 +803,8 @@
                             callbacks: {
                                 label: function (ctx) {
                                     let v = ctx.parsed.y;
-                                    if (metric === 'change') return (v > 0 ? '+' : '') + v;
-                                    if (metric === 'changePct') return (v > 0 ? '+' : '') + v.toFixed(2) + '%';
+                                    if (metric === 'change') return (v >0 ? '+' : '') + v;
+                                    if (metric === 'changePct') return (v >0 ? '+' : '') + v.toFixed(2) + '%';
                                     if (metric === 'goal') return v.toFixed(1) + '%';
                                     if (metric === 'valuation') return Math.round(v).toLocaleString();
                                     return v;
@@ -449,7 +827,120 @@
             });
         }
 
-        // 6. INIT
+        function drawInflationChart(axisDates, indexValues, contributingCounts, categoryKey, tooltipModel) {
+            const ctx = document.getElementById('inflationChart').getContext('2d');
+
+            const titleMap = {
+                median: 'Median Item Inflation Index (Weighted median)',
+                metals: 'Metal Index (Weighted median)',
+                common: 'Common Items Index (Weighted median)'
+            };
+
+            const subtitle =
+                'Index base=100. Per-item baseline=first price in selected range. ' +
+                'Weight=stock value (BT)/1000 (ValuationHistory preferred; fallback stock*price).';
+
+            document.getElementById('inflationChartTitle').textContent =
+                titleMap[categoryKey] || 'Inflation Index (base=100)';
+            document.getElementById('inflationChartDesc').textContent = subtitle;
+
+            const isListCategory = (categoryKey === 'common' || categoryKey === 'metals');
+
+            if (inflationChartInstance) inflationChartInstance.destroy();
+            inflationChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: axisDates.map(dateFmt),
+                    datasets: [{
+                        label: 'Inflation Index (base=100)',
+                        data: indexValues,
+                        borderColor: '#111827',
+                        backgroundColor: 'rgba(17,24,39,0.08)',
+                        borderWidth: 2,
+                        tension: 0.2,
+                        fill: true,
+                        pointRadius: 3,
+                        spanGaps: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            intersect: false,
+                            mode: 'index',
+                            callbacks: {
+                                label: function (ctx) {
+                                    const v = ctx.parsed.y;
+                                    if (v == null) return 'No data';
+                                    return `Index: ${v.toFixed(2)}`;
+                                },
+                                afterBody: function (tooltipItems) {
+                                    if (!tooltipItems || !tooltipItems.length) return [];
+                                    const idx = tooltipItems[0].dataIndex;
+
+                                    const lines = [];
+
+                                    const n = (contributingCounts && isFinite(contributingCounts[idx])) ? contributingCounts[idx] :0;
+                                    const totalW = tooltipModel?.totalWeightPerDay?.[idx] ??0;
+                                    const medFactor = tooltipModel?.medianFactorPerDay?.[idx];
+
+                                    // denom must be in scope for the warning logic below
+                                    const denom = isListCategory ? (tooltipModel?.existingCategoryCount ?? null) : null;
+
+                                    lines.push(`Items: ${n} | Total weight: ${Number(totalW).toFixed(2)}`);
+                                    if (isFinite(medFactor)) {
+                                        lines.push(`Median factor: ${Number(medFactor).toFixed(4)}`);
+                                    }
+
+                                    // Top5 contributors by weight
+                                    const top = tooltipModel?.top5ByWeightPerDay?.[idx] || [];
+                                    if (top.length) {
+                                        lines.push('Top5 by weight:');
+                                        top.forEach((t, i) => {
+                                            const pct = isFinite(t.sharePct) ? t.sharePct : 0;
+                                            const w = isFinite(t.weight) ? t.weight : 0;
+                                            lines.push(`${i + 1}) ${t.name} — ${pct.toFixed(1)}% (w=${w.toFixed(2)})`);
+                                        });
+                                    }
+
+                                    // Missing items (metals/common only)
+                                    if (isListCategory) {
+                                        const missingCount = tooltipModel?.missingCountByDay?.[idx];
+                                        const missingNames = tooltipModel?.missingNamesByDay?.[idx] || [];
+
+                                        if (isFinite(denom) && isFinite(missingCount)) {
+                                            lines.push(`Missing: ${missingCount}/${denom}`);
+                                        }
+
+                                        if (missingNames.length) {
+                                            let missLine = `Missing items: ${missingNames.join(', ')}`;
+                                            if (isFinite(missingCount) && missingCount > missingNames.length) {
+                                                missLine += ` (+${missingCount - missingNames.length} more)`;
+                                            }
+                                            lines.push(missLine);
+                                        }
+                                    }
+
+                                    // Few contributors warning
+                                    if (n <= 2 && (denom == null || denom > n)) {
+                                        lines.push('Warning: very few items contributing today; index may look flat.');
+                                    }
+
+                                    return lines;
+                                }
+                            }
+                        }
+                    },
+                    interaction: { mode: 'nearest', axis: 'x', intersect: false },
+                    scales: { y: { beginAtZero: false } }
+                }
+            });
+        }
+
+        //6) INIT
         let uniqueItems = [];
 
         async function init() {
@@ -457,6 +948,7 @@
             const itemInput = document.getElementById("itemInput");
             const rangeSel = document.getElementById("rangeSelect");
             const metricSel = document.getElementById("metricSelect");
+            const indexSel = document.getElementById("indexSelect");
             const dl = document.getElementById("itemDatalist");
 
             async function loadData() {
@@ -467,6 +959,7 @@
                     fetchCSV('GoalHistory'),
                     fetchCSV('TargetStockHistory')
                 ]);
+
                 CACHE.main = main;
                 CACHE.valuation = val;
                 CACHE.goal = goal;
@@ -481,7 +974,7 @@
                 });
             }
 
-            function update() {
+            function updatePriceAndMiddleCharts() {
                 const item = itemInput.value;
                 const range = rangeSel.value;
                 const metric = metricSel.value;
@@ -502,32 +995,50 @@
                     'goal': '% of Goal Reached',
                     'targetStock': 'Target Stock Stack History'
                 };
-                document.getElementById('bottomChartTitle').textContent = titles[metric];
+
+                document.getElementById('middleChartTitle').textContent = titles[metric] || 'Metric';
 
                 if (!item || !uniqueItems.includes(item)) return;
 
-                const processed = processData(item, range, metric);
-                drawCharts(processed, metric);
+                const priceSeries = processPriceSeries(item, range);
+                drawPriceChart(priceSeries.labels, priceSeries.prices);
+
+                const mid = processMiddleMetricSeries(item, range, metric);
+                drawMiddleChart(mid.midLabels, mid.midValues, mid.chartType, metric, mid.color);
             }
 
-            typeSel.addEventListener('change', async () => { await loadData(); update(); });
-            itemInput.addEventListener('change', update);
-            itemInput.addEventListener('input', update);
-            rangeSel.addEventListener('change', update);
-            metricSel.addEventListener('change', update);
+            function updateInflationChart() {
+                const range = rangeSel.value;
+                const category = indexSel.value;
+                const sheet = typeSel.value;
+
+                const s = processInflationIndexSeries(range, category, { sheet, range });
+                drawInflationChart(s.axisDates, s.indexValues, s.contributingCounts, category, s);
+            }
+
+            function updateAll() {
+                updatePriceAndMiddleCharts();
+                updateInflationChart();
+            }
+
+            typeSel.addEventListener('change', async () => { await loadData(); updateAll(); });
+            itemInput.addEventListener('change', updatePriceAndMiddleCharts);
+            itemInput.addEventListener('input', updatePriceAndMiddleCharts);
+            rangeSel.addEventListener('change', updateAll);
+            metricSel.addEventListener('change', updatePriceAndMiddleCharts);
+            indexSel.addEventListener('change', updateInflationChart);
 
             await loadData();
-            if (uniqueItems.length > 0) {
-                itemInput.value = uniqueItems[0];
-                update();
-            }
+            if (uniqueItems.length >0) itemInput.value = uniqueItems[0];
+
+            updateAll();
         }
 
-         window.onload = () => {
-  window.initSharedTopBar && window.initSharedTopBar();
-   init();
-  };
-  
-     </script>
+        window.onload = () => {
+            window.initSharedTopBar && window.initSharedTopBar();
+            document.body.classList.add('withTopBar');
+            init();
+        };
+    </script>
 </body>
 </html>
