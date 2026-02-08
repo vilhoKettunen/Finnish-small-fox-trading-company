@@ -36,6 +36,24 @@
             background: #fff;
         }
 
+        /* ===== Login terms warning ===== */
+        #loginTermsWarning {
+            display: none;
+            margin: 0 0 10px 0;
+            padding: 10px 12px;
+            border: 1px solid #f3b3b3;
+            background: #fff2f2;
+            border-radius: 8px;
+            color: #a40000;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        #loginTermsWarning a {
+            color: #a40000;
+            text-decoration: underline;
+        }
+
         label {
             display: block;
             margin: 8px 0;
@@ -107,6 +125,11 @@
 </head>
 <body>
     <div id="authPanel" class="section">
+        <div id="loginTermsWarning">
+            <div><strong>By logging in you accept the <a href="TermsAndConditions.html" target="_blank" rel="noopener">Terms and Conditions</a> of this page.</strong></div>
+            <div>In short: we store your email for login identification, and we use trading data for transparency and research purposes.</div>
+        </div>
+
         <div id="googleLoginArea">
             <div id="googleBtn"></div>
             <div class="small" style="margin-top:6px;">If the Google button does not appear, use fallback:</div>

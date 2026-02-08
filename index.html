@@ -27,6 +27,45 @@
             background: #fff;
         }
 
+        /* ===== Login terms warning (shown when logged out) ===== */
+        #loginTermsWarning {
+            display: none;
+            margin: 0 0 10px 0;
+            padding: 10px 12px;
+            border: 1px solid #f3b3b3;
+            background: #fff2f2;
+            border-radius: 8px;
+            color: #a40000;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        #loginTermsWarning a {
+            color: #a40000;
+            text-decoration: underline;
+        }
+
+        /* ===== Setup highlight (shown when profile incomplete) ===== */
+        #setupForm.setup-highlight {
+            background: #eaffe7;
+            border: 1px solid #2e7d32;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.12);
+        }
+
+        #setupDeletionNote {
+            display: none;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #2e7d32;
+        }
+
+        #setupDeletionNote a {
+            color: #2e7d32;
+            text-decoration: underline;
+        }
+
         select, input[type="number"], input[list], input[type="text"], button {
             padding: 6px;
             margin: 6px 0;
@@ -439,6 +478,11 @@
     <!-- top bar injected by topbar.js -->
 
     <div id="authPanel">
+        <div id="loginTermsWarning" style="display:block;">
+            <div><strong>By logging in you accept the <a href="TermsAndConditions.html" target="_blank" rel="noopener">Terms and Conditions</a> of this page.</strong></div>
+            <div>In short: we store your email for login identification, and we use trading data for transparency and research purposes.</div>
+        </div>
+
         <div id="googleLoginArea">
             <div id="googleBtn"></div>
             <div class="login-hint">If the Google button does not appear, use fallback:</div>
@@ -454,6 +498,9 @@
             <label>Mailbox (e.g. 1A / 2B / F1): <input type="text" id="setupMailbox"></label><br>
             <button onclick="submitSetup()">Save Setup</button>
             <div id="setupMsg" class="small"></div>
+            <div id="setupDeletionNote">
+                You can delete your account/email at any time from <a href="AccountSettings.html">Account Settings</a> (this disables login).
+            </div>
         </div>
     </div>
 

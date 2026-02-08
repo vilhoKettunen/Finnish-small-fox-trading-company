@@ -12,6 +12,20 @@
  margin: auto;
  }
 
+ /* ===== Login terms warning ===== */
+ #loginTermsWarning {
+ display: none;
+ margin:0010px0;
+ padding:10px12px;
+ border:1px solid #f3b3b3;
+ background: #fff2f2;
+ border-radius:8px;
+ color: #a40000;
+ font-size:12px;
+ line-height:1.35;
+ }
+ #loginTermsWarning a { color: #a40000; text-decoration: underline; }
+
  .row {
  margin:8px0;
  display: flex;
@@ -97,6 +111,11 @@
  <!-- Shared top bar injected by topbar.js -->
 
  <div id="authPanel">
+ <div id="loginTermsWarning">
+ <div><strong>By logging in you accept the <a href="TermsAndConditions.html" target="_blank" rel="noopener">Terms and Conditions</a> of this page.</strong></div>
+ <div>In short: we store your email for login identification, and we use trading data for transparency and research purposes.</div>
+ </div>
+
  <div id="googleLoginArea">
  <div id="googleBtn"></div>
  <div class="login-hint">If the Google button does not appear, use fallback:</div>
@@ -158,6 +177,16 @@
 
  function byId(x) { return document.getElementById(x); }
  function fmt(n) { const v = Number(n) ||0; return v.toFixed(2).replace(/\.?0+$/, ''); }
+
+ function setTermsWarningVisible_(visible) {
+ const el = document.getElementById('loginTermsWarning');
+ if (!el) return;
+ el.style.display = visible ? 'block' : 'none';
+ }
+
+ function updateTermsWarning_() {
+ setTermsWarningVisible_(!googleIdToken);
+ }
 
  function normalizeResult(j) {
  // standardize to "data" first, then fall back
@@ -370,8 +399,14 @@
  async function ensureAuth() {
  const st = byId('authStatus');
  const saved = window.getSavedIdToken && window.getSavedIdToken();
- if (!saved) { st.textContent = 'Not logged in. Open index.html and login.'; throw new Error('no token'); }
+ if (!saved) {
+ googleIdToken = null;
+ updateTermsWarning_();
+ st.textContent = 'Not logged in. Open index.html and login.';
+ throw new Error('no token');
+ }
  googleIdToken = saved;
+ updateTermsWarning_();
  const me = await apiGet('me', { idToken: googleIdToken });
  const d = normalizeResult(me);
  st.textContent = 'Logged as ' + (d?.user?.email || '');
@@ -496,6 +531,7 @@
  async function onGoogleSignIn(resp) {
  const statusEl = byId('loginStatus');
  googleIdToken = resp && resp.credential;
+ updateTermsWarning_();
  if (!googleIdToken) { statusEl.textContent = 'Login error: no credential'; return; }
  statusEl.textContent = 'Verifying token...';
  try {
@@ -525,6 +561,7 @@
  page =1;
  loadHistory();
  statusEl.textContent = 'Logged in.';
+ updateTermsWarning_();
  } catch (e) {
  statusEl.textContent = 'Login error: ' + e.message;
  }
@@ -532,6 +569,7 @@
 
  window.onTopbarAuthChanged = function (info) {
  googleIdToken = info.idToken;
+ updateTermsWarning_();
  if (!info.idToken) {
  byId('authStatus').textContent = 'Not logged in.';
  byId('tb').innerHTML = '';
@@ -544,6 +582,7 @@
 
  window.onload = () => {
  window.initSharedTopBar && window.initSharedTopBar();
+ updateTermsWarning_();
  const gsiWait = setInterval(() => {
  if (window.google && google.accounts && google.accounts.id) {
  initGoogleIdentity();

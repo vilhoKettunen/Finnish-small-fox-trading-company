@@ -317,10 +317,33 @@
         .trade-favor.bad {
             color: #c62828;
         }
+
+        /* ===== Login terms warning ===== */
+        #loginTermsWarning {
+            display: none;
+            margin: 0 0 10px 0;
+            padding: 10px 12px;
+            border: 1px solid #f3b3b3;
+            background: #fff2f2;
+            border-radius: 8px;
+            color: #a40000;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        #loginTermsWarning a {
+            color: #a40000;
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <div id="authPanel">
+        <div id="loginTermsWarning">
+            <div><strong>By logging in you accept the <a href="TermsAndConditions.html" target="_blank" rel="noopener">Terms and Conditions</a> of this page.</strong></div>
+            <div>In short: we store your email for login identification, and we use trading data for transparency and research purposes.</div>
+        </div>
+
         <div id="googleLoginArea">
             <div id="googleBtn"></div>
             <div class="login-hint">If the Google button does not appear, use fallback:</div>
@@ -329,10 +352,10 @@
             </div>
             <div id="loginStatus" class="small"></div>
         </div>
+        <div id="authStatus" class="small muted">Not logged in.</div>
     </div>
 
     <h1>OCM Merchant</h1>
-    <div id="authStatus" class="small">Not logged in.</div>
 
     <section class="section" aria-label="Listing creation tool">
         <h2>Listing creation tool</h2>

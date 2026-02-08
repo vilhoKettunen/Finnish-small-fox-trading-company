@@ -21,6 +21,16 @@
  if (el) el.textContent = text || '';
  }
 
+ function setVisible(id, visible) {
+ const el = byId(id);
+ if (!el) return;
+ el.style.display = visible ? 'block' : 'none';
+ }
+
+ function updateLoginTermsWarning_() {
+ setVisible('loginTermsWarning', !googleIdToken);
+ }
+
  function setBusy(isBusy) {
  const ids = [
  'btnSavePlayerName', 'btnSaveMailbox', 'btnSaveMallMailbox', 'btnClearMallMailbox',
@@ -321,6 +331,7 @@
 
  async function onLoginFromToken_(idToken, silent) {
  googleIdToken = idToken;
+ updateLoginTermsWarning_();
  if (!googleIdToken) return;
 
  try {
@@ -339,6 +350,7 @@
  setText('loginStatus', 'Loading profile…');
  await loadMeAndApply_();
  setText('loginStatus', 'Logged in.');
+ updateLoginTermsWarning_();
  } catch (e) {
  setText('loginStatus', 'Login error: ' + (e.message || e));
  }
@@ -432,6 +444,7 @@
  // clear local auth
  window.clearSavedIdToken && window.clearSavedIdToken();
  googleIdToken = null;
+ updateLoginTermsWarning_();
  currentUser = null;
 
  if (window.topbarSetAuthState) {
@@ -512,6 +525,9 @@
  window.addEventListener('load', async () => {
  window.initSharedTopBar && window.initSharedTopBar();
  document.body.classList.add('withTopBar');
+
+ // initial warning state
+ updateLoginTermsWarning_();
 
  wireUi_();
  checkHashForIdToken_();

@@ -8,6 +8,28 @@
 
  const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '';
 
+ function setTermsWarningVisible_(visible) {
+ const el = document.getElementById('loginTermsWarning');
+ if (!el) return;
+ el.style.display = visible ? 'block' : 'none';
+ }
+
+ function updateTermsWarning_() {
+ // Default to showing warning unless we are sure we have a token
+ setTermsWarningVisible_(!S.googleIdToken);
+ }
+
+ // Ensure warning is visible by default (logged out) even if this script executes before DOM is fully ready.
+ function showWarningSoon_() {
+ try { setTermsWarningVisible_(true); } catch { }
+ // Also re-apply after DOMContentLoaded in case element wasn't present yet.
+ document.addEventListener('DOMContentLoaded', () => {
+ try { updateTermsWarning_(); } catch { }
+ });
+ }
+
+ showWarningSoon_();
+
  function initGoogleIdentity() {
  if (!window.google || !google.accounts || !google.accounts.id) return;
  google.accounts.id.initialize({
@@ -39,6 +61,7 @@
  async function onGoogleSignIn(resp) {
  const statusEl = byId('loginStatus');
  S.googleIdToken = resp && resp.credential;
+ updateTermsWarning_();
  if (!S.googleIdToken) { statusEl.textContent = 'Login error: no credential'; return; }
  statusEl.textContent = 'Verifying token...';
 
@@ -52,6 +75,7 @@
  statusEl.textContent = 'Loading profile...';
  await O.applyAuthFromToken(S.googleIdToken);
  statusEl.textContent = 'Logged in.';
+ updateTermsWarning_();
  } catch (e) {
  statusEl.textContent = 'Login error: ' + e.message;
  }
@@ -60,4 +84,7 @@
  window.startFallbackLogin = startFallbackLogin;
  O.initGoogleIdentity = initGoogleIdentity;
  O.onGoogleSignIn = onGoogleSignIn;
+
+ // initial state
+ try { updateTermsWarning_(); } catch { }
 })();

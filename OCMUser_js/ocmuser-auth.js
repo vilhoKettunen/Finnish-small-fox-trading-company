@@ -7,6 +7,16 @@
 
  const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '';
 
+ function setTermsWarningVisible_(visible) {
+ const el = document.getElementById('loginTermsWarning');
+ if (!el) return;
+ el.style.display = visible ? 'block' : 'none';
+ }
+
+ function updateTermsWarning_() {
+ setTermsWarningVisible_(!S.googleIdToken);
+ }
+
  function normalizeUser(u) {
  if (!u) return u;
  const cand = (u.playerName && u.playerName.trim()) || (u.name && u.name.trim()) || (u.displayName && u.displayName.trim()) || null;
@@ -16,6 +26,7 @@
 
  async function applyAuthFromToken(idToken) {
  S.googleIdToken = idToken;
+ updateTermsWarning_();
  const me = await apiGet('me', { idToken });
  const d = me.data || me.result || me;
  S.currentUser = normalizeUser(d.user || d) || {};
@@ -31,6 +42,7 @@
  async function onGoogleSignIn(resp) {
  const statusEl = byId('loginStatus');
  S.googleIdToken = resp && resp.credential;
+ updateTermsWarning_();
  if (!S.googleIdToken) { statusEl.textContent = 'Login error: no credential'; return; }
 
  statusEl.textContent = 'Verifying token...';
@@ -43,6 +55,7 @@
  statusEl.textContent = 'Loading profile...';
  await applyAuthFromToken(S.googleIdToken);
  statusEl.textContent = 'Logged in.';
+ updateTermsWarning_();
  } catch (e) {
  statusEl.textContent = 'Login error: ' + e.message;
  }
@@ -80,15 +93,17 @@
  if (!window.initAuthFromStorage) return;
  try {
  const res = await window.initAuthFromStorage();
- if (!res.ok) return;
+ if (!res.ok) { updateTermsWarning_(); return; }
  await applyAuthFromToken(res.idToken);
  } catch (e) {
  console.warn('OCMUser auth restore failed', e);
+ updateTermsWarning_();
  }
  }
 
  window.onTopbarAuthChanged = function (info) {
  S.googleIdToken = info.idToken;
+ updateTermsWarning_();
  S.currentUser = info.user;
  if (window.topbarSetAuthState) window.topbarSetAuthState(info);
  if (!info.idToken) {
@@ -108,4 +123,7 @@
  },200);
  setTimeout(() => clearInterval(gsiWait),4000);
  };
+
+ // initial
+ try { updateTermsWarning_(); } catch { }
 })();
