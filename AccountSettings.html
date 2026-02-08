@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Account Settings</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="icon" href="favicon.ico">
+
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
+    <script src="api-client.js"></script>
+    <script src="topbar.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        body.withTopBar {
+            padding-top: 72px;
+        }
+
+        h1, h2 {
+            margin-top: 0;
+        }
+
+        .section {
+            margin: 18px 0;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        label {
+            display: block;
+            margin: 8px 0;
+        }
+
+        input, button, select {
+            padding: 6px;
+            font-size: 13px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .small {
+            font-size: 12px;
+            color: #555;
+        }
+
+        .muted {
+            color: #666;
+        }
+
+        .danger {
+            background: #b42318;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 10px;
+        }
+
+        .danger:disabled {
+            opacity: 0.6;
+        }
+
+        dialog::backdrop {
+            background: rgba(0,0,0,0.35);
+        }
+
+        .grid2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 860px) {
+            .grid2 { grid-template-columns: 1fr; }
+        }
+
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 6px 0;
+            border-bottom: 1px dashed #eee;
+        }
+
+        .stat:last-child { border-bottom: 0; }
+
+        .mono { font-family: Consolas, monospace; }
+
+        details summary { cursor: pointer; }
+    </style>
+
+    <script src="account_settings_js/account-settings.js"></script>
+</head>
+<body>
+    <div id="authPanel" class="section">
+        <div id="googleLoginArea">
+            <div id="googleBtn"></div>
+            <div class="small" style="margin-top:6px;">If the Google button does not appear, use fallback:</div>
+            <div style="margin-top:6px;">
+                <button id="fallbackBtn" type="button" onclick="startFallbackLogin()">Fallback Google Login</button>
+            </div>
+            <div id="loginStatus" class="small" style="margin-top:6px;"></div>
+        </div>
+        <div id="authStatus" class="small muted" style="margin-top:10px;">Not logged in.</div>
+    </div>
+
+    <h1>Account Settings</h1>
+
+    <section class="section" aria-label="Settings">
+        <h2>Settings</h2>
+        <div class="small muted">Edits are validated for safety. Mailbox formats are strict.</div>
+
+        <label>
+            Username (playerName)
+            <input id="inpPlayerName" type="text" placeholder="Your username" maxlength="32" style="width:min(420px,100%);">
+        </label>
+        <div class="small">Allowed: letters, numbers, spaces, "_" and "-". 2�32 chars.</div>
+        <div class="row" style="margin-top:6px;">
+            <button id="btnSavePlayerName" type="button">Save username</button>
+        </div>
+
+        <hr style="border:0;border-top:1px solid #eee;margin:14px 0;">
+
+        <label>
+            Mailbox
+            <input id="inpMailbox" type="text" placeholder="4A / 1A / F1" style="width:min(420px,100%);">
+        </label>
+        <div class="small">Format: <code>4A / 1A / F1</code></div>
+        <div class="row" style="margin-top:6px;">
+            <button id="btnSaveMailbox" type="button">Save mailbox</button>
+        </div>
+
+        <hr style="border:0;border-top:1px solid #eee;margin:14px 0;">
+
+        <label>
+            Mall mailbox (optional)
+            <input id="inpMallMailbox" type="text" placeholder="M1A / M1A / F1" style="width:min(420px,100%);">
+        </label>
+        <div class="small">Format: <code>M1A / M1A / F1</code> (F&lt;n&gt; is required)</div>
+        <div class="row" style="margin-top:6px;">
+            <button id="btnSaveMallMailbox" type="button">Save mall mailbox</button>
+            <button id="btnClearMallMailbox" type="button">Clear mall mailbox</button>
+        </div>
+
+        <div id="saveMsg" class="small" style="margin-top:10px;"></div>
+    </section>
+
+    <section class="section" aria-label="Account deletion">
+        <h2>Delete account</h2>
+        <div class="small">
+            Deleting your account will remove your email address from the system. Your trade data and history remain for transparency/research.
+            Your OCM listings will be paused so they are no longer publicly visible.
+        </div>
+        <div class="row" style="margin-top:10px;">
+            <button id="btnDeleteAccount" type="button" class="danger">Delete account�</button>
+            <span id="deleteMsg" class="small"></span>
+        </div>
+
+        <dialog id="dlgDelete">
+            <form method="dialog" style="min-width:min(520px,95vw)">
+                <h3 style="margin-top:0;">Confirm account deletion</h3>
+                <div class="small" style="margin-bottom:10px;">
+                    This will:
+                    <ul>
+                        <li>Delete your email address from the system</li>
+                        <li>Keep trade data + history for transparency/research</li>
+                        <li>Pause your OCM listings so they are no longer publicly visible</li>
+                    </ul>
+                </div>
+                <div class="row">
+                    <button id="btnConfirmDelete" type="button" class="danger">Confirm delete</button>
+                    <button id="btnCancelDelete" type="button">Cancel</button>
+                </div>
+            </form>
+        </dialog>
+    </section>
+
+    <section class="section" aria-label="Statistics">
+        <h2>Statistics</h2>
+        <div class="small muted">
+            Statistics are cached and updated automatically when you trade. You can also force refresh.
+        </div>
+
+        <div class="row" style="margin-top:8px;">
+            <button id="btnRefreshStats" type="button">Refresh statistics</button>
+            <span id="statsStatus" class="small muted"></span>
+        </div>
+        <div class="small" style="margin-top:8px;">
+            Last updated: <span id="statsUpdatedAt" class="mono">—</span>
+        </div>
+
+        <hr style="border:0;border-top:1px solid #eee;margin:14px 0;">
+
+        <div class="row" style="margin-bottom:10px;">
+            <label class="small">
+                Favorite STORE buy mode
+                <select id="selStoreBuyMode">
+                    <option value="byQty" selected>Quantity</option>
+                    <option value="byValue">BT value</option>
+                    <option value="byRows">Distinct requests</option>
+                </select>
+            </label>
+            <label class="small">
+                Favorite STORE sell mode
+                <select id="selStoreSellMode">
+                    <option value="byQty" selected>Quantity</option>
+                    <option value="byValue">BT value</option>
+                    <option value="byRows">Distinct requests</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="grid2">
+            <div>
+                <h3 style="margin: 0 0 8px 0;">Store</h3>
+                <div class="stat"><span class="small">Trades with store</span><span id="st_storeTrades" class="mono">—</span></div>
+                <div class="stat"><span class="small">Net BT (REQUEST_APPROVED)</span><span id="st_storeNet" class="mono">—</span></div>
+                <div class="stat"><span class="small">Last store interaction</span><span id="st_storeLast" class="mono">—</span></div>
+                <div class="stat"><span class="small">Largest buy value</span><span id="st_storeMaxBuy" class="mono">—</span></div>
+                <div class="stat"><span class="small">Largest sell value</span><span id="st_storeMaxSell" class="mono">—</span></div>
+
+                <div style="margin-top:10px;">
+                    <div class="small muted" style="margin-bottom:4px;">Favorite item bought from store</div>
+                    <div class="small"><strong id="st_storeFavBuyName">—</strong></div>
+                    <div class="small muted">Qty: <span id="st_storeFavBuyQty" class="mono">—</span> | Value: <span id="st_storeFavBuyValue" class="mono">—</span> | Requests: <span id="st_storeFavBuyRows" class="mono">—</span></div>
+                </div>
+
+                <div style="margin-top:10px;">
+                    <div class="small muted" style="margin-bottom:4px;">Favorite item sold to store</div>
+                    <div class="small"><strong id="st_storeFavSellName">—</strong></div>
+                    <div class="small muted">Qty: <span id="st_storeFavSellQty" class="mono">—</span> | Value: <span id="st_storeFavSellValue" class="mono">—</span> | Requests: <span id="st_storeFavSellRows" class="mono">—</span></div>
+                </div>
+            </div>
+
+            <div>
+                <h3 style="margin: 0 0 8px 0;">OCM</h3>
+                <div class="stat"><span class="small">Total OCM trades</span><span id="st_ocmTrades" class="mono">—</span></div>
+                <div class="stat"><span class="small">Completed by merchant (you when you are merchant)</span><span id="st_ocmCompletedMerchant" class="mono">—</span></div>
+                <div class="stat"><span class="small">Completed by admin</span><span id="st_ocmCompletedAdmin" class="mono">—</span></div>
+                <div class="stat"><span class="small">Trades as customer</span><span id="st_ocmAsBuyer" class="mono">—</span></div>
+                <div class="stat"><span class="small">Trades as merchant</span><span id="st_ocmAsMerchant" class="mono">—</span></div>
+                <div class="stat"><span class="small">Total trade value</span><span id="st_ocmTotalValue" class="mono">—</span></div>
+                <div class="stat"><span class="small">Fees paid (merchant-side)</span><span id="st_ocmFees" class="mono">—</span></div>
+                <div class="stat"><span class="small">Largest trade value</span><span id="st_ocmMax" class="mono">—</span></div>
+                <div class="stat"><span class="small">Last OCM trade</span><span id="st_ocmLast" class="mono">—</span></div>
+                <div class="stat"><span class="small">Active listings</span><span id="st_ocmActiveListings" class="mono">—</span></div>
+
+                <div style="margin-top:10px;">
+                    <div class="small muted" style="margin-bottom:4px;">Favorite counterparty</div>
+                    <div class="small"><strong id="st_ocmFavCounterparty">—</strong></div>
+                    <div class="small muted">Trades: <span id="st_ocmFavCounterpartyCount" class="mono">—</span> | Total value: <span id="st_ocmFavCounterpartyValue" class="mono">—</span></div>
+                </div>
+
+                <div style="margin-top:10px;">
+                    <div class="small muted" style="margin-bottom:4px;">Favorite OCM items / pegs</div>
+                    <div class="small">Sold as merchant: <strong id="st_ocmFavItemSold">—</strong></div>
+                    <div class="small">Bought as customer: <strong id="st_ocmFavItemBought">—</strong></div>
+                    <div class="small">Peg used as customer: <strong id="st_ocmFavPegUsed">—</strong></div>
+                    <div class="small">Peg received as merchant: <strong id="st_ocmFavPegReceived">—</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <details style="margin-top:14px;">
+            <summary class="small muted">Debug: Raw statistics JSON</summary>
+            <pre id="preStatsRaw" class="small" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+        </details>
+    </section>
+
+    <section class="section" aria-label="Top5 statistics">
+        <h2>Top5 statistics</h2>
+        <div class="small muted">
+            These are derived from the cached Top5 sidecar data. (Count vs BT value rankings can differ.)
+        </div>
+
+        <div class="grid2" style="margin-top:10px;">
+            <div>
+                <h3 style="margin: 0 0 8px 0;">Store Top5</h3>
+
+                <details>
+                    <summary class="small muted">Bought from store (Top5 by quantity)</summary>
+                    <pre id="top5_store_buy_byQty" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+                </details>
+
+                <details>
+                    <summary class="small muted">Bought from store (Top5 by BT value)</summary>
+                    <pre id="top5_store_buy_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+                </details>
+
+                <details>
+                    <summary class="small muted">Bought from store (Top5 by distinct requests)</summary>
+                    <pre id="top5_store_buy_byRows" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+                </details>
+
+                <details style="margin-top:8px;">
+                    <summary class="small muted">Sold to store (Top5 by quantity)</summary>
+                    <pre id="top5_store_sell_byQty" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+                </details>
+
+                <details>
+                    <summary class="small muted">Sold to store (Top5 by BT value)</summary>
+                    <pre id="top5_store_sell_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+                </details>
+
+                <details>
+                    <summary class="small muted">Sold to store (Top5 by distinct requests)</summary>
+                    <pre id="top5_store_sell_byRows" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+                </details>
+            </div>
+
+            <div>
+                <h3 style="margin: 0 0 8px 0;">OCM Top5</h3>
+
+                <details>
+                    <summary class="small muted">Counterparties (Top5 by trade count)</summary>
+                    <pre id="top5_ocm_counterparties" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+                </details>
+
+                <details style="margin-top:8px;">
+                    <summary class="small muted">Items sold as merchant (Top5 by trade count)</summary>
+                    <pre id="top5_ocm_itemsSold_byCount" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+                </details>
+
+                <details>
+                    <summary class="small muted">Items sold as merchant (Top5 by BT value)</summary>
+                    <pre id="top5_ocm_itemsSold_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+                </details>
+
+                <details style="margin-top:8px;">
+                    <summary class="small muted">Items bought as customer (Top5 by trade count)</summary>
+                    <pre id="top5_ocm_itemsBought_byCount" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+                </details>
+
+                <details>
+                    <summary class="small muted">Items bought as customer (Top5 by BT value)</summary>
+                    <pre id="top5_ocm_itemsBought_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+                </details>
+
+                <details style="margin-top:8px;">
+                    <summary class="small muted">Pegs used as customer (Top5 by trade count)</summary>
+                    <pre id="top5_ocm_pegsUsed_byCount" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+                </details>
+
+                <details>
+                    <summary class="small muted">Pegs used as customer (Top5 by BT value)</summary>
+                    <pre id="top5_ocm_pegsUsed_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+                </details>
+
+                <details style="margin-top:8px;">
+                    <summary class="small muted">Pegs received as merchant (Top5 by trade count)</summary>
+                    <pre id="top5_ocm_pegsRecv_byCount" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+                </details>
+
+                <details>
+                    <summary class="small muted">Pegs received as merchant (Top5 by BT value)</summary>
+                    <pre id="top5_ocm_pegsRecv_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+                </details>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

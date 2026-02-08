@@ -55,6 +55,7 @@ gap: 12px;
     <div class="right">
       <span id="topBalance" class="balance-chip balance-you" style="display:none;"></span>
       <span id="topUser"></span>
+      <button id="btnSettings" type="button" style="display:none;">Settings</button>
       <button id="btnLogin" type="button">Login</button>
  <button id="btnLogout" type="button" style="display:none;">Logout</button>
     </div>
@@ -86,6 +87,7 @@ return email||name||'';
     const topUser=document.getElementById('topUser');
     const btnLogin=document.getElementById('btnLogin');
     const btnLogout=document.getElementById('btnLogout');
+    const btnSettings=document.getElementById('btnSettings');
     const adminBtn=document.getElementById('adminPanelBtn');
 
     if(logged){
@@ -97,11 +99,13 @@ return email||name||'';
    balEl.classList.add(safe>=0?'positive':'negative');
  }
   if(topUser) topUser.textContent=displayName(state.user);
+      if(btnSettings) btnSettings.style.display='inline-block';
       if(btnLogin) btnLogin.style.display='none';
       if(btnLogout) btnLogout.style.display='inline-block';
     } else {
       if(balEl){ balEl.style.display='none'; balEl.textContent=''; }
  if(topUser) topUser.textContent='';
+      if(btnSettings) btnSettings.style.display='none';
       if(btnLogin) btnLogin.style.display='inline-block';
   if(btnLogout) btnLogout.style.display='none';
     }
@@ -127,6 +131,14 @@ if(btn.id==='btnLogin'){
  // Do NOT call google.accounts.id.prompt() here; just bring user to the main Google button.
  scrollToGoogleButton();
  return;
+      }
+ if(btn.id==='btnSettings'){
+        if(!state.idToken){
+          scrollToGoogleButton();
+          return;
+        }
+        window.location.href='AccountSettings.html';
+        return;
       }
  if(btn.id==='btnLogout'){
   if(typeof window.logout==='function') window.logout();

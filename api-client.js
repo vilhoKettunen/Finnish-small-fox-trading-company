@@ -18,6 +18,10 @@
         // Account setup (NEW)
         'linkPlayer',
 
+        // Self account settings (NEW)
+        'updateMyProfile',
+        'deleteMyAccount',
+
         // Admin account editing
         'adminUpdateUserProfile',
 
