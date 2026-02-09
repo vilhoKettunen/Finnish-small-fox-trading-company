@@ -8,9 +8,44 @@
  googleIdToken: null,
  currentUser: null,
  catalog: [],
- listingsSell: [],
- listingsBuy: [],
- activeTab: 'sell'
+
+ // Raw cache from backend (fetched once-after-login; refreshed on demand)
+ listingsCache: {
+ sell: [],
+ buy: [],
+ fetchedAt: null
+ },
+
+ // Unified rendering output (current page slice)
+ listingsView: {
+ allMatching: [],
+ pageItems: [],
+ totalMatching:0,
+ pageIndex:0,
+ pageCount:0
+ },
+
+ // Filters
+ draftFilters: {
+ type: 'SELL',
+ itemText: '',
+ merchantText: '',
+ pegNames: []
+ },
+ appliedFilters: {
+ type: 'SELL',
+ itemText: '',
+ merchantText: '',
+ pegNames: []
+ },
+
+ // Immediate filters / tuning
+ onlyItemPayment: false,
+ stockMin: null,
+ stockMax: null,
+ sort: 'NONE', // NONE|PRICE_ASC|PRICE_DESC
+ pageSize:20,
+ pageIndex:0
  };
 
  OCMHome.byId = function byId(id) { return document.getElementById(id); };

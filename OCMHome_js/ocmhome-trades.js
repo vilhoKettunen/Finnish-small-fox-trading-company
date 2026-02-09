@@ -1,4 +1,4 @@
-// Listing loading + trade details + pending trades for OCMHome
+ï»¿// Listing loading + trade details + pending trades for OCMHome
 (function () {
  'use strict';
 
@@ -7,23 +7,33 @@
  const byId = O.byId;
  const fmt2 = O.fmt2;
 
- async function loadListings() {
- const qSell = (byId('qSell').value || '').trim();
- const qBuy = (byId('qBuy').value || '').trim();
- byId('msgTop').textContent = 'Loading listings...';
+ async function fetchListingsOnceOrRefresh(opts) {
+ const force = !!(opts && opts.force);
+ if (!S.googleIdToken) {
+ byId('msgTop').textContent = 'Login required to load listings.';
+ // keep table empty when logged out
+ if (O.clearListingsUi_) O.clearListingsUi_();
+ return;
+ }
 
+ if (!force && S.listingsCache && Array.isArray(S.listingsCache.sell) && Array.isArray(S.listingsCache.buy) && S.listingsCache.fetchedAt) {
+ O.applyFiltersAndRender && O.applyFiltersAndRender();
+ return;
+ }
+
+ byId('msgTop').textContent = 'Loading listings...';
  try {
- const q = (S.activeTab === 'sell') ? qSell : qBuy;
- const r = await apiGet('ocmListPublicListings', { q });
+ const r = await apiGet('ocmListPublicListings', { q: '' });
  const d = r.data || r.result || r;
 
- S.listingsSell = d.sell || [];
- S.listingsBuy = d.buy || [];
+ S.listingsCache.sell = d.sell || [];
+ S.listingsCache.buy = d.buy || [];
+ S.listingsCache.fetchedAt = new Date().toISOString();
 
- O.renderTables();
- byId('msgTop').textContent = `Loaded ${S.listingsSell.length} sell, ${S.listingsBuy.length} buy.`;
+ byId('msgTop').textContent = `Loaded ${S.listingsCache.sell.length} sell, ${S.listingsCache.buy.length} buy.`;
+ O.applyFiltersAndRender && O.applyFiltersAndRender();
  } catch (e) {
- byId('msgTop').textContent = 'Error: ' + e.message;
+ byId('msgTop').textContent = 'Error: ' + (e.message || e);
  }
  }
 
@@ -92,7 +102,7 @@
  function computeValueLinesForTrade_(listing, u, selectedPegName, selectedPegRatio) {
  const listingName = String(listing?.itemName || '').trim();
  const pegName = String(selectedPegName || '').trim();
- if (!listingName || !pegName) return { buy: 'BUY: —', sell: 'SELL: —' };
+ if (!listingName || !pegName) return { buy: 'BUY: ï¿½', sell: 'SELL: ï¿½' };
 
  const leftQty = u.units;
  const rightQty = Math.ceil((Number(selectedPegRatio ||0) * u.units) -1e-12);
@@ -115,11 +125,11 @@
 
  const buy = (soldBuy != null && pegBuy != null)
  ? `BUY: ${fmt2(leftQty * soldBuy)} BT (${listingName}) | ${fmt2(rightQty * pegBuy)} BT (${pegName})`
- : 'BUY: —';
+ : 'BUY: ï¿½';
 
  const sell = (soldSell != null && pegSell != null)
  ? `SELL: ${fmt2(leftQty * soldSell)} BT (${listingName}) | ${fmt2(rightQty * pegSell)} BT (${pegName})`
- : 'SELL: —';
+ : 'SELL: ï¿½';
 
  return { buy, sell };
  }
@@ -220,7 +230,7 @@
  <div>
  <div class="small">Listing</div>
  <div><strong>${O.escapeHtml_(listing.itemName)}</strong> (${O.escapeHtml_(listing.type)})</div>
- <div class="small">By ${O.escapeHtml_(listing.playerName || 'Unknown')}</div>
+ <div class="small">Merchant: ${O.escapeHtml_(listing.playerName || 'Unknown')}</div>
  <div class="small muted">Stack size: <span class="mono">${Number(listing.stackSize ||1) ||1}</span></div>
  </div>
 
@@ -237,8 +247,8 @@
 
  <div>
  <div class="small">Estimate</div>
- <div class="mono" data-estimate>—</div>
- <div class="small muted" data-value-lines>—</div>
+ <div class="mono" data-estimate>ï¿½</div>
+ <div class="small muted" data-value-lines>ï¿½</div>
  <div class="small" data-fee-note>Fee:0% if seller completes,10% if admin completes.</div>
  <div class="trade-favor" data-favor-customer style="display:none;"></div>
  <div class="trade-favor" data-favor-merchant style="display:none;"></div>
@@ -266,274 +276,274 @@
  const merchantFavorEl = td.querySelector('[data-favor-merchant]');
  const payPegSel = td.querySelector('select[data-pay-peg]');
 
- function getPaymentChoice() {
- const r = td.querySelector(`input[name="pay_${listing.listingId}"]:checked`);
- if (r) return r.value;
- const h = td.querySelector(`input[name="pay_${listing.listingId}"][type="hidden"]`);
- return h ? h.value : 'BT';
- }
+        function getPaymentChoice() {
+            const r = td.querySelector(`input[name="pay_${listing.listingId}"]:checked`);
+            if (r) return r.value;
+            const h = td.querySelector(`input[name="pay_${listing.listingId}"][type="hidden"]`);
+            return h ? h.value : 'BT';
+        }
 
- function getQtyMode() { return td.querySelector(`input[name="qtym_${listing.listingId}"]:checked`)?.value || 'IND'; }
- function getPayPegName() { return payPegSel ? (String(payPegSel.value || '').trim() || null) : null; }
+        function getQtyMode() { return td.querySelector(`input[name="qtym_${listing.listingId}"]:checked`)?.value || 'IND'; }
+        function getPayPegName() { return payPegSel ? (String(payPegSel.value || '').trim() || null) : null; }
 
- function showEstimate() {
- const qtyMode = getQtyMode();
- const u = computeUnits_(td, listing);
- if (!u) {
- estEl.textContent = '—';
- valueEl.textContent = '—';
- if (customerFavorEl) customerFavorEl.style.display = 'none';
- if (merchantFavorEl) merchantFavorEl.style.display = 'none';
- return;
- }
+        function showEstimate() {
+            const qtyMode = getQtyMode();
+            const u = computeUnits_(td, listing);
+            if (!u) {
+                estEl.textContent = 'â€”';
+                valueEl.textContent = 'â€”';
+                if (customerFavorEl) customerFavorEl.style.display = 'none';
+                if (merchantFavorEl) merchantFavorEl.style.display = 'none';
+                return;
+            }
 
- const paymentChoice = getPaymentChoice();
- const payPegName = getPayPegName();
+            const paymentChoice = getPaymentChoice();
+            const payPegName = getPayPegName();
 
- // Enforce stack-only listings
- if (stackOnly && qtyMode !== 'STACK') {
- estEl.textContent = 'This listing is stack-priced. Choose stack quantity.';
- valueEl.textContent = '—';
- if (customerFavorEl) customerFavorEl.style.display = 'none';
- if (merchantFavorEl) merchantFavorEl.style.display = 'none';
- return;
- }
+            // Enforce stack-only listings
+            if (stackOnly && qtyMode !== 'STACK') {
+                estEl.textContent = 'This listing is stack-priced. Choose stack quantity.';
+                valueEl.textContent = 'â€”';
+                if (customerFavorEl) customerFavorEl.style.display = 'none';
+                if (merchantFavorEl) merchantFavorEl.style.display = 'none';
+                return;
+            }
 
- const est = computeEstimate_(listing, u, paymentChoice, payPegName, primaryPeg, altPegs);
- if (!est) {
- estEl.textContent = '—';
- valueEl.textContent = '—';
- if (customerFavorEl) customerFavorEl.style.display = 'none';
- if (merchantFavorEl) merchantFavorEl.style.display = 'none';
- return;
- }
+            const est = computeEstimate_(listing, u, paymentChoice, payPegName, primaryPeg, altPegs);
+            if (!est) {
+                estEl.textContent = 'â€”';
+                valueEl.textContent = 'â€”';
+                if (customerFavorEl) customerFavorEl.style.display = 'none';
+                if (merchantFavorEl) merchantFavorEl.style.display = 'none';
+                return;
+            }
 
- const parts = [];
+            const parts = [];
 
- if (est.paymentChoice === 'ITEM') {
- // Render stk/ind breakdown for payment item using catalog bundle size (if available)
- let payQtyLabel = `~${est.payItems}`;
- try {
- const payName = String(est.payPegName || '').trim();
- const it = payName ? O.findCatalogItem(payName) : null;
- const bs = Number(it?.bundleSize ||1) ||1;
- const n = Math.max(0, Math.round(Number(est.payItems ||0) ||0));
- if (bs >1 && n >0) {
- const stk = Math.floor(n / bs);
- const ind = n % bs;
- const partsQty = [];
- if (stk >0) partsQty.push(`${stk} stk`);
- if (ind >0) partsQty.push(`${ind} ind`);
- if (partsQty.length) payQtyLabel = partsQty.join(' + ');
- else payQtyLabel = `${n} ind`;
- } else if (n >0) {
- payQtyLabel = `${n} ind`;
- }
- } catch { /* ignore */ }
+            if (est.paymentChoice === 'ITEM') {
+                // Render stk/ind breakdown for payment item using catalog bundle size (if available)
+                let payQtyLabel = `~${est.payItems}`;
+                try {
+                    const payName = String(est.payPegName || '').trim();
+                    const it = payName ? O.findCatalogItem(payName) : null;
+                    const bs = Number(it?.bundleSize || 1) || 1;
+                    const n = Math.max(0, Math.round(Number(est.payItems || 0) || 0));
+                    if (bs > 1 && n > 0) {
+                        const stk = Math.floor(n / bs);
+                        const ind = n % bs;
+                        const partsQty = [];
+                        if (stk > 0) partsQty.push(`${stk} stk`);
+                        if (ind > 0) partsQty.push(`${ind} ind`);
+                        if (partsQty.length) payQtyLabel = partsQty.join(' + ');
+                        else payQtyLabel = `${n} ind`;
+                    } else if (n > 0) {
+                        payQtyLabel = `${n} ind`;
+                    }
+                } catch { /* ignore */ }
 
- parts.push(`You ${verbMain} ${payQtyLabel} ${est.payPegName} (rounded up).`);
- if (est.canonicalBT != null) parts.push(`Canonical BT (primary-based): ${fmt2(est.canonicalBT)} BT.`);
- if (est.selectedPegBT != null) parts.push(`BT eq (selected-peg store price): ${fmt2(est.selectedPegBT)} BT.`);
- if (est.tradedBT != null) parts.push(`Traded item store BT: ${fmt2(est.tradedBT)} BT.`);
- } else {
- if (est.canonicalBT != null) parts.push(`You ${verbMain} ${fmt2(est.canonicalBT)} BT (primary-based).`);
- if (est.tradedBT != null) parts.push(`Traded item store BT: ${fmt2(est.tradedBT)} BT.`);
- }
+                parts.push(`You ${verbMain} ${payQtyLabel} ${est.payPegName} (rounded up).`);
+                if (est.canonicalBT != null) parts.push(`Canonical BT (primary-based): ${fmt2(est.canonicalBT)} BT.`);
+                if (est.selectedPegBT != null) parts.push(`BT eq (selected-peg store price): ${fmt2(est.selectedPegBT)} BT.`);
+                if (est.tradedBT != null) parts.push(`Traded item store BT: ${fmt2(est.tradedBT)} BT.`);
+            } else {
+                if (est.canonicalBT != null) parts.push(`You ${verbMain} ${fmt2(est.canonicalBT)} BT (primary-based).`);
+                if (est.tradedBT != null) parts.push(`Traded item store BT: ${fmt2(est.tradedBT)} BT.`);
+            }
 
- estEl.textContent = parts.join(' ');
+            estEl.textContent = parts.join(' ');
 
- // Value comparison lines are based on the "chosen peg" (for item payment we use selected peg; for BT it's still useful).
- const chosenPegName = (paymentChoice === 'ITEM') ? (est.payPegName || primaryPeg?.itemName) : (primaryPeg?.itemName || '');
- const chosenRatio = (paymentChoice === 'ITEM')
- ? Number((paymentChoice === 'ITEM' && chosenPegName && String(chosenPegName).toLowerCase() === String(primaryPeg?.itemName || '').toLowerCase())
- ? (primaryPeg?.pegQtyPerInd ??0)
- : ((altPegs || []).find(a => String(a?.itemName || '').toLowerCase() === String(chosenPegName || '').toLowerCase())?.pegQtyPerInd ??0))
- : Number(primaryPeg?.pegQtyPerInd ??0);
+            // Value comparison lines are based on the "chosen peg" (for item payment we use selected peg; for BT it's still useful).
+            const chosenPegName = (paymentChoice === 'ITEM') ? (est.payPegName || primaryPeg?.itemName) : (primaryPeg?.itemName || '');
+            const chosenRatio = (paymentChoice === 'ITEM')
+                ? Number((paymentChoice === 'ITEM' && chosenPegName && String(chosenPegName).toLowerCase() === String(primaryPeg?.itemName || '').toLowerCase())
+                    ? (primaryPeg?.pegQtyPerInd ?? 0)
+                    : ((altPegs || []).find(a => String(a?.itemName || '').toLowerCase() === String(chosenPegName || '').toLowerCase())?.pegQtyPerInd ?? 0))
+                : Number(primaryPeg?.pegQtyPerInd ?? 0);
 
- const v = computeValueLinesForTrade_(listing, u, chosenPegName, chosenRatio);
- valueEl.innerHTML = `${O.escapeHtml_(v.buy)}<br>${O.escapeHtml_(v.sell)}`;
+            const v = computeValueLinesForTrade_(listing, u, chosenPegName, chosenRatio);
+            valueEl.innerHTML = `${O.escapeHtml_(v.buy)}<br>${O.escapeHtml_(v.sell)}`;
 
- // ===== Customer favor / Merchant favor =====
- // Totals match the value lines shown.
- // SELL listings: keep existing behavior.
- // BUY listings: use new rules:
- // - Customer:
- // * ITEM: (1 - traded BUY total / peg SELL total)*100
- // * BT: (1 - traded BUY total / peg BUY total)*100
- // - Merchant (both): (1 - peg BUY total / traded SELL total)*100
- try {
- const listingName = String(listing?.itemName || '').trim();
- const pegName = String(chosenPegName || '').trim();
+            // ===== Customer favor / Merchant favor =====
+            // Totals match the value lines shown.
+            // SELL listings: keep existing behavior.
+            // BUY listings: use new rules:
+            // - Customer:
+            // * ITEM: (1 - traded BUY total / peg SELL total)*100
+            // * BT: (1 - traded BUY total / peg BUY total)*100
+            // - Merchant (both): (1 - peg BUY total / traded SELL total)*100
+            try {
+                const listingName = String(listing?.itemName || '').trim();
+                const pegName = String(chosenPegName || '').trim();
 
- // Quantities (must match computeValueLinesForTrade_)
- const leftQty = u.units;
- const rightQty = Math.ceil((Number(chosenRatio ||0) * u.units) -1e-12);
+                // Quantities (must match computeValueLinesForTrade_)
+                const leftQty = u.units;
+                const rightQty = Math.ceil((Number(chosenRatio || 0) * u.units) - 1e-12);
 
- function perInd(name, side) {
- const it = O.findCatalogItem(name);
- if (!it) return null;
- const each = O.getStoreEachPrice_(it, side);
- if (each != null) return each;
- const stk = O.getStoreStackPrice_(it, side);
- const bs = Number(it.bundleSize ||1) ||1;
- if (stk != null) return stk / bs;
- return null;
- }
+                function perInd(name, side) {
+                    const it = O.findCatalogItem(name);
+                    if (!it) return null;
+                    const each = O.getStoreEachPrice_(it, side);
+                    if (each != null) return each;
+                    const stk = O.getStoreStackPrice_(it, side);
+                    const bs = Number(it.bundleSize || 1) || 1;
+                    if (stk != null) return stk / bs;
+                    return null;
+                }
 
- const tradedBuyPer = listingName ? perInd(listingName, 'BUY') : null;
- const tradedSellPer = listingName ? perInd(listingName, 'SELL') : null;
- const pegBuyPer = pegName ? perInd(pegName, 'BUY') : null;
- const pegSellPer = pegName ? perInd(pegName, 'SELL') : null;
+                const tradedBuyPer = listingName ? perInd(listingName, 'BUY') : null;
+                const tradedSellPer = listingName ? perInd(listingName, 'SELL') : null;
+                const pegBuyPer = pegName ? perInd(pegName, 'BUY') : null;
+                const pegSellPer = pegName ? perInd(pegName, 'SELL') : null;
 
- const tradedBuyTotal = (tradedBuyPer != null) ? (leftQty * tradedBuyPer) : null;
- const tradedSellTotal = (tradedSellPer != null) ? (leftQty * tradedSellPer) : null;
- const pegBuyTotal = (pegBuyPer != null) ? (rightQty * pegBuyPer) : null;
- const pegSellTotal = (pegSellPer != null) ? (rightQty * pegSellPer) : null;
+                const tradedBuyTotal = (tradedBuyPer != null) ? (leftQty * tradedBuyPer) : null;
+                const tradedSellTotal = (tradedSellPer != null) ? (leftQty * tradedSellPer) : null;
+                const pegBuyTotal = (pegBuyPer != null) ? (rightQty * pegBuyPer) : null;
+                const pegSellTotal = (pegSellPer != null) ? (rightQty * pegSellPer) : null;
 
- const listingType = String(listing?.type || '').toUpperCase();
+                const listingType = String(listing?.type || '').toUpperCase();
 
- let customerPct = null;
- let merchantPct = null;
+                let customerPct = null;
+                let merchantPct = null;
 
- if (listingType === 'BUY') {
- // BUY rules
- const denomCustomer = (paymentChoice === 'ITEM') ? pegSellTotal : pegBuyTotal;
+                if (listingType === 'BUY') {
+                    // BUY rules
+                    const denomCustomer = (paymentChoice === 'ITEM') ? pegSellTotal : pegBuyTotal;
 
- if (tradedBuyTotal != null && denomCustomer != null && isFinite(tradedBuyTotal) && isFinite(denomCustomer) && denomCustomer >0) {
- customerPct = (1 - (Number(tradedBuyTotal) / Number(denomCustomer))) *100;
- }
+                    if (tradedBuyTotal != null && denomCustomer != null && isFinite(tradedBuyTotal) && isFinite(denomCustomer) && denomCustomer > 0) {
+                        customerPct = (1 - (Number(tradedBuyTotal) / Number(denomCustomer))) * 100;
+                    }
 
- if (pegBuyTotal != null && tradedSellTotal != null && isFinite(pegBuyTotal) && isFinite(tradedSellTotal) && tradedSellTotal >0) {
- merchantPct = (1 - (Number(pegBuyTotal) / Number(tradedSellTotal))) *100;
- }
- } else {
- // SELL rules (keep existing behavior)
- const customerNumerator = (paymentChoice === 'ITEM') ? pegBuyTotal : pegSellTotal;
- if (tradedSellTotal != null && customerNumerator != null && isFinite(tradedSellTotal) && tradedSellTotal >0 && isFinite(customerNumerator)) {
- customerPct = (1 - (Number(customerNumerator) / Number(tradedSellTotal))) *100;
- }
+                    if (pegBuyTotal != null && tradedSellTotal != null && isFinite(pegBuyTotal) && isFinite(tradedSellTotal) && tradedSellTotal > 0) {
+                        merchantPct = (1 - (Number(pegBuyTotal) / Number(tradedSellTotal))) * 100;
+                    }
+                } else {
+                    // SELL rules (keep existing behavior)
+                    const customerNumerator = (paymentChoice === 'ITEM') ? pegBuyTotal : pegSellTotal;
+                    if (tradedSellTotal != null && customerNumerator != null && isFinite(tradedSellTotal) && tradedSellTotal > 0 && isFinite(customerNumerator)) {
+                        customerPct = (1 - (Number(customerNumerator) / Number(tradedSellTotal))) * 100;
+                    }
 
- if (tradedBuyTotal != null && pegSellTotal != null && isFinite(tradedBuyTotal) && tradedBuyTotal >0 && isFinite(pegSellTotal)) {
- merchantPct = (1 - (Number(tradedBuyTotal) / Number(pegSellTotal))) *100;
- }
- }
+                    if (tradedBuyTotal != null && pegSellTotal != null && isFinite(tradedBuyTotal) && tradedBuyTotal > 0 && isFinite(pegSellTotal)) {
+                        merchantPct = (1 - (Number(tradedBuyTotal) / Number(pegSellTotal))) * 100;
+                    }
+                }
 
- function renderFavorLine_(el, who, pct) {
- if (!el || pct == null || !isFinite(pct)) { if (el) el.style.display = 'none'; return; }
- const good = pct >=0;
- const label = good ? `${who} favor` : `${who} disfavor`;
- const word = good ? 'cheaper' : 'more expensive';
- const magTxt = Math.abs(pct).toFixed(1);
+                function renderFavorLine_(el, who, pct) {
+                    if (!el || pct == null || !isFinite(pct)) { if (el) el.style.display = 'none'; return; }
+                    const good = pct >= 0;
+                    const label = good ? `${who} favor` : `${who} disfavor`;
+                    const word = good ? 'cheaper' : 'more expensive';
+                    const magTxt = Math.abs(pct).toFixed(1);
 
- el.classList.remove('good', 'bad');
- el.classList.add(good ? 'good' : 'bad');
- el.textContent = `${label}: ${magTxt}% ${word} compared to store`;
- el.style.display = '';
- }
+                    el.classList.remove('good', 'bad');
+                    el.classList.add(good ? 'good' : 'bad');
+                    el.textContent = `${label}: ${magTxt}% ${word} compared to store`;
+                    el.style.display = '';
+                }
 
- renderFavorLine_(customerFavorEl, 'Customer', customerPct);
- renderFavorLine_(merchantFavorEl, 'Merchant', merchantPct);
- } catch {
- if (customerFavorEl) customerFavorEl.style.display = 'none';
- if (merchantFavorEl) merchantFavorEl.style.display = 'none';
- }
- }
+                renderFavorLine_(customerFavorEl, 'Customer', customerPct);
+                renderFavorLine_(merchantFavorEl, 'Merchant', merchantPct);
+            } catch {
+                if (customerFavorEl) customerFavorEl.style.display = 'none';
+                if (merchantFavorEl) merchantFavorEl.style.display = 'none';
+            }
+        }
 
- calcBtn.addEventListener('click', () => {
- msgEl.textContent = '';
- showEstimate();
- });
+        calcBtn.addEventListener('click', () => {
+            msgEl.textContent = '';
+            showEstimate();
+        });
 
- qtyInput?.addEventListener('input', showEstimate);
- td.querySelectorAll(`input[name="qtym_${listing.listingId}"]`).forEach(r => r.addEventListener('change', showEstimate));
- td.querySelectorAll(`input[name="pay_${listing.listingId}"]`).forEach(r => r.addEventListener('change', showEstimate));
- payPegSel?.addEventListener('change', showEstimate);
+        qtyInput?.addEventListener('input', showEstimate);
+        td.querySelectorAll(`input[name="qtym_${listing.listingId}"]`).forEach(r => r.addEventListener('change', showEstimate));
+        td.querySelectorAll(`input[name="pay_${listing.listingId}"]`).forEach(r => r.addEventListener('change', showEstimate));
+        payPegSel?.addEventListener('change', showEstimate);
 
- sendBtn.addEventListener('click', async () => {
- msgEl.textContent = '';
- if (!S.googleIdToken) { msgEl.textContent = 'Login required.'; return; }
- const u = computeUnits_(td, listing);
- if (!u) { msgEl.textContent = 'Invalid quantity.'; return; }
+        sendBtn.addEventListener('click', async () => {
+            msgEl.textContent = '';
+            if (!S.googleIdToken) { msgEl.textContent = 'Login required.'; return; }
+            const u = computeUnits_(td, listing);
+            if (!u) { msgEl.textContent = 'Invalid quantity.'; return; }
 
- if (stackOnly && getQtyMode() !== 'STACK') {
- msgEl.textContent = 'This listing is stack-priced. Choose stack quantity.';
- return;
- }
+            if (stackOnly && getQtyMode() !== 'STACK') {
+                msgEl.textContent = 'This listing is stack-priced. Choose stack quantity.';
+                return;
+            }
 
- msgEl.textContent = 'Sending...';
- try {
- const paymentChoice = getPaymentChoice();
- const payPegName = (paymentChoice === 'ITEM') ? getPayPegName() : null;
+            msgEl.textContent = 'Sending...';
+            try {
+                const paymentChoice = getPaymentChoice();
+                const payPegName = (paymentChoice === 'ITEM') ? getPayPegName() : null;
 
- const payload = {
- idToken: S.googleIdToken,
- listingId: listing.listingId,
- qtyMode: (u.qtyMode === 'STACK') ? 'STACK' : 'IND',
- qty: u.qtyVal,
- paymentChoice
- };
- if (paymentChoice === 'ITEM' && payPegName) payload.paymentPegName = payPegName;
+                const payload = {
+                    idToken: S.googleIdToken,
+                    listingId: listing.listingId,
+                    qtyMode: (u.qtyMode === 'STACK') ? 'STACK' : 'IND',
+                    qty: u.qtyVal,
+                    paymentChoice
+                };
+                if (paymentChoice === 'ITEM' && payPegName) payload.paymentPegName = payPegName;
 
- const r = await apiPost('ocmCreateTradeRequestV2', payload);
- const d = r.data || r.result || r;
- msgEl.textContent = 'Sent. TradeId: ' + (d.tradeId || '');
- await loadMyPending();
- } catch (e) {
- msgEl.textContent = 'Error: ' + (e.message || e);
- }
- });
+                const r = await apiPost('ocmCreateTradeRequestV2', payload);
+                const d = r.data || r.result || r;
+                msgEl.textContent = 'Sent. TradeId: ' + (d.tradeId || '');
+                await loadMyPending();
+            } catch (e) {
+                msgEl.textContent = 'Error: ' + (e.message || e);
+            }
+        });
 
- // initial
- showEstimate();
- }
+        // initial
+        showEstimate();
+    }
 
- async function loadMyPending() {
- if (!S.googleIdToken) {
- byId('tbMyPending').innerHTML = '';
- byId('msgPending').textContent = 'Login required.';
- return;
- }
+    async function loadMyPending() {
+        if (!S.googleIdToken) {
+            byId('tbMyPending').innerHTML = '';
+            byId('msgPending').textContent = 'Login required.';
+            return;
+        }
 
- byId('msgPending').textContent = 'Loading...';
- try {
- const r = await apiGet('ocmMyPendingTradesV2', { idToken: S.googleIdToken });
- const d = r.data || r.result || r;
- renderMyPending(d.trades || []);
- byId('msgPending').textContent = `Loaded ${(d.trades || []).length}.`;
- } catch (e) {
- byId('msgPending').textContent = 'Error: ' + e.message;
- }
- }
+        byId('msgPending').textContent = 'Loading...';
+        try {
+            const r = await apiGet('ocmMyPendingTradesV2', { idToken: S.googleIdToken });
+            const d = r.data || r.result || r;
+            renderMyPending(d.trades || []);
+            byId('msgPending').textContent = `Loaded ${(d.trades || []).length}.`;
+        } catch (e) {
+            byId('msgPending').textContent = 'Error: ' + e.message;
+        }
+    }
 
- function extractTradeSummary(tr) {
- const snap = O.safeJsonParse(tr.detailsJson || '{}') || {};
- const item = snap.listing?.itemName || '';
- const who = snap.seller?.playerName || '';
- const payment = snap.payment?.method || '';
- const units = Number(snap.request?.requestedUnits || tr.quantity ||0);
+    function extractTradeSummary(tr) {
+        const snap = O.safeJsonParse(tr.detailsJson || '{}') || {};
+        const item = snap.listing?.itemName || '';
+        const who = snap.seller?.playerName || '';
+        const payment = snap.payment?.method || '';
+        const units = Number(snap.request?.requestedUnits || tr.quantity || 0);
 
- const totalBT = Number(
- snap.payment?.canonicalBT
- ?? snap.payment?.payTotalBT
- ?? snap.pricing?.tradeValueBT
- ??0
- );
+        const totalBT = Number(
+            snap.payment?.canonicalBT
+            ?? snap.payment?.payTotalBT
+            ?? snap.pricing?.tradeValueBT
+            ?? 0
+        );
 
- const payItem = snap.payment?.payItemName ? `${snap.payment.payItemQty} ${snap.payment.payItemName}` : '';
- const payInfo = (payment === 'ITEM') ? `ITEM (${payItem})` : payment;
+        const payItem = snap.payment?.payItemName ? `${snap.payment.payItemQty} ${snap.payment.payItemName}` : '';
+        const payInfo = (payment === 'ITEM') ? `ITEM (${payItem})` : payment;
 
- return { snap, item, who, payment: payInfo, units, totalBT };
- }
+        return { snap, item, who, payment: payInfo, units, totalBT };
+    }
 
- function renderMyPending(arr) {
- const tb = byId('tbMyPending');
- tb.innerHTML = '';
+    function renderMyPending(arr) {
+        const tb = byId('tbMyPending');
+        tb.innerHTML = '';
 
- (arr || []).forEach(tr => {
- const { item, who, payment, units, totalBT } = extractTradeSummary(tr);
+        (arr || []).forEach(tr => {
+            const { item, who, payment, units, totalBT } = extractTradeSummary(tr);
 
- const row = document.createElement('tr');
- row.innerHTML = `
+            const row = document.createElement('tr');
+            row.innerHTML = `
  <td class="mono">${tr.tradeId}</td>
  <td>${O.escapeHtml_(item)}</td>
  <td>${O.escapeHtml_(who)}</td>
@@ -544,19 +554,20 @@
  <td><button type="button" data-edit="1">Edit</button> <button type="button" data-cancel="1">Cancel</button></td>
  `;
 
- row.querySelector('button[data-cancel]')?.addEventListener('click', async () => {
- if (!confirm('Cancel trade ' + tr.tradeId + '?')) return;
- try {
- await apiPost('ocmCancelTradeRequestV2', { idToken: S.googleIdToken, tradeId: tr.tradeId });
- await loadMyPending();
- } catch (e) { alert(e.message); }
- });
+            row.querySelector('button[data-cancel]')?.addEventListener('click', async () => {
+                if (!confirm('Cancel trade ' + tr.tradeId + '?')) return;
+                try {
+                    await apiPost('ocmCancelTradeRequestV2', { idToken: S.googleIdToken, tradeId: tr.tradeId });
+                    await loadMyPending();
+                } catch (e) { alert(e.message); }
+            });
 
- tb.appendChild(row);
- });
- }
+            tb.appendChild(row);
+        });
+    }
 
- O.loadListings = loadListings;
- O.toggleTradeDetails = toggleTradeDetails;
- O.loadMyPending = loadMyPending;
+    O.fetchListingsOnceOrRefresh = fetchListingsOnceOrRefresh;
+    O.loadListings = function loadListingsCompat() { return fetchListingsOnceOrRefresh({ force:false }); };
+    O.toggleTradeDetails = toggleTradeDetails;
+    O.loadMyPending = loadMyPending;
 })();

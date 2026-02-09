@@ -37,18 +37,6 @@
             color: #666;
         }
 
-        .grid2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        @media (max-width:860px) {
-            .grid2 {
-                grid-template-columns: 1fr;
-            }
-        }
-
         table {
             border-collapse: collapse;
             width: 100%;
@@ -79,35 +67,35 @@
             margin: 8px 0;
         }
 
-        .search {
-            flex: 1;
-            min-width: 180px;
+        .panel {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fff;
         }
 
-        .tabs {
-            display: none;
-            gap: 8px;
-            margin: 10px 0;
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 10px;
+            align-items: end;
         }
-
-            .tabs button {
-                border: 1px solid #ccc;
-                background: #fff;
-                border-radius: 8px;
-                padding: 8px 10px;
-                cursor: pointer;
-            }
-
-                .tabs button[aria-selected="true"] {
-                    background: #222;
-                    color: #fff;
-                    border-color: #222;
-                }
 
         @media (max-width:860px) {
-            .tabs {
-                display: flex;
+            .grid {
+                grid-template-columns: repeat(6, 1fr);
             }
+        }
+
+        .col-3 { grid-column: span 3; }
+        .col-4 { grid-column: span 4; }
+        .col-6 { grid-column: span 6; }
+        .col-12 { grid-column: span 12; }
+
+        @media (max-width:860px) {
+            .col-3, .col-4 { grid-column: span 6; }
+            .col-6 { grid-column: span 6; }
+            .col-12 { grid-column: span 6; }
         }
 
         tr.clickable {
@@ -128,7 +116,7 @@
 
         .details-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 10px;
         }
 
@@ -151,14 +139,6 @@
             border-radius: 999px;
             font-size: 11px;
             background: #eee;
-        }
-
-        .pill-sell {
-            background: #e9ffe8;
-        }
-
-        .pill-buy {
-            background: #e8f7ff;
         }
 
         .mono {
@@ -230,6 +210,91 @@
             color: #a40000;
             text-decoration: underline;
         }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .chip {
+            display: inline-flex;
+            gap: 6px;
+            align-items: center;
+            border: 1px solid #ddd;
+            background: #fafafa;
+            border-radius: 999px;
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+
+        .chip button {
+            padding: 0 6px;
+            font-size: 12px;
+        }
+
+        .pager {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .pager-left, .pager-right {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        /* ===== Store-style dropdown search (same pattern as index.html) ===== */
+        .dropdown-wrap {
+            position: relative;
+            display: inline-block;
+            width:100%;
+            max-width:360px;
+        }
+
+        .dropdown-input {
+            width:100%;
+            padding:6px;
+            font-size:13px;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top:100%;
+            left:0;
+            right:0;
+            background: #fff;
+            border:1px solid #ccc;
+            max-height:220px;
+            overflow-y: auto;
+            z-index:500;
+            border-radius:4px;
+            display: none;
+        }
+
+        .dropdown-item {
+            padding:6px8px;
+            cursor: pointer;
+            border-radius:4px;
+            display: flex;
+            gap:8px;
+            align-items: flex-start;
+        }
+
+        .dropdown-item:hover, .dropdown-item.active {
+            background: #f0f6ff;
+        }
+
+        /* Hide the index stock-circle if present (OCMHome doesn't provide progress cache) */
+        .dropdown-item .stock-circle {
+            display: none;
+        }
     </style>
 
     <!-- OCMHome scripts (segmented) -->
@@ -260,58 +325,119 @@
     </div>
 
     <h1>OCM Marketplace</h1>
-    <div class="tabs" role="tablist" aria-label="Marketplace sections">
-        <button id="tabSell" role="tab" aria-selected="true" aria-controls="sellWrap" type="button">For sale / Supply</button>
-        <button id="tabBuy" role="tab" aria-selected="false" aria-controls="buyWrap" type="button">Buying / Demand</button>
-    </div>
 
     <div class="small" id="msgTop"></div>
 
-    <div class="grid2">
-        <section id="sellWrap" aria-label="Supply listings">
-            <h2>For sale / Supply</h2>
-            <div class="toolbar">
-                <input id="qSell" class="search" type="text" placeholder="Search supply items">
-                <button id="btnSearchSell" type="button">Search</button>
+    <section class="panel" aria-label="Marketplace filters">
+        <div class="grid">
+            <div class="col-3">
+                <div class="small muted">Listing type (applies on Search)</div>
+                <select id="fltType" style="width:100%">
+                    <option value="SELL">Supply (SELL)</option>
+                    <option value="BUY">Demand (BUY)</option>
+                </select>
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Item price</th>
-                        <th>BT price</th>
-                        <th>Individual stock</th>
-                        <th>Stack size</th>
-                        <th>Seller</th>
-                        <th>Trade</th>
-                    </tr>
-                </thead>
-                <tbody id="tbSell"></tbody>
-            </table>
-        </section>
 
-        <section id="buyWrap" aria-label="Demand listings">
-            <h2>Buying / Demand</h2>
-            <div class="toolbar">
-                <input id="qBuy" class="search" type="text" placeholder="Search demand items">
-                <button id="btnSearchBuy" type="button">Search</button>
+            <div class="col-4">
+                <div class="small muted">Item name (applies on Search)</div>
+                <input id="fltItem" type="text" placeholder="e.g. iron" style="width:100%">
             </div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Item price</th>
-                        <th>BT price</th>
-                        <th>Individual demand</th>
-                        <th>Stack size</th>
-                        <th>Buyer</th>
-                        <th>Trade</th>
-                    </tr>
-                </thead>
-                <tbody id="tbBuy"></tbody>
-            </table>
-        </section>
-    </div>
+
+            <div class="col-4">
+                <div class="small muted">Merchant name (applies on Search)</div>
+                <input id="fltMerchant" type="text" placeholder="e.g. smith" style="width:100%">
+            </div>
+
+            <div class="col-3">
+                <label class="field" style="justify-content:space-between;width:100%">
+                    <span class="small muted">Only item-payment listings (immediate)</span>
+                    <input id="fltOnlyItemPay" type="checkbox">
+                </label>
+            </div>
+
+            <div class="col-3">
+                <div class="small muted">Stock min (immediate)</div>
+                <input id="fltStockMin" type="number" min="0" placeholder="0" style="width:100%">
+            </div>
+
+            <div class="col-3">
+                <div class="small muted">Stock max (immediate)</div>
+                <input id="fltStockMax" type="number" min="0" placeholder="∞" style="width:100%">
+            </div>
+
+            <div class="col-3">
+                <div class="small muted">Sort (immediate)</div>
+                <select id="fltSort" style="width:100%">
+                    <option value="NONE">None</option>
+                    <option value="PRICE_ASC">BT price (canonical) asc</option>
+                    <option value="PRICE_DESC">BT price (canonical) desc</option>
+                </select>
+            </div>
+
+            <div class="col-3">
+                <div class="small muted">Page size (immediate)</div>
+                <select id="fltPageSize" style="width:100%">
+                    <option value="10">10</option>
+                    <option value="20" selected>20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <div class="small muted">Accepted payment pegs (applies on Search, up to 5)</div>
+                <div class="toolbar" style="margin-top:4px; margin-bottom:0;">
+                    <div class="dropdown-wrap" style="min-width:260px;">
+                        <input id="fltPegInput" class="dropdown-input" type="text" placeholder="type to search peg..." autocomplete="off">
+                        <div id="fltPegInputList" class="dropdown-list" role="listbox" aria-label="Peg suggestions"></div>
+                    </div>
+                    <button id="btnAddPeg" type="button">Add peg</button>
+                    <button id="btnClearPegs" type="button">Clear pegs</button>
+                    <div id="fltPegChips" class="chips" aria-label="Selected pegs"></div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="toolbar" style="margin-top:6px;">
+                    <button id="btnSearch" type="button">Search</button>
+                    <button id="btnReset" type="button">Reset (draft)</button>
+                    <button id="btnRefreshListings" type="button">Refresh listings</button>
+                    <span id="msgFilters" class="small muted"></span>
+                </div>
+                <div id="activeFilters" class="small"></div>
+                <div id="lastUpdated" class="small muted"></div>
+            </div>
+        </div>
+    </section>
+
+    <section aria-label="Unified listings">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Item price</th>
+                    <th>BT price</th>
+                    <th id="thQty">Individual stock</th>
+                    <th>Stack size</th>
+                    <th>Merchant</th>
+                    <th>Trade</th>
+                </tr>
+            </thead>
+            <tbody id="tbListings"></tbody>
+        </table>
+
+        <div class="pager" aria-label="Pagination">
+            <div class="pager-left">
+                <button id="btnPrevPage" type="button">Prev</button>
+                <button id="btnNextPage" type="button">Next</button>
+                <span id="pageInfo" class="small muted">Page 1 of 1</span>
+                <span id="resultsInfo" class="small muted"></span>
+            </div>
+            <div class="pager-right">
+                <span class="small muted">Login required to load listings.</span>
+            </div>
+        </div>
+    </section>
 
     <h2>My pending trades</h2>
     <div class="toolbar">
@@ -324,7 +450,7 @@
             <tr>
                 <th>TradeId</th>
                 <th>Item</th>
-                <th>Trader</th>
+                <th>Merchant</th>
                 <th>Qty (individual)</th>
                 <th>Payment</th>
                 <th>Total (BT eq)</th>
@@ -339,7 +465,7 @@
         <form method="dialog" style="min-width:min(560px,95vw)">
             <h3 style="margin-top:0;">Edit pending trade</h3>
             <div class="small">Trade: <span id="editTradeId" class="mono"></span></div>
-            <div class="small">Item: <span id="editItemName"></span> | Trader: <span id="editSellerName"></span></div>
+            <div class="small">Item: <span id="editItemName"></span> | Merchant: <span id="editSellerName"></span></div>
 
             <div style="margin-top:10px;" class="details-grid">
                 <div>
