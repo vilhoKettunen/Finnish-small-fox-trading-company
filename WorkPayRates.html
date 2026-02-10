@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>Work Pay Rates</title>
+ <script src="app-config.js"></script>
+ <script src="https://accounts.google.com/gsi/client" async defer></script>
+ <script src="api-client.js"></script>
+ <script src="auth-storage.js"></script>
+ <script src="topbar.js"></script>
+ <style>
+ body { font-family: Arial, sans-serif; background:#f7f7f7; margin:0; }
+ .container { max-width:1200px; margin:0 auto; padding:16px; }
+ .card { background:#fff; border-radius:8px; padding:12px14px; box-shadow:01px4px rgba(0,0,0,0.08); }
+ .row { display:flex; gap:12px; flex-wrap: wrap; align-items: center; }
+ .row > * { flex:00 auto; }
+ input[type="text"], input[type="number"], select, textarea { padding:8px; border:1px solid #ccc; border-radius:6px; }
+ textarea { width:100%; min-height:90px; }
+ button { padding:8px10px; border:1px solid #bbb; background:#fff; border-radius:6px; cursor:pointer; }
+ button.primary { background:#222; color:#fff; border-color:#222; }
+ button.danger { background:#b00020; color:#fff; border-color:#b00020; }
+
+ .muted { color:#666; font-size:12px; }
+ .pill { display:inline-block; padding:2px8px; border-radius:999px; background:#eee; font-size:12px; }
+ .pill.bad { background:#ffe0e0; color:#7a0000; }
+
+ table { width:100%; border-collapse: collapse; }
+ th, td { padding:10px8px; border-bottom:1px solid #eee; text-align:left; vertical-align: top; }
+
+ .desc { white-space: pre-wrap; background:#fafafa; border:1px dashed #ddd; border-radius:6px; padding:10px; margin-top:8px; }
+
+ /* login area pattern */
+ #googleLoginArea { margin-bottom:12px; }
+ #loginStatus { margin-top:6px; }
+
+ #adminArea { display:none; }
+ #adminArea.active { display:block; }
+
+ .split { display:flex; gap:12px; flex-wrap: wrap; }
+ .split > .card { flex:11420px; }
+
+ .list { max-height:420px; overflow:auto; }
+ .list button { width:100%; text-align:left; }
+ </style>
+</head>
+<body>
+ <div class="container">
+ <div id="googleLoginArea" class="card">
+ <div class="row">
+ <div>
+ <div style="font-weight:bold;">Login (admin to edit)</div>
+ <div class="muted">Public can view pay rates without logging in.</div>
+ </div>
+ <div style="margin-left:auto;"></div>
+ <div id="googleBtn"></div>
+ <button id="fallbackBtn" type="button" onclick="startFallbackLogin()">Use fallback login</button>
+ </div>
+ <div id="loginStatus" class="muted"></div>
+ </div>
+
+ <div class="card" style="margin-bottom:12px;">
+ <div class="row">
+ <div style="font-weight:bold; font-size:18px;">Work Pay Rates</div>
+ <span id="catalogStatus" class="muted"></span>
+ </div>
+ <div class="row" style="margin-top:10px;">
+ <label>Search: <input id="searchBox" type="text" placeholder="Search item..." /></label>
+ <label>Sort:
+ <select id="sortSelect">
+ <option value="highest">Highest paying</option>
+ <option value="lowest">Lowest paying</option>
+ </select>
+ </label>
+ <button id="refreshBtn" type="button">Refresh</button>
+ <span style="margin-left:auto;"></span>
+ <button id="adminToggleBtn" type="button" style="display:none;">Admin edit mode</button>
+ </div>
+ </div>
+
+ <div id="publicArea" class="card">
+ <div class="muted" id="publicHint" style="margin-bottom:8px;"></div>
+ <div style="overflow:auto;">
+ <table>
+ <tbody id="jobsTbody"></tbody>
+ </table>
+ </div>
+ </div>
+
+ <div id="adminArea" style="margin-top:12px;">
+ <div class="split">
+ <div class="card">
+ <div class="row">
+ <div style="font-weight:bold;">Existing entries</div>
+ <span class="muted">(includes inactive)</span>
+ </div>
+ <div class="row" style="margin-top:8px;">
+ <input id="adminEntriesSearch" type="text" placeholder="Search entries..." style="flex:11 auto;" />
+ </div>
+ <div class="list" id="entriesList" style="margin-top:8px;"></div>
+ </div>
+
+ <div class="card">
+ <div class="row">
+ <div style="font-weight:bold;">Create new entry (select from catalog)</div>
+ </div>
+ <div class="row" style="margin-top:8px;">
+ <input id="catalogItemSearch" type="text" placeholder="Search catalog..." style="flex:11 auto;" />
+ </div>
+ <div class="list" id="catalogPickList" style="margin-top:8px;"></div>
+ </div>
+
+ <div class="card">
+ <div class="row">
+ <div style="font-weight:bold;">Editor</div>
+ <span id="editorKey" class="pill" style="display:none;"></span>
+ <span id="editorInvalid" class="pill bad" style="display:none;">Catalog item not found</span>
+ <span style="margin-left:auto;"></span>
+ <button id="newBlankBtn" type="button">New (from selection)</button>
+ </div>
+
+ <div style="margin-top:8px;">
+ <div class="muted">Item name (read-only in v1)</div>
+ <input id="editorItemName" type="text" style="width:100%;" readonly />
+ </div>
+
+ <div class="row" style="margin-top:8px;">
+ <label>Min rate <input id="editorMinRate" type="number" min="1" step="1" /></label>
+ <label>Max rate <input id="editorMaxRate" type="number" min="1" step="1" /></label>
+ <label>Unit
+ <select id="editorRateUnit">
+ <option value="STACKS_PER_HOUR">Stacks / hour</option>
+ <option value="IND_PER_HOUR">Items / hour</option>
+ </select>
+ </label>
+ <label>Active <select id="editorIsActive"><option value="1">Yes</option><option value="0">No</option></select></label>
+ </div>
+
+ <div style="margin-top:8px;">
+ <div class="row">
+ <div style="font-weight:bold;">Description</div>
+ <div class="muted" style="margin-left:auto;"><span id="descCount">0</span>/500</div>
+ </div>
+ <textarea id="editorDescription" maxlength="500" placeholder="Plain text (newlines allowed)"></textarea>
+ </div>
+
+ <div class="row" style="margin-top:8px;">
+ <button id="saveBtn" type="button" class="primary">Save</button>
+ <button id="disableBtn" type="button" class="danger">Disable</button>
+ <span id="adminStatus" class="muted"></span>
+ </div>
+ </div>
+ </div>
+ </div>
+
+ </div>
+
+ <script src="workpay_js/workpay-core.js"></script>
+ <script src="workpay_js/workpay-admin.js"></script>
+ <script src="workpay_js/workpay-boot.js"></script>
+
+ <script>
+ // Match other pages' login flow (popup GSI + redirect fallback)
+ let googleIdToken = null;
+ const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '857098772457-kuvq861sa844esf2jc4b7av1pnlmnn1c.apps.googleusercontent.com';
+
+ function byId(x){ return document.getElementById(x); }
+
+ function initGoogleIdentity() {
+ if (!window.google || !google.accounts || !google.accounts.id) return;
+ google.accounts.id.initialize({
+ client_id: OAUTH_CLIENT_ID,
+ callback: handleCredentialResponse,
+ ux_mode: 'popup',
+ auto_select: false,
+ use_fedcm_for_prompt: true
+ });
+ google.accounts.id.renderButton(
+ document.getElementById('googleBtn'),
+ { theme: 'outline', size: 'large', type: 'standard', shape: 'rectangular', logo_alignment: 'left' }
+ );
+ }
+
+ function handleCredentialResponse(resp) { onGoogleSignIn(resp); }
+
+ function startFallbackLogin() {
+ const nonce = crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
+ const redirectUri = location.origin + location.pathname;
+ const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
+ + '?client_id=' + encodeURIComponent(OAUTH_CLIENT_ID)
+ + '&redirect_uri=' + encodeURIComponent(redirectUri)
+ + '&response_type=id_token'
+ + '&scope=' + encodeURIComponent('openid email profile')
+ + '&nonce=' + encodeURIComponent(nonce)
+ + '&prompt=select_account';
+ window.location.href = authUrl;
+ }
+
+ async function onGoogleSignIn(resp) {
+ const statusEl = byId('loginStatus');
+ googleIdToken = resp && resp.credential;
+ if (!googleIdToken) { statusEl.textContent = 'Login error: no credential'; return; }
+ statusEl.textContent = 'Verifying token...';
+ try {
+ const tResp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`);
+ if (!tResp.ok) throw new Error('tokeninfo failed ' + tResp.status);
+ const info = await tResp.json();
+ if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
+
+ window.saveIdToken && window.saveIdToken(googleIdToken);
+ statusEl.textContent = 'Loading profile...';
+
+ // Apply auth via page helper (shared with restore flow)
+ if (typeof window.workpayApplyAuthFromToken === 'function') {
+ await window.workpayApplyAuthFromToken(googleIdToken, false);
+ }
+ statusEl.textContent = 'Logged in.';
+ } catch (e) {
+ statusEl.textContent = 'Login error: ' + (e.message || e);
+ }
+ }
+
+ // Handle redirect-fallback returning id_token in URL hash
+ (function tryConsumeHashIdToken(){
+ try {
+ const hash = String(location.hash || '');
+ if (!hash.includes('id_token=')) return;
+ const params = new URLSearchParams(hash.replace(/^#/, ''));
+ const tok = params.get('id_token');
+ if (!tok) return;
+ // clean URL
+ history.replaceState(null, '', location.pathname + location.search);
+ // treat like popup result
+ onGoogleSignIn({ credential: tok });
+ } catch {}
+ })();
+
+ window.onload = () => {
+ window.initSharedTopBar && window.initSharedTopBar();
+ const gsiWait = setInterval(() => {
+ if (window.google && google.accounts && google.accounts.id) {
+ initGoogleIdentity();
+ clearInterval(gsiWait);
+ }
+ },200);
+ setTimeout(() => clearInterval(gsiWait),4000);
+ };
+ </script>
+</body>
+</html>

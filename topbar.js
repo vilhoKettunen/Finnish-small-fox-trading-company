@@ -51,6 +51,7 @@ gap: 12px;
 <button type="button" data-nav="history">Account History</button>
 <button type="button" data-nav="ocm">OCM</button>
     <button type="button" data-nav="merchant">OCM Merchant</button>
+    <button type="button" data-nav="workpay">Work Pay Rates</button>
     <button id="adminPanelBtn" style="display:none" type="button" data-nav="admin">Admin Panel</button>
     <div class="right">
       <span id="topBalance" class="balance-chip balance-you" style="display:none;"></span>
@@ -153,6 +154,7 @@ if(btn.id==='btnLogin'){
     else if(nav==='history') window.location.href='AccountHistory.html';
     else if(nav==='ocm') window.location.href='OCMHome.html';
   else if(nav==='merchant') window.location.href='OCMUser.html';
+  else if(nav==='workpay') window.location.href='WorkPayRates.html';
    else if(nav==='admin'){
     if(!state.idToken||!state.isAdmin){alert('Admin only');return;}
     window.location.href='Admin.html';

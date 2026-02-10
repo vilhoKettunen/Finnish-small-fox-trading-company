@@ -4,7 +4,7 @@
    Integrates GET Bypass logic for write actions. */
 
 (function () {
-    const BASE = (window.WEB_APP_URL || '').replace(/\/+$/, '');
+    const BASE = (window.WEB_APP_URL || '').replace(/\/+$|\s+$/g, '');
 
     // Actions that must be sent via GET to bypass POST blocks
     const BYPASS_ACTIONS = [
@@ -29,14 +29,17 @@
         'ocmCreateListingV2', 'ocmUpdateListingV2',
         'ocmCreateTradeRequestV2', 'ocmUpdateTradeRequestV2', 'ocmCancelTradeRequestV2',
         'ocmApproveListingV2', 'ocmRejectListingV2',
-        'ocmAcceptTradeAsSellerV2', 'ocmAcceptTradeAsAdminV2', 'ocmDenyTradeV2','ocmAdminCreateListingV2',
+        'ocmAcceptTradeAsSellerV2', 'ocmAcceptTradeAsAdminV2', 'ocmDenyTradeV2', 'ocmAdminCreateListingV2',
 
         // Admin OCM v2
         'ocmAdminUpdateListingV2',
 
         // Optional: mailbox/details enrichment endpoints (add these actions on backend if you implement them)
         'ocmEnrichTradeDetailsMailboxesV2',
-        'ocmRepairTradeDetailsMailboxesV2'
+        'ocmRepairTradeDetailsMailboxesV2',
+
+        // Work pay rates (admin write)
+        'workPayUpsert'
     ];
 
     function normalize(j) {
@@ -80,7 +83,6 @@
                 }
             }
         }
-        // in apiGet:
         const r = await fetch(url.toString(), { method: 'GET' });
         const j = await readJsonOrThrow_(r);
         return normalize(j);
@@ -98,7 +100,6 @@
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // Use text/plain to avoid OPTIONS preflight
             body: JSON.stringify(payload)
         });
-        // in apiPost:
         const j = await readJsonOrThrow_(r);
         return normalize(j);
     }
