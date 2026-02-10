@@ -449,6 +449,27 @@
         .balance-target {
             color: #f0c200;
         }
+
+        /* ===== Pay With / Converter settings UI ===== */
+        .tool-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin: 6px 0 10px 0;
+        }
+
+        .tool-controls label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .tool-controls .small {
+            font-size: 12px;
+            color: #555;
+        }
     </style>
     <script src="app-config.js"></script>
     <script src="api-client.js"></script>
@@ -760,6 +781,28 @@
             <p>Cover a negative net with item payments.</p>
             <button onclick="toggleInfo('payInfo')">❌ Close</button>
         </div>
+
+        <div class="tool-controls" id="payWithControls">
+            <label>
+                Result type:
+                <select id="payWithResultType">
+                    <option value="NET" selected>Net Balance</option>
+                    <option value="ACCOUNT">Account Balance</option>
+                </select>
+            </label>
+
+            <label>
+                % preset:
+                <select id="payWithPercentPreset">
+                    <option value="DEFAULT_100" selected>Default100%</option>
+                    <option value="EQUALIZER">Equalizer</option>
+                </select>
+            </label>
+
+            <button id="btnPayWithApplyPreset" type="button" onclick="applyPayWithPreset()">Apply</button>
+            <span class="small" id="payWithPresetMsg"></span>
+        </div>
+
         <div id="payOptions"></div>
         <button onclick="addPayRow()">➕ Add Item</button>
         <ul id="payList"></ul>
@@ -774,6 +817,28 @@
             <p>Allocate % of positive Net Balance into items.</p>
             <button onclick="toggleInfo('converterInfo')">❌ Close</button>
         </div>
+
+        <div class="tool-controls" id="converterControls">
+            <label>
+                Result type:
+                <select id="converterResultType">
+                    <option value="NET" selected>Net Balance</option>
+                    <option value="ACCOUNT">Account Balance</option>
+                </select>
+            </label>
+
+            <label>
+                % preset:
+                <select id="converterPercentPreset">
+                    <option value="DEFAULT_100" selected>Default100%</option>
+                    <option value="EQUALIZER">Equalizer</option>
+                </select>
+            </label>
+
+            <button id="btnConverterApplyPreset" type="button" onclick="applyConverterPreset()">Apply</button>
+            <span class="small" id="converterPresetMsg"></span>
+        </div>
+
         <div id="converterOptions"></div>
         <button onclick="addConverterRow()">➕ Add Item</button>
         <ul id="converterListDisplay"></ul>
@@ -833,8 +898,8 @@
             window.checkHashForIdToken && window.checkHashForIdToken();
             window.loadData && window.loadData();
 
-            if (document.getElementById('payOptions')) window.addPayRow && window.addPayRow();
-            if (document.getElementById('converterOptions')) window.addConverterRow && window.addConverterRow();
+            //if (document.getElementById('payOptions')) window.addPayRow && window.addPayRow();
+            //if (document.getElementById('converterOptions')) window.addConverterRow && window.addConverterRow();
 
             window.initRecaptcha && window.initRecaptcha();
 
