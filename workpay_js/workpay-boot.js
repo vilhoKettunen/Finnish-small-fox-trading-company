@@ -115,8 +115,8 @@
  const key = window.workpayCore.normKey(j.itemKey || j.itemName);
  const it = map[key];
  if(!it) return; // hide invalid catalog entries
- const sellStack = Number(it.sellStack);
- if(!isFinite(sellStack)) return; // hide if no payout
+ const buyStack = Number(it.buyStack);
+ if(!isFinite(buyStack) || buyStack ===0) return; // hide if no payout
  const c = window.workpayCore.computeBtPerHourRange(j, it);
  if(!c) return;
  out.push({ ...j, _computed: c });

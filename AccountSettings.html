@@ -119,6 +119,26 @@
         .mono { font-family: Consolas, monospace; }
 
         details summary { cursor: pointer; }
+
+        .pill {
+            display:inline-block;
+            padding:2px6px;
+            border-radius:999px;
+            border:1px solid #ddd;
+            background:#fafafa;
+            font-size:12px;
+            margin:2px6px2px0;
+        }
+
+        .linkBtn {
+            background: none;
+            border: none;
+            padding:0;
+            color: #06c;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size:13px;
+        }
     </style>
 
     <script src="account_settings_js/account-settings.js"></script>
@@ -151,7 +171,7 @@
             Username (playerName)
             <input id="inpPlayerName" type="text" placeholder="Your username" maxlength="32" style="width:min(420px,100%);">
         </label>
-        <div class="small">Allowed: letters, numbers, spaces, "_" and "-". 2�32 chars.</div>
+        <div class="small">Allowed: letters, numbers, spaces, "_" and "-". 2&mdash;32 chars.</div>
         <div class="row" style="margin-top:6px;">
             <button id="btnSavePlayerName" type="button">Save username</button>
         </div>
@@ -178,6 +198,50 @@
             <button id="btnSaveMallMailbox" type="button">Save mall mailbox</button>
             <button id="btnClearMallMailbox" type="button">Clear mall mailbox</button>
         </div>
+
+        <div id="saveMsg" class="small" style="margin-top:10px;"></div>
+    </section>
+
+    <section class="section" aria-label="Leaderboards (opt-in)">
+        <h2>Leaderboards (opt-in)</h2>
+        <div class="small muted" style="margin-bottom:8px;">
+            You can choose whether you appear in public leaderboards. This is optional and default is opted out.
+        </div>
+
+        <label class="small">
+            Leaderboard consent
+            <select id="selLeaderboardConsent" style="width:min(420px,100%);">
+                <option value="OUT" selected>Opted out (default)</option>
+                <option value="HALF">Half opt-in (anonymous)</option>
+                <option value="FULL">Full opt-in (show my username)</option>
+            </select>
+        </label>
+
+        <div id="leaderboardHalfInfo" class="small" style="display:none;margin-top:6px;">
+            Your public display name will be: <strong id="lblAnonName">Anonymous</strong>
+        </div>
+
+        <div class="small muted" style="margin-top:10px;">This will show (only these 8 stats):</div>
+        <div class="small" style="margin-top:6px;line-height:1.55;">
+            <span class="pill">Store: biggest buy transaction</span>
+            <span class="pill">Store: biggest sale transaction</span>
+            <span class="pill">Store: trades with store</span>
+            <span class="pill">OCM: trades as customer</span>
+            <span class="pill">OCM: trades as merchant</span>
+            <span class="pill">OCM: fees paid (merchant-side)</span>
+            <span class="pill">OCM: largest trade value</span>
+            <span class="pill">OCM: total trade value</span>
+        </div>
+        <div class="small muted" style="margin-top:8px;">
+            We never show your email, mailbox, or mall mailbox on leaderboards.
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+            <button id="btnSaveLeaderboardConsent" type="button">Save leaderboard preference</button>
+            <a class="linkBtn" href="Leaderboards.html" target="_blank" rel="noopener">Preview leaderboards</a>
+        </div>
+
+        <div id="leaderboardMsg" class="small" style="margin-top:8px;"></div>
 
         <div id="saveMsg" class="small" style="margin-top:10px;"></div>
     </section>

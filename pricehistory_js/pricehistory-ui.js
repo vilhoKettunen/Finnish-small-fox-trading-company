@@ -358,64 +358,32 @@ window.PriceHistory.UI = (function () {
  targetStock: 'Target stock stack'
  };
 
- const metricDetails = {
- stock: [
- 'Formula: uses StockHistory stacks directly for each day.',
- 'Missing values: shown as gaps when no stock was recorded for that day.',
- 'Interpretation: fractional values mean partial stacks (still valid).'
- ],
- valuation: [
- 'Formula: uses ValuationHistory value (BT) as recorded.',
- 'Missing values: if ValuationHistory is missing for a day, the line will gap.',
- 'Interpretation: this is the best value signal when available.'
- ],
- targetStock: [
- 'Formula: uses TargetStockHistory values (goal stacks).',
- 'Missing values: gaps mean no target recorded/changed that day.',
- 'Interpretation: targets are usually whole stacks.'
- ],
- goal: [
- 'Formula: uses GoalHistory ×100 to display percent of goal reached.',
- 'Missing values: gaps mean no goal record for that day.',
- 'Interpretation:100% means goal reached.'
- ],
- change: [
- 'Formula: price[today] ? price[yesterday] per item.',
- 'Missing values: if either day price is missing, the change is shown as a gap.',
- 'Multi-item behavior: shown as lines for readability.'
- ],
- changePct: [
- 'Formula: ((price[today] ? price[yesterday]) / price[yesterday]) ×100 per item.',
- 'Missing values: gaps when yesterday is missing or equals0.',
- 'Multi-item behavior: shown as lines for readability.'
- ]
- };
+ const metricHelp = window.PriceHistory.HelpText?.middleMetricHelp?.[metric];
 
- const base = window.PriceHistory.HelpText?.middleDynamicBase;
  const modal = $('infoModal');
  const title = $('infoModalTitle');
  const body = $('infoModalBody');
- if (!modal || !title || !body || !base) return;
+ if (!modal || !title || !body || !metricHelp) return;
 
- title.textContent = base.title || 'Middle Chart';
+ title.textContent = 'Middle Chart';
  body.innerHTML = '';
 
  body.appendChild(
  el('div', { className: 'helpExample' }, [
- el('div', { className: 'helpExampleTitle', text: `Current metric: ${metricNameMap[metric] || metric}` })
+ el('div', { className: 'helpExampleTitle', text: `Current metric: ${metricNameMap[metric] || metric}` }),
+ el('div', { text: `Best for: ${metricHelp.bestFor}` })
  ])
  );
 
  const ul = el('ul');
- (base.bullets || []).forEach(b => ul.appendChild(el('li', { text: b })));
- (metricDetails[metric] || []).forEach(b => ul.appendChild(el('li', { text: b })));
+ (metricHelp.bullets || []).forEach(b => ul.appendChild(el('li', { text: b })));
  body.appendChild(ul);
 
- if (base.example) {
+ if (metricHelp.example) {
  body.appendChild(
  el('div', { className: 'helpExample' }, [
  el('div', { className: 'helpExampleTitle', text: 'Example' }),
- el('div', { text: base.example })
+ el('div', { text: metricHelp.example })
  ])
  );
  }
@@ -433,54 +401,44 @@ window.PriceHistory.UI = (function () {
  selected: 'Selected items index (Weighted)'
  };
 
- const categoryDetails = {
- median: ['Items used: all items with prices in the selected sheet and range.'],
- metals: ['Items used: the configured metals allowlist (see list below).'],
- common: ['Items used: the configured common allowlist (see list below).'],
- selected: ['Items used: your currently applied item selection (the same set used by the charts).']
- };
+ const catHelp = window.PriceHistory.HelpText?.inflationCategoryHelp?.[category];
 
- const base = window.PriceHistory.HelpText?.inflationDynamicBase;
  const modal = $('infoModal');
  const title = $('infoModalTitle');
  const body = $('infoModalBody');
- if (!modal || !title || !body || !base) return;
+ if (!modal || !title || !body || !catHelp) return;
 
- title.textContent = base.title || 'Inflation Index';
+ title.textContent = 'Inflation Index';
  body.innerHTML = '';
 
  body.appendChild(
  el('div', { className: 'helpExample' }, [
- el('div', { className: 'helpExampleTitle', text: `Current category: ${categoryNameMap[category] || category}` })
+ el('div', { className: 'helpExampleTitle', text: `Current category: ${categoryNameMap[category] || category}` }),
+ el('div', { text: `Best for: ${catHelp.bestFor}` })
  ])
  );
 
  const ul = el('ul');
- (base.bullets || []).forEach(b => ul.appendChild(el('li', { text: b })));
- ul.appendChild(
- el('li', {
- text: 'Weight fallback: uses ValuationHistory when available; otherwise falls back to stock × price (less accurate if valuations are missing).'
- })
- );
- (categoryDetails[category] || []).forEach(b => ul.appendChild(el('li', { text: b })));
+ (catHelp.bullets || []).forEach(b => ul.appendChild(el('li', { text: b })));
  body.appendChild(ul);
 
- // List exact items for list-based categories OR selected items
  const itemList = Proc.getInflationCategoryItemList(category, appliedItems);
  if (itemList && itemList.length) {
- body.appendChild(
- el('div', { className: 'helpExample' }, [
- el('div', { className: 'helpExampleTitle', text: 'Items in this category' }),
- el('div', { text: itemList.join(', ') })
- ])
- );
+ const listWrap = el('div', { className: 'helpExample' }, [
+ el('div', { className: 'helpExampleTitle', text: 'Items in this category' })
+ ]);
+
+ const itemsUl = el('ul');
+ itemList.forEach(name => itemsUl.appendChild(el('li', { text: String(name) })));
+ listWrap.appendChild(itemsUl);
+ body.appendChild(listWrap);
  }
 
- if (base.example) {
+ if (catHelp.example) {
  body.appendChild(
  el('div', { className: 'helpExample' }, [
  el('div', { className: 'helpExampleTitle', text: 'Example' }),
- el('div', { text: base.example })
+ el('div', { text: catHelp.example })
  ])
  );
  }

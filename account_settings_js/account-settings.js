@@ -50,7 +50,9 @@
  email: x.email || '',
  playerName: x.playerName || '',
  mailbox: x.mailbox || '',
- mallMailbox: x.mallMailbox || ''
+ mallMailbox: x.mallMailbox || '',
+ leaderboardConsent: x.leaderboardConsent || 'OUT',
+ leaderboardAnonLabel: x.leaderboardAnonLabel || ''
  };
  }
 
@@ -98,6 +100,32 @@
  byId('inpPlayerName').value = u.playerName || '';
  byId('inpMailbox').value = u.mailbox || '';
  byId('inpMallMailbox').value = u.mallMailbox || '';
+
+ const sel = byId('selLeaderboardConsent');
+ if (sel) sel.value = String(u.leaderboardConsent || 'OUT');
+
+ const anon = byId('lblAnonName');
+ if (anon) anon.textContent = u.leaderboardAnonLabel || 'Anonymous';
+
+ updateLeaderboardUi_(u);
+ }
+
+ function updateLeaderboardUi_(u) {
+ const consent = String((u && u.leaderboardConsent) || byId('selLeaderboardConsent')?.value || 'OUT').toUpperCase();
+ const showHalf = consent === 'HALF';
+ setVisible('leaderboardHalfInfo', showHalf);
+ if (showHalf) {
+ const anon = byId('lblAnonName');
+ const label = (u && u.leaderboardAnonLabel) || currentUser?.leaderboardAnonLabel || 'Anonymous';
+ if (anon) anon.textContent = label;
+ }
+ }
+
+ function getConsentFromUi_() {
+ const sel = byId('selLeaderboardConsent');
+ const v = String(sel ? sel.value : 'OUT').trim().toUpperCase();
+ if (v !== 'OUT' && v !== 'HALF' && v !== 'FULL') return 'OUT';
+ return v;
  }
 
  function fmtNumber_(n, digs =0) {
@@ -417,6 +445,7 @@
  if (!googleIdToken) throw new Error('Not logged in');
  setBusy(true);
  setText('saveMsg', 'Saving…');
+ setText('leaderboardMsg', '');
  try {
  await window.apiPost('updateMyProfile', {
  idToken: googleIdToken,
@@ -425,7 +454,12 @@
  await loadMeAndApply_();
  setText('saveMsg', 'Saved.');
  } catch (e) {
- setText('saveMsg', 'Error: ' + (e.message || e));
+ const msg = (e.message || e);
+ // If user is editing leaderboard preference, show error near it too.
+ if (patch && Object.prototype.hasOwnProperty.call(patch, 'leaderboardConsent')) {
+ setText('leaderboardMsg', 'Error: ' + msg);
+ }
+ setText('saveMsg', 'Error: ' + msg);
  } finally {
  setBusy(false);
  }
@@ -465,7 +499,12 @@
  byId('btnSavePlayerName').addEventListener('click', () => {
  try {
  const playerName = validatePlayerName(byId('inpPlayerName').value);
- saveProfile_({ playerName, mailbox: currentUser?.mailbox || '', mallMailbox: currentUser?.mallMailbox || '' });
+ saveProfile_({
+ playerName,
+ mailbox: currentUser?.mailbox || '',
+ mallMailbox: currentUser?.mallMailbox || '',
+ leaderboardConsent: getConsentFromUi_()
+ });
  } catch (e) {
  setText('saveMsg', 'Error: ' + (e.message || e));
  }
@@ -474,7 +513,12 @@
  byId('btnSaveMailbox').addEventListener('click', () => {
  try {
  const mailbox = validateMailbox(byId('inpMailbox').value);
- saveProfile_({ playerName: currentUser?.playerName || '', mailbox, mallMailbox: currentUser?.mallMailbox || '' });
+ saveProfile_({
+ playerName: currentUser?.playerName || '',
+ mailbox,
+ mallMailbox: currentUser?.mallMailbox || '',
+ leaderboardConsent: getConsentFromUi_()
+ });
  } catch (e) {
  setText('saveMsg', 'Error: ' + (e.message || e));
  }
@@ -483,7 +527,12 @@
  byId('btnSaveMallMailbox').addEventListener('click', () => {
  try {
  const mallMailbox = validateMallMailbox(byId('inpMallMailbox').value);
- saveProfile_({ playerName: currentUser?.playerName || '', mailbox: currentUser?.mailbox || '', mallMailbox });
+ saveProfile_({
+ playerName: currentUser?.playerName || '',
+ mailbox: currentUser?.mailbox || '',
+ mallMailbox,
+ leaderboardConsent: getConsentFromUi_()
+ });
  } catch (e) {
  setText('saveMsg', 'Error: ' + (e.message || e));
  }
@@ -491,7 +540,33 @@
 
  byId('btnClearMallMailbox').addEventListener('click', () => {
  byId('inpMallMailbox').value = '';
- saveProfile_({ playerName: currentUser?.playerName || '', mailbox: currentUser?.mailbox || '', mallMailbox: '' });
+ saveProfile_({
+ playerName: currentUser?.playerName || '',
+ mailbox: currentUser?.mailbox || '',
+ mallMailbox: '',
+ leaderboardConsent: getConsentFromUi_()
+ });
+ });
+
+ byId('selLeaderboardConsent')?.addEventListener('change', () => {
+ updateLeaderboardUi_({ leaderboardConsent: getConsentFromUi_() });
+ setText('leaderboardMsg', '');
+ });
+
+ byId('btnSaveLeaderboardConsent')?.addEventListener('click', async () => {
+ try {
+ const consent = getConsentFromUi_();
+ setText('leaderboardMsg', 'Saving…');
+ await saveProfile_({
+ playerName: currentUser?.playerName || '',
+ mailbox: currentUser?.mailbox || '',
+ mallMailbox: currentUser?.mallMailbox || '',
+ leaderboardConsent: consent
+ });
+ setText('leaderboardMsg', 'Saved.');
+ } catch (e) {
+ setText('leaderboardMsg', 'Error: ' + (e.message || e));
+ }
  });
 
  // Delete dialog

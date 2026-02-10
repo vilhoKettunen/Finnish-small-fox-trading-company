@@ -642,6 +642,7 @@
         window.addConverterRow = function () { return implConv ? implConv() : undefined; };
 
         // Ensure there is at least one slot for each tool after DOM ready
+        
         document.addEventListener('DOMContentLoaded', () => {
             try {
                 if (document.getElementById('payOptions') && !document.querySelector('#payOptions .payRow')) {
@@ -652,5 +653,6 @@
                 }
             } catch { }
         });
+        
     })();
 })();

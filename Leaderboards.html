@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="UTF-8">
+ <title>Leaderboards</title>
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <link rel="icon" href="favicon.ico">
+
+ <script src="app-config.js"></script>
+ <script src="api-client.js"></script>
+ <script src="topbar.js"></script>
+
+ <style>
+ body {
+ font-family: Arial, sans-serif;
+ padding:20px;
+ max-width:1100px;
+ margin: auto;
+ }
+ body.withTopBar { padding-top:72px; }
+
+ .section {
+ margin:18px0;
+ padding:12px;
+ border:1px solid #ccc;
+ border-radius:8px;
+ background: #fff;
+ }
+
+ .grid2 {
+ display: grid;
+ grid-template-columns:1fr1fr;
+ gap:12px;
+ }
+ @media (max-width:900px) { .grid2 { grid-template-columns:1fr; } }
+
+ h1, h2, h3 { margin-top:0; }
+ .small { font-size:12px; color: #555; }
+ .muted { color: #666; }
+ .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+ .mono { font-family: Consolas, monospace; }
+
+ table { width:100%; border-collapse: collapse; }
+ th, td { text-align:left; padding:6px8px; border-bottom:1px solid #eee; font-size:13px; }
+ th { font-size:12px; text-transform: uppercase; letter-spacing: .03em; color:#666; }
+ td.num { text-align:right; font-family: Consolas, monospace; }
+ td.rank { width:42px; color:#666; font-family: Consolas, monospace; }
+
+ button { padding:6px10px; font-size:13px; }
+ </style>
+
+ <script src="leaderboards_js/leaderboards.js"></script>
+</head>
+<body>
+ <h1>Leaderboards</h1>
+
+ <section class="section" aria-label="Leaderboard meta">
+ <div class="row">
+ <button id="btnRefreshLeaderboards" type="button">Refresh</button>
+ <span id="lbStatus" class="small muted"></span>
+ </div>
+ <div class="small" style="margin-top:8px;">Last updated: <span id="lbUpdatedAt" class="mono">—</span></div>
+ <div class="small muted" style="margin-top:6px;">Only players who opted in appear here. Half opt-in shows a stable anonymous alias.</div>
+ </section>
+
+ <div class="grid2">
+ <div>
+ <section class="section" aria-label="Store leaderboards">
+ <h2>Store</h2>
+
+ <h3>Biggest buy transaction (BT)</h3>
+ <table>
+ <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
+ <tbody id="tb_storeMaxBuyValueBT"></tbody>
+ </table>
+
+ <h3 style="margin-top:14px;">Biggest sale transaction (BT)</h3>
+ <table>
+ <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
+ <tbody id="tb_storeMaxSellValueBT"></tbody>
+ </table>
+
+ <h3 style="margin-top:14px;">Trades with store</h3>
+ <table>
+ <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Trades</th></tr></thead>
+ <tbody id="tb_storeTradesWithStoreCount"></tbody>
+ </table>
+ </section>
+ </div>
+
+ <div>
+ <section class="section" aria-label="OCM leaderboards">
+ <h2>OCM</h2>
+
+ <h3>Trades as customer</h3>
+ <table>
+ <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Trades</th></tr></thead>
+ <tbody id="tb_ocmAsBuyerCount"></tbody>
+ </table>
+
+ <h3 style="margin-top:14px;">Trades as merchant</h3>
+ <table>
+ <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Trades</th></tr></thead>
+ <tbody id="tb_ocmAsMerchantCount"></tbody>
+ </table>
+
+ <h3 style="margin-top:14px;">Fees paid (merchant-side) (BT)</h3>
+ <table>
+ <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Fees</th></tr></thead>
+ <tbody id="tb_ocmFeesPaidBT"></tbody>
+ </table>
+
+ <h3 style="margin-top:14px;">Largest trade value (BT)</h3>
+ <table>
+ <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
+ <tbody id="tb_ocmMaxTradeValueBT"></tbody>
+ </table>
+
+ <h3 style="margin-top:14px;">Total trade value (BT)</h3>
+ <table>
+ <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
+ <tbody id="tb_ocmTotalValueBT"></tbody>
+ </table>
+ </section>
+ </div>
+ </div>
+</body>
+</html>

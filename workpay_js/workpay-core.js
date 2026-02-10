@@ -23,8 +23,14 @@
 
  function computeBtPerHourRange(job, catalogItem){
  if(!job || !catalogItem) return null;
- const sellStack = Number(catalogItem.sellStack);
- if(!isFinite(sellStack)) return null;
+ // Use the store "buy" stack price (what the store pays the player)
+ let payoutPerStack = Number(catalogItem.buyStack);
+ // Fallback: if buyStack missing, use buyEach * bundleSize if available
+ if((!isFinite(payoutPerStack) || payoutPerStack ===0) && isFinite(Number(catalogItem.buyEach))) {
+ const bs = Number(catalogItem.bundleSize ||1) ||1;
+ payoutPerStack = Number(catalogItem.buyEach) * bs;
+ }
+ if(!isFinite(payoutPerStack) || payoutPerStack ===0) return null;
 
  const bs = Number(catalogItem.bundleSize||1) ||1;
 
@@ -33,9 +39,9 @@
  if(minEff==null || maxEff==null) return null;
 
  return {
- payoutPerStackBT: sellStack,
- minBTPerHour: minEff * sellStack,
- maxBTPerHour: maxEff * sellStack
+ payoutPerStackBT: payoutPerStack,
+ minBTPerHour: minEff * payoutPerStack,
+ maxBTPerHour: maxEff * payoutPerStack
  };
  }
 
