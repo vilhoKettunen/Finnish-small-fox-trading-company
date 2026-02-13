@@ -1,0 +1,148 @@
+/* Paper-backed panels and broad mapping for existing markup */
+
+/* This file must be NON-INVASIVE.
+ It should not change layout (padding/margins/widths) or restyle inputs/buttons/tables.
+ It only adds paper textures + subtle borders/shadows.
+*/
+
+:root {
+ --paper-border: rgba(0,0,0,0.18);
+ /* valid box-shadow value: offset-x offset-y blur spread color */
+ --paper-shadow: 8px 20px 18px rgba(0,0,0,0.18);
+ --heading-shadow: 1px 2px 4px rgba(0,0,0,0.55);
+}
+
+/* Opt-out: pages that must not use paper panels */
+body.no-paper .paper-panel,
+body.no-paper .section,
+body.no-paper .panel,
+body.no-paper .card,
+body.no-paper .box,
+body.no-paper .notice,
+body.no-paper .banner,
+body.no-paper .chart-card,
+body.no-paper .peg-box,
+body.no-paper .peg-row,
+body.no-paper .picklist-container,
+body.no-paper #controls,
+body.no-paper #publicArea {
+ background-image: none !important;
+ background-color: transparent !important;
+ box-shadow: none !important;
+}
+
+/* Use regular selectors and !important for backgrounds so page-level `background:` shorthands
+ do not fully remove the paper texture. Keep this minimal and scoped to common containers. */
+.paper-panel, .section, .panel, .card, .box, .notice, .banner, .chart-card, .peg-box, .peg-row, .picklist-container {
+ /* ensure paper image is visible even if a background-color was set earlier */
+ background-image: url("../images/pack_Ground/paper.png") !important;
+ background-size:100% auto !important;
+ background-repeat: repeat-y !important;
+ /* translucent white base to ensure readability while allowing subtle paper texture */
+ background-color: rgba(255,255,255,0.92) !important;
+ /* blend to make texture more visible against white */
+ background-blend-mode: multiply !important;
+ border:1px solid var(--paper-border) !important;
+ box-shadow: var(--paper-shadow) !important;
+}
+
+#controls, #publicArea {
+ background-image: url("../images/pack_Ground/paper.png") !important;
+ background-size:100% auto !important;
+ background-repeat: repeat-y !important;
+ background-color: rgba(255,255,255,0.92) !important;
+ background-blend-mode: multiply !important;
+ border:1px solid var(--paper-border) !important;
+ box-shadow: var(--paper-shadow) !important;
+}
+
+/* Force paper on index sections specifically (helps pages that apply strong background shorthand)
+ This is scoped to the index page only to avoid surprises elsewhere. */
+body.index-page .section {
+ background-image: url("../images/pack_Ground/paper.png") !important;
+ background-size:100% auto !important;
+ background-repeat: repeat-y !important;
+ background-color: rgba(255,255,255,0.92) !important;
+ background-blend-mode: multiply !important;
+ border:1px solid var(--paper-border) !important;
+ box-shadow: var(--paper-shadow) !important;
+}
+
+/* Headings can be hard to read over photo backgrounds when not inside a panel */
+/* use a valid text-shadow value */
+h1, h2, h3 {
+ text-shadow: var(--heading-shadow);
+}
+
+/* Per-request: make the index page main heading high-contrast */
+body.index-page h1 {
+ color: #ffffff !important;
+ background: rgba(0,0,0,0.24) !important;
+ display: inline-block;
+ padding:6px10px;
+ border-radius:6px;
+}
+
+/* Tables often sit outside panels on some pages; keep them readable without affecting layout.
+ We keep borders/shadows minimal and do not change width/padding.
+*/
+table {
+ background: rgba(255,255,255,0.98) !important;
+}
+ 
+ /* Keep plain/transparent for shared topbar + login area/buttons/status */
+ #topBar,
+ #topBar * {
+ background: initial !important;
+ background-image: none !important;
+ box-shadow: none !important;
+ }
+
+#googleLoginArea,
+#googleLoginArea * {
+ background-image: none !important;
+ box-shadow: none !important;
+}
+
+/* However, allow login warning banner to be paper-backed with red tint.
+ In most pages, the login warning uses id `loginTermsWarning`.
+*/
+#loginTermsWarning {
+ background-image: url("../images/pack_Ground/paper.png") !important;
+ background-size:100% auto !important;
+ background-repeat: repeat-y !important;
+ position: relative;
+ border:1px solid rgba(164,0,0,0.6) !important;
+ color: #7a0000;
+}
+
+#loginTermsWarning::before {
+ content: "";
+ position: absolute;
+ inset:0;
+ border-radius: inherit;
+ background: rgba(220,38,38,0.12);
+ pointer-events: none;
+}
+
+#loginTermsWarning > * { position: relative; }
+
+/* Dialogs/modals (user-facing panels) - visuals only */
+dialog {
+ background-image: url("../images/pack_Ground/paper.png");
+ background-size:100% auto;
+ background-repeat: repeat-y;
+ border:1px solid rgba(0,0,0,0.18);
+ box-shadow: var(--paper-shadow);
+}
+
+/* WorkPayRates: keep its login card paper-backed.
+ Other pages: google login area should remain plain.
+*/
+body.workpay #googleLoginArea {
+ background-image: url("../images/pack_Ground/paper.png");
+ background-size:100% auto;
+ background-repeat: repeat-y;
+ border:1px solid rgba(0,0,0,0.18);
+ box-shadow: var(--paper-shadow);
+}

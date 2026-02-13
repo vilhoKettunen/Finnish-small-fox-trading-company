@@ -1,0 +1,196 @@
+/* Extracted from `BTIncurance.html` on 2026-02-13. Keep selectors unchanged. */
+
+:root {
+    font-family: Inter,system-ui,Arial,sans-serif;
+    color: #222;
+}
+
+body {
+    max-width: 1100px;
+    margin: 18px auto;
+    padding: 12px;
+}
+
+h1 {
+margin: 0 0 6px;
+}
+
+.lead {
+    color: #444;
+    margin-bottom: 12px;
+}
+
+.row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin: 8px 0;
+}
+
+input[type=text], input[type=number], select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+button {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 0;
+    background: #1f8cff;
+    color: #fff;
+    cursor: pointer;
+}
+
+button.secondary {
+    background: #6c757d;
+}
+
+.box {
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+    background: #fff;
+}
+
+.small {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+th, td {
+    padding: 8px;
+    border: 1px solid #eee;
+    text-align: left;
+}
+
+th {
+    background: #fafafa;
+}
+
+.mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.95rem;
+}
+
+.warn {
+    color: #d97706;
+    font-weight: 600;
+}
+
+.error {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+@media (max-width:720px) {
+    .row {
+        flex-direction: column;
+  align-items: stretch;
+    }
+}
+
+/* Shared top bar styling */
+#topBar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 52px;
+    background: #222;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 1000;
+    font-size: 14px;
+    gap: 12px;
+}
+
+#topBar a, #topBar button {
+    color: #fff;
+    text-decoration: none;
+    margin-right: 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+#topBar .right {
+    margin-left: auto;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+body.withTopBar {
+    padding-top: 72px;
+}
+
+.balance-chip {
+    padding: 2px 6px;
+border-radius: 4px;
+    background: rgba(255,255,255,0.08);
+    white-space: nowrap;
+}
+
+.balance-you.positive {
+    color: #2ecc71;
+}
+
+.balance-you.negative {
+    color: #ff5252;
+}
+
+.balance-target {
+    color: #f0c200;
+}
+
+#orderPopup {
+    position: absolute;
+    top: 52px;
+right: 100px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 8px;
+    display: none;
+min-width: 260px;
+    z-index: 1100;
+    color: #000;
+}
+
+#orderStatusBall {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #777;
+    cursor: pointer;
+}
+
+.status-pending {
+    background: #f0c200 !important;
+}
+
+.status-error {
+    background: #e74c3c !important;
+}
+
+.status-none {
+    background: #777 !important;
+}
+
+.order-link {
+    color: #66c;
+    text-decoration: underline;
+    cursor: pointer;
+}

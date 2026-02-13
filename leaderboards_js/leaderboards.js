@@ -2,6 +2,20 @@
 (function () {
  'use strict';
 
+ // Ensure `apiGet` exists. Some pages rely on `api-client.js`, but Leaderboards may be used standalone.
+ // This prevents runtime errors like "Failed to construct 'URL': Invalid URL" in environments where
+ // a helper tries to build URLs from an undefined base.
+ if (typeof window.apiGet !== 'function') {
+ const base = String(window.WEB_APP_URL || '').trim();
+ const baseOk = /^https?:\/\//i.test(base);
+ window.apiGet = async function (action, params) {
+ if (!baseOk) throw new Error('WEB_APP_URL is not configured');
+ const qs = new URLSearchParams({ action, ...(params || {}) });
+ const resp = await fetch(base + '?' + qs.toString());
+ return await resp.json();
+ };
+ }
+
  function byId(id){ return document.getElementById(id); }
  function setText(id, t){ const el=byId(id); if(el) el.textContent = t || ''; }
 

@@ -1,0 +1,14 @@
+:root {
+ --site-font: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+ --site-text: #1f2937;
+ --site-muted: #6b7280;
+
+ --paper-padding:12px;
+ --paper-radius:10px;
+ --paper-border: rgba(0,0,0,0.18);
+ --paper-shadow:08px20px rgba(0,0,0,0.18);
+
+ --table-border: rgba(0,0,0,0.18);
+
+ --focus-ring:0003px rgba(26,115,232,0.25);
+}

@@ -1,0 +1,128 @@
+/* Extracted from `AccountSettings.html` on 2026-02-13. Keep selectors unchanged. */
+
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    max-width: 1100px;
+    margin: auto;
+}
+
+body.withTopBar {
+    padding-top: 72px;
+}
+
+h1, h2 {
+    margin-top: 0;
+}
+
+.section {
+margin: 18px 0;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+}
+
+/* ===== Login terms warning ===== */
+#loginTermsWarning {
+    display: none;
+    margin: 0 0 10px 0;
+    padding: 10px 12px;
+    border: 1px solid #f3b3b3;
+    background: #fff2f2;
+    border-radius: 8px;
+    color: #a40000;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+#loginTermsWarning a {
+    color: #a40000;
+    text-decoration: underline;
+}
+
+label {
+    display: block;
+    margin: 8px 0;
+}
+
+input, button, select {
+    padding: 6px;
+    font-size: 13px;
+}
+
+.row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.small {
+    font-size: 12px;
+    color: #555;
+}
+
+.muted {
+color: #666;
+}
+
+.danger {
+    background: #b42318;
+color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 10px;
+}
+
+.danger:disabled {
+    opacity: 0.6;
+}
+
+dialog::backdrop {
+    background: rgba(0,0,0,0.35);
+}
+
+.grid2 {
+    display: grid;
+grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+@media (max-width: 860px) {
+    .grid2 { grid-template-columns: 1fr; }
+}
+
+.stat {
+    display: flex;
+justify-content: space-between;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px dashed #eee;
+}
+
+.stat:last-child { border-bottom: 0; }
+
+.mono { font-family: Consolas, monospace; }
+
+details summary { cursor: pointer; }
+
+.pill {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 999px;
+    border: 1px solid #ddd;
+    background: #fafafa;
+    font-size: 12px;
+    margin: 2px 6px 2px 0;
+}
+
+.linkBtn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #06c;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 13px;
+}

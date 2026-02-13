@@ -4,7 +4,13 @@
    Integrates GET Bypass logic for write actions. */
 
 (function () {
-    const BASE = (window.WEB_APP_URL || '').replace(/\/+$|\s+$/g, '');
+    const RAW_BASE = String(window.WEB_APP_URL || '').trim();
+    const BASE = RAW_BASE.replace(/\/+$|\s+$/g, '');
+    const BASE_OK = /^https?:\/\//i.test(BASE);
+
+    function missingBaseError_() {
+        return new Error('WEB_APP_URL is not configured (missing app-config.js or empty WEB_APP_URL).');
+    }
 
     // Actions that must be sent via GET to bypass POST blocks
     const BYPASS_ACTIONS = [
@@ -74,6 +80,8 @@
         }
     }
     async function apiGet(action, params) {
+        if (!BASE_OK) throw missingBaseError_();
+
         const url = new URL(BASE);
         url.searchParams.set('action', action);
         if (params && typeof params === 'object') {
@@ -90,6 +98,8 @@
 
     // Uses GET bypass if action is in list, otherwise standard POST
     async function apiPost(action, body) {
+        if (!BASE_OK) throw missingBaseError_();
+
         if (BYPASS_ACTIONS.includes(action)) {
             return apiGetBypass(action, body);
         }
@@ -105,6 +115,8 @@
     }
 
     async function apiGetBypass(action, body) {
+        if (!BASE_OK) throw missingBaseError_();
+
         const url = new URL(BASE);
         url.searchParams.append('action', action);
 
@@ -128,7 +140,7 @@
         const j = await readJsonOrThrow_(r);
         return normalize(j);
     }
-    
+
     // expose
     window.apiGet = apiGet;
     window.apiPost = apiPost;

@@ -1,0 +1,64 @@
+/* Background fox (fixed) + decorative side foxes */
+
+body::before {
+ content: "";
+ position: fixed;
+ inset:0;
+ z-index: -3;
+ pointer-events: none;
+ background-image: url("../images/pack_Ground/fox.png");
+ background-repeat: no-repeat;
+ background-position: center center;
+ background-size: cover;
+}
+
+/* Side decorations are injected by `shared/site-decor.js` as fixed divs.
+ They are visually cropped by shifting off-screen at smaller widths.
+*/
+.site-decor-left,
+.site-decor-right {
+ position: fixed;
+ top:50%;
+ transform: translateY(-50%);
+ z-index: -2;
+ pointer-events: none;
+ height: min(85vh,920px);
+ width: min(560px,44vw);
+ background-image: url("../images/pack_Ground/fox_stand.png");
+ background-repeat: no-repeat;
+ background-position: center center;
+ background-size: contain;
+}
+
+.site-decor-left {
+ left:0;
+ margin-left: -220px;
+}
+
+.site-decor-right {
+ right:0;
+ margin-right: -220px;
+ transform: translateY(-50%) scaleX(-1);
+}
+
+/* Hide side decorations on small screens */
+@media (max-width:720px) {
+ .site-decor-left,
+ .site-decor-right { display:none; }
+}
+
+/* Narrow/medium: show only center third-ish by cropping harder */
+@media (min-width:721px) and (max-width:1100px) {
+ .site-decor-left { margin-left: -300px; width: min(560px,50vw); }
+ .site-decor-right { margin-right: -300px; width: min(560px,50vw); }
+}
+
+/* Wide screens: show full image (no crop) */
+@media (min-width:1500px) {
+ .site-decor-left { margin-left:0; }
+ .site-decor-right { margin-right:0; }
+}
+
+/* Opt-out for pages like PriceHistory (remove side decorations only) */
+body.no-side-decor .site-decor-left,
+body.no-side-decor .site-decor-right { display:none; }

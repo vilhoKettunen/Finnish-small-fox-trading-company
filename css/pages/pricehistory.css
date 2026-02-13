@@ -1,0 +1,371 @@
+/* PriceHistory: remove side decorations and widen content */
+
+body { padding:12px; }
+
+body.no-side-decor {
+ /* keeps fox.png background from site-layout.css */
+}
+
+/* Controls and charts should take near full width */
+#controls,
+#charts {
+ max-width: min(1400px, calc(100vw -24px));
+ margin-left: auto;
+ margin-right: auto;
+}
+
+.chart-body { grid-template-columns:1fr220px; }
+
+@media (max-width:880px) {
+ .chart-body { grid-template-columns:1fr; }
+}
+
+/* PriceHistory page CSS (restored original look) */
+
+body {
+ font-family: system-ui, -apple-system, sans-serif;
+ padding:1rem;
+ background: #fafafa;
+ color: #333;
+}
+
+body.withTopBar {
+ padding-top:72px;
+}
+
+/* Requested: heading must be readable on fox.png */
+body.no-side-decor h1 {
+ color: #fff;
+}
+
+h1 {
+ margin-bottom:1rem;
+ color: #222;
+}
+
+/* --- CONTROLS BAR --- */
+#controls {
+ display: flex;
+ flex-wrap: wrap;
+ gap:1rem;
+ align-items: flex-end;
+ background: #fff;
+ padding:1rem;
+ border-radius:12px;
+ box-shadow:02px8px rgba(0,0,0,0.05);
+ margin-bottom:1.5rem;
+}
+
+label {
+ display: flex;
+ flex-direction: column;
+ gap:0.3rem;
+ font-weight:500;
+ font-size:0.85rem;
+ color: #666;
+}
+
+select, input[list], button {
+ padding: .5rem .7rem;
+ border:1px solid #ddd;
+ border-radius:6px;
+ font-size:0.95rem;
+ outline: none;
+}
+
+select:focus, input:focus {
+ border-color: #007bff;
+}
+
+button {
+ cursor: pointer;
+ background: #fff;
+}
+
+button.primary {
+ background: #111827;
+ color: #fff;
+ border-color: #111827;
+}
+
+button.primary:hover {
+ filter: brightness(1.05);
+}
+
+.itemSelectBlock {
+ display: flex;
+ flex-direction: column;
+ gap: .5rem;
+ flex-grow:1;
+ min-width:320px;
+ max-width:520px;
+}
+
+.itemSelectRow {
+ display: flex;
+ gap: .5rem;
+ align-items: center;
+}
+
+.selectWithInfo {
+ display: flex;
+ gap: .5rem;
+ align-items: flex-end;
+}
+
+#selectedItemsChips {
+ display: flex;
+ flex-wrap: wrap;
+ gap: .5rem;
+ min-height:32px;
+ padding-top: .25rem;
+}
+
+.chip {
+ display: inline-flex;
+ align-items: center;
+ gap: .4rem;
+ padding: .25rem .5rem;
+ border:1px solid #eee;
+ border-radius:999px;
+ background: #fafafa;
+}
+
+.chipColor {
+ width:10px;
+ height:10px;
+ border-radius:2px;
+}
+
+.chipText {
+ font-size: .9rem;
+ font-weight:600;
+}
+
+.chipRemove {
+ border: none;
+ background: transparent;
+ font-size:1rem;
+ line-height:1;
+ padding:0 .15rem;
+ color: #dc2626;
+ font-weight:900;
+}
+
+.chipRemove:hover {
+ color: #b91c1c;
+}
+
+#warningBox {
+ display: none;
+ width:100%;
+ padding: .6rem .75rem;
+ border-radius:8px;
+ background: #fff7ed;
+ border:1px solid #fed7aa;
+ color: #9a3412;
+ font-size: .9rem;
+}
+
+#selectedItemImages {
+ display: flex;
+ align-items: center;
+ gap: .35rem;
+ margin-left: auto;
+}
+
+.itemThumb {
+ width:34px;
+ height:34px;
+ object-fit: contain;
+ border-radius:8px;
+ border:1px solid #eee;
+ background: #fff;
+}
+
+.moreCount {
+ color: #6b7280;
+ font-size: .85rem;
+}
+
+.toggles {
+ display: flex;
+ flex-direction: column;
+ gap: .35rem;
+ padding-left: .25rem;
+}
+
+.toggleRow {
+ display: flex;
+ gap: .5rem;
+ align-items: center;
+ font-size: .85rem;
+ color: #374151;
+}
+
+.infoBtn {
+ border:1px solid #ddd;
+ background: #fff;
+ border-radius:8px;
+ padding: .35rem .6rem;
+ font-weight:700;
+ color: #111827;
+ font-size: .85rem;
+ white-space: nowrap;
+}
+
+.infoBtn:hover {
+ border-color: #cbd5e1;
+}
+
+/* --- CHART CONTAINERS --- */
+#charts {
+ display: flex;
+ flex-direction: column;
+ gap:2rem;
+}
+
+.chart-card {
+ background: white;
+ border-radius:12px;
+ padding:1rem;
+ box-shadow:04px12px rgba(0,0,0,0.08);
+}
+
+.chart-header {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ margin-bottom:0.75rem;
+ padding-bottom:0.5rem;
+ border-bottom:1px solid #eee;
+ gap:1rem;
+}
+
+.chart-title {
+ font-weight:700;
+ color: #444;
+ font-size:1.1rem;
+ display: flex;
+ align-items: center;
+ gap: .5rem;
+}
+
+.chart-meta {
+ font-size:0.85rem;
+ color: #888;
+}
+
+.chart-body {
+ display: grid;
+ grid-template-columns:1fr220px;
+ gap:1rem;
+ align-items: start;
+}
+
+.chart-wrapper {
+ position: relative;
+ height:400px;
+ width:100%;
+}
+
+canvas {
+ display: block;
+ width:100%;
+ height:100%;
+}
+
+.legend {
+ border-left:1px solid #eee;
+ padding-left:1rem;
+ max-height:400px;
+ overflow: auto;
+}
+
+.legendRow {
+ display: flex;
+ align-items: center;
+ gap: .5rem;
+ margin-bottom: .4rem;
+}
+
+.legendSwatch {
+ width:12px;
+ height:12px;
+ border-radius:3px;
+ flex:00 auto;
+}
+
+.legendLabel {
+ font-size: .9rem;
+ font-weight:700;
+ word-break: break-word;
+}
+
+/* Modal */
+#infoModal {
+ display: none;
+ position: fixed;
+ inset:0;
+ background: rgba(0,0,0,0.45);
+ align-items: center;
+ justify-content: center;
+ padding:1rem;
+ z-index:9999;
+}
+
+.modalCard {
+ width: min(720px,95vw);
+ background: #fff;
+ border-radius:12px;
+ padding:1rem;
+ box-shadow:08px30px rgba(0,0,0,0.25);
+}
+
+.modalHeader {
+ display: flex;
+ justify-content: space-between;
+ align-items: center;
+ gap:1rem;
+ margin-bottom: .5rem;
+}
+
+.modalTitle {
+ font-weight:800;
+ color: #111827;
+ font-size:1.1rem;
+}
+
+.modalClose {
+ border:1px solid #ddd;
+ background: #fff;
+ border-radius:8px;
+ padding: .35rem .6rem;
+}
+
+.helpExample {
+ margin-top: .75rem;
+ padding: .75rem;
+ border-radius:10px;
+ background: #f9fafb;
+ border:1px solid #eee;
+}
+
+.helpExampleTitle {
+ font-weight:800;
+ margin-bottom: .25rem;
+}
+
+@media (max-width:880px) {
+ .chart-body {
+ grid-template-columns:1fr;
+ }
+
+ .legend {
+ border-left: none;
+ padding-left:0;
+ border-top:1px solid #eee;
+ padding-top:1rem;
+ max-height:180px;
+ }
+}
