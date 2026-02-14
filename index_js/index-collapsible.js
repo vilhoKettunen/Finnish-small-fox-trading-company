@@ -12,13 +12,18 @@ window.applyCollapseState = function applyCollapseState(contentId, btnId, open) 
     const content = document.getElementById(contentId);
     const btn = document.getElementById(btnId);
     if (!content || !btn) return;
+
+    // Use consistent triangle glyphs: closed = right-pointing, open = down-pointing.
+    const CLOSED_GLYPH = '▸';
+    const OPEN_GLYPH = '▾';
+
     if (open) {
         content.style.display = 'block';
-        btn.textContent = '▾';
+        btn.textContent = OPEN_GLYPH;
         btn.setAttribute('aria-expanded', 'true');
     } else {
         content.style.display = 'none';
-        btn.textContent = '▸';
+        btn.textContent = CLOSED_GLYPH;
         btn.setAttribute('aria-expanded', 'false');
     }
 };

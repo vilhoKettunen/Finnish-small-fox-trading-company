@@ -1,0 +1,92 @@
+/* Shared universal dropdown styling (favorites + width) */
+
+:root {
+ --ud-input-width:312px; /*250px *1.25 */
+ --ud-fav-tint: #fff8d0;
+}
+
+.dropdown-wrap {
+ position: relative;
+ display: inline-block;
+}
+
+.dropdown-input {
+ width: var(--ud-input-width);
+ padding:6px;
+}
+
+.dropdown-list {
+ position: absolute;
+ top:100%;
+ left:0;
+ right:0;
+ background: #fff;
+ border:1px solid #ccc;
+ max-height:220px;
+ overflow-y: auto;
+ z-index:500;
+ border-radius:4px;
+}
+
+.dropdown-item {
+ padding:6px8px;
+ display: flex;
+ align-items: center;
+ gap:10px;
+ cursor: pointer;
+}
+
+.dropdown-item:hover {
+ background: #f0f6ff;
+}
+
+.dropdown-item.active {
+ background: #dff0ff;
+}
+
+.dropdown-item.is-favorite {
+ background: var(--ud-fav-tint);
+}
+
+.dropdown-item.is-favorite:hover {
+ background: #f3e7b5; /* slightly darker yellow so favorite stays visible */
+}
+
+.stock-circle {
+ width:28px;
+ height:28px;
+ flex:00 auto;
+}
+
+.dropdown-label {
+ flex:11 auto;
+ min-width:0;
+}
+
+.dropdown-fav-btn {
+ flex:00 auto;
+ width:28px;
+ height:28px;
+ border:1px solid transparent;
+ background: transparent;
+ border-radius:4px;
+ cursor: pointer;
+ font-size:18px;
+ line-height:1;
+ padding:0;
+ display: inline-flex;
+ align-items: center;
+ justify-content: center;
+ color: #8a6d00;
+}
+
+.dropdown-fav-btn:hover {
+ border-color: rgba(0,0,0,0.15);
+ background: rgba(0,0,0,0.03);
+}
+
+@media (max-width:700px) {
+ :root {
+ --ud-input-width:225px; /*180px *1.25 */
+ }
+}

@@ -19,7 +19,7 @@
 
  function computeQtyUnitsFromInput(value, mode, stackSize) {
  const v = Math.max(0, Number(value ||0) ||0);
- if (!isFinite(v)) return 0;
+ if (!isFinite(v)) return0;
  const ss = Number(stackSize ||1) ||1;
  if (String(mode || 'IND').toUpperCase() === 'STACK') return Math.round(v) * ss;
  return Math.round(v);
@@ -31,6 +31,25 @@
  const list = (typeof listOrId === 'string') ? byId(listOrId) : listOrId;
  if (!input || !list) return;
 
+ // Prefer shared universal dropdown if present (adds favorites)
+ if (window.universalDropdown && typeof window.universalDropdown.attach === 'function') {
+ window.universalDropdown.attach({
+ inputEl: input,
+ listEl: list,
+ getItems: () => (S.catalog || []),
+ getLabel: (it) => String(it?.name || ''),
+ getExtraText: (it) => `stk:${Number(it?.bundleSize ||1) ||1}`,
+ showProgress: false,
+ onSelect: (name) => {
+ input.value = name;
+ const it = findCatalogItem(name);
+ if (onPick) onPick(it);
+ }
+ });
+ return;
+ }
+
+ // Fallback: old local dropdown
  function setActiveIndex(idx) {
  const els = Array.from(list.querySelectorAll('.dropdown-item'));
  els.forEach(e => e.classList.remove('active'));

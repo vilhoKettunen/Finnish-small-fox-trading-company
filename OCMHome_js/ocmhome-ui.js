@@ -340,6 +340,40 @@
  const input = byId('fltPegInput');
  const list = byId('fltPegInputList');
  if (input && list) {
+ // Prefer universal dropdown (favorites)
+ if (window.universalDropdown && typeof window.universalDropdown.attach === 'function') {
+ window.universalDropdown.attach({
+ inputEl: input,
+ listEl: list,
+ getItems: () => (S.catalog || []),
+ getLabel: (it) => String(it?.name || ''),
+ getExtraText: () => '',
+ showProgress: false,
+ onSelect: (name) => {
+ input.value = name;
+ list.style.display = 'none';
+ input._dropIndex = -1;
+ }
+ });
+
+ // Also keep Enter behavior: if no highlighted row, treat Enter like Add button.
+ if (!input._ocmPegEnterAddWired) {
+ input._ocmPegEnterAddWired = true;
+ input.addEventListener('keydown', (ev) => {
+ if (ev.key !== 'Enter') return;
+ const hasActive = (typeof input._dropIndex === 'number' && input._dropIndex >=0);
+ if (hasActive) return; // universal dropdown handles item click via active index
+ ev.preventDefault();
+ if (typeof O.addSelectedPegFromUi === 'function') O.addSelectedPegFromUi();
+ });
+ }
+
+ // Initial render on empty
+ try { input.dispatchEvent(new Event('focus')); } catch { }
+ return;
+ }
+
+ // Fallback (old local implementation)
  // Build dropdownData in the same shape as index.html expects.
  const names = (S.catalog || []).slice().map(i => String(i.name || '')).filter(Boolean);
  names.sort((a, b) => String(a).localeCompare(String(b)));

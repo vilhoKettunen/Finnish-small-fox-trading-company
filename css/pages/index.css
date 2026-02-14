@@ -17,9 +17,9 @@ h1, h2, h3 {
  border:1px solid #ccc;
  border-radius:8px;
  position: relative;
-- background: #fff;
-+ /* prefer transparent background so universal paper texture can show */
-+ background: transparent;
+ background: #fff;
+/* prefer transparent background so universal paper texture can show */
+ background: transparent;
 }
 
 /* ===== Login terms warning (shown when logged out) ===== */

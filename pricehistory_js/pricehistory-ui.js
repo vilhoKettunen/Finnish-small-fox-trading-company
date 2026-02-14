@@ -18,6 +18,8 @@ window.PriceHistory.UI = (function () {
  let normalizeCombinedTo100 = DEFAULTS.normalizeCombinedTo100;
  let showCombinedMiddleSum = DEFAULTS.showCombinedMiddleSum;
 
+ let dropdownApi = null;
+
  function $(id) {
  return document.getElementById(id);
  }
@@ -459,15 +461,7 @@ window.PriceHistory.UI = (function () {
 
  uniqueItems = buildUniqueItems(main);
 
- const dl = $('itemDatalist');
- if (dl) {
- dl.innerHTML = '';
- uniqueItems.forEach(item => {
- const opt = document.createElement('option');
- opt.value = item;
- dl.appendChild(opt);
- });
- }
+ // old datalist removed; keep arrays only
 
  stagedItems = validateItems(stagedItems);
  appliedItems = validateItems(appliedItems);
@@ -477,28 +471,75 @@ window.PriceHistory.UI = (function () {
 
  renderChips();
  renderAppliedImages();
+
+ // (Re)wire dropdown with fresh item list
+ wireUniversalItemDropdown_();
  }
 
+ function wireUniversalItemDropdown_() {
+ const input = $('itemSearchInput');
+ const list = $('itemSearchInputList');
+ if (!input || !list) return;
+
+ if (!(window.universalDropdown && typeof window.universalDropdown.attach === 'function')) return;
+
+ // If we already wired it once, just refresh to pick up new uniqueItems.
+ if (dropdownApi && typeof dropdownApi.refresh === 'function') {
+ dropdownApi.refresh();
+ return;
+ }
+
+ dropdownApi = window.universalDropdown.attach({
+ inputEl: input,
+ listEl: list,
+ getItems: () => uniqueItems.map(name => ({ name })),
+ getLabel: (it) => String(it?.name || ''),
+ getExtraText: () => '',
+ showProgress: false,
+ onSelect: (name) => {
+ addStagedItem(name);
+ input.value = '';
+ try { input.focus(); } catch { }
+ // refresh suggestions after modifying the input
+ setTimeout(() => {
+ try { input.dispatchEvent(new Event('input')); } catch { }
+ },0);
+ }
+ });
+ }
+
+ // Restore from old PriceHistory UI (before universal dropdown).
+ // Note: item validation depends on catalog load, so validation happens after loadDataAndCatalog().
  function applyPresetIfAny(preset) {
  if (!preset) return;
 
  const settings = preset.settings || {};
  const toggles = preset.toggles || {};
 
- if (settings.type) $('typeSelect').value = settings.type;
- if (settings.range) $('rangeSelect').value = settings.range;
- if (settings.metric) $('metricSelect').value = settings.metric;
- if (settings.index) $('indexSelect').value = settings.index;
+ const typeEl = $('typeSelect');
+ const rangeEl = $('rangeSelect');
+ const metricEl = $('metricSelect');
+ const indexEl = $('indexSelect');
+
+ if (settings.type && typeEl) typeEl.value = settings.type;
+ if (settings.range && rangeEl) rangeEl.value = settings.range;
+ if (settings.metric && metricEl) metricEl.value = settings.metric;
+ if (settings.index && indexEl) indexEl.value = settings.index;
 
  showCombinedPrice = !!toggles.showCombinedPrice;
  normalizeCombinedTo100 = !!toggles.normalizeCombinedTo100;
  showCombinedMiddleSum = !!toggles.showCombinedMiddleSum;
 
- $('toggleCombinedPrice').checked = showCombinedPrice;
- $('toggleNormalizeCombined').checked = normalizeCombinedTo100;
- $('toggleCombinedMiddle').checked = showCombinedMiddleSum;
+ const tPrice = $('toggleCombinedPrice');
+ const tNorm = $('toggleNormalizeCombined');
+ const tMiddle = $('toggleCombinedMiddle');
+
+ if (tPrice) tPrice.checked = showCombinedPrice;
+ if (tNorm) tNorm.checked = normalizeCombinedTo100;
+ if (tMiddle) tMiddle.checked = showCombinedMiddleSum;
 
  appliedItems = Array.isArray(preset.appliedItems) ? preset.appliedItems.map(String) : [];
+ // stagedItems is temporary; we restore it from appliedItems only.
  stagedItems = [...appliedItems];
  }
 
@@ -524,6 +565,10 @@ window.PriceHistory.UI = (function () {
 
  $('itemSearchInput').addEventListener('keydown', (e) => {
  if (e.key === 'Enter') {
+ // If dropdown has an active selection, let dropdown handle it.
+ const hasActive = (typeof $('itemSearchInput')._dropIndex === 'number' && $('itemSearchInput')._dropIndex >=0);
+ if (hasActive) return;
+
  e.preventDefault();
  addStagedItem($('itemSearchInput').value);
  $('itemSearchInput').value = '';

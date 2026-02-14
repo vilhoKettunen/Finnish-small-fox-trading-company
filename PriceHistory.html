@@ -15,7 +15,9 @@
     <!-- NOTE: this repo currently ships `css/pages/pricehistory.css` (lowercase). Keep as-is to avoid breaking. -->
     <link rel="stylesheet" href="css/site-layout.css">
     <link rel="stylesheet" href="css/panels-paper.css">
+    <link rel="stylesheet" href="css/shared/universal-dropdown.css">
     <script src="shared/site-decor.js"></script>
+    <script src="shared/universal-dropdown.js"></script>
 </head>
 
 <body class="no-side-decor">
@@ -37,8 +39,10 @@
             </div>
 
             <div class="itemSelectRow">
-                <input id="itemSearchInput" list="itemDatalist" placeholder="Search items..." style="flex:1;" />
-                <datalist id="itemDatalist"></datalist>
+                <div class="dropdown-wrap" style="flex:1;">
+                    <input id="itemSearchInput" class="dropdown-input" placeholder="Search items..." style="width:100%;" />
+                    <div id="itemSearchInputList" class="dropdown-list" style="display:none;"></div>
+                </div>
                 <button id="addItemBtn" type="button">Add</button>
                 <button id="applyItemsBtn" type="button" class="primary">Apply</button>
                 <button id="clearItemsBtn" type="button">Clear</button>
