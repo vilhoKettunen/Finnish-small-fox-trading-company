@@ -1,4 +1,4 @@
-// Shared dropdown / search UI used across index sections
+﻿// Shared dropdown / search UI used across index sections
 
 // NOTE: This file intentionally matches the working implementation from
 // `admin_js_old _working/index_old.html` to avoid SVG scaling regressions.
@@ -150,24 +150,23 @@ window.renderDropdownList = function renderDropdownList(container, arr, onSelect
  const label = document.createElement('div');
  label.className = 'dropdown-label';
  label.innerHTML = `<strong>${_udFavSafeEsc_(row.name)}</strong><br><small>${_udFavSafeEsc_(row.extra || '')}</small>`;
-
- const star = document.createElement('button');
- star.type = 'button';
- star.className = 'dropdown-fav-btn';
- const isFav = favSet.has(row.name);
- star.textContent = isFav ? '?' : '?';
- star.title = isFav ? 'Unfavorite' : 'Favorite';
- star.setAttribute('aria-label', star.title);
- star.addEventListener('click', (ev) => {
+ // Favorite button (use HTML entities to avoid encoding/font issues)
+ div.appendChild(label);
+ const starBtn = document.createElement('button');
+ starBtn.type = 'button';
+ starBtn.className = 'dropdown-fav-btn';
+ const isFavNow = favSet.has(row.name);
+ starBtn.innerHTML = isFavNow ? '&#9733;' : '&#9734;';
+ starBtn.title = isFavNow ? 'Unfavorite' : 'Favorite';
+ starBtn.setAttribute('aria-label', starBtn.title);
+ starBtn.addEventListener('click', (ev) => {
  ev.preventDefault();
  ev.stopPropagation();
  toggleFav(row.name);
  // re-render everything to resort
  window.renderDropdownList(container, arr, onSelect);
  });
-
- div.appendChild(label);
- div.appendChild(star);
+ div.appendChild(starBtn);
 
  div.addEventListener('mouseover', () => {
  Array.from(container.querySelectorAll('.dropdown-item')).forEach(s => s.classList.remove('active'));
