@@ -126,3 +126,6 @@ details summary { cursor: pointer; }
     cursor: pointer;
     font-size: 13px;
 }
+h1 {
+    color: #fff;
+}
