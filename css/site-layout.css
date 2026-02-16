@@ -62,6 +62,3 @@ body::before {
 /* Opt-out for pages like PriceHistory (remove side decorations only) */
 body.no-side-decor .site-decor-left,
 body.no-side-decor .site-decor-right { display:none; }
-#topBar {
-    background: #000 !important;
-}

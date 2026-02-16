@@ -1,4 +1,4 @@
-/* Extracted from `TermsAndConditions.html` on2026-02-13. Keep selectors unchanged. */
+/* Legal page styling for `PrivacyPolicy.html` */
 
 body {
  font-family: Arial, sans-serif;
@@ -26,10 +26,6 @@ a { color: #0066cc; text-decoration: none; }
 a:hover { text-decoration: underline; }
 
 ul { margin:8px0018px; }
-
-h1 {
- color: #111;
-}
 h1 {
     color: #fff;
 }

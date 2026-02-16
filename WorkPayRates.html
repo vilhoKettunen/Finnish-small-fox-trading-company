@@ -13,6 +13,7 @@
  <link rel="stylesheet" href="css/site-layout.css">
  <link rel="stylesheet" href="css/panels-paper.css">
  <script src="shared/site-decor.js"></script>
+ <script src="shared/site-footer.js"></script>
 </head>
 <body class="workpay">
  <div class="container">
@@ -124,6 +125,20 @@
  </div>
 
  </div>
+
+ <details id="workpayDebug" style="margin-top:12px;">
+ <summary class="muted" style="cursor:pointer;">Debug (click to expand)</summary>
+ <div class="card" style="margin-top:8px;">
+ <div class="small mono" id="workpayDebugText" style="white-space:pre-wrap;word-break:break-word;">(debug not initialized)</div>
+ <div class="row" style="margin-top:8px;">
+ <button id="workpayDebugCopyBtn" type="button">Copy debug</button>
+ <span style="margin-left:auto;"></span>
+ <a id="dbgCatalogLink" class="small" href="#" target="_blank" rel="noopener">Open catalog JSON</a>
+ <span class="small muted">|</span>
+ <a id="dbgWorkpayLink" class="small" href="#" target="_blank" rel="noopener">Open workpay JSON</a>
+ </div>
+ </div>
+ </details>
 
  <script src="workpay_js/workpay-core.js"></script>
  <script src="workpay_js/workpay-admin.js"></script>

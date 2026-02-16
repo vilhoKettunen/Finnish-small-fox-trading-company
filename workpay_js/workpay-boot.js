@@ -11,6 +11,29 @@
 
  function el(id){ return document.getElementById(id); }
 
+ // ===== Debug panel helpers =====
+ const DBG = { lines: [], last: {}, isAdmin:false };
+ function dbgLine(msg){
+ DBG.lines.push(`[${new Date().toISOString()}] ${msg}`);
+ const t = el('workpayDebugText');
+ if (t) t.textContent = DBG.lines.join('\n');
+ }
+ function dbgSet(k,v){ DBG.last[k]=v; }
+ function dbgErr(prefix, e){
+ const isAdmin = !!S.isAdmin;
+ const msg = (e && (e.stack || e.message)) ? String(e.stack || e.message) : String(e);
+ dbgLine(prefix + (isAdmin ? (': ' + msg) : ': An error occurred. Please contact support.'));
+ }
+ function dbgInitLinks(){
+ try {
+ const base = String(window.WEB_APP_URL||'').trim();
+ const cat = el('dbgCatalogLink');
+ const wp = el('dbgWorkpayLink');
+ if (cat) cat.href = base ? `${base}?action=ocmGetCatalogSnapshot` : '#';
+ if (wp) wp.href = base ? `${base}?action=workPayList` : '#';
+ } catch {}
+ }
+
  async function fetchBalanceIfLoggedIn(){
  if(!S.idToken) return null;
  try {
@@ -111,26 +134,62 @@
  function computeAndFilterPublic(){
  const map = S.catalog && S.catalog.map ? S.catalog.map : {};
  const out = [];
+ let missingCatalog =0;
+ let missingPayout =0;
+ let computedOk =0;
  (S.jobsPublic||[]).forEach(j=>{
  const key = window.workpayCore.normKey(j.itemKey || j.itemName);
  const it = map[key];
- if(!it) return; // hide invalid catalog entries
+ if(!it) { missingCatalog++; return; } // hide invalid catalog entries
  const buyStack = Number(it.buyStack);
- if(!isFinite(buyStack) || buyStack ===0) return; // hide if no payout
+ if(!isFinite(buyStack) || buyStack ===0) { missingPayout++; return; } // hide if no payout
  const c = window.workpayCore.computeBtPerHourRange(j, it);
  if(!c) return;
  out.push({ ...j, _computed: c });
+ computedOk++;
  });
  S.jobsPublicComputed = out;
+
+ // expose to debug panel
+ dbgSet('public.totalJobsFromBackend', (S.jobsPublic||[]).length);
+ dbgSet('public.missingCatalog', missingCatalog);
+ dbgSet('public.missingPayout', missingPayout);
+ dbgSet('public.computedOk', computedOk);
+ dbgSet('public.shown', out.length);
+ dbgLine(`Public join: jobs=${(S.jobsPublic||[]).length}, shown=${out.length}, missingCatalog=${missingCatalog}, missingPayout=${missingPayout}`);
  }
 
  async function loadPublicData(){
+ dbgInitLinks();
+ dbgLine('Boot: loadPublicData start');
+
  el('catalogStatus').textContent = 'Loading...';
+ try {
+ dbgLine('Fetch: ocmGetCatalogSnapshot');
  S.catalog = await window.workpayCore.loadCatalogSnapshot();
- el('catalogStatus').textContent = `Catalog loaded (${(S.catalog.items||[]).length} items)`;
+ const n = (S.catalog.items||[]).length;
+ dbgSet('catalog.count', n);
+ dbgLine(`Catalog OK: ${n} items`);
+ el('catalogStatus').textContent = `Catalog loaded (${n} items)`;
+ } catch(e){
+ el('catalogStatus').textContent = 'Catalog load failed';
+ dbgErr('Catalog FAIL', e);
+ S.catalog = { items:[], map:{} };
+ }
+
+ try {
+ dbgLine('Fetch: workPayList (public)');
  S.jobsPublic = await window.workpayCore.loadWorkPayJobsPublic();
+ dbgSet('workpay.public.count', (S.jobsPublic||[]).length);
+ dbgLine(`WorkPay public OK: ${(S.jobsPublic||[]).length} rows`);
+ } catch(e){
+ dbgErr('WorkPay public FAIL', e);
+ S.jobsPublic = [];
+ }
+
  computeAndFilterPublic();
  renderPublic();
+ dbgLine('Boot: loadPublicData end');
  }
 
  async function restoreAuth(){
@@ -142,6 +201,7 @@
 
  async function applyAuthFromToken(idToken, silent){
  try {
+ dbgLine('Auth: applying token');
  S.idToken = idToken;
  const me = await window.apiGet('me', { idToken });
  const user = (me && me.result && me.result.user) ? me.result.user : (me && me.data && me.data.user) ? me.data.user : null;
@@ -149,6 +209,9 @@
 
  S.user = user;
  S.isAdmin = isAdmin;
+
+ dbgSet('auth.isAdmin', isAdmin);
+ dbgLine(`Auth OK: isAdmin=${isAdmin ? 'true' : 'false'}`);
 
  const b = await fetchBalanceIfLoggedIn();
  S.balanceBT = (b!=null) ? Number(b) : (user && user.balanceBT!=null) ? Number(user.balanceBT) :0;
@@ -160,11 +223,20 @@
  if(window.workpayAdmin){
  window.workpayAdmin.setAuth(S.idToken, S.isAdmin);
  if(S.isAdmin){
+ try {
+ dbgLine('Fetch: workPayList (admin includeInactive=1)');
  const all = await window.workpayCore.loadWorkPayJobsAdminAll(S.idToken);
+ dbgSet('workpay.admin.count', (all||[]).length);
+ dbgLine(`WorkPay admin OK: ${(all||[]).length} rows`);
  window.workpayAdmin.setJobsAdminAll(all);
+ } catch(e){
+ dbgErr('WorkPay admin FAIL', e);
+ window.workpayAdmin.setJobsAdminAll([]);
+ }
  }
  }
  } catch(e){
+ dbgErr('Auth FAIL', e);
  if(!silent) showLoginStatus(e.message||String(e));
  }
  }
@@ -179,6 +251,8 @@
  // note: initSharedTopBar is called by inline login script, but calling twice is safe
  wireUI();
 
+ dbgLine('Boot: window load');
+
  // admin init early (no auth yet)
  if(window.workpayAdmin) window.workpayAdmin.init({ idToken:null, isAdmin:false, catalog:null });
 
@@ -189,9 +263,31 @@
  if(window.workpayAdmin){
  window.workpayAdmin.setCatalog(S.catalog);
  if(S.isAdmin){
+ try {
+ dbgLine('Fetch: workPayList (admin includeInactive=1) post-restore');
  const all = await window.workpayCore.loadWorkPayJobsAdminAll(S.idToken);
+ dbgSet('workpay.admin.count', (all||[]).length);
+ dbgLine(`WorkPay admin OK(post-restore): ${(all||[]).length} rows`);
  window.workpayAdmin.setJobsAdminAll(all);
+ } catch(e){
+ dbgErr('WorkPay admin FAIL(post-restore)', e);
+ window.workpayAdmin.setJobsAdminAll([]);
  }
+ }
+ }
+
+ const copyBtn = el('workpayDebugCopyBtn');
+ if (copyBtn && !copyBtn._workpayDbgWired) {
+ copyBtn._workpayDbgWired = true;
+ copyBtn.addEventListener('click', async ()=>{
+ try {
+ const payload = { last: DBG.last, log: DBG.lines };
+ await navigator.clipboard.writeText(JSON.stringify(payload, null,2));
+ dbgLine('Debug copied to clipboard');
+ } catch(e){
+ dbgErr('Copy debug FAIL', e);
+ }
+ });
  }
  });
 

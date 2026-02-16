@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="UTF-8">
+ <title>Privacy Policy</title>
+ <meta name="viewport" content="width=device-width,initial-scale=1">
+ <link rel="icon" href="favicon.ico">
+
+ <!-- Shared UI deps (top bar) -->
+ <script src="app-config.js"></script>
+ <script src="topbar.js"></script>
+
+ <!-- Page styling -->
+ <link rel="stylesheet" href="css/pages/PrivacyPolicy.css">
+ <link rel="stylesheet" href="css/site-layout.css">
+ <link rel="stylesheet" href="css/panels-paper.css">
+
+ <!-- Decor + shared footer -->
+ <script src="shared/site-decor.js"></script>
+ <script src="shared/site-footer.js"></script>
+</head>
+<body>
+ <h1>Privacy Policy</h1>
+
+ <div class="section">
+ <!-- PRIVACY_LAST_UPDATED: Update this date when editing. Format: DD/MM/YYYY -->
+ <div class="small"><strong>Last updated:</strong>16/02/2026</div>
+ <div class="small" style="margin-top:6px;">
+ This policy may be updated as the project evolves. Updates will be reflected by the “Last updated” date above.
+ </div>
+ </div>
+
+ <div class="section">
+ <h2>1. Data Controller</h2>
+ <div class="small" style="line-height:1.6;">
+ <div><strong>Vilho Antton Kettunen</strong></div>
+ <div>Finland</div>
+ <div>Email: <a href="mailto:vilhokettu1@gmail.com">vilhokettu1@gmail.com</a></div>
+ </div>
+ </div>
+
+ <div class="section">
+ <h2>2. What Data We Collect</h2>
+ <ul>
+ <li><strong>Account information (Google Login):</strong> email address and basic profile fields provided by Google Sign-In (we do not collect or store passwords).</li>
+ <li><strong>Profile information you provide:</strong> username (player name) and mailbox fields (including optional mall mailbox).</li>
+ <li><strong>Trading / transaction / history data:</strong> records needed to operate the tool and preserve transparency/integrity of trading history. These records are linked to an internal user ID and may include your chosen username.</li>
+ <li><strong>Leaderboards preference:</strong> whether you opt in/out of public leaderboards (OUT / HALF / FULL), including an internal anonymous label/ID used for HALF opt-in.</li>
+ <li><strong>Statistics cache:</strong> computed summaries of your activity used to display your personal statistics and, if opted in, leaderboards.</li>
+ <li><strong>Technical data / local device storage:</strong> we may store a Google login token in your browser (localStorage and/or cookies) to restore your session. You can remove it by logging out and/or clearing your browser storage.</li>
+ </ul>
+ </div>
+
+ <div class="section">
+ <h2>3. Purpose of Processing</h2>
+ <ul>
+ <li>To provide login and account functionality.</li>
+ <li>To operate and maintain the service (including account settings, trading tools, and history views).</li>
+ <li>To provide transparency and integrity of trading history, and to compute statistics.</li>
+ <li>To improve the functionality and safety of the tool.</li>
+ </ul>
+ <div class="small" style="margin-top:8px;">
+ We do not use your email for marketing purposes.
+ </div>
+ </div>
+
+ <div class="section">
+ <h2>4. Legal Basis (GDPR Article6)</h2>
+ <ul>
+ <li><strong>Performance of a contract (Art.6(1)(b)):</strong> processing needed to provide access and core service features.</li>
+ <li><strong>Legitimate interests (Art.6(1)(f)):</strong> operating, securing, and improving the service; preserving transaction integrity and transparency.</li>
+ <li><strong>Consent (Art.6(1)(a)):</strong> public leaderboards participation is opt-in and can be changed in Account Settings.</li>
+ </ul>
+ </div>
+
+ <div class="section">
+ <h2>5. Data Retention</h2>
+ <ul>
+ <li>Your email is stored while your account remains active.</li>
+ <li>If you delete your account, your email is removed from the system.</li>
+ <li><strong>Important:</strong> historical trading/transaction/history data may be retained for transparency and integrity purposes.</li>
+ <li>After account deletion, retained historical data is generally linked to an internal user ID and/or historical username snapshots. This means it is <strong>pseudonymized, not fully anonymized</strong>.</li>
+ </ul>
+ </div>
+
+ <div class="section">
+ <h2>6. Data Sharing / Third-Party Services</h2>
+ <ul>
+ <li>We do not sell or rent personal data.</li>
+ <li>We use third-party providers to operate the service. In particular, Google and Cloudflare may process data as part of providing authentication and hosting/delivery services.</li>
+ <li>For more details, please refer to the providers’ privacy policies.</li>
+ </ul>
+ </div>
+
+ <div class="section">
+ <h2>7. International Transfers</h2>
+ <div class="small">
+ Some third-party providers (such as Google and Cloudflare) may process data in jurisdictions outside the EU/EEA as part of providing their services.
+ Please refer to their privacy documentation for details.
+ </div>
+ </div>
+
+ <div class="section">
+ <h2>8. Your Rights Under GDPR</h2>
+ <div class="small" style="margin-bottom:8px;">If applicable, you may have the right to:</div>
+ <ul>
+ <li>Access your personal data</li>
+ <li>Request correction of inaccurate data</li>
+ <li>Request deletion of your data (note: some history may be retained as described above)</li>
+ <li>Restrict or object to processing</li>
+ <li>Receive a copy of your data</li>
+ <li>Lodge a complaint with the Finnish Data Protection Ombudsman</li>
+ </ul>
+ <div class="small" style="margin-top:8px;">
+ To exercise your rights, contact: <a href="mailto:vilhokettu1@gmail.com">vilhokettu1@gmail.com</a>
+ </div>
+ </div>
+
+ <div class="section">
+ <h2>9. Security</h2>
+ <div class="small">
+ We implement reasonable technical and organizational measures to protect personal data.
+ However, as this is an early-stage hobby project, no system can guarantee absolute security.
+ </div>
+ </div>
+
+ <div class="section">
+ <h2>10. Changes to This Policy</h2>
+ <div class="small">
+ This Privacy Policy may be updated as the project evolves. Updates will be reflected by the “Last updated” date above.
+ </div>
+ </div>
+
+ <script>
+ window.addEventListener('load', () => {
+ window.initSharedTopBar && window.initSharedTopBar();
+ document.body.classList.add('withTopBar');
+ });
+ </script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+/* Shared footer styles (injected by `shared/site-footer.js`). */
+
+#siteFooter {
+ margin-top:24px;
+ padding:14px12px;
+ border-top:1px solid rgba(0,0,0,0.12);
+ background: rgba(255,255,255,0.75);
+ backdrop-filter: blur(2px);
+}
+
+#siteFooter .siteFooter-inner {
+ max-width:1100px;
+ margin:0 auto;
+ display: flex;
+ gap:10px;
+ align-items: baseline;
+ justify-content: space-between;
+ flex-wrap: wrap;
+}
+
+#siteFooter .siteFooter-links {
+ font-size:13px;
+}
+
+#siteFooter .siteFooter-links a {
+ color: #0066cc;
+ text-decoration: none;
+}
+
+#siteFooter .siteFooter-links a:hover {
+ text-decoration: underline;
+}
+
+#siteFooter .siteFooter-sep {
+ opacity:0.6;
+ margin:08px;
+}
+
+#siteFooter .siteFooter-note {
+ font-size:12px;
+ color: rgba(0,0,0,0.7);
+}

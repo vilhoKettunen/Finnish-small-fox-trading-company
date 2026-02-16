@@ -50,26 +50,27 @@
  });
  }
 
- function renderCatalogPickList(){
- const host = el('catalogPickList');
- if(!host) return;
- const q = String(el('catalogItemSearch')?.value||'').trim().toLowerCase();
- host.innerHTML = '';
- const items = (S.catalog && S.catalog.items) ? S.catalog.items : [];
+    function renderCatalogPickList() {
+        const host = el('catalogPickList');
+        if (!host) return;
+        const q = String(el('catalogItemSearch')?.value || '').trim().toLowerCase();
+        host.innerHTML = '';
+        const items = (S.catalog && S.catalog.items) ? S.catalog.items : [];
 
- // simple search: substring match (index-like feel without coupling)
- items.filter(it=>{
- const name = String(it && it.name || '').toLowerCase();
- if(!q) return true;
- return name.includes(q);
- }).slice(0,200).forEach(it=>{
- const key = window.workpayCore.normKey(it.name);
- const btn = document.createElement('button');
- btn.textContent = it.name;
- btn.onclick = ()=> selectCatalogItemForNew(key);
- host.appendChild(btn);
- });
- }
+        // simple search: substring match (index-like feel without coupling)
+        // Increased limit from 200 to 1000
+        items.filter(it => {
+            const name = String(it && it.name || '').toLowerCase();
+            if (!q) return true;
+            return name.includes(q);
+        }).slice(0, 1000).forEach(it => {
+            const key = window.workpayCore.normKey(it.name);
+            const btn = document.createElement('button');
+            btn.textContent = it.name;
+            btn.onclick = () => selectCatalogItemForNew(key);
+            host.appendChild(btn);
+        });
+    }
 
  function clearEditor(){
  S.selectedJobKey = null;
