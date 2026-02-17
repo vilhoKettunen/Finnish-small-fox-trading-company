@@ -72,6 +72,40 @@
 
     <h1>🛒 Vak Store Trading Calculator</h1>
 
+    <!-- Business model / service explanation (visible on page + aligns with meta description) -->
+    <div class="section" id="serviceIntro">
+        <h2>What this service is</h2>
+        <p>
+            <strong>We organize and facilitate trade among players in Vintage Story on The Official Public Server (TOPS).</strong>
+            We run a main store for instant trades, track pricing data across traded items, and provide a player-to-player trading platform (OCM).
+        </p>
+        <button class="more-info-btn" type="button" onclick="toggleInfo('serviceIntroInfo')">More Info</button>
+        <div id="serviceIntroInfo" class="info-box">
+            <p style="margin-top:0;">
+                <strong>Main store (instant trades):</strong> buy/sell common items quickly at listed prices.<br>
+                <strong>Price tracking:</strong> we record historical trade pricing to improve transparency and help with fair trading.<br>
+                <strong>OCM marketplace:</strong> players can list and trade directly with each other, using the same pricing and tooling.
+            </p>
+
+            <p>
+                <strong>About the currency (BT):</strong><br>
+                BT is designed to be a fully liquid trading currency. Its value is not permanently pegged to one specific metal or item.
+                The goal is to make trading smoother by giving players a common “trade-anything” medium: you can earn BT by selling items
+                and spend BT to buy many other items the store accepts.
+            </p>
+
+            <p>
+                <strong>Backing / insurance (when funded):</strong><br>
+                When the system has sufficient reserves, we back BT with metals. If you hold more than <strong>500 BT</strong>, you can request
+                the equivalent value in metals to be delivered to your deposit box as an always-accessible “insurance” option.
+                The long-term goal is to maintain <strong>more value in metal reserves than BT in circulation</strong>, so even a “bank run”
+                would not collapse the system (this was achieved last wipe; 2026 wipe will depend on how quickly reserves build up again).
+            </p>
+
+            <button type="button" onclick="toggleInfo('serviceIntroInfo')">❌ Close</button>
+        </div>
+    </div>
+
     <div class="section">
         <label for="currencyInput"><b>Display Currency:</b></label>
         <input id="currencyInput" list="currencyDatalist" placeholder="Search currency / item">
