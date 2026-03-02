@@ -39,7 +39,13 @@
         byId('playerSearch').dataset.selectedUser = uid;
         byId('playerSearch').value = pl.playerName || '';
         byId('transferTarget').value = pl.playerName || '';
-        byId('balancesInfo').textContent = `Selected: ${pl.playerName} | Balance: ${(Number(pl.balanceBT) || 0).toFixed(2)} BT`;
+        byId('balancesInfo').textContent = `Selected: ${pl.playerName} | Balance: ${(Number(pl.balanceBT) || 0).toFixed(2)} 
+        
+        
+        
+        
+        
+        `;
 
         fireTargetChanged_();
 

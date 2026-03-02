@@ -147,7 +147,7 @@
                 if (leftPerInd == null || rightPerInd == null) return `${label}: — (missing catalog price)`;
                 const leftBt = leftQtyInd * leftPerInd;
                 const rightBt = rightQtyInd * rightPerInd;
-                return `${label}: ${fmt2(leftBt)} BT (sold) | ${fmt2(rightBt)} BT (peg)`;
+                return `${label}: ${fmt2(leftBt)} EW (sold) | ${fmt2(rightBt)} EW (peg)`;
             }
 
             const buyLine = valueLine('BUY', soldBuy, pegBuy);

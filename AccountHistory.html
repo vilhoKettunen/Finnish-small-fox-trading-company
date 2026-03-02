@@ -167,7 +167,17 @@
  const bundle = it.bundleSize && Number(it.bundleSize) >1 ? `x${Number(it.bundleSize)}` : 'x';
  const price = it.priceBT || it.price;
  const qtyStr = `${qty}${bundle}`;
- const priceStr = price != null ? ` (${price} BT)` : '';
+ const priceStr = price != null ? ` (${price} 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ )` : '';
  return `<div class="history-item-line"><span class="qty">${qtyStr}</span>${name}<span class="small">${priceStr}</span></div>`;
  }).join('');
  }
@@ -183,7 +193,7 @@
  <th>TradeId</th>
  <th>Trader</th>
  <th>Completed By</th>
- <th>Total Value (BT)</th>
+ <th>Total Value (EW)</th>
  <th>Details</th>
  </tr>`;
  } else {
@@ -192,7 +202,7 @@
  <th>Date</th>
  <th>TxId</th>
  <th>Type</th>
- <th>Delta BT</th>
+ <th>Delta EW</th>
  <th>Balance After</th>
  <th>Details</th>
  </tr>`;
@@ -238,7 +248,7 @@
 
  return `<div class="history-details-box">
  <div class="small" style="margin-bottom:6px;">Date: <strong>${prettyAt || (h.at || '')}</strong></div>
- <div class="small" style="margin-bottom:6px;">Delta: <strong>${deltaStr} BT</strong> &nbsp;|&nbsp; Balance after: <strong>${balStr} BT</strong></div>
+ <div class="small" style="margin-bottom:6px;">Delta: <strong>${deltaStr} EW</strong> &nbsp;|&nbsp; Balance after: <strong>${balStr} EW</strong></div>
  <div class="history-details-grid">
  <div class="history-details-col">
  <h4>Items bought</h4>
@@ -250,7 +260,7 @@
  </div>
  </div>
  <div class="small" style="margin-top:6px;">
- Net from items: <strong>${fmt(net)} BT</strong>${manual != null ? ` &nbsp;|&nbsp; Manual adj: <strong>${fmt(manual)} BT</strong>` : ''}
+ Net from items: <strong>${fmt(net)} EW</strong>${manual != null ? ` &nbsp;|&nbsp; Manual adj: <strong>${fmt(manual)} EW</strong>` : ''}
  </div>
  </div>`;
  }
@@ -293,12 +303,12 @@
  Type: <strong>${listing.type || ''}</strong>
  </div>
  <div class="small" style="margin-bottom:6px;">
- Payment: <strong>${payment.method || 'BT'}</strong>
+ Payment: <strong>${payment.method || 'EW'}</strong>
  ${payItemPart}
- &nbsp;|&nbsp; Total: <strong>${fmt(payment.payTotalBT || h.totalValueBT ||0)} BT</strong>
+ &nbsp;|&nbsp; Total: <strong>${fmt(payment.payTotalBT || h.totalValueBT ||0)} EW</strong>
  </div>
  <div class="small">
- TradeValueBT (basis): <strong>${fmt(pricing.tradeValueBT ||0)} BT</strong>
+ TradeValueBT (basis): <strong>${fmt(pricing.tradeValueBT ||0)} EW</strong>
  </div>
  </div>`;
  }

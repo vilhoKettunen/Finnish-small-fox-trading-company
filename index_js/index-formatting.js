@@ -30,7 +30,7 @@ function formatAsStacksAndRemainder(amountInItemUnits, bundleSize, itemName) {
 }
 
 window.formatValue = function formatValue(btValue, currencyName, forBuy) {
-    const BASE_CURRENCY = window.BASE_CURRENCY || 'BT';
+    const BASE_CURRENCY = window.BASE_CURRENCY || 'EW';
     const items = window.items || [];
     if (isNaN(btValue)) btValue = 0;
     let txt = `${Number(btValue).toFixed(2)} ${BASE_CURRENCY}`;

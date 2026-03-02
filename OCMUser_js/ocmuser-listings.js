@@ -131,7 +131,7 @@
  if (!isFinite(quantityUnits) || quantityUnits <=0) throw new Error('Invalid quantity');
 
  const fixedBTPerUnit = Number(byId('createFixedBT').value ||0);
- if (!isFinite(fixedBTPerUnit) || fixedBTPerUnit <=0) throw new Error('Fixed BT per unit must be >0');
+ if (!isFinite(fixedBTPerUnit) || fixedBTPerUnit <=0) throw new Error('Fixed EW per unit must be >0');
 
  const r = await apiPost('ocmCreateListingV2', {
  idToken: S.googleIdToken,
@@ -174,7 +174,7 @@
 
  function pricingLabel(l) {
  const p = l.pricing || {};
- if (p.mode === 'FIXED_BT') return `FIXED ${fmt2(p.fixedBTPerUnit)} BT/unit`;
+ if (p.mode === 'FIXED_BT') return `FIXED ${fmt2(p.fixedBTPerUnit)} EW/unit`;
 
  const prim = p.primaryPeg || (p.pegItemName ? { itemName:p.pegItemName, pegQtyPerInd:p.pegQtyPerUnit, ui:{ priceBasis:p.pricingBasis || 'IND' } } : null);
  if (!prim || !prim.itemName) return '—';
@@ -438,7 +438,7 @@
 
  if (listingMode === 'FULL') {
  const fixedBTPerUnit = Number(byId('editFixedBTVal').value ||0);
- if (!isFinite(fixedBTPerUnit) || fixedBTPerUnit <=0) throw new Error('Fixed BT per unit must be >0');
+ if (!isFinite(fixedBTPerUnit) || fixedBTPerUnit <=0) throw new Error('Fixed EW per unit must be >0');
  payload.pricingMode = 'FIXED_BT';
  payload.fixedBTPerUnit = fixedBTPerUnit;
  } else {

@@ -218,7 +218,7 @@
  }
  const st = document.getElementById('onBehalfStatus');
  if (st && window.submitForUser) {
- st.textContent = `Target set: ${target.playerName || target.email || target.userId}. Balance: ${Number(bal).toFixed(2)} BT`;
+ st.textContent = `Target set: ${target.playerName || target.email || target.userId}. Balance: ${Number(bal).toFixed(2)} EW`;
  }
  } catch (e) {
  const st = document.getElementById('onBehalfStatus');

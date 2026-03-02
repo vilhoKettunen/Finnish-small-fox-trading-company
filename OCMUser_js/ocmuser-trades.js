@@ -78,7 +78,7 @@
  snap: s,
  item: s.listing?.itemName || '',
  counterparty: isMine ? (s.seller?.playerName || '') : (s.buyer?.playerName || ''),
- payment: s.payment?.method || 'BT',
+ payment: s.payment?.method || 'EW',
  qty: Number(s.request?.requestedUnits || tr.quantity ||0),
  supportsItem
  };
@@ -168,7 +168,7 @@
 
  const snap = summary.snap || {};
 
- const method = String(snap.payment?.method || 'BT').toUpperCase();
+ const method = String(snap.payment?.method || 'EW').toUpperCase();
  (method === 'ITEM' ? byId('tradePayItem') : byId('tradePayBT')).checked = true;
 
  const qm = String(snap.request?.qtyMode || 'IND').toUpperCase();
@@ -211,7 +211,7 @@
  try {
  const qtyMode = byId('tradeQtyStack').checked ? 'STACK' : 'IND';
  const qty = Number(byId('tradeQtyVal').value ||0);
- const paymentChoice = byId('tradePayItem').checked ? 'ITEM' : 'BT';
+ const paymentChoice = byId('tradePayItem').checked ? 'ITEM' : 'EW';
 
  const payload = { idToken: S.googleIdToken, tradeId: S.editingTrade.tradeId, qtyMode, qty, paymentChoice };
  if (paymentChoice === 'ITEM') {

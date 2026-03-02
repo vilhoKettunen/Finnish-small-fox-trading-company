@@ -108,7 +108,7 @@ gap: 12px;
             const b = Number(state.balanceBT); const safe = isFinite(b) ? b : 0;
             if (balEl) {
                 balEl.style.display = 'inline-block';
-                balEl.textContent = `Balance: ${safe.toFixed(0)} BT`;
+                balEl.textContent = `Balance: ${safe.toFixed(0)} EW`;
                 balEl.classList.remove('positive', 'negative');
                 balEl.classList.add(safe >= 0 ? 'positive' : 'negative');
             }

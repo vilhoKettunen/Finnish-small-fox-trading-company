@@ -90,7 +90,7 @@ window.PriceHistory.HelpText = {
  valuation: {
  bestFor: 'Comparing your inventory value over time and which items matter most by value.',
  bullets: [
- 'Data source: ValuationHistory (BT value recorded for the item).',
+ 'Data source: ValuationHistory (EW value recorded for the item).',
  'Missing values: gaps mean ValuationHistory has no record for that day (it is not treated as0).',
  'Interpretation: valuation is the preferred value signal when available.'
  ],

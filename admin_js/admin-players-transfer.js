@@ -29,7 +29,7 @@ const Admin = window.Admin;
         search.addEventListener('input', () => {
    const q = search.value;
   const arr = fuzzyPlayers(q);
- const out = arr.map(p => `<div data-user="${esc(p.userId)}" class="player-row">${esc(p.playerName || '(no name)')} <span class="small">(${(Number(p.balanceBT) || 0).toFixed(2)} BT)</span></div>`).join('');
+ const out = arr.map(p => `<div data-user="${esc(p.userId)}" class="player-row">${esc(p.playerName || '(no name)')} <span class="small">(${(Number(p.balanceBT) || 0).toFixed(2)} EW)</span></div>`).join('');
  list.innerHTML = out || '<div class="small">No matches</div>';
   });
 
@@ -39,7 +39,7 @@ const Admin = window.Admin;
         const userId = row.dataset.user;
         const player = Admin.state.playersCache.find(p => p.userId === userId);
       if (player) {
- byId('balancesInfo').textContent = `Selected: ${player.playerName} | Balance: ${(Number(player.balanceBT) || 0).toFixed(2)} BT`;
+ byId('balancesInfo').textContent = `Selected: ${player.playerName} | Balance: ${(Number(player.balanceBT) || 0).toFixed(2)} EW`;
  byId('transferTarget').value = player.playerName || '';
        search.dataset.selectedUser = userId;
   }

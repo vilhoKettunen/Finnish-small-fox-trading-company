@@ -78,7 +78,13 @@ function formatQtyStkInd_(qty, stackSize) {
    const bundle = it.bundleSize && Number(it.bundleSize) >1 ? `x${Number(it.bundleSize)}` : 'x';
  const price = it.priceBT || it.price;
   const qtyStr = `${qty}${bundle}`;
-        const priceStr = price != null ? ` (${price} BT)` : '';
+        const priceStr = price != null ? ` (${price} 
+        
+        
+        
+        
+        
+        )` : '';
       return `<div class="history-item-line"><span class="qty">${esc(qtyStr)}</span>${esc(name)}<span class="small">${esc(priceStr)}</span></div>`;
    }).join('');
     }
@@ -94,7 +100,7 @@ function formatQtyStkInd_(qty, stackSize) {
  <th>TradeId</th>
      <th>Trader</th>
  <th>Completed By</th>
-     <th>Total Value (BT)</th>
+     <th>Total Value (EW)</th>
  <th>Details</th>
  </tr>`;
    } else {
@@ -103,7 +109,7 @@ function formatQtyStkInd_(qty, stackSize) {
      <th>Date</th>
      <th>TxId</th>
      <th>Type</th>
-     <th>Delta BT</th>
+     <th>Delta EW</th>
      <th>Balance After</th>
      <th>Details</th>
      </tr>`;
@@ -158,7 +164,7 @@ function formatQtyStkInd_(qty, stackSize) {
        </div>
       </div>
         <div class="small" style="margin-top:6px;">
-       Net from items: <strong>${net.toFixed(2)} BT</strong>${manual != null ? ` &nbsp;|&nbsp; Manual adj: <strong>${manual.toFixed(2)} BT</strong>` : ''}
+       Net from items: <strong>${net.toFixed(2)} EW</strong>${manual != null ? ` &nbsp;|&nbsp; Manual adj: <strong>${manual.toFixed(2)} EW</strong>` : ''}
    </div>
    </div>`;
     }
@@ -201,9 +207,9 @@ function formatQtyStkInd_(qty, stackSize) {
  Type: <strong>${esc(listing.type || '')}</strong>
         </div>
    <div class="small" style="margin-bottom:6px;">
- Payment: <strong>${esc(payment.method || 'BT')}</strong>
+ Payment: <strong>${esc(payment.method || 'EW')}</strong>
  ${payItemPart}
-       &nbsp;|&nbsp; Total: <strong>${(Number(payment.canonicalBT ?? payment.payTotalBT ?? h.totalValueBT ??0)).toFixed(2)} BT</strong>
+       &nbsp;|&nbsp; Total: <strong>${(Number(payment.canonicalBT ?? payment.payTotalBT ?? h.totalValueBT ??0)).toFixed(2)} EW</strong>
   </div>
    <div class="small">
  Pricing basis: <strong>${esc(pricing.pricingBasis || '')}</strong>

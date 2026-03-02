@@ -101,7 +101,7 @@
  },200);
  setTimeout(() => clearInterval(gsiWait),4000);
 
- // Load catalog early even before login (needed for canonical BT once listings are fetched)
+ // Load catalog early even before login (needed for canonical EW once listings are fetched)
  O.ensureCatalogLoaded().catch(() => { });
 
  // Initial UI text

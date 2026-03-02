@@ -54,7 +54,7 @@
  return `${r?.name || ''} (Mailbox ${r?.mailbox || 'N/A'})`;
  }
 
- // Robust BT number parser (handles "," decimals and thousands separators)
+ // Robust EW number parser (handles "," decimals and thousands separators)
  function parseBtNumber_(v) {
  if (v == null || v === '') return null;
  if (typeof v === 'number') return isFinite(v) ? v : null;
@@ -351,7 +351,7 @@
              if (l == null || r == null) return `${label}:  (missing catalog price)`;
              const leftBt = leftQtyInd * l;
              const rightBt = rightQtyInd * r;
-             return `${label}: ${fmt2(leftBt)} BT (${soldName}) | ${fmt2(rightBt)} BT (${pegName})`;
+             return `${label}: ${fmt2(leftBt)} EW (${soldName}) | ${fmt2(rightBt)} EW (${pegName})`;
          }
 
          const buyLine = line('BUY', soldBuy, pegBuy);
@@ -687,7 +687,7 @@
 
  if (listingMode === 'FULL') {
  const fixedBTPerUnit = Number(byId('editFixedBTVal').value ||0);
- if (!isFinite(fixedBTPerUnit) || fixedBTPerUnit <=0) throw new Error('Fixed BT per unit must be >0');
+ if (!isFinite(fixedBTPerUnit) || fixedBTPerUnit <=0) throw new Error('Fixed EW per unit must be >0');
  payload.pricingMode = 'FIXED_BT';
  payload.fixedBTPerUnit = fixedBTPerUnit;
  } else {
@@ -843,7 +843,7 @@
     // Helper: short pricing summary shown in listing rows
     function pricingLabel(l) {
         const p = l.pricing || {};
-        if (p.mode === 'FIXED_BT') return `FIXED ${fmt2(p.fixedBTPerUnit)} BT/unit`;
+        if (p.mode === 'FIXED_BT') return `FIXED ${fmt2(p.fixedBTPerUnit)} EW/unit`;
 
         const prim = p.primaryPeg || (p.pegItemName ? {
             itemName: p.pegItemName,
@@ -1247,7 +1247,7 @@
  const quantityUnits = assertIntegerQty_(byId('createQtyUnitsFull')?.value, 'Quantity', false);
 
  const fixedBTPerUnit = Number(byId('createFixedBT')?.value ||0);
- if (!isFinite(fixedBTPerUnit) || fixedBTPerUnit <=0) throw new Error('Fixed BT per unit must be >0');
+ if (!isFinite(fixedBTPerUnit) || fixedBTPerUnit <=0) throw new Error('Fixed EW per unit must be >0');
 
  const r = await window.apiPost('ocmAdminCreateListingV2', {
  idToken: Admin.state.googleIdToken,

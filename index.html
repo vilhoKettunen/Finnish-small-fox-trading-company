@@ -91,17 +91,17 @@
             </p>
 
             <p>
-                <strong>About the currency (BT):</strong><br>
-                BT is designed to be a fully liquid trading currency. Its value is not permanently pegged to one specific metal or item.
-                The goal is to make trading smoother by giving players a common “trade-anything” medium: you can earn BT by selling items
-                and spend BT to buy many other items the store accepts.
+                <strong>About the currency (EW)(Echange Weight):</strong><br>
+                EW is designed to be a fully liquid trading currency. Its value is not permanently pegged to one specific metal or item.
+                The goal is to make trading smoother by giving players a common “trade-anything” medium: you can earn EW by selling items
+                and spend EW to buy many other items the store offers.
             </p>
 
             <p>
                 <strong>Backing / insurance (when funded):</strong><br>
-                When the system has sufficient reserves, we back BT with metals. If you hold more than <strong>500 BT</strong>, you can request
+                When the system has sufficient reserves, we back EW with metals. If you hold more than <strong>500 EW</strong>, you can request
                 the equivalent value in metals to be delivered to your deposit box as an always-accessible “insurance” option.
-                The long-term goal is to maintain <strong>more value in metal reserves than BT in circulation</strong>, so even a “bank run”
+                The long-term goal is to maintain <strong>more value in metal reserves than EW in circulation</strong>, so even a “bank run”
                 would not collapse the system (this was achieved last wipe; 2026 wipe will depend on how quickly reserves build up again).
             </p>
 
@@ -112,17 +112,17 @@
     <div class="section">
         <label for="currencyInput"><b>Display Currency:</b></label>
         <input id="currencyInput" list="currencyDatalist" placeholder="Search currency / item">
-        <input id="currencySelect" type="hidden" value="BT">
+        <input id="currencySelect" type="hidden" value="EW">
         <datalist id="currencyDatalist"></datalist>
         <!-- Add this button inside the Display Currency section, after the existing inputs -->
-        <button id="btnSendBT" type="button" onclick="openTransferModal()">Send BT</button>
+        <button id="btnSendBT" type="button" onclick="openTransferModal()">Send EW</button>
     </div>
     <!-- Add this modal just before the closing </body> (or anywhere after the Display Currency section) -->
     <div id="transferModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:3000;">
         <div style="background:#fff;padding:16px;max-width:440px;margin:60px auto;border-radius:8px;position:relative;">
-            <h3 style="margin-top:0;">Send BT</h3>
+            <h3 style="margin-top:0;">Send EW</h3>
             <div class="small" style="margin-bottom:8px;">
-                Transfer BT directly to another player. Minimum 0.01 BT. No fees. Your balance: <span id="transferYourBalance">0.00</span> BT.
+                Transfer EW directly to another player. Minimum 0.01 EW. No fees. Your balance: <span id="transferYourBalance">0.00</span> EW.
             </div>
             <label style="display:block;margin-bottom:8px;">
                 Target Player Name:
@@ -130,7 +130,7 @@
             </label>
             <div id="transferSuggestions" class="small" style="max-height:140px;overflow:auto;border:1px solid #ddd;border-radius:4px;padding:4px;display:none;"></div>
             <label style="display:block;margin:8px 0;">
-                Amount (BT):
+                Amount (EW):
                 <input id="transferAmountInput" type="number" min="0.01" step="0.01" placeholder="0.01" style="width:140px;">
             </label>
             <label style="display:block;margin:8px 0;">
@@ -212,7 +212,7 @@
         </div>
 
         <h3>Account Balance</h3>
-        <label>Enter Balance (BT): <input type="number" id="buyAccountBalanceInput" value="0"></label>
+        <label>Enter Balance (EW): <input type="number" id="buyAccountBalanceInput" value="0"></label>
         <button onclick="addBuyAccountBalance()">➕ Add Balance</button>
 
         <div class="section" style="padding:12px;margin-top:12px;">
@@ -294,7 +294,7 @@
         </div>
 
         <h3>Account Balance</h3>
-        <label>Enter Balance (BT): <input type="number" id="accountBalanceInput" value="0"></label>
+        <label>Enter Balance (EW): <input type="number" id="accountBalanceInput" value="0"></label>
         <button onclick="addAccountBalance()">➕ Add Balance</button>
 
         <div class="section" style="padding:12px;margin-top:12px;">
@@ -350,9 +350,9 @@
             <button onclick="toggleInfo('combinedInfo')">❌ Close</button>
         </div>
         <div id="combinedTotalBox">
-            <div>Account Balance: <span id="accountBalanceCurrent">0.00 BT</span></div>
-            <div>Net Balance: <span id="netTotal" data-raw="0">0.00 BT</span></div>
-            <div>Account Balance After Transaction: <span id="accountBalanceAfter" data-raw="0">0.00 BT</span></div>
+            <div>Account Balance: <span id="accountBalanceCurrent">0.00 EW</span></div>
+            <div>Net Balance: <span id="netTotal" data-raw="0">0.00 EW</span></div>
+            <div>Account Balance After Transaction: <span id="accountBalanceAfter" data-raw="0">0.00 EW</span></div>
         </div>
     </div>
 
@@ -460,7 +460,7 @@
             <a class="link-btn" href="https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/edit?gid=0#gid=0" target="_blank" rel="noopener">PRICE SHEET</a>
             <a class="link-btn" href="https://www.vintagestory.at/" target="_blank" rel="noopener">Vintage Story</a>
             <a class="link-btn" href="https://mods.vintagestory.at/" target="_blank" rel="noopener">Official mods</a>
-            <a class="link-btn internal" href="BTIncurance.html">BT Insurance</a>
+            <a class="link-btn internal" href="BTIncurance.html">EW Insurance</a>
             <a class="link-btn internal" href="PriceHistory.html">Price History</a>
             <a class="link-btn internal" href="VintageStoryEconomics.html">Vintage Story Economics</a>
         </nav>

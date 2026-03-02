@@ -6,8 +6,8 @@
         const name = document.getElementById('quickStackSelect').value;
         const qty = parseInt(document.getElementById('quickStackQty').value) || 0;
         const item = (window.items || []).find(i => i.name === name); if (!item) return;
-        const buyText = item.buyStack ? `${qty} × ${item.bundleSize} ${item.name} buys for ${(qty * item.buyStack).toFixed(2)} BT` : '';
-        const sellText = item.sellStack ? `${qty} × ${item.bundleSize} ${item.name} sells for ${(qty * item.sellStack).toFixed(2)} BT` : '';
+        const buyText = item.buyStack ? `${qty} × ${item.bundleSize} ${item.name} buys for ${(qty * item.buyStack).toFixed(2)} EW` : '';
+        const sellText = item.sellStack ? `${qty} × ${item.bundleSize} ${item.name} sells for ${(qty * item.sellStack).toFixed(2)} EW` : '';
         document.getElementById('quickStackResult').textContent = [buyText, sellText].filter(Boolean).join(' | ');
     };
 
@@ -15,8 +15,8 @@
         const name = document.getElementById('quickIndivSelect').value;
         const qty = parseInt(document.getElementById('quickIndivQty').value) || 0;
         const item = (window.items || []).find(i => i.name === name); if (!item) return;
-        const buyText = item.buyEach ? `${qty} × ${item.name} buys for ${(qty * item.buyEach).toFixed(2)} BT` : '';
-        const sellText = item.sellEach ? `${qty} × ${item.name} sells for ${(qty * item.sellEach).toFixed(2)} BT` : '';
+        const buyText = item.buyEach ? `${qty} × ${item.name} buys for ${(qty * item.buyEach).toFixed(2)} EW` : '';
+        const sellText = item.sellEach ? `${qty} × ${item.name} sells for ${(qty * item.sellEach).toFixed(2)} EW` : '';
         document.getElementById('quickIndivResult').textContent = [buyText, sellText].filter(Boolean).join(' | ');
     };
 
@@ -166,15 +166,15 @@
             let rowTotal = 0, rowText = '';
             if (e.bundleSize && e.isFullyCustom) {
                 rowTotal = (e.qty / e.bundleSize) * e.price;
-                rowText = `${e.qty} x ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
+                rowText = `${e.qty} x ${e.name} (${e.price.toFixed(2)} EW per ${e.bundleSize}) (${rowTotal.toFixed(2)} EW)`;
             } else if (e.bundleSize) {
                 rowTotal = e.qty * e.price;
-                rowText = `${e.qty} x ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`;
+                rowText = `${e.qty} x ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} EW stack) (${rowTotal.toFixed(2)} EW)`;
             } else {
                 rowTotal = e.qty * e.price;
-                rowText = `${e.qty} x ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`;
+                rowText = `${e.qty} x ${e.name} (${e.price.toFixed(2)} EW each) (${rowTotal.toFixed(2)} EW)`;
             }
-            if (e.isBalance) { rowText = `Account Balance: ${rowTotal.toFixed(2)} BT`; if (e.isAccountBalancePinned) rowText += ' (auto)'; }
+            if (e.isBalance) { rowText = `Account Balance: ${rowTotal.toFixed(2)} EW`; if (e.isAccountBalancePinned) rowText += ' (auto)'; }
             total += rowTotal;
             if (e.isConverter) rowText += ' [Converted]';
             if (e.source === 'OCM') rowText += ' [OCM]';
@@ -208,15 +208,15 @@
             let rowTotal = 0, rowText = '';
             if (e.bundleSize && e.isFullyCustom) {
                 rowTotal = (e.qty / e.bundleSize) * e.price;
-                rowText = `${e.qty} x ${e.name} (${e.price.toFixed(2)} BT per ${e.bundleSize}) (${rowTotal.toFixed(2)} BT)`;
+                rowText = `${e.qty} x ${e.name} (${e.price.toFixed(2)} EW per ${e.bundleSize}) (${rowTotal.toFixed(2)} EW)`;
             } else if (e.bundleSize) {
                 rowTotal = e.qty * e.price;
-                rowText = `${e.qty} x ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} BT stack) (${rowTotal.toFixed(2)} BT)`;
+                rowText = `${e.qty} x ${e.bundleSize} ${e.name} (${e.price.toFixed(2)} EW stack) (${rowTotal.toFixed(2)} EW)`;
             } else {
                 rowTotal = e.qty * e.price;
-                rowText = `${e.qty} x ${e.name} (${e.price.toFixed(2)} BT each) (${rowTotal.toFixed(2)} BT)`;
+                rowText = `${e.qty} x ${e.name} (${e.price.toFixed(2)} EW each) (${rowTotal.toFixed(2)} EW)`;
             }
-            if (e.isBalance && !e.isAccountBalancePinned) { rowText = `Account Balance (manual): ${rowTotal.toFixed(2)} BT`; }
+            if (e.isBalance && !e.isAccountBalancePinned) { rowText = `Account Balance (manual): ${rowTotal.toFixed(2)} EW`; }
             total += rowTotal;
             if (e.isPayWith) rowText += ' [Pay With]';
             if (e.source === 'OCM') rowText += ' [OCM]';

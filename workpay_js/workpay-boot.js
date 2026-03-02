@@ -80,12 +80,19 @@
  list.forEach(j=>{
  const tr = document.createElement('tr');
 
- const payout = j._computed ? `${window.workpayCore.fmt2(j._computed.payoutPerStackBT)} BT/stack` : 'N/A';
+ const payout = j._computed ? `${window.workpayCore.fmt2(j._computed.payoutPerStackBT)} 
+ 
+ 
+ 
+ 
+ 
+ 
+ /stack` : 'N/A';
  const unit = String(j.rateUnit||'STACKS_PER_HOUR').toUpperCase() === 'IND_PER_HOUR' ? 'items/h' : 'stacks/h';
 
  const rateTxt = `${escapeHtml(j.minRate)}${rangeSep()}${escapeHtml(j.maxRate)} ${escapeHtml(unit)}`;
  const bthTxt = j._computed
- ? `${escapeHtml(window.workpayCore.fmt2(j._computed.minBTPerHour))}${rangeSep()}${escapeHtml(window.workpayCore.fmt2(j._computed.maxBTPerHour))} BT/h`
+ ? `${escapeHtml(window.workpayCore.fmt2(j._computed.minBTPerHour))}${rangeSep()}${escapeHtml(window.workpayCore.fmt2(j._computed.maxBTPerHour))} EW/h`
  : 'N/A';
 
  // Compact layout without headers

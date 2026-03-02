@@ -175,16 +175,26 @@
                 <div id="playerList" class="small"></div>
             </div>
             <div>
-                <label>Adjust Balance (Δ BT): <input id="adjAmount" type="number" step="0.01"></label><br>
+                <label>Adjust Balance (Δ 
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                ): <input id="adjAmount" type="number" step="0.01"></label><br>
                 <label>Reason: <input id="adjReason" type="text"></label><br>
                 <button id="btnAdjust" onclick="adjustBalance()">Apply Adjustment</button>
                 <div id="adjMsg" class="small"></div>
             </div>
             <div>
                 <label>Transfer To (playerName): <input id="transferTarget" type="text"></label><br>
-                <label>Amount BT: <input id="transferAmount" type="number" step="0.01" min="0.01"></label><br>
+                <label>Amount EW: <input id="transferAmount" type="number" step="0.01" min="0.01"></label><br>
                 <label>Note (optional): <input id="transferNote" type="text"></label><br>
-                <button id="btnTransfer" onclick="sendTransfer()">Send BT</button>
+                <button id="btnTransfer" onclick="sendTransfer()">Send EW</button>
                 <div id="transferMsg" class="small"></div>
             </div>
             <div><div id="balancesInfo" class="small">Balances will appear here.</div></div>
@@ -240,7 +250,7 @@
                         <div>
                             <div class="peg-box">
                                 <div class="small"><strong>Pricing (PEG)</strong></div>
-                                <div class="small">Primary + up to 10 alternative pegs. Buyer can pay with BT or exactly one peg item.</div>
+                                <div class="small">Primary + up to 10 alternative pegs. Buyer can pay with EW or exactly one peg item.</div>
                                 <div id="createStorePegBox"></div>
                                 <div class="flex" style="margin-top:8px;">
                                     <button type="button" id="btnCreateStoreAddAlt">Add alternative peg</button>
@@ -310,8 +320,8 @@
                             <label>Quantity available (individual units) <input id="createQtyUnitsFull" type="number" min="1" value="1"></label>
                         </div>
                         <div>
-                            <label>Fixed BT price per 1 unit (individual) <input id="createFixedBT" type="number" min="0.01" step="0.01" value="1"></label>
-                            <div class="small">Full custom listings use fixed BT (no item payment).</div>
+                            <label>Fixed EW price per 1 unit (individual) <input id="createFixedBT" type="number" min="0.01" step="0.01" value="1"></label>
+                            <div class="small">Full custom listings use fixed EW (no item payment).</div>
                         </div>
                         <div>
                             <button type="button" id="btnCreateFull">Create listing</button>
@@ -463,7 +473,7 @@
                     </div>
 
                     <div id="editFixedFields" style="display:none;">
-                        <label>Fixed BT per 1 unit <input id="editFixedBTVal" type="number" min="0.01" step="0.01" value="1"></label>
+                        <label>Fixed EW per 1 unit <input id="editFixedBTVal" type="number" min="0.01" step="0.01" value="1"></label>
                     </div>
                 </div>
 

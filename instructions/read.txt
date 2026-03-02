@@ -1,0 +1,310 @@
+AI SCAN / CONTEXT INSTRUCTIONS FOR THIS PROJECT
+
+When starting ANY new task in this repository, follow these steps BEFORE changing code:
+
+0) HOW TO FIND “WHAT MATTERS” FAST (DO THIS FIRST)
+- Always start by opening the page(s) you’re changing and reading:
+ - The `<head>` section: all `<link rel="stylesheet">` and `<script src="...">`
+ - The bottom-of-body `<script src="...">` includes (these define the page’s real behavior)
+- Then open each referenced JS/CSS file and read it fully before editing any logic.
+- If you’re not sure where something is implemented, do a global search for:
+ - The `<script src="...">` filename
+ - A unique DOM id/class (e.g., `googleLoginArea`, `adminTabs`, `topBar`)
+ - Key functions (`initSharedTopBar`, `topbarSetAuthState`, `apiGet`, `apiPost`)
+
+1) CORE ENTRY PAGES (MUST READ FIRST)
+- Open and fully read these HTML files to understand layout, login, and top bar behavior:
+ - index.html (main store UI; most patterns originate here)
+ - AccountHistory.html (account history + auth/topbar usage)
+ - AccountSettings.html (self profile editing + delete account; uses shared auth/api patterns)
+ - OCMHome.html (OCM marketplace list + trades + auth/topbar wiring)
+ - OCMUser.html (OCM merchant listings + auth/topbar wiring)
+ - Admin.html (admin tools, universal target user, OCM admin, stock, segmented admin JS)
+ - PriceHistory.html (charts + data processing; uses shared config/auth patterns)
+ - Leaderboards.html (leaderboards UI + scripts)
+ - WorkPayRates.html (work pay rates UI + admin editing)
+
+2) SHARED JS / CONFIG (READ BEFORE CHANGING AUTH, API, OR TOP BAR)
+Read these files in full:
+- app-config.js
+ - Defines constants like `WEB_APP_URL`, `OAUTH_CLIENT_ID`, etc.
+- auth-storage.js
+ - Token storage: `initAuthFromStorage`, `saveIdToken`, `clearSavedIdToken`
+- api-client.js
+ - Shared API helpers: `apiGet` / `apiPost`
+ - GET-bypass logic (write actions that must be sent via GET)
+ - If you add a new backend write action, it may need to be added to `BYPASS_ACTIONS`.
+- topbar.js
+ - Shared top bar injection + behavior
+ - `initSharedTopBar`, `topbarSetAuthState`, navigation wiring
+- pay-converter.js
+ - 
+ 
+ 
+ 
+ /payment conversion utilities (if referenced by pages)
+
+Shared “component” scripts (used across multiple pages):
+- shared/site-decor.js
+ - Decorative background behaviors (foxes/paper theming hooks; see CSS section below)
+- shared/trade-more-info.js
+ - Trade “more info” popup/formatting helpers (used by Admin + OCM flows)
+- shared/listing-more-info.js
+ - Listing “more info” popup/formatting helpers (used by Admin + OCM flows)
+
+3) FRONTEND FEATURE AREAS (FILE MAP FOR SEGMENTED JS/CSS)
+This repo is organized by feature folders. When changing a feature, read its JS and its page CSS.
+
+A) Store (index)
+- JS folder: `index_js/`
+ - Typical split includes: `index-core.js`, `index-data.js`, `index-formatting.js`,
+ `index-dropdowns.js`, `index-collapsible.js`, plus legacy modules (`legacy-*.js`).
+- Page CSS: `css/pages/index.css`
+
+B) OCM home (marketplace list)
+- JS folder: `OCMHome_js/`
+ - Typically: `ocmhome-boot.js`, `ocmhome-auth.js`, `ocmhome-core.js`,
+ `ocmhome-ui.js`, `ocmhome-trades.js`
+- Page CSS: `css/pages/OCMHome.css`
+
+C) OCM user (merchant tools)
+- JS folder: `OCMUser_js/`
+ - Typically: `ocmuser-boot.js`, `ocmuser-auth.js`, `ocmuser-core.js`,
+ `ocmuser-listings.js`, `ocmuser-trades.js`, `ocmuser-pegs.js`, `ocmuser-catalog.js`
+- Page CSS: `css/pages/OCMUser.css`
+
+D) Admin panel
+- JS folder: `admin_js/`
+ - Typical modules:
+ - `admin-core.js` (shared admin state/helpers)
+ - `admin-auth.js` (admin login/onLogin pattern)
+ - `admin-tabs.js` (tab switching)
+ - `admin-boot.js` (wiring + startup)
+ - `admin-players.js`, `admin-target-user.js`, `admin-target-hooks.js`
+ - `admin-requests.js`, `admin-trades.js`, `admin-history.js`
+ - `admin-stock.js`, `admin-players-transfer.js`
+ - Optional feature modules may exist
+- Page CSS: `css/pages/Admin.css`
+
+E) Account settings (self profile)
+- JS folder: `account_settings_js/`
+ - Typical: `account-settings.js`
+- Page CSS: `css/pages/AccountSettings.css`
+
+F) Price history
+- JS folder: `pricehistory_js/`
+ - Typical: `pricehistory-boot.js`, `pricehistory-config.js`, `pricehistory-data.js`,
+ `pricehistory-storage.js`, `pricehistory-utils.js`, `pricehistory-processing.js`,
+ `pricehistory-ui.js`, `pricehistory-charts.js`, `pricehistory-helptext.js`
+- Page CSS: `css/pages/pricehistory.css` (note: casing differs from `PriceHistory.html`)
+
+G) Work pay rates
+- JS folder: `workpay_js/`
+ - Typical: `workpay-boot.js`, `workpay-core.js`, `workpay-admin.js`
+- Page CSS: `css/pages/WorkPayRates.css`
+
+H) Terms / static pages / essays
+- Terms page: `TermsAndConditions.html` + `css/pages/TermsAndConditions.css`
+- Essay page: `VintageStoryEconomics.html` + `css/pages/VintageStoryEconomics.css`
+- Other pages (example): `BTIncurance.html` + `css/pages/BTIncurance.css`
+
+I) Leaderboards
+- JS folder: `leaderboards_js/`
+ - Typical: `leaderboards.js`
+- Page CSS: `css/pages/Leaderboards.css`
+
+4) BACKEND / SERVER LOGIC (READ TO UNDERSTAND API CONTRACTS)
+Read these backend-related files BEFORE modifying any client calls or assuming response shapes:
+- back_end/cloudflare worker.txt
+ - Cloudflare Worker routing, `?action=...` handlers, JSON formats, required parameters.
+
+Backend code note:
+- The "real" production backend is a Google Apps Script project + Cloudflare Worker.
+- This repo contains copy/paste source-of-truth text files that must be kept consistent with production.
+
+Legacy monolithic reference (do not deploy alongside split modules):
+- back_end/google script.txt
+ - Historical single-file backend. Keep as reference only.
+
+CURRENT BACKEND WORKING SET (SPLIT / SEGMENTED)
+- The backend is split into segments under `back_end/`:
+ - `back_end/gs_00_router.txt` (entry points + action router)
+ - `back_end/gs_01_config_utils.txt`
+ - `back_end/gs_02_sanitizers.txt`
+ - `back_end/gs_03_sheet_helpers.txt`
+ - `back_end/gs_04_auth_users.txt`
+ - `back_end/gs_05_workpay.txt`
+ - `back_end/gs_06_core_me_profile_admin.txt`
+ - `back_end/gs_07_balance_history.txt`
+ - `back_end/gs_08_requests.txt`
+ - `back_end/gs_09_stock.txt`
+ - `back_end/gs_10_stats_leaderboards.txt`
+ - `back_end/gs_11_ocm_v2_helpers.txt`
+ - `back_end/gs_12_ocm_legacy.txt`
+ - `back_end/gs_13_ocm_v2_endpoints.txt`
+
+Deployment rule:
+- In the real Apps Script project, these `.txt` files are intended to be copied into `.gs` files.
+- DO NOT keep the old monolithic backend active at the same time as the split modules, because duplicate global function names will override each other unpredictably.
+- If you need to disable the monolithic file content in production, use:
+ - `back_end/google script_REPLACEMENT_EMPTY.txt` (comment-only placeholder)
+
+RULE: Any new or changed frontend call to `WEB_APP_URL` MUST match the backend behavior.
+
+5) LOGIN / AUTH PATTERN (MUST BE CONSISTENT)
+For each page that supports login (index, AccountHistory, OCMHome, OCMUser, Admin, etc.):
+- The page-level Google login UI normally uses:
+ - Container: `googleLoginArea`
+ - Primary button container: `googleBtn`
+ - Fallback button: `fallbackBtn` (calls `startFallbackLogin`)
+ - Status text: `loginStatus`
+
+Expected flow:
+1) Receive a Google `id_token` (GSI popup or redirect fallback).
+2) Verify with: `https://oauth2.googleapis.com/tokeninfo?id_token=...`
+3) Call backend: `WEB_APP_URL?action=me&idToken=...`
+4) Normalize user so `user.playerName` and `user.email` are usable.
+5) Save token via `saveIdToken` (auth-storage.js)
+6) Call `topbarSetAuthState({ idToken, user, isAdmin, balanceBT })`
+7) Trigger page-specific loads.
+
+Restore on refresh:
+- Use `initAuthFromStorage()` and then call the same page-level helper used by normal login
+ (example: `applyAuthFromToken(idToken)` or `onLogin(idToken, true)`).
+
+6) TOP BAR BEHAVIOR (ALWAYS USE SHARED topbar.js)
+- DO NOT create custom `#topBar` markup in individual HTML pages.
+- Always rely on `topbar.js` to:
+ - Inject the shared top bar when `window.initSharedTopBar()` is called.
+ - Manage nav buttons and Login/Logout visibility.
+ - Display balance and `user.playerName`/`user.email`.
+
+Pages MUST:
+- Call `window.initSharedTopBar()` once in `window.onload` (or equivalent)
+- Add class `withTopBar` to `<body>` so content isn’t hidden
+- Call `window.topbarSetAuthState(...)` whenever:
+ - Login completes
+ - Balance changes
+ - Logout happens
+
+7) CURRENT SHARED CSS + FOX/PAPER BACKGROUND SYSTEM (HOW IT WORKS)
+Global styling is layered and intentionally split:
+
+A) Layout baseline (structure/spacing)
+- `css/site-layout.css`
+ - Provides site-wide layout rules: spacing, section width, common typography sizing,
+ and the `withTopBar` body offset pattern.
+ - Most pages include this so the UI “feels” consistent.
+
+B) Theme + decorations (background/visual identity)
+- `css/site-theme.css`
+ - Defines the site-wide theme tokens (colors, fonts, “parchment” look rules)
+ - Provides base background variables/classes used by decor/paper panels.
+ - NOTE: Some pages might not include it yet; check the page `<head>`.
+
+- `css/panels-paper.css`
+ - Implements “paper/panel” surfaces:
+ - Paper-like cards, bordered panels, and paper texture usage.
+ - Pages typically wrap content in `.section` / “panel” structures that pick up these styles.
+
+C) JS-driven decorative elements
+- `shared/site-decor.js`
+ - Adds/positions decorative assets (foxes and similar) and/or toggles classes based on page.
+ - The fox/paper visuals are a combination of:
+ - CSS background layers (paper texture)
+ - Positioned decorative images (foxes) controlled by JS + CSS
+
+D) Asset files (images)
+- `images/pack_Ground/paper.png`
+- `images/pack_Ground/fox.png`
+- `images/pack_Ground/fox_stand.png`
+
+Important behavior notes:
+- “Paper background” is generally applied by CSS (`panels-paper.css` + theme rules) to page sections.
+- “Fox decorations” are generally added by `shared/site-decor.js` as decorative DOM elements or
+ by toggling body classes that CSS uses to show/position fox images.
+- Many pages can opt out of paper styling by using a body class like `no-paper`.
+- If a page’s background looks “wrong”, verify ALL THREE are included:
+ - `css/site-layout.css`
+ - `css/panels-paper.css`
+ - `shared/site-decor.js`
+ And (if used by that page) `css/site-theme.css`.
+
+8) ADMIN-SPECIFIC RULES
+- Admin.html additional requirements:
+ - Uses backend `me` + `getBalance` to display admin’s own EW balance in the shared top bar.
+ - Uses “Universal Target User” selection:
+ - `globalTargetUser` / `ocmAdminTargetUser` represent current inspection target.
+ - Target balance may be fetched via `getBalance(idToken, userId)` but must be shown in admin UI,
+ not in the shared top bar.
+ - Admin login:
+ - Primary Google popup button in `googleBtn`
+ - Secondary legacy GSI button in `loginBtnArea` as fallback
+ - `onLogin(token, silent)` is the single source of truth for admin setup.
+
+9) OCM PAGES (OCMHome.html, OCMUser.html)
+- Do NOT change marketplace logic unless explicitly requested.
+- For auth changes:
+ - Follow AccountHistory/index patterns for Google login + `topbarSetAuthState`.
+- Keep existing data load functions and UI tables/toolbars unchanged unless requested.
+- Ensure both OCM pages:
+ - Auto-restore auth using `initAuthFromStorage`
+ - Have visible Google login area + fallback login
+
+10) WHEN MODIFYING CODE – MANDATORY PLAN FILE (LOCATION + ITERATION RULES)
+BEFORE editing any existing file, an AI MUST:
+
+A) Create a plan file (MANDATORY, ALWAYS)
+- Plans MUST be placed in `txt/`.
+- Naming: `txt/plan_<short-feature-name>.txt`
+- Example: `txt/plan_admin_account_editing.txt`
+
+B) Plan content requirements
+The plan file MUST include:
+- Goal / short description
+- Files to be modified (bullet list) + why each file is touched
+- Step-by-step implementation plan (high-level, no full code)
+- Risks/compatibility notes (auth/topbar/API contracts)
+- Clarifying questions / assumptions at the END of the plan file
+
+C) Iteration workflow (MANDATORY)
+- After writing the plan:
+1) STOP and wait for developer answers in the plan file (or chat).
+2) Update/refine the plan based on answers.
+3) Repeat until the plan is “good enough to execute”.
+
+D) BACKEND CHANGES RULES (UPDATED FOR SPLIT BACKEND)
+- Backend edits ARE allowed during plan execution, but they MUST target the split backend files in `back_end/gs_*.txt`.
+- Any plan that requires backend modifications MUST:
+ - Declare “Backend changes required: YES”.
+ - List each `action` and handler function impacted.
+ - List the exact split backend files to be edited (e.g., `back_end/gs_00_router.txt`, `back_end/gs_13_ocm_v2_endpoints.txt`).
+
+When adding a completely new backend feature:
+- If the feature is large enough to deserve its own backend module, the plan MUST:
+ - Specify the new module filename to create under `back_end/` (e.g., `back_end/gs_14_new_feature.txt`).
+ - Specify what functions will live in that module.
+ - Specify router changes needed in `back_end/gs_00_router.txt`.
+- During execution, the AI MUST create that new module file and update the router accordingly.
+
+11) GLOBAL SEARCH KEYWORDS (WHEN IN DOUBT)
+Search for these identifiers across the repo:
+- `topbarSetAuthState`
+- `initSharedTopBar`
+- `initAuthFromStorage`
+- `saveIdToken`
+- `onGoogleSignIn`
+- `applyAuthFromToken`
+- `onLogin`
+- `WEB_APP_URL`
+- `OAUTH_CLIENT_ID`
+- `getBalance`
+- `adminListPlayers` / `adminListAllListings` / `listPendingRequests` / `listTrades` / `myOpenTrades`
+- backend split: `gs_00_router`, `handleRequest`, handler function names
+
+12) REMINDER: ALWAYS READ THESE BEFORE STARTING REAL WORK
+- Read core pages (section1)
+- Read shared JS/config (section2)
+- Read backend docs + split backend map (section4)
+- Then write the plan file in `txt/` and include clarifying questions at the end
+- Then start editing (frontend and/or split backend), following the plan

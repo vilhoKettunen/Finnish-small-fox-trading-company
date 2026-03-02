@@ -96,7 +96,7 @@
  };
  }
 
- return { units: u.units, paymentChoice: 'BT', tradedBT, canonicalBT };
+ return { units: u.units, paymentChoice: 'EW', tradedBT, canonicalBT };
  }
 
  function computeValueLinesForTrade_(listing, u, selectedPegName, selectedPegRatio) {
@@ -124,11 +124,11 @@
  const pegSell = perInd(pegName, 'SELL');
 
  const buy = (soldBuy != null && pegBuy != null)
- ? `BUY: ${fmt2(leftQty * soldBuy)} BT (${listingName}) | ${fmt2(rightQty * pegBuy)} BT (${pegName})`
+ ? `BUY: ${fmt2(leftQty * soldBuy)} EW (${listingName}) | ${fmt2(rightQty * pegBuy)} EW (${pegName})`
  : 'BUY: �';
 
  const sell = (soldSell != null && pegSell != null)
- ? `SELL: ${fmt2(leftQty * soldSell)} BT (${listingName}) | ${fmt2(rightQty * pegSell)} BT (${pegName})`
+ ? `SELL: ${fmt2(leftQty * soldSell)} EW (${listingName}) | ${fmt2(rightQty * pegSell)} EW (${pegName})`
  : 'SELL: �';
 
  return { buy, sell };
@@ -193,7 +193,7 @@
  return `
  <div class="notice">
  <div class="small"><strong>Item payment peg</strong></div>
- <div class="small muted">Canonical BT and admin fee are based on the <strong>primary</strong> peg store price.</div>
+ <div class="small muted">Canonical EW and admin fee are based on the <strong>primary</strong> peg store price.</div>
  <div class="field" style="margin-top:6px;">
  <label>${verbTitle}
  <select data-pay-peg style="min-width:260px;">
@@ -207,9 +207,9 @@
 
  const payOptions = supportsItem
  ? `<label><input type="radio" name="pay_${listing.listingId}" value="ITEM"> Item payment</label>
- <label><input type="radio" name="pay_${listing.listingId}" value="BT" checked> BT payment</label>`
- : `<div class="small">This listing only supports BT payment.</div>
- <input type="hidden" name="pay_${listing.listingId}" value="BT">`;
+ <label><input type="radio" name="pay_${listing.listingId}" value="EW" checked> EW payment</label>`
+ : `<div class="small">This listing only supports EW payment.</div>
+ <input type="hidden" name="pay_${listing.listingId}" value="EW">`;
 
  const stackOnly = (String(basis).toUpperCase() === 'STACK');
  const qtyModeHtml = stackOnly
@@ -280,7 +280,7 @@
             const r = td.querySelector(`input[name="pay_${listing.listingId}"]:checked`);
             if (r) return r.value;
             const h = td.querySelector(`input[name="pay_${listing.listingId}"][type="hidden"]`);
-            return h ? h.value : 'BT';
+            return h ? h.value : 'EW';
         }
 
         function getQtyMode() { return td.querySelector(`input[name="qtym_${listing.listingId}"]:checked`)?.value || 'IND'; }
@@ -342,17 +342,17 @@
                 } catch { /* ignore */ }
 
                 parts.push(`You ${verbMain} ${payQtyLabel} ${est.payPegName} (rounded up).`);
-                if (est.canonicalBT != null) parts.push(`Canonical BT (primary-based): ${fmt2(est.canonicalBT)} BT.`);
-                if (est.selectedPegBT != null) parts.push(`BT eq (selected-peg store price): ${fmt2(est.selectedPegBT)} BT.`);
-                if (est.tradedBT != null) parts.push(`Traded item store BT: ${fmt2(est.tradedBT)} BT.`);
+                if (est.canonicalBT != null) parts.push(`Canonical EW (primary-based): ${fmt2(est.canonicalBT)} EW.`);
+                if (est.selectedPegBT != null) parts.push(`EW eq (selected-peg store price): ${fmt2(est.selectedPegBT)} EW.`);
+                if (est.tradedBT != null) parts.push(`Traded item store EW: ${fmt2(est.tradedBT)} EW.`);
             } else {
-                if (est.canonicalBT != null) parts.push(`You ${verbMain} ${fmt2(est.canonicalBT)} BT (primary-based).`);
-                if (est.tradedBT != null) parts.push(`Traded item store BT: ${fmt2(est.tradedBT)} BT.`);
+                if (est.canonicalBT != null) parts.push(`You ${verbMain} ${fmt2(est.canonicalBT)} EW (primary-based).`);
+                if (est.tradedBT != null) parts.push(`Traded item store EW: ${fmt2(est.tradedBT)} EW.`);
             }
 
             estEl.textContent = parts.join(' ');
 
-            // Value comparison lines are based on the "chosen peg" (for item payment we use selected peg; for BT it's still useful).
+            // Value comparison lines are based on the "chosen peg" (for item payment we use selected peg; for EW it's still useful).
             const chosenPegName = (paymentChoice === 'ITEM') ? (est.payPegName || primaryPeg?.itemName) : (primaryPeg?.itemName || '');
             const chosenRatio = (paymentChoice === 'ITEM')
                 ? Number((paymentChoice === 'ITEM' && chosenPegName && String(chosenPegName).toLowerCase() === String(primaryPeg?.itemName || '').toLowerCase())
@@ -369,7 +369,7 @@
             // BUY listings: use new rules:
             // - Customer:
             // * ITEM: (1 - traded BUY total / peg SELL total)*100
-            // * BT: (1 - traded BUY total / peg BUY total)*100
+            // * EW: (1 - traded BUY total / peg BUY total)*100
             // - Merchant (both): (1 - peg BUY total / traded SELL total)*100
             try {
                 const listingName = String(listing?.itemName || '').trim();
@@ -549,7 +549,7 @@
  <td>${O.escapeHtml_(who)}</td>
  <td class="mono">${units}</td>
  <td class="mono">${O.escapeHtml_(payment)}</td>
- <td class="mono">${fmt2(totalBT)} BT</td>
+ <td class="mono">${fmt2(totalBT)} EW</td>
  <td class="mono">${O.escapeHtml_(tr.status || '')}</td>
  <td><button type="button" data-edit="1">Edit</button> <button type="button" data-cancel="1">Cancel</button></td>
  `;

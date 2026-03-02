@@ -172,7 +172,7 @@ window.PriceHistory.Charts = (function () {
 
     const subtitle =
       'Index base=100. Per-item baseline=first price in selected range. ' +
-      'Weight=stock value (BT)/1000 (ValuationHistory preferred; fallback stock*price).';
+      'Weight=stock value (EW)/1000 (ValuationHistory preferred; fallback stock*price).';
 
     const titleEl = document.getElementById('inflationChartTitle');
     const descEl = document.getElementById('inflationChartDesc');

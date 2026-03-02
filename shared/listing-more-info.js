@@ -30,7 +30,7 @@
  const mode = String(p.mode || '').toUpperCase();
  if (mode === 'FIXED_BT') {
  const v = Number(p.fixedBTPerUnit ?? p.fixedBtPerUnit ??0) ||0;
- return `FIXED_BT: <strong>${v.toFixed(2)} BT</strong> per unit`;
+ return `FIXED_BT: <strong>${v.toFixed(2)} EW</strong> per unit`;
  }
 
  const prim = p.primaryPeg || (p.pegItemName ? {

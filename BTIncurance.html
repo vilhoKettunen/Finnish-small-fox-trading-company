@@ -10,7 +10,8 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="auth-storage.js"></script>
     <meta charset="utf-8" />
-    <title>BT Insurer — Metals Calculator</title>
+    <title>
+    Insurer — Metals Calculator</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <link rel="stylesheet" href="css/pages/BTIncurance.css">
     <link rel="stylesheet" href="css/site-layout.css">
@@ -50,8 +51,8 @@
         document.body.classList.add('withTopBar');
         if (window.initSharedTopBar) { window.initSharedTopBar(); }
     </script>
-    <h1>🔒 BT Insurer — Metals Calculator</h1>
-    <p class="lead">Enter a player, set BT amount to insure and the site will use your Price Sheet + Allocation sheet to calculate how many ingots & nuggets are needed per resource and compare against stock.</p>
+    <h1>🔒 EW Insurer — Metals Calculator</h1>
+    <p class="lead">Enter a player, set EW amount to insure and the site will use your Price Sheet + Allocation sheet to calculate how many ingots & nuggets are needed per resource and compare against stock.</p>
 
     <div class="box">
         <div class="row">
@@ -62,7 +63,7 @@
             </label>
 
             <label>
-                BT to insure
+                EW to insure
                 <input id="btInput" type="number" min="0" step="0.01" value="1500">
             </label>
 
@@ -95,13 +96,13 @@
                     <th>Resource</th>
                     <th>Stock</th>
                     <th>%</th>
-                    <th>BT allocated</th>
-                    <th>Ingot price (BT)</th>
+                    <th>EW allocated</th>
+                    <th>Ingot price (EW)</th>
                     <th>Ingots</th>
-                    <th>Nugget price (BT)</th>
+                    <th>Nugget price (EW)</th>
                     <th>Nuggets</th>
-                    <th>Insured (BT)</th>
-                    <th>Uninsured (BT)</th>
+                    <th>Insured (EW)</th>
+                    <th>Uninsured (EW)</th>
                     <th>Warnings</th>
                 </tr>
             </thead>
@@ -170,7 +171,7 @@
             allocations = { header, players };
         }
 
-        function formatMoney(v) { return (isNaN(v) ? 0 : v).toFixed(2) + " BT"; }
+        function formatMoney(v) { return (isNaN(v) ? 0 : v).toFixed(2) + " EW"; }
         function stackFormat(count, stackSize, label) {
             if (!count || count <= 0) return "0 " + label;
             const stacks = Math.floor(count / stackSize);
@@ -192,15 +193,15 @@
         }
 
         // ---- MAIN RENDER ----
-        function renderResults(player, bt) {
+        function renderResults(player, EW) {
             el.resultsWrap.style.display = 'block';
             el.tableBody.innerHTML = '';
-            el.summary.textContent = `Player: ${player.name} — ${bt} BT insured`;
+            el.summary.textContent = `Player: ${player.name} — ${EW} EW insured`;
             let total = 0;
 
             for (const [res, pct] of Object.entries(player.percents)) {
                 if (pct <= 0) continue;
-                const allocBT = (pct / 100) * bt;
+                const allocBT = (pct / 100) * EW;
                 const found = findPrice(res);
                 const mode = el.priceMode.value;
                 const ingotP = found.ingot ? found.ingot[mode + "Each"] : null;
@@ -269,7 +270,7 @@
             }
 
             const foot = document.createElement('tr');
-            foot.innerHTML = `<td><b>Total</b></td><td></td><td></td><td><b>${formatMoney(bt)}</b></td><td colspan="4"></td><td><b>${formatMoney(total)}</b></td><td><b>${formatMoney(bt - total)}</b></td><td></td>`;
+            foot.innerHTML = `<td><b>Total</b></td><td></td><td></td><td><b>${formatMoney(EW)}</b></td><td colspan="4"></td><td><b>${formatMoney(total)}</b></td><td><b>${formatMoney(EW - total)}</b></td><td></td>`;
             el.tableBody.appendChild(foot);
         }
 
@@ -278,9 +279,9 @@
             const name = el.playerInput.value.trim().toLowerCase();
             const p = allocations.players.find(x => x.name.toLowerCase() === name);
             if (!p) { alert("Player not found"); return; }
-            const bt = parseFloat(el.btInput.value || 0);
-            if (!bt) { alert("Enter BT amount"); return; }
-            renderResults(p, bt);
+            const EW = parseFloat(el.btInput.value || 0);
+            if (!EW) { alert("Enter EW amount"); return; }
+            renderResults(p, EW);
         };
         el.reloadBtn.onclick = loadSheets;
 

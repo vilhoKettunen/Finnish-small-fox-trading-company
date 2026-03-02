@@ -1,4 +1,9 @@
-// Direct BT transfer UI and actions
+// Direct 
+
+
+
+
+transfer UI and actions
 (function () {
     'use strict';
 
@@ -99,7 +104,7 @@
         if (!targetName) { if (errEl) errEl.textContent = 'Enter target player name'; return; }
 
         const amount = Number(amtRaw);
-        if (!isFinite(amount) || amount < 0.01) { if (errEl) errEl.textContent = 'Minimum 0.01 BT'; return; }
+        if (!isFinite(amount) || amount < 0.01) { if (errEl) errEl.textContent = 'Minimum 0.01 EW'; return; }
 
         const balance = window.topBalanceSelfBT != null ? window.topBalanceSelfBT : window.currentBalanceBT;
         if (amount > balance) { if (errEl) errEl.textContent = 'Not enough funds'; return; }

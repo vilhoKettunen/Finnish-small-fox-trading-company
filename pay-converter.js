@@ -185,10 +185,19 @@
         const iEntry = meta.entries.find(en => en.type === 'indiv');
         const pct = meta.percent;
         const parts = [];
-        if (sEntry) parts.push(`${sEntry.ref.qty} x ${sEntry.ref.bundleSize || meta.item.bundleSize} ${meta.item.name} (${sEntry.ref.price.toFixed(2)} BT stack)`);
-        if (iEntry) parts.push(`${iEntry.ref.qty} x ${meta.item.name} (${iEntry.ref.price.toFixed(2)} BT each)`);
+        if (sEntry) parts.push(`${sEntry.ref.qty} x ${sEntry.ref.bundleSize || meta.item.bundleSize} ${meta.item.name} (${sEntry.ref.price.toFixed(2)} 
+        
+        
+        
+        
+        
+        
+        
+        
+        stack)`);
+        if (iEntry) parts.push(`${iEntry.ref.qty} x ${meta.item.name} (${iEntry.ref.price.toFixed(2)} EW each)`);
         const totalBT = (sEntry ? sEntry.ref.qty * sEntry.ref.price : 0) + (iEntry ? iEntry.ref.qty * iEntry.ref.price : 0);
-        const newText = `${pct}% = ` + parts.join(' + ') + ` (${totalBT.toFixed(2)} BT)`;
+        const newText = `${pct}% = ` + parts.join(' + ') + ` (${totalBT.toFixed(2)} EW)`;
 
         // Remove leading text nodes (keep remove button)
         while (meta.li.firstChild && meta.li.firstChild.nodeType === Node.TEXT_NODE) meta.li.removeChild(meta.li.firstChild);
@@ -246,7 +255,7 @@
             const paymentResult = document.getElementById('paymentResult');
             if (paymentResult) {
                 const label = (mode === 'ACCOUNT') ? 'Account Balance After Transaction' : 'Net Balance';
-                paymentResult.textContent = `✅ ${label} is ${t0.toFixed(2)} BT. No payment needed.`;
+                paymentResult.textContent = `✅ ${label} is ${t0.toFixed(2)} EW. No payment needed.`;
             }
             return;
         }
@@ -313,9 +322,9 @@
 
                 const totalBT = (stacks * stackPrice) + (individuals * indivPrice);
                 const parts = [];
-                if (stacks > 0) parts.push(`${stacks} x ${item.bundleSize} ${item.name} (${stackPrice.toFixed(2)} BT stack)`);
-                if (individuals > 0) parts.push(`${individuals} x ${item.name} (${indivPrice.toFixed(2)} BT each)`);
-                li.textContent = `${percent}% = ${parts.join(' + ')} (${totalBT.toFixed(2)} BT)`;
+                if (stacks > 0) parts.push(`${stacks} x ${item.bundleSize} ${item.name} (${stackPrice.toFixed(2)} EW stack)`);
+                if (individuals > 0) parts.push(`${individuals} x ${item.name} (${indivPrice.toFixed(2)} EW each)`);
+                li.textContent = `${percent}% = ${parts.join(' + ')} (${totalBT.toFixed(2)} EW)`;
 
                 const removeBtn = document.createElement('button');
                 removeBtn.textContent = '❌';
@@ -368,12 +377,12 @@
             const label = (mode === 'ACCOUNT') ? 'Account Balance After Transaction' : 'Net Balance';
 
             if (t < 0) {
-                paymentResult.textContent = `⚠️ Payment did not fully cover the target. ${label}: ${t.toFixed(2)} BT.`;
+                paymentResult.textContent = `⚠️ Payment did not fully cover the target. ${label}: ${t.toFixed(2)} EW.`;
             } else {
                 const wanted = owed;
                 paymentResult.textContent = usedPercent !== 100
                     ? `⚠️ Warning: payment percentages total ${usedPercent}%, not100%. Target: ${label} >=0.00.`
-                    : `✅ Target reached (${label} >=0.00). Estimated covered: ${wanted.toFixed(2)} BT.`;
+                    : `✅ Target reached (${label} >=0.00). Estimated covered: ${wanted.toFixed(2)} EW.`;
             }
         }
     };
@@ -433,7 +442,7 @@
     };
 
     function getBalanceCurrentRaw_() {
-        // accountBalanceCurrent renders with "0.00 BT" text; parse as float
+        // accountBalanceCurrent renders with "0.00 EW" text; parse as float
         const el = document.getElementById('accountBalanceCurrent');
         const t = String(el?.textContent || '0');
         const n = parseFloat(t.replace(/[^\d.-]/g, ''));
@@ -537,13 +546,13 @@
             if (converterList) {
                 const li = document.createElement('li');
                 let txt = `${percent}% = `;
-                if (stacks > 0) txt += `${stacks} stack(s) × ${item.bundleSize} ${item.name} (${stackPrice.toFixed(2)} BT stack)`;
+                if (stacks > 0) txt += `${stacks} stack(s) × ${item.bundleSize} ${item.name} (${stackPrice.toFixed(2)} EW stack)`;
                 if (individuals > 0) {
                     if (stacks > 0) txt += ' + ';
-                    txt += `${individuals} × ${item.name} (${indivPrice.toFixed(2)} BT each)`;
+                    txt += `${individuals} × ${item.name} (${indivPrice.toFixed(2)} EW each)`;
                 }
                 const totalBT = stacks * stackPrice + individuals * indivPrice;
-                txt += ` (${totalBT.toFixed(2)} BT)`;
+                txt += ` (${totalBT.toFixed(2)} EW)`;
 
                 const curr = document.getElementById('currencySelect')?.value || window.BASE_CURRENCY;
                 if (curr && curr !== window.BASE_CURRENCY && window.formatValue) {
@@ -605,7 +614,7 @@
 
             converterResult.textContent = usedPercent === 0
                 ? '⚠️ No allocations set.'
-                : `✅ Conversion done. Target: ${label} >=0.00. Current: ${t.toFixed(2)} BT.`;
+                : `✅ Conversion done. Target: ${label} >=0.00. Current: ${t.toFixed(2)} EW.`;
         }
     };
 

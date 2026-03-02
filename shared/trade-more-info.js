@@ -155,7 +155,7 @@ function renderTradeNiceHtml(snap, buyerLabel, sellerLabel) {
  const tradedLine = `${esc(formatQtyStkInd_(requestedUnits, tradedStackSize))} ${esc(itemName)}`;
  if (listingType === 'SELL' || listingType === 'BUY') leftLines.push(tradedLine);
 
-  const method = String(payment.method || 'BT').toUpperCase();
+  const method = String(payment.method || 'EW').toUpperCase();
    if (method === 'ITEM') {
   const payItemName = sanitizeItemName(payment.payItemName || payment.payItem || '');
    const payItemQty = computeItemPayQtyFromSnap_(payment, pricing, requestedUnits);
@@ -163,8 +163,8 @@ function renderTradeNiceHtml(snap, buyerLabel, sellerLabel) {
    const payItemStack = resolvePaymentItemStackSize_(payItemName);
  rightLines.push(`${esc(formatQtyStkInd_(payItemQty, payItemStack))} ${esc(payItemName)}`);
     } else {
-       const bt = Number(payment.canonicalBT ?? payment.payTotalBT ??0) ||0;
-   rightLines.push(`${bt.toFixed(2)} BT`);
+       const EW = Number(payment.canonicalBT ?? payment.payTotalBT ??0) ||0;
+   rightLines.push(`${EW.toFixed(2)} EW`);
         }
 
    const leftHeader = (listingType === 'BUY') ? 'Merchant takes' : 'Merchant gives';
@@ -213,8 +213,8 @@ function renderTradeNiceHtml(snap, buyerLabel, sellerLabel) {
  </div>
 
  <div class="small" style="margin-top:10px;">
- ${canonicalBT != null ? `Canonical BT: <strong>${canonicalBT.toFixed(2)} BT</strong>` : ''}
- ${selectedPegBT != null ? ` &nbsp;|&nbsp; Selected-peg BT: <strong>${selectedPegBT.toFixed(2)} BT</strong>` : ''}
+ ${canonicalBT != null ? `Canonical EW: <strong>${canonicalBT.toFixed(2)} EW</strong>` : ''}
+ ${selectedPegBT != null ? ` &nbsp;|&nbsp; Selected-peg EW: <strong>${selectedPegBT.toFixed(2)} EW</strong>` : ''}
  </div>
 
  ${favorHtml}

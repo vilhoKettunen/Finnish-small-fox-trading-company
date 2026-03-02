@@ -81,7 +81,7 @@ function renderRequests(arr) {
    <div class="picklist-item">
   <span class="picklist-qty">${esc(qtyDisp)}</span>
    ${esc(it.itemName || it.name)}
-   <span class="small" style="color:#777">(${esc(it.priceBT || it.price)} BT)</span>
+   <span class="small" style="color:#777">(${esc(it.priceBT || it.price)} EW)</span>
     </div>`;
       }).join('');
   };
@@ -113,7 +113,7 @@ function renderRequests(arr) {
      <div style="margin-top:15px; text-align:right; border-top:1px solid #eee; padding-top:10px;">
      <strong>Net Balance Change: </strong>
     <span style="font-size:1.2em; color:${details.totals?.netBT >= 0 ? 'green' : 'red'}">
-   ${(Number(details.totals?.netBT || 0)).toFixed(2)} BT
+   ${(Number(details.totals?.netBT || 0)).toFixed(2)} EW
     </span>
      </div>
  </div>`;

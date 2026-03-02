@@ -6,7 +6,7 @@ const WEB_APP_URL = window.WEB_APP_URL || 'https://yellow-king-52c6.vilhokettu1.
 const RECAPTCHA_SITE_KEY = window.RECAPTCHA_SITE_KEY || '6LdjcAgsAAAAABWoHl5dmFjbJQL61kOu7ddvkUZF';
 const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '857098772457-kuvq861sa844esf2jc4b7av1pnlmnn1c.apps.googleusercontent.com';
 const sheetURL = "https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/gviz/tq?tqx=out:json&gid=0";
-const BASE_CURRENCY = "BT";
+const BASE_CURRENCY = "EW";
 
 // State (kept on window to preserve legacy globals)
 window.items = window.items || [];

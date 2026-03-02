@@ -172,7 +172,14 @@
                 Favorite STORE buy mode
                 <select id="selStoreBuyMode">
                     <option value="byQty" selected>Quantity</option>
-                    <option value="byValue">BT value</option>
+                    <option value="byValue">
+                    
+                    
+                    
+                    
+                    
+                    
+                    value</option>
                     <option value="byRows">Distinct requests</option>
                 </select>
             </label>
@@ -180,7 +187,7 @@
                 Favorite STORE sell mode
                 <select id="selStoreSellMode">
                     <option value="byQty" selected>Quantity</option>
-                    <option value="byValue">BT value</option>
+                    <option value="byValue">EW value</option>
                     <option value="byRows">Distinct requests</option>
                 </select>
             </label>
@@ -190,7 +197,7 @@
             <div>
                 <h3 style="margin: 0 0 8px 0;">Store</h3>
                 <div class="stat"><span class="small">Trades with store</span><span id="st_storeTrades" class="mono">—</span></div>
-                <div class="stat"><span class="small">Net BT (REQUEST_APPROVED)</span><span id="st_storeNet" class="mono">—</span></div>
+                <div class="stat"><span class="small">Net EW (REQUEST_APPROVED)</span><span id="st_storeNet" class="mono">—</span></div>
                 <div class="stat"><span class="small">Last store interaction</span><span id="st_storeLast" class="mono">—</span></div>
                 <div class="stat"><span class="small">Largest buy value</span><span id="st_storeMaxBuy" class="mono">—</span></div>
                 <div class="stat"><span class="small">Largest sell value</span><span id="st_storeMaxSell" class="mono">—</span></div>
@@ -246,7 +253,7 @@
     <section class="section" aria-label="Top5 statistics">
         <h2>Top5 statistics</h2>
         <div class="small muted">
-            These are derived from the cached Top5 sidecar data. (Count vs BT value rankings can differ.)
+            These are derived from the cached Top5 sidecar data. (Count vs EW value rankings can differ.)
         </div>
 
         <div class="grid2" style="margin-top:10px;">
@@ -259,7 +266,7 @@
                 </details>
 
                 <details>
-                    <summary class="small muted">Bought from store (Top5 by BT value)</summary>
+                    <summary class="small muted">Bought from store (Top5 by EW value)</summary>
                     <pre id="top5_store_buy_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
                 </details>
 
@@ -274,7 +281,7 @@
                 </details>
 
                 <details>
-                    <summary class="small muted">Sold to store (Top5 by BT value)</summary>
+                    <summary class="small muted">Sold to store (Top5 by EW value)</summary>
                     <pre id="top5_store_sell_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
                 </details>
 
@@ -298,7 +305,7 @@
                 </details>
 
                 <details>
-                    <summary class="small muted">Items sold as merchant (Top5 by BT value)</summary>
+                    <summary class="small muted">Items sold as merchant (Top5 by EW value)</summary>
                     <pre id="top5_ocm_itemsSold_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
                 </details>
 
@@ -308,7 +315,7 @@
                 </details>
 
                 <details>
-                    <summary class="small muted">Items bought as customer (Top5 by BT value)</summary>
+                    <summary class="small muted">Items bought as customer (Top5 by EW value)</summary>
                     <pre id="top5_ocm_itemsBought_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
                 </details>
 
@@ -318,7 +325,7 @@
                 </details>
 
                 <details>
-                    <summary class="small muted">Pegs used as customer (Top5 by BT value)</summary>
+                    <summary class="small muted">Pegs used as customer (Top5 by EW value)</summary>
                     <pre id="top5_ocm_pegsUsed_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
                 </details>
 
@@ -328,7 +335,7 @@
                 </details>
 
                 <details>
-                    <summary class="small muted">Pegs received as merchant (Top5 by BT value)</summary>
+                    <summary class="small muted">Pegs received as merchant (Top5 by EW value)</summary>
                     <pre id="top5_ocm_pegsRecv_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
                 </details>
             </div>

@@ -78,7 +78,8 @@
  if (String(p.mode || '').toUpperCase() === 'FIXED_BT') {
  const btPerInd = Number(p.fixedBTPerUnit ?? p.fixedBT ?? p.priceBT ??0);
  if (!isFinite(btPerInd) || btPerInd <=0) return '<span class="muted">—</span>';
- return `1 ${escapeHtml_(listedItemName)} = ${fmt2(btPerInd)} BT`;
+     return `1 ${escapeHtml_(listedItemName)} = ${fmt2(btPerInd)} 
+ `;
  }
 
  const prim = getPrimaryPeg_(listing);
@@ -177,7 +178,7 @@
  });
  }
 
- // Immediate: sorting by canonical BT
+ // Immediate: sorting by canonical EW
  const sort = String(S.sort || 'NONE');
  if (sort === 'PRICE_ASC' || sort === 'PRICE_DESC') {
  const dir = (sort === 'PRICE_ASC') ?1 : -1;
@@ -540,7 +541,7 @@
  async function applyAuthFromToken(idToken) {
  S.googleIdToken = idToken;
 
- // Load catalog FIRST so canonical BT + peg dropdown are correct
+ // Load catalog FIRST so canonical EW + peg dropdown are correct
  await O.ensureCatalogLoaded();
  renderPegDropdown_();
 
