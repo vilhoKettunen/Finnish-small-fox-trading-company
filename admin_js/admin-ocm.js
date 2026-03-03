@@ -8,6 +8,13 @@
  const fmt2 = Admin.fmt2;
  const safeJsonParse = Admin.safeJsonParse;
 
+ // =========================
+ // DEBUG (testing)
+ // Set to true to request backend step-by-step logs for some API calls.
+ // Backend logs come back as `data.debugLog` (array of strings).
+ // =========================
+ const OCM_ADMIN_DEBUG_LISTINGS = false;
+
  function printVelocityDebug_(label, resp) {
  try {
  const d = resp?.data || resp?.result || resp;
@@ -969,7 +976,12 @@
  if (msgEl) msgEl.textContent = 'Loading...';
 
  try {
- const r = await window.apiGet('ocmAdminListUserListingsV2', { idToken: Admin.state.googleIdToken, userId: Admin.state.globalTargetUser.userId });
+ const r = await window.apiGet('ocmAdminListUserListingsV2', {
+ idToken: Admin.state.googleIdToken,
+ userId: Admin.state.globalTargetUser.userId,
+ // DEBUG: include backend trace (only when enabled)
+ dbg: OCM_ADMIN_DEBUG_LISTINGS ?1 : ''
+ });
  const d = r.data || r.result || r;
  Admin.state.adminTargetListings = d.listings || [];
  renderAdminTargetListings_();

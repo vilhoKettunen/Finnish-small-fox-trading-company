@@ -8,6 +8,25 @@
     const BASE = RAW_BASE.replace(/\/+$|\s+$/g, '');
     const BASE_OK = /^https?:\/\//i.test(BASE);
 
+    // =========================
+    // DEBUG (testing)
+    // Set to true to print backend-provided `debugLog` arrays to the browser console.
+    // Backend debug is enabled per-call (example): apiGet('ocmListMyListingsV2', { ..., dbg:1 })
+    // =========================
+    const API_DEBUG_LOGGING = false;
+
+    function printBackendDebugLog_(label, resp) {
+        if (!API_DEBUG_LOGGING) return;
+        try {
+            const d = resp?.data || resp?.result || resp;
+            const lines = d?.debugLog;
+            if (!Array.isArray(lines) || !lines.length) return;
+            console.groupCollapsed(label);
+            lines.forEach(l => console.log(l));
+            console.groupEnd();
+        } catch { /* ignore */ }
+    }
+
     function missingBaseError_() {
         return new Error('WEB_APP_URL is not configured (missing app-config.js or empty WEB_APP_URL).');
     }
@@ -65,6 +84,10 @@
             // e.g. { ok: true, balanceAfter: 100 }
             j.result = j;
         }
+
+        // Test/debug support: if backend included a debugLog array, optionally print it.
+        printBackendDebugLog_('Backend debugLog', j);
+
         return j;
     }
     async function readJsonOrThrow_(r) {
