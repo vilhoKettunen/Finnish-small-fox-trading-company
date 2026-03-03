@@ -49,8 +49,8 @@
  function computeCanonicalBtForListing_(listing) {
  const p = listing?.pricing || {};
 
- if (String(p.mode || '').toUpperCase() === 'FIXED_BT') {
- const btPerInd = Number(p.fixedBTPerUnit ?? p.fixedBT ?? p.priceBT ??0);
+ if (String(p.mode || '').toUpperCase() === 'FIXED_EW') {
+ const btPerInd = Number(p.fixedEWPerUnit ?? p.fixedBT ?? p.priceBT ??0);
  if (!isFinite(btPerInd) || btPerInd <=0) return { btPerInd: null, btPerStack: null };
  const stackSize = Number(listing.stackSize ||1) ||1;
  return { btPerInd, btPerStack: btPerInd * stackSize };
@@ -75,8 +75,8 @@
  const p = listing?.pricing || {};
  const listedItemName = String(listing?.itemName || '').trim();
 
- if (String(p.mode || '').toUpperCase() === 'FIXED_BT') {
- const btPerInd = Number(p.fixedBTPerUnit ?? p.fixedBT ?? p.priceBT ??0);
+ if (String(p.mode || '').toUpperCase() === 'FIXED_EW') {
+ const btPerInd = Number(p.fixedEWPerUnit ?? p.fixedBT ?? p.priceBT ??0);
  if (!isFinite(btPerInd) || btPerInd <=0) return '<span class="muted">—</span>';
      return `1 ${escapeHtml_(listedItemName)} = ${fmt2(btPerInd)} 
  `;
@@ -144,7 +144,7 @@
  });
  }
 
- // Search-applied: merchant terms AND (substring)
+ // Search-applied: Customer terms AND (substring)
  if (merchantTerms.length) {
  arr = arr.filter(l => {
  const hay = String(l.playerName || '').toLowerCase();
@@ -304,7 +304,7 @@
 
  const partsSearch = [typeLabel];
  if (itemT) partsSearch.push(`Item:"${escapeHtml_(itemT)}"`);
- if (merchT) partsSearch.push(`Merchant:"${escapeHtml_(merchT)}"`);
+ if (merchT) partsSearch.push(`Customer:"${escapeHtml_(merchT)}"`);
  if (pegs.length) partsSearch.push(`Pegs: ${pegs.map(escapeHtml_).join(', ')}`);
 
  const partsImm = [];

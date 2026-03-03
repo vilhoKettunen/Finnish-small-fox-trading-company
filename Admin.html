@@ -23,7 +23,7 @@
         <button onclick="navigateStore()">Store</button>
         <button onclick="navigateHistory()">Account History</button>
         <button onclick="navigateOCM()">OCM</button>
-        <button onclick="navigateMerchant()">OCM Merchant</button>
+        <button onclick="navigateMerchant()">OCM Customer</button>
         <button id="adminPanelBtn" style="display:none;" onclick="navigateAdmin()">Admin Panel</button>
         <div class="right">
             <button id="btnLogin" onclick="startLogin()">Login</button>
@@ -121,8 +121,8 @@
                     <tr>
                         <th>TradeId</th>
                         <th>Item</th>
-                        <th>Buyer</th>
-                        <th>Seller</th>
+                        <th>Customer</th>
+                        <th>Merchant</th>
                         <th>Qty</th>
                         <th>Payment</th>
                         <th>Status</th>
@@ -156,7 +156,7 @@
                         <th>Status</th>
                         <th>Qty</th>
                         <th>Stack</th>
-                        <th>Seller</th>
+                        <th>Merchant</th>
                         <th>Updated</th>
                         <th>Actions</th>
                     </tr>
@@ -250,7 +250,7 @@
                         <div>
                             <div class="peg-box">
                                 <div class="small"><strong>Pricing (PEG)</strong></div>
-                                <div class="small">Primary + up to 10 alternative pegs. Buyer can pay with EW or exactly one peg item.</div>
+                                <div class="small">Primary + up to 10 alternative pegs. Customer can pay with EW or exactly one peg item.</div>
                                 <div id="createStorePegBox"></div>
                                 <div class="flex" style="margin-top:8px;">
                                     <button type="button" id="btnCreateStoreAddAlt">Add alternative peg</button>
@@ -361,7 +361,7 @@
                 <h3>Pending trades (Target user)</h3>
                 <div class="grid">
                     <div>
-                        <h4>My pending requests (target is buyer)</h4>
+                        <h4>My pending requests (target is Customer)</h4>
                         <div class="flex">
                             <button type="button" id="btnReloadTargetMyPending">Reload</button>
                             <span id="msgTargetMyPending" class="small"></span>
@@ -372,7 +372,7 @@
                         </table>
                     </div>
                     <div>
-                        <h4>Incoming pending requests (target is seller)</h4>
+                        <h4>Incoming pending requests (target is Merchant)</h4>
                         <div class="flex">
                             <button type="button" id="btnReloadTargetIncomingPending">Reload</button>
                             <span id="msgTargetIncomingPending" class="small"></span>
@@ -461,7 +461,7 @@
                 </div>
 
                 <div>
-                    <label>Pricing mode <select id="editPricingMode"><option value="PEG">PEG</option><option value="FIXED_BT">FIXED_BT</option></select></label>
+                    <label>Pricing mode <select id="editPricingMode"><option value="PEG">PEG</option><option value="FIXED_EW">FIXED_EW</option></select></label>
 
                     <div id="editPegFields" class="peg-box">
                         <div class="small"><strong>Pricing (PEG)</strong></div>

@@ -131,7 +131,7 @@
 
     // buyerLabel/sellerLabel should *already* include mailbox wording:
     // "vak (Mailbox N/A)"
-    // This renderer will prepend "Merchant:"/"Customer:" just like OCMUser.
+    // This renderer will prepend "Customer:"/"Merchant:" just like OCMUser.
 function renderTradeNiceHtml(snap, buyerLabel, sellerLabel) {
   const listing = snap?.listing || {};
   const request = snap?.request || {};
@@ -143,7 +143,7 @@ function renderTradeNiceHtml(snap, buyerLabel, sellerLabel) {
    const listingStackSizeFallback = Number(listing.stackSize ||1) || 1;
     const requestedUnits = Number(request.requestedUnits ||0) || 0;
 
-    // Merchant = seller, Customer = buyer
+    // Customer = Merchant, Merchant = Customer
    const merchantLabel = sellerLabel || '';
   const customerLabel = buyerLabel || '';
 
@@ -163,16 +163,16 @@ function renderTradeNiceHtml(snap, buyerLabel, sellerLabel) {
    const payItemStack = resolvePaymentItemStackSize_(payItemName);
  rightLines.push(`${esc(formatQtyStkInd_(payItemQty, payItemStack))} ${esc(payItemName)}`);
     } else {
-       const EW = Number(payment.canonicalBT ?? payment.payTotalBT ??0) ||0;
+       const EW = Number(payment.canonicalEW ?? payment.payTotalEW ??0) ||0;
    rightLines.push(`${EW.toFixed(2)} EW`);
         }
 
-   const leftHeader = (listingType === 'BUY') ? 'Merchant takes' : 'Merchant gives';
-   const rightHeader = (listingType === 'BUY') ? 'Customer receives' : 'Customer pays';
+   const leftHeader = (listingType === 'BUY') ? 'Customer takes' : 'Customer gives';
+   const rightHeader = (listingType === 'BUY') ? 'Merchant receives' : 'Merchant pays';
 
         const primaryBasis = esc(String(pricing.pricingBasis || ''));
-        const canonicalBT = payment.canonicalBT != null ? Number(payment.canonicalBT ||0) : null;
-   const selectedPegBT = payment.selectedPegBT != null ? Number(payment.selectedPegBT ||0) : null;
+        const canonicalEW = payment.canonicalEW != null ? Number(payment.canonicalEW ||0) : null;
+   const selectedPegEW = payment.selectedPegEW != null ? Number(payment.selectedPegEW ||0) : null;
 
    const listHtml = (arr) => arr.length
       ? `<div>${arr.map(x => `<div class="picklist-item">${x}</div>`).join('')}</div>`
@@ -184,8 +184,8 @@ function renderTradeNiceHtml(snap, buyerLabel, sellerLabel) {
  let favorHtml = '';
  try {
  const fav = computeFavorPctsFromSnap_(snap);
- const cLine = renderFavorLine_('Customer', fav.customerPctRaw);
- const mLine = renderFavorLine_('Merchant', fav.merchantPctRaw);
+ const cLine = renderFavorLine_('Merchant', fav.customerPctRaw);
+ const mLine = renderFavorLine_('Customer', fav.merchantPctRaw);
  const joined = [cLine, mLine].filter(Boolean).join('<br>');
  if (joined) favorHtml = `<div style="margin-top:10px;">${joined}</div>`;
  } catch { /* ignore */ }
@@ -202,19 +202,19 @@ function renderTradeNiceHtml(snap, buyerLabel, sellerLabel) {
  <div class="details-grid" style="margin-top:10px;">
  <div class="picklist-col give">
  <h4>${esc(leftHeader)}</h4>
- <div class="small">Merchant: ${esc(merchantLabel)}</div>
+ <div class="small">Customer: ${esc(merchantLabel)}</div>
  ${listHtml(leftLines)}
  </div>
  <div class="picklist-col take">
  <h4>${esc(rightHeader)}</h4>
- <div class="small">Customer: ${esc(customerLabel)}</div>
+ <div class="small">Merchant: ${esc(customerLabel)}</div>
  ${listHtml(rightLines)}
  </div>
  </div>
 
  <div class="small" style="margin-top:10px;">
- ${canonicalBT != null ? `Canonical EW: <strong>${canonicalBT.toFixed(2)} EW</strong>` : ''}
- ${selectedPegBT != null ? ` &nbsp;|&nbsp; Selected-peg EW: <strong>${selectedPegBT.toFixed(2)} EW</strong>` : ''}
+ ${canonicalEW != null ? `Canonical EW: <strong>${canonicalEW.toFixed(2)} EW</strong>` : ''}
+ ${selectedPegEW != null ? ` &nbsp;|&nbsp; Selected-peg EW: <strong>${selectedPegEW.toFixed(2)} EW</strong>` : ''}
  </div>
 
  ${favorHtml}

@@ -70,7 +70,7 @@
  const primaryRatio = Number(primaryPeg?.pegQtyPerInd ?? listing.pricing?.pegQtyPerUnit ??0);
  const primarySide = listingSide;
  const primaryEach = (primaryName && primaryRatio) ? O.perIndPriceFromCatalog_(primaryName, primarySide) : null;
- const canonicalBT = (primaryEach != null && primaryRatio) ? (u.units * primaryRatio * primaryEach) : null;
+ const canonicalEW = (primaryEach != null && primaryRatio) ? (u.units * primaryRatio * primaryEach) : null;
 
  if (paymentChoice === 'ITEM') {
  const selName = payPegName || primaryName;
@@ -90,13 +90,13 @@
  payPegName: selName,
  payItems,
  tradedBT,
- canonicalBT,
- selectedPegBT: selBT,
+ canonicalEW,
+ selectedPegEW: selBT,
  selectedPegQty: selRatio * u.units
  };
  }
 
- return { units: u.units, paymentChoice: 'EW', tradedBT, canonicalBT };
+ return { units: u.units, paymentChoice: 'EW', tradedBT, canonicalEW };
  }
 
  function computeValueLinesForTrade_(listing, u, selectedPegName, selectedPegRatio) {
@@ -230,7 +230,7 @@
  <div>
  <div class="small">Listing</div>
  <div><strong>${O.escapeHtml_(listing.itemName)}</strong> (${O.escapeHtml_(listing.type)})</div>
- <div class="small">Merchant: ${O.escapeHtml_(listing.playerName || 'Unknown')}</div>
+ <div class="small">Customer: ${O.escapeHtml_(listing.playerName || 'Unknown')}</div>
  <div class="small muted">Stack size: <span class="mono">${Number(listing.stackSize ||1) ||1}</span></div>
  </div>
 
@@ -249,9 +249,9 @@
  <div class="small">Estimate</div>
  <div class="mono" data-estimate>�</div>
  <div class="small muted" data-value-lines>�</div>
- <div class="small" data-fee-note>Fee:0% if seller completes,10% if admin completes.</div>
- <div class="trade-favor" data-favor-customer style="display:none;"></div>
- <div class="trade-favor" data-favor-merchant style="display:none;"></div>
+ <div class="small" data-fee-note>Fee:0% if Merchant completes,10% if admin completes.</div>
+ <div class="trade-favor" data-favor-Merchant style="display:none;"></div>
+ <div class="trade-favor" data-favor-Customer style="display:none;"></div>
  </div>
  </div>
 
@@ -272,8 +272,8 @@
  const msgEl = td.querySelector('[data-msg]');
  const estEl = td.querySelector('[data-estimate]');
  const valueEl = td.querySelector('[data-value-lines]');
- const customerFavorEl = td.querySelector('[data-favor-customer]');
- const merchantFavorEl = td.querySelector('[data-favor-merchant]');
+ const customerFavorEl = td.querySelector('[data-favor-Merchant]');
+ const merchantFavorEl = td.querySelector('[data-favor-Customer]');
  const payPegSel = td.querySelector('select[data-pay-peg]');
 
         function getPaymentChoice() {
@@ -342,11 +342,11 @@
                 } catch { /* ignore */ }
 
                 parts.push(`You ${verbMain} ${payQtyLabel} ${est.payPegName} (rounded up).`);
-                if (est.canonicalBT != null) parts.push(`Canonical EW (primary-based): ${fmt2(est.canonicalBT)} EW.`);
-                if (est.selectedPegBT != null) parts.push(`EW eq (selected-peg store price): ${fmt2(est.selectedPegBT)} EW.`);
+                if (est.canonicalEW != null) parts.push(`Canonical EW (primary-based): ${fmt2(est.canonicalEW)} EW.`);
+                if (est.selectedPegEW != null) parts.push(`EW eq (selected-peg store price): ${fmt2(est.selectedPegEW)} EW.`);
                 if (est.tradedBT != null) parts.push(`Traded item store EW: ${fmt2(est.tradedBT)} EW.`);
             } else {
-                if (est.canonicalBT != null) parts.push(`You ${verbMain} ${fmt2(est.canonicalBT)} EW (primary-based).`);
+                if (est.canonicalEW != null) parts.push(`You ${verbMain} ${fmt2(est.canonicalEW)} EW (primary-based).`);
                 if (est.tradedBT != null) parts.push(`Traded item store EW: ${fmt2(est.tradedBT)} EW.`);
             }
 
@@ -363,14 +363,14 @@
             const v = computeValueLinesForTrade_(listing, u, chosenPegName, chosenRatio);
             valueEl.innerHTML = `${O.escapeHtml_(v.buy)}<br>${O.escapeHtml_(v.sell)}`;
 
-            // ===== Customer favor / Merchant favor =====
+            // ===== Merchant favor / Customer favor =====
             // Totals match the value lines shown.
             // SELL listings: keep existing behavior.
             // BUY listings: use new rules:
-            // - Customer:
+            // - Merchant:
             // * ITEM: (1 - traded BUY total / peg SELL total)*100
             // * EW: (1 - traded BUY total / peg BUY total)*100
-            // - Merchant (both): (1 - peg BUY total / traded SELL total)*100
+            // - Customer (both): (1 - peg BUY total / traded SELL total)*100
             try {
                 const listingName = String(listing?.itemName || '').trim();
                 const pegName = String(chosenPegName || '').trim();
@@ -441,8 +441,8 @@
                     el.style.display = '';
                 }
 
-                renderFavorLine_(customerFavorEl, 'Customer', customerPct);
-                renderFavorLine_(merchantFavorEl, 'Merchant', merchantPct);
+                renderFavorLine_(customerFavorEl, 'Merchant', customerPct);
+                renderFavorLine_(merchantFavorEl, 'Customer', merchantPct);
             } catch {
                 if (customerFavorEl) customerFavorEl.style.display = 'none';
                 if (merchantFavorEl) merchantFavorEl.style.display = 'none';
@@ -518,13 +518,13 @@
     function extractTradeSummary(tr) {
         const snap = O.safeJsonParse(tr.detailsJson || '{}') || {};
         const item = snap.listing?.itemName || '';
-        const who = snap.seller?.playerName || '';
+        const who = snap.Merchant?.playerName || '';
         const payment = snap.payment?.method || '';
         const units = Number(snap.request?.requestedUnits || tr.quantity || 0);
 
         const totalBT = Number(
-            snap.payment?.canonicalBT
-            ?? snap.payment?.payTotalBT
+            snap.payment?.canonicalEW
+            ?? snap.payment?.payTotalEW
             ?? snap.pricing?.tradeValueBT
             ?? 0
         );

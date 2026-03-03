@@ -26,11 +26,11 @@
 
         const m = mEl ? String(mEl.value || 'PEG').toUpperCase() : 'PEG';
         if (byId('editPegFields')) byId('editPegFields').style.display = (m === 'PEG') ? '' : 'none';
-        if (byId('editFixedFields')) byId('editFixedFields').style.display = (m === 'FIXED_BT') ? '' : 'none';
+        if (byId('editFixedFields')) byId('editFixedFields').style.display = (m === 'FIXED_EW') ? '' : 'none';
 
         const lm = lmEl ? String(lmEl.value || '').toUpperCase() : '';
         if (lm === 'FULL') {
-            if (mEl) { mEl.value = 'FIXED_BT'; mEl.disabled = true; }
+            if (mEl) { mEl.value = 'FIXED_EW'; mEl.disabled = true; }
             if (byId('editPegFields')) byId('editPegFields').style.display = 'none';
             if (byId('editFixedFields')) byId('editFixedFields').style.display = '';
         } else {
@@ -380,31 +380,31 @@
 
              if (listingType === 'BUY') {
                  // BUY (PEG statement uses ITEM-style formulas by requirement)
-                 // Customer: (1 - (soldBuyTotal / pegSellTotal))*100
+                 // Merchant: (1 - (soldBuyTotal / pegSellTotal))*100
                  if (soldBuyTotal != null && pegSellTotal != null && isFinite(soldBuyTotal) && isFinite(pegSellTotal) && pegSellTotal >0) {
                      customerPctRaw = (1 - (Number(soldBuyTotal) / Number(pegSellTotal))) *100;
                  }
 
-                 // Merchant: (1 - (pegBuyTotal / soldSellTotal))*100
+                 // Customer: (1 - (pegBuyTotal / soldSellTotal))*100
                  if (pegBuyTotal != null && soldSellTotal != null && isFinite(pegBuyTotal) && isFinite(soldSellTotal) && soldSellTotal >0) {
                      merchantPctRaw = (1 - (Number(pegBuyTotal) / Number(soldSellTotal))) *100;
                  }
              } else {
                  // SELL (keep existing behavior)
-                 // Customer: (1 - (pegBuyTotal / soldSellTotal))*100
+                 // Merchant: (1 - (pegBuyTotal / soldSellTotal))*100
                  if (soldSellTotal != null && pegBuyTotal != null && isFinite(soldSellTotal) && soldSellTotal >0 && isFinite(pegBuyTotal)) {
                      customerPctRaw = (1 - (Number(pegBuyTotal) / Number(soldSellTotal))) *100;
                  }
 
-                 // Merchant: (1 - (soldBuyTotal / pegSellTotal))*100
+                 // Customer: (1 - (soldBuyTotal / pegSellTotal))*100
                  if (soldBuyTotal != null && pegSellTotal != null && isFinite(pegSellTotal) && pegSellTotal >0 && isFinite(soldBuyTotal)) {
                      merchantPctRaw = (1 - (Number(soldBuyTotal) / Number(pegSellTotal))) *100;
                  }
              }
          } catch { customerPctRaw = null; merchantPctRaw = null; }
 
-         const customerHtml = pctLine_('Customer', customerPctRaw);
-         const merchantHtml = pctLine_('Merchant', merchantPctRaw);
+         const customerHtml = pctLine_('Merchant', customerPctRaw);
+         const merchantHtml = pctLine_('Customer', merchantPctRaw);
 
          statement.innerHTML = `${esc(eqLine)}<br><span class="muted">${esc(buyLine)}</span><br><span class="muted">${esc(sellLine)}</span>${customerHtml ? `<br>${customerHtml}` : ''}${merchantHtml ? `<br>${merchantHtml}` : ''}`;
      }
@@ -590,8 +590,8 @@
  byId('editSourceItemId').value = l.sourceItemId || '';
 
  const mode = String(l.pricing?.mode || 'PEG').toUpperCase();
- byId('editPricingMode').value = (mode === 'FIXED_BT') ? 'FIXED_BT' : 'PEG';
- byId('editFixedBTVal').value = String(l.pricing?.fixedBTPerUnit ??1);
+ byId('editPricingMode').value = (mode === 'FIXED_EW') ? 'FIXED_EW' : 'PEG';
+ byId('editFixedBTVal').value = String(l.pricing?.fixedEWPerUnit ??1);
 
  const prim = l.pricing?.primaryPeg || (l.pricing?.pegItemName ? {
  itemName: l.pricing.pegItemName,
@@ -686,12 +686,12 @@
  if (paused) payload.status = 'PAUSED';
 
  if (listingMode === 'FULL') {
- const fixedBTPerUnit = Number(byId('editFixedBTVal').value ||0);
- if (!isFinite(fixedBTPerUnit) || fixedBTPerUnit <=0) throw new Error('Fixed EW per unit must be >0');
- payload.pricingMode = 'FIXED_BT';
- payload.fixedBTPerUnit = fixedBTPerUnit;
+ const fixedEWPerUnit = Number(byId('editFixedBTVal').value ||0);
+ if (!isFinite(fixedEWPerUnit) || fixedEWPerUnit <=0) throw new Error('Fixed EW per unit must be >0');
+ payload.pricingMode = 'FIXED_EW';
+ payload.fixedEWPerUnit = fixedEWPerUnit;
  } else {
- if (pricingModeUi === 'FIXED_BT') throw new Error('FIXED_BT is only allowed for FULL listings.');
+ if (pricingModeUi === 'FIXED_EW') throw new Error('FIXED_EW is only allowed for FULL listings.');
 
  const editState = Admin.state.editState;
  if (!window.validatePegSet_(editState.primary, editState.alts, byId('editPegWarn'))) throw new Error('Fix peg inputs');
@@ -774,7 +774,7 @@
  (arr || []).forEach(tr => {
  const snap = safeJsonParse(tr.detailsJson || '{}') || {};
  const item = snap.listing?.itemName || '';
- const counterparty = mine ? (snap.seller?.playerName || '') : (snap.buyer?.playerName || '');
+ const counterparty = mine ? (snap.Merchant?.playerName || '') : (snap.Customer?.playerName || '');
  const payment = snap.payment?.method || '';
  const qty = Number(snap.request?.requestedUnits || tr.quantity ||0);
 
@@ -807,7 +807,7 @@
  }
 
  const buyerLabel = labelFromUserId_(tr.buyerUserId);
- const sellerLabel = labelFromUserId_(tr.sellerUserId);
+ const sellerLabel = labelFromUserId_(tr.MerchantUserId);
  tmi.toggleDetailsRow(row, snap || {}, buyerLabel, sellerLabel,6);
  });
  }
@@ -843,7 +843,7 @@
     // Helper: short pricing summary shown in listing rows
     function pricingLabel(l) {
         const p = l.pricing || {};
-        if (p.mode === 'FIXED_BT') return `FIXED ${fmt2(p.fixedBTPerUnit)} EW/unit`;
+        if (p.mode === 'FIXED_EW') return `FIXED ${fmt2(p.fixedEWPerUnit)} EW/unit`;
 
         const prim = p.primaryPeg || (p.pegItemName ? {
             itemName: p.pegItemName,
@@ -1246,8 +1246,8 @@
  const stackSize = assertIntegerQty_(byId('createStackFull')?.value, 'Stack size', false);
  const quantityUnits = assertIntegerQty_(byId('createQtyUnitsFull')?.value, 'Quantity', false);
 
- const fixedBTPerUnit = Number(byId('createFixedBT')?.value ||0);
- if (!isFinite(fixedBTPerUnit) || fixedBTPerUnit <=0) throw new Error('Fixed EW per unit must be >0');
+ const fixedEWPerUnit = Number(byId('createFixedBT')?.value ||0);
+ if (!isFinite(fixedEWPerUnit) || fixedEWPerUnit <=0) throw new Error('Fixed EW per unit must be >0');
 
  const r = await window.apiPost('ocmAdminCreateListingV2', {
  idToken: Admin.state.googleIdToken,
@@ -1258,8 +1258,8 @@
  sourceItemId: '',
  stackSize,
  quantityUnits,
- pricingMode: 'FIXED_BT',
- fixedBTPerUnit,
+ pricingMode: 'FIXED_EW',
+ fixedEWPerUnit,
  approveNow: true
  });
 

@@ -189,7 +189,7 @@
                         customerPctRaw = (1 - (Number(soldBuyTotal) / Number(pegSellTotal))) * 100;
                     }
 
-                    // Merchant: (1 - (pegBuyTotal / soldSellTotal))*100
+                    // Customer: (1 - (pegBuyTotal / soldSellTotal))*100
                     if (pegBuyTotal != null && soldSellTotal != null && isFinite(pegBuyTotal) && isFinite(soldSellTotal) && soldSellTotal > 0) {
                         merchantPctRaw = (1 - (Number(pegBuyTotal) / Number(soldSellTotal))) * 100;
                     }
@@ -200,14 +200,14 @@
                         customerPctRaw = (1 - (Number(pegBuyTotal) / Number(soldSellTotal))) * 100;
                     }
 
-                    // Merchant: (1 - (soldBuyTotal / pegSellTotal))*100
+                    // Customer: (1 - (soldBuyTotal / pegSellTotal))*100
                     if (soldBuyTotal != null && pegSellTotal != null && isFinite(soldBuyTotal) && isFinite(pegSellTotal) && pegSellTotal > 0) {
                         merchantPctRaw = (1 - (Number(soldBuyTotal) / Number(pegSellTotal))) * 100;
                     }
                 }
 
                 if (customerPctRaw != null && isFinite(customerPctRaw)) customerFavorHtml = favorLineHtml_('Customer', customerPctRaw);
-                if (merchantPctRaw != null && isFinite(merchantPctRaw)) merchantFavorHtml = favorLineHtml_('Merchant', merchantPctRaw);
+                if (merchantPctRaw != null && isFinite(merchantPctRaw)) merchantFavorHtml = favorLineHtml_('Customer', merchantPctRaw);
             }
 
             // Render statement: equation + BUY/SELL + favors (when computable)

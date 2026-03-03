@@ -72,8 +72,8 @@
 
  setText('lbUpdatedAt', fmtIso_(updatedAt));
 
- renderTable_('tb_storeMaxBuyValueBT', lb?.storeMaxBuyValueBT, v => fmtNumber_(v,2));
- renderTable_('tb_storeMaxSellValueBT', lb?.storeMaxSellValueBT, v => fmtNumber_(v,2));
+     renderTable_('tb_storeMaxBuyValueBT', lb?.storeMaxBuyValueEW, v => fmtNumber_(v,2));
+ renderTable_('tb_storeMaxSellValueBT', lb?.storeMaxSellValueEW, v => fmtNumber_(v,2));
  renderTable_('tb_storeTradesWithStoreCount', lb?.storeTradesWithStoreCount, v => fmtNumber_(v,0));
 
  renderTable_('tb_ocmAsBuyerCount', lb?.ocmAsBuyerCount, v => fmtNumber_(v,0));

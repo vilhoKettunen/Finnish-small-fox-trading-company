@@ -155,13 +155,13 @@
  const favBuy = pickStoreFavorite_('buy', buyMode);
  setText('st_storeFavBuyName', favBuy?.itemName || '—');
  setText('st_storeFavBuyQty', favBuy ? fmtNumber_(favBuy.totalQty,0) : '—');
- setText('st_storeFavBuyValue', favBuy ? fmtNumber_(favBuy.totalValueBT,2) : '—');
+ setText('st_storeFavBuyValue', favBuy ? fmtNumber_(favBuy.totalValueEW,2) : '—');
  setText('st_storeFavBuyRows', favBuy ? fmtNumber_(favBuy.rows,0) : '—');
 
  const favSell = pickStoreFavorite_('sell', sellMode);
  setText('st_storeFavSellName', favSell?.itemName || '—');
  setText('st_storeFavSellQty', favSell ? fmtNumber_(favSell.totalQty,0) : '—');
- setText('st_storeFavSellValue', favSell ? fmtNumber_(favSell.totalValueBT,2) : '—');
+ setText('st_storeFavSellValue', favSell ? fmtNumber_(favSell.totalValueEW,2) : '—');
  setText('st_storeFavSellRows', favSell ? fmtNumber_(favSell.rows,0) : '—');
  }
 
@@ -195,7 +195,7 @@
  const storeBuy = t?.storeTop5?.buy;
  const storeSell = t?.storeTop5?.sell;
 
- const fmtStoreItem_ = (x, i) => `${i +1}. ${x?.itemName || '—'} | qty=${fmtNumber_(x?.totalQty,0)} | value=${fmtNumber_(x?.totalValueBT,2)} | requests=${fmtNumber_(x?.rows,0)}`;
+ const fmtStoreItem_ = (x, i) => `${i +1}. ${x?.itemName || '—'} | qty=${fmtNumber_(x?.totalQty,0)} | value=${fmtNumber_(x?.totalValueEW,2)} | requests=${fmtNumber_(x?.rows,0)}`;
 
  setText('top5_store_buy_byQty', fmtList_(storeBuy?.byQty, fmtStoreItem_));
  setText('top5_store_buy_byValue', fmtList_(storeBuy?.byValue, fmtStoreItem_));
@@ -205,17 +205,17 @@
  setText('top5_store_sell_byValue', fmtList_(storeSell?.byValue, fmtStoreItem_));
  setText('top5_store_sell_byRows', fmtList_(storeSell?.byRows, fmtStoreItem_));
 
- const fmtCp_ = (x, i) => `${i +1}. ${x?.playerName || x?.userId || '—'} | trades=${fmtNumber_(x?.tradesCount,0)} | value=${fmtNumber_(x?.totalValueBT,2)}`;
+ const fmtCp_ = (x, i) => `${i +1}. ${x?.playerName || x?.userId || '—'} | trades=${fmtNumber_(x?.tradesCount,0)} | value=${fmtNumber_(x?.totalValueEW,2)}`;
  setText('top5_ocm_counterparties', fmtList_(t?.ocmTop5?.counterparties, fmtCp_));
 
- const fmtOcmItem_ = (x, i) => `${i +1}. ${x?.itemName || '—'} | trades=${fmtNumber_(x?.tradesCount,0)} | value=${fmtNumber_(x?.totalValueBT,2)}`;
+ const fmtOcmItem_ = (x, i) => `${i +1}. ${x?.itemName || '—'} | trades=${fmtNumber_(x?.tradesCount,0)} | value=${fmtNumber_(x?.totalValueEW,2)}`;
  setText('top5_ocm_itemsSold_byCount', fmtList_(t?.ocmTop5?.itemsSoldAsMerchant?.byCount, fmtOcmItem_));
  setText('top5_ocm_itemsSold_byValue', fmtList_(t?.ocmTop5?.itemsSoldAsMerchant?.byValueBT, fmtOcmItem_));
 
  setText('top5_ocm_itemsBought_byCount', fmtList_(t?.ocmTop5?.itemsBoughtAsBuyer?.byCount, fmtOcmItem_));
  setText('top5_ocm_itemsBought_byValue', fmtList_(t?.ocmTop5?.itemsBoughtAsBuyer?.byValueBT, fmtOcmItem_));
 
- const fmtPeg_ = (x, i) => `${i +1}. ${x?.itemName || '—'} | trades=${fmtNumber_(x?.tradesCount,0)} | value=${fmtNumber_(x?.totalValueBT,2)}`;
+ const fmtPeg_ = (x, i) => `${i +1}. ${x?.itemName || '—'} | trades=${fmtNumber_(x?.tradesCount,0)} | value=${fmtNumber_(x?.totalValueEW,2)}`;
  setText('top5_ocm_pegsUsed_byCount', fmtList_(t?.ocmTop5?.pegsUsedAsBuyer?.byCount, fmtPeg_));
  setText('top5_ocm_pegsUsed_byValue', fmtList_(t?.ocmTop5?.pegsUsedAsBuyer?.byValueBT, fmtPeg_));
 
@@ -239,18 +239,18 @@
  setText('st_storeTrades', fmtNumber_(st?.store?.tradesWithStoreCount,0));
  setText('st_storeNet', fmtNumber_(st?.store?.netDeltaBT,2));
  setText('st_storeLast', fmtNumber_(st?.store?.lastStoreAt));
- setText('st_storeMaxBuy', fmtNumber_(st?.store?.maxBuyValueBT,2));
- setText('st_storeMaxSell', fmtNumber_(st?.store?.maxSellValueBT,2));
+ setText('st_storeMaxBuy', fmtNumber_(st?.store?.maxBuyValueEW,2));
+ setText('st_storeMaxSell', fmtNumber_(st?.store?.maxSellValueEW,2));
  renderStoreFavorites_();
 
  // OCM
  setText('st_ocmTrades', fmtNumber_(st?.ocm?.totalTradesCount,0));
  setText('st_ocmCompletedMerchant', fmtNumber_(st?.ocm?.completedByMerchantCount,0));
  setText('st_ocmCompletedAdmin', fmtNumber_(st?.ocm?.completedByAdminCount,0));
- // Customer/merchant terminology: keep ids unchanged for compatibility
- setText('st_ocmAsBuyer', fmtNumber_(st?.ocm?.asBuyerCount,0));
+ // Merchant/Customer terminology: keep ids unchanged for compatibility
+ setText('st_ocmAsBuyer', fmtNumber_(st?.ocm?.asCustomerCount,0));
  setText('st_ocmAsMerchant', fmtNumber_(st?.ocm?.asMerchantCount,0));
- setText('st_ocmTotalValue', fmtNumber_(st?.ocm?.totalValueBT,2));
+ setText('st_ocmTotalValue', fmtNumber_(st?.ocm?.totalValueEW,2));
  setText('st_ocmFees', fmtNumber_(st?.ocm?.feesPaidBT,2));
  setText('st_ocmMax', fmtNumber_(st?.ocm?.maxTradeValueBT,2));
  setText('st_ocmLast', fmtIso_(st?.ocm?.lastTradeAt));
@@ -260,7 +260,7 @@
  const cp = st?.ocm?.favoriteCounterparty;
  setText('st_ocmFavCounterparty', cp?.playerName || '—');
  setText('st_ocmFavCounterpartyCount', cp ? fmtNumber_(cp.tradesCount,0) : '—');
- setText('st_ocmFavCounterpartyValue', cp ? fmtNumber_(cp.totalValueBT,2) : '—');
+ setText('st_ocmFavCounterpartyValue', cp ? fmtNumber_(cp.totalValueEW,2) : '—');
 
  // OCM favorites mirrored into core
  setText('st_ocmFavItemSold', st?.ocm?.favoriteItemSoldAsMerchant?.itemName || '—');

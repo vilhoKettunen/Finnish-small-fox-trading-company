@@ -305,7 +305,7 @@
  <div class="small" style="margin-bottom:6px;">
  Payment: <strong>${payment.method || 'EW'}</strong>
  ${payItemPart}
- &nbsp;|&nbsp; Total: <strong>${fmt(payment.payTotalBT || h.totalValueBT ||0)} EW</strong>
+ &nbsp;|&nbsp; Total: <strong>${fmt(payment.payTotalEW || h.totalValueEW ||0)} EW</strong>
  </div>
  <div class="small">
  TradeValueBT (basis): <strong>${fmt(pricing.tradeValueBT ||0)} EW</strong>
@@ -368,7 +368,7 @@
  <td>${h.tradeId || ''}</td>
  <td>${h.traderName || ''}</td>
  <td>${h.completedBy || ''}</td>
- <td>${fmt(h.totalValueBT ||0)}</td>
+ <td>${fmt(h.totalValueEW ||0)}</td>
  <td>${hasDetails ? `<button type="button" data-details-toggle="1">See details</button>` : `<span class="small">No details</span>`}</td>
  `;
 

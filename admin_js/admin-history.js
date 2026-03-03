@@ -209,7 +209,7 @@ function formatQtyStkInd_(qty, stackSize) {
    <div class="small" style="margin-bottom:6px;">
  Payment: <strong>${esc(payment.method || 'EW')}</strong>
  ${payItemPart}
-       &nbsp;|&nbsp; Total: <strong>${(Number(payment.canonicalBT ?? payment.payTotalBT ?? h.totalValueBT ??0)).toFixed(2)} EW</strong>
+       &nbsp;|&nbsp; Total: <strong>${(Number(payment.canonicalEW ?? payment.payTotalEW ?? h.totalValueEW ??0)).toFixed(2)} EW</strong>
   </div>
    <div class="small">
  Pricing basis: <strong>${esc(pricing.pricingBasis || '')}</strong>
@@ -281,7 +281,7 @@ window.adminLoadHistory = async function adminLoadHistory() {
      <td>${esc(h.tradeId || '')}</td>
    <td>${esc(h.traderName || '')}</td>
    <td>${esc(h.completedBy || '')}</td>
-     <td>${(Number(h.totalValueBT || 0)).toFixed(2)}</td>
+     <td>${(Number(h.totalValueEW || 0)).toFixed(2)}</td>
      <td>${hasDetails ? `<button type="button" data-details-toggle="1">See details</button>` : `<span class="small">No details</span>`}</td>
      `;
 

@@ -130,8 +130,8 @@
  const quantityUnits = Math.max(1, Math.round(Number(byId('createQtyUnitsFull').value ||0) ||0));
  if (!isFinite(quantityUnits) || quantityUnits <=0) throw new Error('Invalid quantity');
 
- const fixedBTPerUnit = Number(byId('createFixedBT').value ||0);
- if (!isFinite(fixedBTPerUnit) || fixedBTPerUnit <=0) throw new Error('Fixed EW per unit must be >0');
+ const fixedEWPerUnit = Number(byId('createFixedBT').value ||0);
+ if (!isFinite(fixedEWPerUnit) || fixedEWPerUnit <=0) throw new Error('Fixed EW per unit must be >0');
 
  const r = await apiPost('ocmCreateListingV2', {
  idToken: S.googleIdToken,
@@ -141,8 +141,8 @@
  sourceItemId: '',
  stackSize,
  quantityUnits,
- pricingMode: 'FIXED_BT',
- fixedBTPerUnit
+ pricingMode: 'FIXED_EW',
+ fixedEWPerUnit
  });
 
  const d = r.data || r.result || r;
@@ -174,7 +174,7 @@
 
  function pricingLabel(l) {
  const p = l.pricing || {};
- if (p.mode === 'FIXED_BT') return `FIXED ${fmt2(p.fixedBTPerUnit)} EW/unit`;
+ if (p.mode === 'FIXED_EW') return `FIXED ${fmt2(p.fixedEWPerUnit)} EW/unit`;
 
  const prim = p.primaryPeg || (p.pegItemName ? { itemName:p.pegItemName, pegQtyPerInd:p.pegQtyPerUnit, ui:{ priceBasis:p.pricingBasis || 'IND' } } : null);
  if (!prim || !prim.itemName) return '—';
@@ -254,14 +254,14 @@
  byId('editCustomItemBlock').style.display = store ? 'none' : '';
 
  if (full) {
- byId('editPricingMode').value = 'FIXED_BT';
+ byId('editPricingMode').value = 'FIXED_EW';
  byId('editPricingMode').disabled = true;
  } else {
  byId('editPricingMode').disabled = false;
  }
 
  const pm = byId('editPricingMode').value;
- byId('editFixedFields').style.display = (pm === 'FIXED_BT') ? '' : 'none';
+ byId('editFixedFields').style.display = (pm === 'FIXED_EW') ? '' : 'none';
  byId('editPegBox').style.display = (pm === 'PEG') ? '' : 'none';
  byId('btnEditAddAlt').disabled = (pm !== 'PEG');
  }
@@ -331,8 +331,8 @@
  else byId('editItemCustom').value = l.itemName || '';
 
  const pm = String(l.pricing?.mode || 'PEG').toUpperCase();
- byId('editPricingMode').value = (pm === 'FIXED_BT') ? 'FIXED_BT' : 'PEG';
- byId('editFixedBTVal').value = String(l.pricing?.fixedBTPerUnit ??1);
+ byId('editPricingMode').value = (pm === 'FIXED_EW') ? 'FIXED_EW' : 'PEG';
+ byId('editFixedBTVal').value = String(l.pricing?.fixedEWPerUnit ??1);
 
  byId('editPause').checked = String(l.statusRaw || '').toUpperCase() === 'PAUSED';
  byId('editListingMsg').textContent = '';
@@ -437,12 +437,12 @@
  if (paused) payload.status = 'PAUSED';
 
  if (listingMode === 'FULL') {
- const fixedBTPerUnit = Number(byId('editFixedBTVal').value ||0);
- if (!isFinite(fixedBTPerUnit) || fixedBTPerUnit <=0) throw new Error('Fixed EW per unit must be >0');
- payload.pricingMode = 'FIXED_BT';
- payload.fixedBTPerUnit = fixedBTPerUnit;
+ const fixedEWPerUnit = Number(byId('editFixedBTVal').value ||0);
+ if (!isFinite(fixedEWPerUnit) || fixedEWPerUnit <=0) throw new Error('Fixed EW per unit must be >0');
+ payload.pricingMode = 'FIXED_EW';
+ payload.fixedEWPerUnit = fixedEWPerUnit;
  } else {
- if (pricingMode === 'FIXED_BT') throw new Error('FIXED_BT is only allowed for FULL listings.');
+ if (pricingMode === 'FIXED_EW') throw new Error('FIXED_EW is only allowed for FULL listings.');
  if (!O.validatePegSet_(S.editState.primary, S.editState.alts, byId('editPegWarn'))) throw new Error('Fix peg inputs');
  const pegPayload = O.buildPegPayload_(S.editState.primary, S.editState.alts);
  payload.pricingMode = 'PEG';

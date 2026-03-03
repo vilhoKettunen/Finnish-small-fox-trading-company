@@ -101,7 +101,7 @@
             const { snap, item, qty, payment, updatedAt } = tradeSnapshotSummary_(tr);
 
             const b = window.resolveNameMailbox_(tr.buyerUserId);
-            const s = window.resolveNameMailbox_(tr.sellerUserId);
+            const s = window.resolveNameMailbox_(tr.MerchantUserId);
 
             const actionable = isActionablePendingTrade_(tr);
 
@@ -193,7 +193,7 @@
         tb.innerHTML = '';
 
         (Admin.state.adminReviewQueue || []).forEach(l => {
-            const seller = window.resolveNameMailbox_(l.sellerUserId);
+            const Merchant = window.resolveNameMailbox_(l.MerchantUserId);
             const notes = [];
             if (l.isInvalidQty) notes.push('<span class="warn">INVALID QTY</span>');
 
@@ -205,7 +205,7 @@
  <td>${statusPill(l.status || l.statusRaw)}</td>
  <td class="mono">${esc(l.remainingQuantity)}</td>
  <td class="mono">${esc(Number(l.stackSize || 1) || 1)}</td>
- <td>${esc(seller.name)}<div class="small">Mailbox: <span class="mono">${esc(seller.mailbox)}</span> ${notes.length ? (' | ' + notes.join(' ')) : ''}</div></td>
+ <td>${esc(Merchant.name)}<div class="small">Mailbox: <span class="mono">${esc(Merchant.mailbox)}</span> ${notes.length ? (' | ' + notes.join(' ')) : ''}</div></td>
  <td class="mono">${esc(l.updatedAt || '')}</td>
  <td>
  <button type="button" data-more="1">Show more info</button>
@@ -230,13 +230,13 @@
                 } catch (e) { alert(e.message); }
             });
 
-            row.querySelector('button[data-more]')?.addEventListener('click', () => toggleListingDetailsRow_(row, l, seller));
+            row.querySelector('button[data-more]')?.addEventListener('click', () => toggleListingDetailsRow_(row, l, Merchant));
 
             tb.appendChild(row);
         });
     }
 
-    function toggleListingDetailsRow_(mainRow, listingObj, seller) {
+    function toggleListingDetailsRow_(mainRow, listingObj, Merchant) {
         const lmi = window.ListingMoreInfo;
         if (!lmi || typeof lmi.toggleDetailsRow !== 'function') {
             const marker = window.__ListingMoreInfoLoaded ? 'script executed but window.ListingMoreInfo missing' : 'script likely not loaded';
@@ -244,7 +244,7 @@
             return;
         }
 
-        const sellerLabel = `${seller?.name || ''} (Mailbox ${seller?.mailbox || 'N/A'})`;
+        const sellerLabel = `${Merchant?.name || ''} (Mailbox ${Merchant?.mailbox || 'N/A'})`;
         lmi.toggleDetailsRow(mainRow, listingObj, sellerLabel,9);
     }
 

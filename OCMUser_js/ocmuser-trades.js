@@ -77,7 +77,7 @@
  return {
  snap: s,
  item: s.listing?.itemName || '',
- counterparty: isMine ? (s.seller?.playerName || '') : (s.buyer?.playerName || ''),
+ counterparty: isMine ? (s.Merchant?.playerName || '') : (s.Customer?.playerName || ''),
  payment: s.payment?.method || 'EW',
  qty: Number(s.request?.requestedUnits || tr.quantity ||0),
  supportsItem
@@ -106,8 +106,8 @@
  row.querySelector('button[data-more]')?.addEventListener('click', async () => {
  const snapObj = sum.snap || safeJsonParse(tr.detailsJson || '{}', {}) || {};
 
- const b = resolveNameMailbox_(tr.buyerUserId, snapObj?.buyer?.playerName);
- const s = resolveNameMailbox_(tr.sellerUserId, snapObj?.seller?.playerName);
+ const b = resolveNameMailbox_(tr.buyerUserId, snapObj?.Customer?.playerName);
+ const s = resolveNameMailbox_(tr.MerchantUserId, snapObj?.Merchant?.playerName);
 
  const buyerLabel = `${b?.name || ''} (Mailbox ${b?.mailbox || 'N/A'})`;
  const sellerLabel = `${s?.name || ''} (Mailbox ${s?.mailbox || 'N/A'})`;
@@ -141,7 +141,7 @@
  row.querySelector('button[data-edit]')?.addEventListener('click', () => openEditTrade(tr, sum));
  } else {
  row.querySelector('button[data-accept]')?.addEventListener('click', async () => {
- if (!confirm('Accept and complete trade ' + tr.tradeId + ' as seller? (0% fee)')) return;
+ if (!confirm('Accept and complete trade ' + tr.tradeId + ' as Merchant? (0% fee)')) return;
  await apiPost('ocmAcceptTradeAsSellerV2', { idToken: S.googleIdToken, tradeId: tr.tradeId });
  await loadPendingRequests();
  });

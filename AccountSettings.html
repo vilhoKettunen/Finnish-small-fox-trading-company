@@ -102,8 +102,8 @@
             <span class="pill">Store: biggest sale transaction</span>
             <span class="pill">Store: trades with store</span>
             <span class="pill">OCM: trades as customer</span>
-            <span class="pill">OCM: trades as merchant</span>
-            <span class="pill">OCM: fees paid (merchant-side)</span>
+            <span class="pill">OCM: trades as Customer</span>
+            <span class="pill">OCM: fees paid (Customer-side)</span>
             <span class="pill">OCM: largest trade value</span>
             <span class="pill">OCM: total trade value</span>
         </div>
@@ -218,12 +218,12 @@
             <div>
                 <h3 style="margin: 0 0 8px 0;">OCM</h3>
                 <div class="stat"><span class="small">Total OCM trades</span><span id="st_ocmTrades" class="mono">—</span></div>
-                <div class="stat"><span class="small">Completed by merchant (you when you are merchant)</span><span id="st_ocmCompletedMerchant" class="mono">—</span></div>
+                <div class="stat"><span class="small">Completed by Customer (you when you are Customer)</span><span id="st_ocmCompletedMerchant" class="mono">—</span></div>
                 <div class="stat"><span class="small">Completed by admin</span><span id="st_ocmCompletedAdmin" class="mono">—</span></div>
                 <div class="stat"><span class="small">Trades as customer</span><span id="st_ocmAsBuyer" class="mono">—</span></div>
-                <div class="stat"><span class="small">Trades as merchant</span><span id="st_ocmAsMerchant" class="mono">—</span></div>
+                <div class="stat"><span class="small">Trades as Customer</span><span id="st_ocmAsMerchant" class="mono">—</span></div>
                 <div class="stat"><span class="small">Total trade value</span><span id="st_ocmTotalValue" class="mono">—</span></div>
-                <div class="stat"><span class="small">Fees paid (merchant-side)</span><span id="st_ocmFees" class="mono">—</span></div>
+                <div class="stat"><span class="small">Fees paid (Customer-side)</span><span id="st_ocmFees" class="mono">—</span></div>
                 <div class="stat"><span class="small">Largest trade value</span><span id="st_ocmMax" class="mono">—</span></div>
                 <div class="stat"><span class="small">Last OCM trade</span><span id="st_ocmLast" class="mono">—</span></div>
                 <div class="stat"><span class="small">Active listings</span><span id="st_ocmActiveListings" class="mono">—</span></div>
@@ -236,10 +236,10 @@
 
                 <div style="margin-top:10px;">
                     <div class="small muted" style="margin-bottom:4px;">Favorite OCM items / pegs</div>
-                    <div class="small">Sold as merchant: <strong id="st_ocmFavItemSold">—</strong></div>
+                    <div class="small">Sold as Customer: <strong id="st_ocmFavItemSold">—</strong></div>
                     <div class="small">Bought as customer: <strong id="st_ocmFavItemBought">—</strong></div>
                     <div class="small">Peg used as customer: <strong id="st_ocmFavPegUsed">—</strong></div>
-                    <div class="small">Peg received as merchant: <strong id="st_ocmFavPegReceived">—</strong></div>
+                    <div class="small">Peg received as Customer: <strong id="st_ocmFavPegReceived">—</strong></div>
                 </div>
             </div>
         </div>
@@ -300,12 +300,12 @@
                 </details>
 
                 <details style="margin-top:8px;">
-                    <summary class="small muted">Items sold as merchant (Top5 by trade count)</summary>
+                    <summary class="small muted">Items sold as Customer (Top5 by trade count)</summary>
                     <pre id="top5_ocm_itemsSold_byCount" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
                 </details>
 
                 <details>
-                    <summary class="small muted">Items sold as merchant (Top5 by EW value)</summary>
+                    <summary class="small muted">Items sold as Customer (Top5 by EW value)</summary>
                     <pre id="top5_ocm_itemsSold_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
                 </details>
 
@@ -330,12 +330,12 @@
                 </details>
 
                 <details style="margin-top:8px;">
-                    <summary class="small muted">Pegs received as merchant (Top5 by trade count)</summary>
+                    <summary class="small muted">Pegs received as Customer (Top5 by trade count)</summary>
                     <pre id="top5_ocm_pegsRecv_byCount" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
                 </details>
 
                 <details>
-                    <summary class="small muted">Pegs received as merchant (Top5 by EW value)</summary>
+                    <summary class="small muted">Pegs received as Customer (Top5 by EW value)</summary>
                     <pre id="top5_ocm_pegsRecv_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
                 </details>
             </div>

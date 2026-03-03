@@ -28,9 +28,9 @@
  function pricingSummary_(pricing) {
  const p = pricing || {};
  const mode = String(p.mode || '').toUpperCase();
- if (mode === 'FIXED_BT') {
- const v = Number(p.fixedBTPerUnit ?? p.fixedBtPerUnit ??0) ||0;
- return `FIXED_BT: <strong>${v.toFixed(2)} EW</strong> per unit`;
+ if (mode === 'FIXED_EW') {
+ const v = Number(p.fixedEWPerUnit ?? p.fixedEWPerUnit ??0) ||0;
+ return `FIXED_EW: <strong>${v.toFixed(2)} EW</strong> per unit`;
  }
 
  const prim = p.primaryPeg || (p.pegItemName ? {
@@ -55,11 +55,11 @@
 
  function renderListingNiceHtml(listingObj, sellerLabel) {
  const l = listingObj || {};
- const seller = sellerLabel || '';
+ const Merchant = sellerLabel || '';
 
  const lines = [];
  lines.push(`<div class="small"><strong>Listing details</strong></div>`);
- lines.push(`<div class="small" style="margin-top:6px;">Seller: ${esc(seller)}</div>`);
+ lines.push(`<div class="small" style="margin-top:6px;">Merchant: ${esc(Merchant)}</div>`);
 
  lines.push(`<div class="small" style="margin-top:6px;">` + [
  `<span class="pill-lite">${esc(String(l.type || '').toUpperCase() || '—')}</span>`,

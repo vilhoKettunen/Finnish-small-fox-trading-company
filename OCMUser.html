@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>OCM Merchant</title>
+    <title>OCM Customer</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="icon" href="data:,">
     <script src="app-config.js"></script>
@@ -36,7 +36,7 @@
         <div id="authStatus" class="small muted">Not logged in.</div>
     </div>
 
-    <h1>OCM Merchant</h1>
+    <h1>OCM Customer</h1>
 
     <section class="section" aria-label="Listing creation tool">
         <h2>Listing creation tool</h2>
@@ -77,7 +77,7 @@
                 <div>
                     <div class="peg-box">
                         <div class="small"><strong>Pricing (PEG)</strong></div>
-                        <div class="small muted">Primary + up to 10 alternative pegs. Buyer can pay with 
+                        <div class="small muted">Primary + up to 10 alternative pegs. Customer can pay with 
                         
                         
                         
@@ -227,7 +227,7 @@
         <h2>Pending trades</h2>
         <div class="grid">
             <div>
-                <h3>My pending requests (I am buyer)</h3>
+                <h3>My pending requests (I am Customer)</h3>
                 <div class="toolbar">
                     <button type="button" id="btnReloadMineTrades">Reload</button>
                     <span id="msgMine" class="small"></span>
@@ -238,7 +238,7 @@
                 </table>
             </div>
             <div>
-                <h3>Incoming pending requests (I am seller)</h3>
+                <h3>Incoming pending requests (I am Merchant)</h3>
                 <div class="toolbar">
                     <button type="button" id="btnReloadIncoming">Reload</button>
                     <span id="msgIncoming" class="small"></span>
@@ -294,7 +294,7 @@
     <label>Pricing mode
     <select id="editPricingMode">
     <option value="PEG">PEG</option>
-    <option value="FIXED_BT">FIXED_BT</option>
+    <option value="FIXED_EW">FIXED_EW</option>
     </select>
     </label>
 
