@@ -6,6 +6,17 @@
     const byId = Admin.byId;
     const esc = Admin.esc;
 
+    function printVelocityDebug_(label, resp) {
+        try {
+            const d = resp?.data || resp?.result || resp;
+            const lines = d?.velocityDebugLog;
+            if (!Array.isArray(lines) || !lines.length) return;
+            console.groupCollapsed(label);
+            lines.forEach(l => console.log(l));
+            console.groupEnd();
+        } catch { /* ignore */ }
+    }
+
     window.loadPendingRequests = async function loadPendingRequests() {
     if (!Admin.state.googleIdToken) return;
    const msgEl = byId('reqMsg');
@@ -125,11 +136,14 @@ function renderRequests(arr) {
     window.approveRequest = async function approveRequest(id) {
    if (!confirm('Approve request ' + id + '?')) return;
         try {
-      await window.apiPost('approveRequest', { idToken: Admin.state.googleIdToken, requestId: id });
+      const resp = await window.apiPost('approveRequest', { idToken: Admin.state.googleIdToken, requestId: id });
+  printVelocityDebug_('Approve Request Debug Log', resp);
   window.loadPendingRequests();
   } catch (e) {
-   alert(e.message);
-   }
+ // api-client.js throws on {ok:false}. It attaches extras on err.extra sometimes.
+ try { printVelocityDebug_('Approve Request Debug Log (error)', e?.extra); } catch { }
+ alert(e.message);
+ }
     };
 
     window.denyRequest = async function denyRequest(id) {

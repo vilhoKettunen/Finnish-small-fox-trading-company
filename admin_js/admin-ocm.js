@@ -8,6 +8,17 @@
  const fmt2 = Admin.fmt2;
  const safeJsonParse = Admin.safeJsonParse;
 
+ function printVelocityDebug_(label, resp) {
+ try {
+ const d = resp?.data || resp?.result || resp;
+ const lines = d?.velocityDebugLog;
+ if (!Array.isArray(lines) || !lines.length) return;
+ console.groupCollapsed(label);
+ lines.forEach(l => console.log(l));
+ console.groupEnd();
+ } catch { /* ignore */ }
+ }
+
     // Insert this small helper block near the top of admin-ocm.js (immediately after
     // the `safeJsonParse`/helper declarations) so the functions exist before they're called.
 
@@ -815,9 +826,16 @@
  if (!mine && actionable) {
  row.querySelector('button[data-accept]')?.addEventListener('click', async () => {
  if (!confirm(`Accept trade ${tr.tradeId} as admin? (10% fee)`)) return;
- try { await window.apiPost('ocmAcceptTradeAsAdminV2', { idToken: Admin.state.googleIdToken, tradeId: tr.tradeId }); await window.loadAdminTargetPendingTrades(); }
- catch (e) { alert(e.message); }
- });
+ try {
+ const resp = await window.apiPost('ocmAcceptTradeAsAdminV2', { idToken: Admin.state.googleIdToken, tradeId: tr.tradeId });
+ printVelocityDebug_('OCM Accept Debug Log', resp);
+ await window.loadAdminTargetPendingTrades();
+ }
+ catch (e) {
+ try { printVelocityDebug_('OCM Accept Debug Log (error)', e?.extra); } catch {}
+ alert(e.message);
+ }
+});
 
  row.querySelector('button[data-deny]')?.addEventListener('click', async () => {
  if (!confirm(`Deny trade ${tr.tradeId}?`)) return;
