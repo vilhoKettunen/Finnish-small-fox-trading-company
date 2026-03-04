@@ -1,51 +1,64 @@
 // pricehistory-data.js
 window.PriceHistory = window.PriceHistory || {};
 window.PriceHistory.Data = (function () {
-  const { csvUrl, parseLocalNum, parseDateStrict } = window.PriceHistory.Utils;
+  const { csvUrlFor, parseLocalNum, parseDateStrict } = window.PriceHistory.Utils;
+  const { HISTORY_SHEETS } = window.PriceHistory.Config;
 
   const CACHE = { main: [], valuation: [], goal: [], targetStock: [] };
 
-  async function fetchCSV(sheetName) {
+  function resolveHistorySource_(sheetKey) {
+    const src = HISTORY_SHEETS && HISTORY_SHEETS[sheetKey];
+    if (!src || !src.spreadsheetId || !src.tabName) {
+      throw new Error(`Missing HISTORY_SHEETS mapping for ${sheetKey}`);
+    }
+    return src;
+  }
+
+  async function fetchCSV(sheetKey) {
     try {
-      const res = await fetch(csvUrl(sheetName));
+      const src = resolveHistorySource_(sheetKey);
+      const res = await fetch(csvUrlFor(src.spreadsheetId, src.tabName));
       if (!res.ok) throw new Error('Fetch failed');
-const text = await res.text();
+      const text = await res.text();
       const lines = text.replace(/\r/g, '').split('\n').filter(l => l.trim() !== '');
       if (lines.length <= 1) return [];
 
-  return lines
-   .slice(1)
-  .map(line => {
-     const parts = line
-       .split(/,(?=(?:(?:[^\"]*\"){2})*[^\"]*$)/)
- .map(s => s.replace(/^\"|\"$/g, '').trim());
+      return lines
+        .slice(1)
+        .map(line => {
+          const parts = line
+            .split(/,(?=(?:(?:[^\"]*\"){2})*[^\"]*$)/)
+            .map(s => s.replace(/^\"|\"$/g, '').trim());
 
-    const dateStr = parts[0];
- const item = parts[1];
+          const dateStr = parts[0];
+          const item = parts[1];
 
-    const valCol = parseLocalNum(parts[2]);
-      const stockCol = parseLocalNum(parts[3]);
-    const ts = parseDateStrict(dateStr);
+          const valCol = parseLocalNum(parts[2]);
+          const stockCol = parseLocalNum(parts[3]);
+          const ts = parseDateStrict(dateStr);
 
-      if (sheetName.includes('Valuation') || sheetName.includes('Goal')) {
-   return { ts, item, value: valCol };
-     }
-     return { ts, item, value: valCol, stock: stockCol };
+          // 3-column sheets: Timestamp, Item, Value
+          if (sheetKey.includes('Valuation') || sheetKey.includes('Goal') || sheetKey.includes('TargetStock')) {
+            return { ts, item, value: valCol };
+          }
+
+          // 4-column sheets: Timestamp, Item, Price, Stock
+          return { ts, item, value: valCol, stock: stockCol };
         })
-   .filter(r => r.item && r.ts);
+        .filter(r => r.item && r.ts);
     } catch (e) {
-      console.error('Error loading sheet:', sheetName, e);
+      console.error('Error loading sheet:', sheetKey, e);
       return [];
     }
   }
 
-  async function loadAllSheets(mainSheetName) {
+  async function loadAllSheets(mainSheetKey) {
     const [main, val, goal, targetStock] = await Promise.all([
-      fetchCSV(mainSheetName),
-  fetchCSV('ValuationHistory'),
+      fetchCSV(mainSheetKey),
+      fetchCSV('ValuationHistory'),
       fetchCSV('GoalHistory'),
       fetchCSV('TargetStockHistory')
-]);
+    ]);
 
     CACHE.main = main;
     CACHE.valuation = val;

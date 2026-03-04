@@ -3,24 +3,34 @@ window.PriceHistory = window.PriceHistory || {};
 window.PriceHistory.Utils = (function () {
   const { SPREADSHEET_ID, USER_LOCALE, ITEM_COLOR_PALETTE } = window.PriceHistory.Config;
 
+  // Build a public CSV URL using the Google Visualization endpoint.
+  // Works for "published to web" sheets.
+  // If this ever fails for a given sheet, alternative is the export endpoint:
+  //   https://docs.google.com/spreadsheets/d/{id}/export?format=csv&gid={gid}
+  // (requires gid instead of tab name)
+  function csvUrlFor(spreadsheetId, tabName) {
+    return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(spreadsheetId)}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}`;
+  }
+
+  // Legacy wrapper (single-spreadsheet mode)
   function csvUrl(sheet) {
-return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheet)}`;
+    return csvUrlFor(SPREADSHEET_ID, sheet);
   }
 
   function normalizeName(name) {
     return String(name || '')
- .trim()
- .toLowerCase()
+      .trim()
+      .toLowerCase()
       .replace(/\s+/g, ' ');
   }
 
   function csvToNormalizedSet(csv) {
     const out = new Set();
     String(csv || '')
- .split(',')
+      .split(',')
       .map(s => s.trim())
- .filter(Boolean)
-  .forEach(s => out.add(normalizeName(s)));
+      .filter(Boolean)
+      .forEach(s => out.add(normalizeName(s)));
     return out;
   }
 
@@ -33,12 +43,12 @@ return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out
       const lastComma = clean.lastIndexOf(',');
       const lastDot = clean.lastIndexOf('.');
       if (lastComma > lastDot) {
-    clean = clean.replace(/\./g, '').replace(',', '.');
-  } else {
-    clean = clean.replace(/,/g, '');
+        clean = clean.replace(/\./g, '').replace(',', '.');
+      } else {
+        clean = clean.replace(/,/g, '');
       }
     } else if (clean.includes(',')) {
-  clean = clean.replace(',', '.');
+      clean = clean.replace(',', '.');
     }
 
     const result = parseFloat(clean);
@@ -51,10 +61,10 @@ return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out
 
     const parts = s.split(/[\/\-\.]/);
     if (parts.length === 3) {
- const day = parseInt(parts[0], 10);
+      const day = parseInt(parts[0], 10);
       const month = parseInt(parts[1], 10);
       let year = parseInt(parts[2], 10);
-  if (year < 100) year += 2000;
+      if (year < 100) year += 2000;
       return new Date(year, month - 1, day);
     }
 
@@ -72,8 +82,8 @@ return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out
   function hashStringToInt(s) {
     let h = 0;
     const str = String(s || '');
-for (let i = 0; i < str.length; i++) {
-  h = (h * 31 + str.charCodeAt(i)) | 0;
+    for (let i = 0; i < str.length; i++) {
+      h = (h * 31 + str.charCodeAt(i)) | 0;
     }
     return Math.abs(h);
   }
@@ -102,9 +112,9 @@ for (let i = 0; i < str.length; i++) {
         for (let step = 1; step <= palette.length; step++) {
           const c = palette[(startIdx + step) % palette.length];
           if (!used.has(c)) {
- found = c;
- break;
- }
+            found = c;
+            break;
+          }
         }
         chosen = found || desired;
       }
@@ -135,21 +145,22 @@ for (let i = 0; i < str.length; i++) {
 
   function clamp01(x) {
     if (!isFinite(x)) return 0;
-return Math.max(0, Math.min(1, x));
+    return Math.max(0, Math.min(1, x));
   }
 
   return {
-csvUrl,
+    csvUrlFor,
+    csvUrl,
     normalizeName,
     csvToNormalizedSet,
     parseLocalNum,
     parseDateStrict,
     computeCutoff,
-dateFmt,
+    dateFmt,
     baseItemColor,
-assignUniqueColors,
+    assignUniqueColors,
     itemColor,
-hexToRgba,
+    hexToRgba,
     clamp01
   };
 })();
