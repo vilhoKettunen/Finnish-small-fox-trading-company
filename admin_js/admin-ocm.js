@@ -792,7 +792,7 @@
  (arr || []).forEach(tr => {
  const snap = safeJsonParse(tr.detailsJson || '{}') || {};
  const item = snap.listing?.itemName || '';
- const counterparty = mine ? (snap.Customer?.playerName || '') : (snap.Merchant?.playerName || '');
+     const counterparty = mine ? (snap.Merchant?.playerName || '') : (snap.Customer?.playerName || '');
  const payment = snap.payment?.method || '';
  const qty = Number(snap.request?.requestedUnits || tr.quantity ||0);
 

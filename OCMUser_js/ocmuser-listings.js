@@ -8,6 +8,14 @@
  const esc = O.esc;
  const fmt2 = O.fmt2;
 
+ // =========================
+ // DEBUG (testing)
+ // Set to true to request backend step-by-step logs for `ocmListMyListingsV2`.
+ // Backend logs return as `data.debugLog` (array of strings) and are printed by api-client.js
+ // when its `API_DEBUG_LOGGING` is enabled.
+ // =========================
+ const OCMUSER_DEBUG_MY_LISTINGS = false;
+
  function setCreationTab(which) {
  const map = {
  store: { tab: 'tabCreateStore', panel: 'panelCreateStore' },
@@ -155,7 +163,7 @@
 
  async function loadMyListings() {
  if (!S.googleIdToken) return;
- const r = await apiGet('ocmListMyListingsV2', { idToken: S.googleIdToken });
+ const r = await apiGet('ocmListMyListingsV2', { idToken: S.googleIdToken, dbg: OCMUSER_DEBUG_MY_LISTINGS ?1 : '' });
  const d = r.data || r.result || r;
  S.myListings = d.listings || [];
  renderMyListings();

@@ -481,11 +481,11 @@
         try { window.renderBuyList && window.renderBuyList(); } catch { }
         try { window.calculateNet && window.calculateNet(); } catch { }
 
-        const netBT = getNetRaw();
+        const netEW = getNetRaw();
         const budgetBT = computeConvertBudgetBT_(mode);
 
         if (mode === 'NET') {
-            if (netBT <= 0) {
+            if (netEW <= 0) {
                 const converterResult = document.getElementById('converterResult');
                 if (converterResult) converterResult.textContent = '⚠️ Net Balance is not positive.';
                 return;

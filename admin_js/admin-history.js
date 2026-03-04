@@ -146,7 +146,7 @@ function formatQtyStkInd_(qty, stackSize) {
         const buy = carts.buy || [];
     const sell = carts.sell || [];
   const totals = d.totals || {};
-   const net = Number(totals.netBT || 0);
+   const net = Number(totals.netEW || 0);
   const manual = d.manualBalanceDeltaBT != null ? Number(d.manualBalanceDeltaBT) : null;
 
     const prettyAt = formatDatePretty(h.at || '');

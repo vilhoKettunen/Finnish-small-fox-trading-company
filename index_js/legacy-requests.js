@@ -15,9 +15,9 @@
         const buyRowsForSend = (window.buyCart || []).filter(r => !r.isAccountBalancePinned).map(mapRow);
         const sellRowsForSend = (window.sellCart || []).filter(r => !r.isAccountBalancePinned).map(mapRow);
 
-        const buyBT = buyRowsForSend.reduce((s, i) => s + (i.priceBT * i.qty), 0);
-        const sellBT = sellRowsForSend.reduce((s, i) => s + (i.priceBT * i.qty), 0);
-        const netBT = sellBT - buyBT;
+        const buyEW = buyRowsForSend.reduce((s, i) => s + (i.priceBT * i.qty), 0);
+        const sellEW = sellRowsForSend.reduce((s, i) => s + (i.priceBT * i.qty), 0);
+        const netEW = sellEW - buyEW;
 
         const manualBuyBal = (window.buyCart || []).filter(r => r.isBalance && !r.isAccountBalancePinned).reduce((s, r) => s + (r.price * r.qty), 0);
         const manualSellBal = (window.sellCart || []).filter(r => r.isBalance && !r.isAccountBalancePinned).reduce((s, r) => s + (r.price * r.qty), 0);
@@ -37,7 +37,7 @@
             createdAt: new Date().toISOString(),
             user: baseUser,
             carts: { buy: buyRowsForSend, sell: sellRowsForSend },
-            totals: { buyBT, sellBT, netBT },
+            totals: { buyEW, sellEW, netEW },
             manualBalanceDeltaBT,
             priceSource: { sheetId: 'PRICE_SHEET', asOf: new Date().toISOString() },
             editedFromRequestId: window.editedFromRequestId || null,

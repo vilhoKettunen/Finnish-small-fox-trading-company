@@ -47,7 +47,7 @@ function renderRequests(arr) {
         const tb = byId('tbRequests');
    tb.innerHTML = '';
     arr.forEach(r => {
-   const net = Number(r.totals?.netBT || 0);
+   const net = Number(r.totals?.netEW || 0);
   const mailbox = r.user?.mailbox || '-';
    const tr = document.createElement('tr');
   tr.innerHTML = `
@@ -55,8 +55,8 @@ function renderRequests(arr) {
       <td>${esc(r.user?.playerName || '')}</td>
       <td style="font-weight:bold; color:#0066cc;">${esc(mailbox)}</td>
      <td>
-     <div class="small">Buy: ${(Number(r.totals?.buyBT || 0)).toFixed(2)}</div>
-     <div class="small">Sell: ${(Number(r.totals?.sellBT || 0)).toFixed(2)}</div>
+     <div class="small">Buy: ${(Number(r.totals?.buyEW || 0)).toFixed(2)}</div>
+     <div class="small">Sell: ${(Number(r.totals?.sellEW || 0)).toFixed(2)}</div>
        </td>
  <td class="mono">${(Number(r.manualBalanceDeltaBT || 0)).toFixed(2)}</td>
       <td class="mono" style="color:${net >= 0 ? 'green' : 'red'}">${net.toFixed(2)}</td>
@@ -123,8 +123,8 @@ function renderRequests(arr) {
      </div>
      <div style="margin-top:15px; text-align:right; border-top:1px solid #eee; padding-top:10px;">
      <strong>Net Balance Change: </strong>
-    <span style="font-size:1.2em; color:${details.totals?.netBT >= 0 ? 'green' : 'red'}">
-   ${(Number(details.totals?.netBT || 0)).toFixed(2)} EW
+    <span style="font-size:1.2em; color:${details.totals?.netEW >= 0 ? 'green' : 'red'}">
+   ${(Number(details.totals?.netEW || 0)).toFixed(2)} EW
     </span>
      </div>
  </div>`;
