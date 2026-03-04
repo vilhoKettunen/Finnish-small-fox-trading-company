@@ -14,7 +14,14 @@ window.PriceHistory.Config = {
     SellHistory:        { spreadsheetId: '1siICPt1qzBfJFlXTtTWlwwZw4cUw0p9g3zoe2cUouBI', tabName: 'History' },
     ValuationHistory:   { spreadsheetId: '14fHs-CDv53F4ZynAGem1ESKz-kngjjf0Tj0_K1OygsM', tabName: 'History' },
     GoalHistory:        { spreadsheetId: '1DkPjABNTCqbOkasPnTI7DF9C8GNafujqWAuMb9SY4zk', tabName: 'History' },
-    TargetStockHistory: { spreadsheetId: '13TxnisJImLlYwDTme9ihuHj9CPRubFfAyYFWcPm-RmE', tabName: 'History' }
+    TargetStockHistory: { spreadsheetId: '13TxnisJImLlYwDTme9ihuHj9CPRubFfAyYFWcPm-RmE', tabName: 'History' },
+
+    // Velocity histories
+    EwVelocity:         { spreadsheetId: '1frHtigWQ6Tz_7rd14pkqGqKiQwMXfcZ4Ttb385luJDY', tabName: 'History' },
+    VelocityVolume:     { spreadsheetId: '1VWSnlydtB_x49X5R0nj7la0LaxQiorq9dlMBslMVRXw', tabName: 'History' },
+    OcmVolume:          { spreadsheetId: '1yDJ7qH6Kky58Ar5ft9WyAlEx-XfHOcV3mrp4Q67YQAQ', tabName: 'History' },
+    UniqueTraders:      { spreadsheetId: '1XvwJHZh1aLYU2ckikUNCTbSO0_obAOiG7HvHQH-AGq0', tabName: 'History' },
+    TradeCount:         { spreadsheetId: '1ea803qSnyaxmiJILcgdOJYVWd4Kl7vTOCrbVKNkJh48', tabName: 'History' }
   },
 
   // Keep true only when debugging inflation behavior.
@@ -60,8 +67,19 @@ window.PriceHistory.Config = {
   DEFAULTS: {
     showCombinedPrice: false,
     normalizeCombinedTo100: false,
+    // New: normalize each item line to base=100 for the visible range
+    normalizePriceItemsTo100: false,
+
     showCombinedMiddleSum: false,
     // For multi-item change/changePct readability
-    multiItemChangeChartType: 'line'
+    multiItemChangeChartType: 'line',
+
+    // Velocity defaults
+    velocityMetric: 'ewVelocity',
+    velocityShowBreakdown: true,
+    velocityShowCombinedSum: false,
+    velocityNormalizeTo100: false,
+    velocityShowA: true,
+    velocityShowB: true
   }
 };

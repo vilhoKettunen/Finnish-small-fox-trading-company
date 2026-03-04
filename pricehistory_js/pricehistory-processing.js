@@ -150,6 +150,20 @@ while (j < rowsSorted.length && rowsSorted[j].ts <= d) {
     return values.map(v => (v == null || !isFinite(v) ? null : (v / first) * 100));
   }
 
+  function normalizeTo100FirstNonZero(values) {
+    const first = (values || []).find(v => v != null && isFinite(v) && v !== 0);
+    if (first == null || !isFinite(first) || first === 0) return values;
+    return values.map(v => (v == null || !isFinite(v) ? null : (v / first) * 100));
+  }
+
+  function normalizePerItemSeriesMapTo100_(axisDates, perItemSeriesMap) {
+    const out = new Map();
+    for (const [item, series] of perItemSeriesMap.entries()) {
+      out.set(item, normalizeTo100(series));
+    }
+    return out;
+  }
+
   function computeCombinedWeightedPrice(axisDates, items, perItemPriceGapSeries) {
     // Weight per item/day:
     // prefer valuation as-of, else fallback to (stock as-of * price as-of), else no weight.
@@ -235,9 +249,13 @@ if (!atLeastOne || !isFinite(wSum) || wSum <= 0) {
     const combined = computeCombinedWeightedPrice(axisDates, items, perItemPrices);
     const combinedOut = options.normalizeCombinedTo100 ? normalizeTo100(combined) : combined;
 
+    const perItemOut = options.normalizeItemsTo100
+ ? normalizePerItemSeriesMapTo100_(axisDates, perItemPrices)
+ : perItemPrices;
+
     return {
   axisDates,
-      perItemPrices,
+      perItemPrices: perItemOut,
       combined: combinedOut,
       perItemLastKnown
     };
@@ -246,335 +264,452 @@ if (!atLeastOne || !isFinite(wSum) || wSum <= 0) {
   function processMiddleMetricSeriesMulti(items, rangeDays, metric) {
     const cutoff = computeCutoff(rangeDays);
 
-    // Axis based on underlying data source for the metric.
-    // For stock/change/changePct: main axis
-    // For valuation/goal/targetStock: use respective axis but keep union across items
     const usesVal = metric === 'valuation';
     const usesGoal = metric === 'goal';
     const usesTarget = metric === 'targetStock';
 
     const axisDates = (() => {
-      if (usesVal) return buildUnionAxisDatesForItems(items, rangeDays, true);
-      if (usesGoal) {
-   const set = new Set();
-        for (const r of CACHE.goal || []) {
-    if (!r.ts || r.ts < cutoff) continue;
-      if (items && items.length && !items.includes(r.item)) continue;
-      set.add(+r.ts);
-  }
-   return [...set].sort((a, b) => a - b).map(ms => new Date(ms));
-  }
-if (usesTarget) {
-   const set = new Set();
-        for (const r of CACHE.targetStock || []) {
-      if (!r.ts || r.ts < cutoff) continue;
-     if (items && items.length && !items.includes(r.item)) continue;
-     set.add(+r.ts);
-    }
-        return [...set].sort((a, b) => a - b).map(ms => new Date(ms));
-      }
-      return buildUnionAxisDatesForItems(items, rangeDays, false);
-    })();
+ if (usesVal) return buildUnionAxisDatesForItems(items, rangeDays, true);
+ if (usesGoal) {
+ const set = new Set();
+ for (const r of CACHE.goal || []) {
+ if (!r.ts || r.ts < cutoff) continue;
+ if (items && items.length && !items.includes(r.item)) continue;
+ set.add(+r.ts);
+ }
+ return [...set].sort((a, b) => a - b).map(ms => new Date(ms));
+ }
+ if (usesTarget) {
+ const set = new Set();
+ for (const r of CACHE.targetStock || []) {
+ if (!r.ts || r.ts < cutoff) continue;
+ if (items && items.length && !items.includes(r.item)) continue;
+ set.add(+r.ts);
+ }
+ return [...set].sort((a, b) => a - b).map(ms => new Date(ms));
+ }
+ return buildUnionAxisDatesForItems(items, rangeDays, false);
+ })();
 
     const perItemSeries = new Map();
-const perItemLastKnown = new Map();
+    const perItemLastKnown = new Map();
 
     for (const item of items || []) {
-      if (metric === 'stock') {
-        const rows = (CACHE.main || [])
-    .filter(r => r.item === item && r.ts && r.ts >= cutoff)
-      .sort((a, b) => a.ts - b.ts);
-  perItemSeries.set(item, alignSeriesToAxis(rows, axisDates, r => r.stock));
-   perItemLastKnown.set(item, buildAsOfSeries(rows, axisDates, r => ({ v: r.stock, ts: r.ts })));
-      } else if (metric === 'valuation') {
-   const rows = (CACHE.valuation || [])
-     .filter(r => r.item === item && r.ts && r.ts >= cutoff)
-.sort((a, b) => a.ts - b.ts);
-        perItemSeries.set(item, alignSeriesToAxis(rows, axisDates, r => r.value));
-    perItemLastKnown.set(item, buildAsOfSeries(rows, axisDates, r => ({ v: r.value, ts: r.ts })));
-  } else if (metric === 'targetStock') {
-    const rows = (CACHE.targetStock || [])
-     .filter(r => r.item === item && r.ts && r.ts >= cutoff)
-.sort((a, b) => a.ts - b.ts);
-        perItemSeries.set(item, alignSeriesToAxis(rows, axisDates, r => r.value));
-    perItemLastKnown.set(item, buildAsOfSeries(rows, axisDates, r => ({ v: r.value, ts: r.ts })));
-  } else if (metric === 'goal') {
-  const rows = (CACHE.goal || [])
-     .filter(r => r.item === item && r.ts && r.ts >= cutoff)
-      .sort((a, b) => a.ts - b.ts);
-        perItemSeries.set(item, alignSeriesToAxis(rows, axisDates, r => (r.value != null && isFinite(r.value) ? r.value * 100 : null)));
-  perItemLastKnown.set(item, buildAsOfSeries(rows, axisDates, r => ({ v: r.value != null && isFinite(r.value) ? r.value * 100 : null, ts: r.ts })));
-  } else {
-   // change/changePct derived from per-item price gap series
-  const priceRows = (CACHE.main || [])
-      .filter(r => r.item === item && r.ts && r.ts >= cutoff)
-     .sort((a, b) => a.ts - b.ts);
-    const prices = alignSeriesToAxis(priceRows, axisDates, r => r.value);
-   const derived = metric === 'change' ? computeChangeSeries(prices) : computeChangePctSeries(prices);
-        perItemSeries.set(item, derived);
-   perItemLastKnown.set(item, buildAsOfSeries(priceRows, axisDates, r => ({ v: r.value, ts: r.ts })));
-      }
-    }
+ if (metric === 'stock') {
+ const rows = (CACHE.main || [])
+ .filter(r => r.item === item && r.ts && r.ts >= cutoff)
+ .sort((a, b) => a.ts - b.ts);
+ perItemSeries.set(item, alignSeriesToAxis(rows, axisDates, r => r.stock));
+ perItemLastKnown.set(item, buildAsOfSeries(rows, axisDates, r => ({ v: r.stock, ts: r.ts })));
+ } else if (metric === 'valuation') {
+ const rows = (CACHE.valuation || [])
+ .filter(r => r.item === item && r.ts && r.ts >= cutoff)
+ .sort((a, b) => a.ts - b.ts);
+ perItemSeries.set(item, alignSeriesToAxis(rows, axisDates, r => r.value));
+ perItemLastKnown.set(item, buildAsOfSeries(rows, axisDates, r => ({ v: r.value, ts: r.ts })));
+ } else if (metric === 'targetStock') {
+ const rows = (CACHE.targetStock || [])
+ .filter(r => r.item === item && r.ts && r.ts >= cutoff)
+ .sort((a, b) => a.ts - b.ts);
+ perItemSeries.set(item, alignSeriesToAxis(rows, axisDates, r => r.value));
+ perItemLastKnown.set(item, buildAsOfSeries(rows, axisDates, r => ({ v: r.value, ts: r.ts })));
+ } else if (metric === 'goal') {
+ const rows = (CACHE.goal || [])
+ .filter(r => r.item === item && r.ts && r.ts >= cutoff)
+ .sort((a, b) => a.ts - b.ts);
 
-    // combined sum only meaningful for stock/valuation/targetStock
-    const canCombineSum = metric === 'stock' || metric === 'valuation' || metric === 'targetStock';
-    const combinedSum = canCombineSum
-      ? axisDates.map((_, i) => {
+ perItemSeries.set(item, alignSeriesToAxis(rows, axisDates, r => (r.value != null && isFinite(r.value) ? r.value *100 : null)));
+ perItemLastKnown.set(item, buildAsOfSeries(rows, axisDates, r => ({ v: r.value != null && isFinite(r.value) ? r.value *100 : null, ts: r.ts })));
+ } else {
+ const priceRows = (CACHE.main || [])
+ .filter(r => r.item === item && r.ts && r.ts >= cutoff)
+ .sort((a, b) => a.ts - b.ts);
+ const prices = alignSeriesToAxis(priceRows, axisDates, r => r.value);
+ const derived = metric === 'change' ? computeChangeSeries(prices) : computeChangePctSeries(prices);
+ perItemSeries.set(item, derived);
+ perItemLastKnown.set(item, buildAsOfSeries(priceRows, axisDates, r => ({ v: r.value, ts: r.ts })));
+ }
+ }
+
+ const canCombineSum = metric === 'stock' || metric === 'valuation' || metric === 'targetStock';
+ const combinedSum = canCombineSum
+ ? axisDates.map((_, i) => {
  let sum = 0;
-let any = false;
-    for (const item of items || []) {
-  const v = perItemSeries.get(item)?.[i];
-   if (v == null || !isFinite(v)) continue;
-  any = true;
+ let any = false;
+ for (const item of items || []) {
+ const v = perItemSeries.get(item)?.[i];
+ if (v == null || !isFinite(v)) continue;
+ any = true;
  sum += v;
-      }
-      return any ? sum : null;
-   })
-  : null;
+ }
+ return any ? sum : null;
+ })
+ : null;
 
-return { axisDates, perItemSeries, perItemLastKnown, combinedSum, canCombineSum };
-  }
+ return { axisDates, perItemSeries, perItemLastKnown, combinedSum, canCombineSum };
+ }
 
   // --- Inflation logic ---
   function groupByItemNormalized(rows) {
-    const m = new Map();
-    for (const r of rows || []) {
+ const m = new Map();
+ for (const r of rows || []) {
  const key = normalizeName(r.item);
-      if (!key) continue;
-  if (!m.has(key)) m.set(key, []);
-      m.get(key).push(r);
-    }
-    for (const arr of m.values()) {
+ if (!key) continue;
+ if (!m.has(key)) m.set(key, []);
+ m.get(key).push(r);
+ }
+ for (const arr of m.values()) {
  arr.sort((a, b) => a.ts - b.ts);
-    }
-    return m;
-  }
+ }
+ return m;
+ }
 
-  function pickDisplayNameForKey(key, mainByItem) {
-    const rows = mainByItem.get(key);
-if (rows && rows.length) return String(rows[0].item || '').trim();
-    return key;
-  }
+ function pickDisplayNameForKey(key, mainByItem) {
+ const rows = mainByItem.get(key);
+ if (rows && rows.length) return String(rows[0].item || '').trim();
+ return key;
+ }
 
-  function weightedMeanWithPivot(pairs) {
-    const valid = (pairs || []).filter(p => p && isFinite(p.x) && isFinite(p.w) && p.w >0);
-    if (!valid.length) return { mean: null, pivot: null, totalW:0 };
+ function weightedMeanWithPivot(pairs) {
+ const valid = (pairs || []).filter(p => p && isFinite(p.x) && isFinite(p.w) && p.w >0);
+ if (!valid.length) return { mean: null, pivot: null, totalW:0 };
 
-    const totalW = valid.reduce((s, p) => s + p.w,0);
-    if (!isFinite(totalW) || totalW <=0) return { mean: null, pivot: null, totalW:0 };
+ const totalW = valid.reduce((s, p) => s + p.w,0);
+ if (!isFinite(totalW) || totalW <=0) return { mean: null, pivot: null, totalW:0 };
 
-    const weightedSum = valid.reduce((s, p) => s + p.x * p.w,0);
-    const mean = weightedSum / totalW;
-    if (!isFinite(mean) || mean <=0) return { mean: null, pivot: null, totalW };
+ // Weighted mean (kept name for compatibility with chart tooltips)
+ const weightedSum = valid.reduce((s, p) => s + p.x * p.w,0);
+ const mean = weightedSum / totalW;
+ if (!isFinite(mean) || mean <=0) return { mean: null, pivot: null, totalW };
 
-    const pivot = valid.slice().sort((a, b) => b.w - a.w)[0] || null;
-    return { mean, pivot, totalW };
-  }
+ const pivot = valid.slice().sort((a, b) => b.w - a.w)[0] || null;
+ return { mean, pivot, totalW };
+ }
 
-  function getInflationCategoryKeys(categoryKey, appliedItems) {
-    const metalsSet = csvToNormalizedSet(INFLATION_LISTS.metalsCsv);
-    const commonSet = csvToNormalizedSet(INFLATION_LISTS.commonCsv);
+ function getInflationCategoryKeys(categoryKey, appliedItems) {
+ const metalsSet = csvToNormalizedSet(INFLATION_LISTS.metalsCsv);
+ const commonSet = csvToNormalizedSet(INFLATION_LISTS.commonCsv);
 
-    if (categoryKey === 'metals') return { includedSet: metalsSet, isSelection: false };
-    if (categoryKey === 'common') return { includedSet: commonSet, isSelection: false };
-    if (categoryKey === 'selected') {
+ if (categoryKey === 'metals') return { includedSet: metalsSet, isSelection: false };
+ if (categoryKey === 'common') return { includedSet: commonSet, isSelection: false };
+ if (categoryKey === 'selected') {
  const sel = new Set((appliedItems || []).map(normalizeName).filter(Boolean));
  return { includedSet: sel, isSelection: true };
  }
-    return { includedSet: null, isSelection: false };
-  }
+ return { includedSet: null, isSelection: false };
+ }
 
-  // Expose exact item lists for help UI
-  function getInflationCategoryItemList(categoryKey, appliedItems) {
-    const metals = (INFLATION_LISTS.metalsCsv || '').split(',').map(s => s.trim()).filter(Boolean);
-    const common = (INFLATION_LISTS.commonCsv || '').split(',').map(s => s.trim()).filter(Boolean);
+ function getInflationCategoryItemList(categoryKey, appliedItems) {
+ const metals = (INFLATION_LISTS.metalsCsv || '').split(',').map(s => s.trim()).filter(Boolean);
+ const common = (INFLATION_LISTS.commonCsv || '').split(',').map(s => s.trim()).filter(Boolean);
 
-    if (categoryKey === 'metals') return metals;
-    if (categoryKey === 'common') return common;
-    if (categoryKey === 'selected') return (appliedItems || []).slice();
-    return null;
-  }
+ if (categoryKey === 'metals') return metals;
+ if (categoryKey === 'common') return common;
+ if (categoryKey === 'selected') return (appliedItems || []).slice();
+ return null;
+ }
 
-  function processInflationIndexSeries(rangeDays, categoryKey, debugInfo) {
-    const cutoff = computeCutoff(rangeDays);
+ function processInflationIndexSeries(rangeDays, categoryKey, debugInfo) {
+ const cutoff = computeCutoff(rangeDays);
 
-    const mainRows = (CACHE.main || []).filter(r => r.ts && r.ts >= cutoff);
-    const valRows = (CACHE.valuation || []).filter(r => r.ts && r.ts >= cutoff);
+ const mainRows = (CACHE.main || []).filter(r => r.ts && r.ts >= cutoff);
+ const valRows = (CACHE.valuation || []).filter(r => r.ts && r.ts >= cutoff);
 
-    const axisMsSet = new Set();
-    for (const r of mainRows) axisMsSet.add(+r.ts);
-    for (const r of valRows) axisMsSet.add(+r.ts);
-    const axisDates = [...axisMsSet].sort((a, b) => a - b).map(ms => new Date(ms));
+ const axisMsSet = new Set();
+ for (const r of mainRows) axisMsSet.add(+r.ts);
+ for (const r of valRows) axisMsSet.add(+r.ts);
+ const axisDates = [...axisMsSet].sort((a, b) => a - b).map(ms => new Date(ms));
 
-    const mainByItem = groupByItemNormalized(mainRows);
-    const valByItem = groupByItemNormalized(valRows);
+ const mainByItem = groupByItemNormalized(mainRows);
+ const valByItem = groupByItemNormalized(valRows);
 
-    const { includedSet } = getInflationCategoryKeys(categoryKey, debugInfo?.appliedItems);
+ const { includedSet } = getInflationCategoryKeys(categoryKey, debugInfo?.appliedItems);
 
-    const candidateKeys = [...new Set(mainRows.map(r => normalizeName(r.item)).filter(Boolean))];
+ const candidateKeys = [...new Set(mainRows.map(r => normalizeName(r.item)).filter(Boolean))];
 
-    const existingCategoryKeys = (() => {
-      if (!includedSet) return null;
-  const keys = [];
-      includedSet.forEach(k => {
-    if (mainByItem.has(k)) keys.push(k);
-  });
-return keys;
-    })();
+ const existingCategoryKeys = (() => {
+ if (!includedSet) return null;
+ const keys = [];
+ includedSet.forEach(k => {
+ if (mainByItem.has(k)) keys.push(k);
+ });
+ return keys;
+ })();
 
-    const indexValues = new Array(axisDates.length).fill(null);
-    const contributingCounts = new Array(axisDates.length).fill(0);
-    const totalWeightPerDay = new Array(axisDates.length).fill(0);
-    const top5ByWeightPerDay = new Array(axisDates.length).fill(null);
-    const missingCountByDay = new Array(axisDates.length).fill(null);
-    const missingNamesByDay = new Array(axisDates.length).fill(null);
-    const medianFactorPerDay = new Array(axisDates.length).fill(null);
+ const indexValues = new Array(axisDates.length).fill(null);
+ const contributingCounts = new Array(axisDates.length).fill(0);
 
-    const perItemCache = new Map();
+ // Restore stats used by `drawInflationChart` tooltips
+ const totalWeightPerDay = new Array(axisDates.length).fill(0);
+ const top5ByWeightPerDay = new Array(axisDates.length).fill(null);
+ const missingCountByDay = new Array(axisDates.length).fill(null);
+ const missingNamesByDay = new Array(axisDates.length).fill(null);
+ const medianFactorPerDay = new Array(axisDates.length).fill(null);
 
-    function getPerItemSeries(key) {
-if (perItemCache.has(key)) return perItemCache.get(key);
+ const perItemCache = new Map();
 
-  const priceRows = mainByItem.get(key) || [];
-      const valuationRows = valByItem.get(key) || [];
+ function getPerItemSeries(key) {
+ if (perItemCache.has(key)) return perItemCache.get(key);
+
+ const priceRows = mainByItem.get(key) || [];
+ const valuationRows = valByItem.get(key) || [];
 
  const priceAsOf = buildAsOfSeries(priceRows, axisDates, r => r.value);
-      const stockAsOf = buildAsOfSeries(priceRows, axisDates, r => r.stock);
-      const valuationAsOf = buildAsOfSeries(valuationRows, axisDates, r => r.value);
+ const stockAsOf = buildAsOfSeries(priceRows, axisDates, r => r.stock);
+ const valuationAsOf = buildAsOfSeries(valuationRows, axisDates, r => r.value);
 
-      let baselinePrice = null;
-      for (const p of priceAsOf) {
-   if (p != null && isFinite(p) && p >0) {
-    baselinePrice = p;
-    break;
-        }
-      }
+ let baselinePrice = null;
+ for (const p of priceAsOf) {
+ if (p != null && isFinite(p) && p >0) {
+ baselinePrice = p;
+ break;
+ }
+ }
 
-      const v = { priceAsOf, stockAsOf, valuationAsOf, baselinePrice };
-  perItemCache.set(key, v);
+ const v = { priceAsOf, stockAsOf, valuationAsOf, baselinePrice };
+ perItemCache.set(key, v);
  return v;
-    }
+ }
 
-    for (let k =0; k < axisDates.length; k++) {
+ const iterKeys = includedSet ? existingCategoryKeys : candidateKeys;
+
+ for (let k = 0; k < axisDates.length; k++) {
  const pairs = [];
 
-      const iterKeys = includedSet ? existingCategoryKeys : candidateKeys;
-      for (const key of iterKeys || []) {
-    if (includedSet && !includedSet.has(key)) continue;
+ for (const key of iterKeys || []) {
+ if (includedSet && !includedSet.has(key)) continue;
 
-   const s = getPerItemSeries(key);
+ const s = getPerItemSeries(key);
+ const baseline = s.baselinePrice;
+ if (baseline == null || !isFinite(baseline) || baseline <=0) continue;
 
-   const baseline = s.baselinePrice;
-    if (baseline == null || !isFinite(baseline) || baseline <=0) continue;
+ const price = s.priceAsOf[k];
+ if (price == null || !isFinite(price) || price <=0) continue;
 
-  const price = s.priceAsOf[k];
-   if (price == null || !isFinite(price) || price <=0) continue;
+ const factor = price / baseline;
+ if (!isFinite(factor) || factor <=0) continue;
 
-   const factor = price / baseline;
-    if (!isFinite(factor) || factor <=0) continue;
-
-    let stockValueBT = s.valuationAsOf[k];
-    let usedFallback = false;
-    if (stockValueBT == null || !isFinite(stockValueBT) || stockValueBT <=0) {
-      const stockStacks = s.stockAsOf[k];
-      if (stockStacks != null && isFinite(stockStacks) && stockStacks >0) {
+ let stockValueBT = s.valuationAsOf[k];
+ let usedFallback = false;
+ if (stockValueBT == null || !isFinite(stockValueBT) || stockValueBT <=0) {
+ const stockStacks = s.stockAsOf[k];
+ if (stockStacks != null && isFinite(stockStacks) && stockStacks >0) {
  stockValueBT = stockStacks * price;
  usedFallback = true;
-      } else {
-       stockValueBT = null;
-      }
-    }
-
-    if (stockValueBT == null || !isFinite(stockValueBT) || stockValueBT <=0) continue;
-
-   const w = stockValueBT /1000;
-    if (!isFinite(w) || w <=0) continue;
-
-   pairs.push({ x: factor, w, key, usedFallback });
-      }
-
-      const meanInfo = weightedMeanWithPivot(pairs);
-      const mean = meanInfo.mean;
-
-  if (mean == null) {
-   indexValues[k] = null;
-   medianFactorPerDay[k] = null;
-    contributingCounts[k] =0;
-   totalWeightPerDay[k] =0;
-  top5ByWeightPerDay[k] = [];
-  } else {
-   indexValues[k] = mean *100;
-  medianFactorPerDay[k] = mean;
-   contributingCounts[k] = pairs.length;
-
-  const totalWDay = pairs.reduce((s, p) => s + p.w,0);
-        totalWeightPerDay[k] = isFinite(totalWDay) ? totalWDay :0;
-
-        const top = pairs
-     .slice()
-    .sort((a, b) => b.w - a.w)
-     .slice(0,5)
-      .map(p => {
- const name = pickDisplayNameForKey(p.key, mainByItem);
-        const sharePct = totalWDay >0 ? (p.w / totalWDay) *100 :0;
-        return { name, weight: p.w, sharePct, usedFallback: !!p.usedFallback };
-     });
-
-        top5ByWeightPerDay[k] = top;
-  }
-
-      if (includedSet && Array.isArray(existingCategoryKeys)) {
-    const present = new Set(pairs.map(p => p.key));
-    const missingKeys = existingCategoryKeys.filter(key => !present.has(key));
-
-  missingCountByDay[k] = missingKeys.length;
-    missingNamesByDay[k] = missingKeys.slice(0,5).map(k2 => pickDisplayNameForKey(k2, mainByItem));
-      } else {
-   missingCountByDay[k] = null;
-        missingNamesByDay[k] = null;
+ } else {
+ stockValueBT = null;
  }
-    }
+ }
 
-    if (DEBUG_INFLATION && debugInfo && (categoryKey === 'common' || categoryKey === 'metals' || categoryKey === 'selected')) {
-  try {
-    const counts = contributingCounts.slice();
-        const min = counts.length ? Math.min(...counts) :0;
-  const max = counts.length ? Math.max(...counts) :0;
-  const avg = counts.length ? counts.reduce((s, n) => s + n,0) / counts.length :0;
+ if (stockValueBT == null || !isFinite(stockValueBT) || stockValueBT <=0) continue;
 
-    console.log('[Inflation DEBUG]', {
-     sheet: debugInfo.sheet,
-range: debugInfo.range,
+ const w = stockValueBT /1000;
+ if (!isFinite(w) || w <=0) continue;
+
+ pairs.push({ x: factor, w, key, usedFallback });
+ }
+
+ const meanInfo = weightedMeanWithPivot(pairs);
+ const mean = meanInfo.mean;
+
+ if (mean == null) {
+ indexValues[k] = null;
+ medianFactorPerDay[k] = null;
+ contributingCounts[k] =0;
+ totalWeightPerDay[k] =0;
+ top5ByWeightPerDay[k] = [];
+ } else {
+ indexValues[k] = mean *100;
+ medianFactorPerDay[k] = mean;
+ contributingCounts[k] = pairs.length;
+
+ const totalWDay = pairs.reduce((s, p) => s + p.w,0);
+ totalWeightPerDay[k] = isFinite(totalWDay) ? totalWDay :0;
+
+ const top = pairs
+ .slice()
+ .sort((a, b) => b.w - a.w)
+ .slice(0,5)
+ .map(p => {
+ const name = pickDisplayNameForKey(p.key, mainByItem);
+ const sharePct = totalWDay >0 ? (p.w / totalWDay) *100 :0;
+ return { name, weight: p.w, sharePct, usedFallback: !!p.usedFallback };
+ });
+
+ top5ByWeightPerDay[k] = top;
+ }
+
+ if (includedSet && Array.isArray(existingCategoryKeys)) {
+ const present = new Set(pairs.map(p => p.key));
+ const missingKeys = existingCategoryKeys.filter(key => !present.has(key));
+
+ missingCountByDay[k] = missingKeys.length;
+ missingNamesByDay[k] = missingKeys.slice(0,5).map(k2 => pickDisplayNameForKey(k2, mainByItem));
+ } else {
+ missingCountByDay[k] = null;
+ missingNamesByDay[k] = null;
+ }
+ }
+
+ if (DEBUG_INFLATION && debugInfo && (categoryKey === 'common' || categoryKey === 'metals' || categoryKey === 'selected')) {
+ try {
+ const counts = contributingCounts.slice();
+ const min = counts.length ? Math.min(...counts) :0;
+ const max = counts.length ? Math.max(...counts) :0;
+ const avg = counts.length ? counts.reduce((s, n) => s + n,0) / counts.length :0;
+
+ console.log('[Inflation DEBUG]', {
+ sheet: debugInfo.sheet,
+ range: debugInfo.range,
  category: categoryKey,
-     axisDays: axisDates.length,
-      contributors: { min, avg, max },
-      daysWithNoPairs: counts.filter(x => x ===0).length,
+ axisDays: axisDates.length,
+ contributors: { min, avg, max },
+ daysWithNoPairs: counts.filter(x => x ===0).length,
  existingCategoryDenominator: existingCategoryKeys ? existingCategoryKeys.length : null
-    });
-      } catch (e) {
-    console.warn('Inflation DEBUG failed', e);
-      }
-    }
+ });
+ } catch (e) {
+ console.warn('Inflation DEBUG failed', e);
+ }
+ }
 
-    return {
-      axisDates,
-      indexValues,
-  contributingCounts,
-      totalWeightPerDay,
-      top5ByWeightPerDay,
-      missingCountByDay,
-      missingNamesByDay,
-      existingCategoryCount: existingCategoryKeys ? existingCategoryKeys.length : null,
-      medianFactorPerDay
-    };
-  }
+ return {
+ axisDates,
+ indexValues,
+ contributingCounts,
+ totalWeightPerDay,
+ top5ByWeightPerDay,
+ missingCountByDay,
+ missingNamesByDay,
+ existingCategoryCount: existingCategoryKeys ? existingCategoryKeys.length : null,
+ medianFactorPerDay
+ };
+ }
 
-  return {
+ // --- Velocity series processing (new) ---
+ function dateKeyLocal_(d) {
+ const yy = d.getFullYear();
+ const mm = String(d.getMonth() +1).padStart(2, '0');
+ const dd = String(d.getDate()).padStart(2, '0');
+ return `${yy}-${mm}-${dd}`;
+ }
+
+ function axisDailyDatesFromKeys_(keys) {
+ return (keys || [])
+ .slice()
+ .sort()
+ .map(k => {
+ const [y, m, d] = k.split('-').map(n => parseInt(n,10));
+ return new Date(y, (m ||1) -1, d ||1);
+ });
+ }
+
+ function buildVelocityAxisDailyKeys_(items, rangeDays, sheetKey) {
+ const cutoff = computeCutoff(rangeDays);
+ const wanted = new Set((items || []).map(String));
+
+ const rows = (CACHE.velocity && CACHE.velocity[sheetKey]) || [];
+ const keys = new Set();
+ for (const r of rows) {
+ if (!r || !r.ts || r.ts < cutoff) continue;
+ if (wanted.size && !wanted.has(r.item)) continue;
+ keys.add(dateKeyLocal_(r.ts));
+ }
+
+ return [...keys].sort();
+ }
+
+ function seriesByItemByDay_(items, sheetKey, rangeDays) {
+ const cutoff = computeCutoff(rangeDays);
+ const wanted = new Set((items || []).map(String));
+ const rows = (CACHE.velocity && CACHE.velocity[sheetKey]) || [];
+
+ const out = new Map();
+ for (const item of items || []) out.set(item, new Map());
+
+ for (const r of rows) {
+ if (!r || !r.ts || r.ts < cutoff) continue;
+ if (wanted.size && !wanted.has(r.item)) continue;
+ const dk = dateKeyLocal_(r.ts);
+ if (!out.has(r.item)) out.set(r.item, new Map());
+
+ const m = out.get(r.item);
+ const prev = m.get(dk) || { a:0, b:0 };
+ prev.a += isFinite(r.a) ? r.a :0;
+ if (r.b != null) prev.b += isFinite(r.b) ? r.b :0;
+ m.set(dk, prev);
+ }
+
+ return out;
+ }
+
+ function processVelocitySeriesMulti(items, rangeDays, velocitySheetKey, options) {
+ const opts = options || {};
+
+ const axisKeys = buildVelocityAxisDailyKeys_(items, rangeDays, velocitySheetKey);
+ const axisDates = axisDailyDatesFromKeys_(axisKeys);
+
+ const dayMapsByItem = seriesByItemByDay_(items, velocitySheetKey, rangeDays);
+
+ const perItemA = new Map();
+ const perItemB = new Map();
+ const perItemCombined = new Map();
+
+ for (const item of items || []) {
+ const dayMap = dayMapsByItem.get(item) || new Map();
+
+ const aSeries = axisKeys.map(k => {
+ const v = dayMap.get(k);
+ return v ? (isFinite(v.a) ? v.a :0) :0;
+ });
+
+ const bSeries = axisKeys.map(k => {
+ const v = dayMap.get(k);
+ return v ? (isFinite(v.b) ? v.b :0) :0;
+ });
+
+ perItemA.set(item, aSeries);
+ perItemB.set(item, bSeries);
+ perItemCombined.set(item, aSeries.map((v, i) => (isFinite(v) ? v :0) + (isFinite(bSeries[i]) ? bSeries[i] :0)));
+ }
+
+ const combinedSum = axisKeys.map((_, i) => {
+ let sum =0;
+ for (const item of items || []) {
+ const s = perItemCombined.get(item);
+ if (!s) continue;
+ const v = s[i];
+ if (!isFinite(v)) continue;
+ sum += v;
+ }
+ return sum;
+ });
+
+ const normalize = !!opts.normalizeTo100;
+
+ const perItemOutA = normalize ? new Map([...perItemA.entries()].map(([k, v]) => [k, normalizeTo100FirstNonZero(v)])) : perItemA;
+ const perItemOutB = normalize ? new Map([...perItemB.entries()].map(([k, v]) => [k, normalizeTo100FirstNonZero(v)])) : perItemB;
+ const perItemOutCombined = normalize
+ ? new Map([...perItemCombined.entries()].map(([k, v]) => [k, normalizeTo100FirstNonZero(v)]))
+ : perItemCombined;
+
+ const combinedSumOut = normalize ? normalizeTo100FirstNonZero(combinedSum) : combinedSum;
+
+ return {
+ axisDates,
+ perItemA: perItemOutA,
+ perItemB: perItemOutB,
+ perItemCombined: perItemOutCombined,
+ combinedSum: combinedSumOut
+ };
+ }
+
+ return {
     processPriceSeries,
     processMiddleMetricSeries,
     processPriceSeriesMulti,
     processMiddleMetricSeriesMulti,
     processInflationIndexSeries,
-    getInflationCategoryItemList
-  };
+    getInflationCategoryItemList,
+    processVelocitySeriesMulti
+ };
 })();

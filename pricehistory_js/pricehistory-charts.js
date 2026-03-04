@@ -6,14 +6,20 @@ window.PriceHistory.Charts = (function () {
   let priceChartInstance = null;
   let middleChartInstance = null;
   let inflationChartInstance = null;
+  let velocityChartInstance = null;
+  let velocityCombinedChartInstance = null;
 
   function destroyAll() {
     if (priceChartInstance) priceChartInstance.destroy();
     if (middleChartInstance) middleChartInstance.destroy();
     if (inflationChartInstance) inflationChartInstance.destroy();
+    if (velocityChartInstance) velocityChartInstance.destroy();
+    if (velocityCombinedChartInstance) velocityCombinedChartInstance.destroy();
     priceChartInstance = null;
     middleChartInstance = null;
     inflationChartInstance = null;
+    velocityChartInstance = null;
+    velocityCombinedChartInstance = null;
   }
 
   function formatLastKnownValue(metric, v) {
@@ -280,10 +286,90 @@ window.PriceHistory.Charts = (function () {
     });
   }
 
+  function drawVelocityChartMulti(axisDates, datasets, metricKey) {
+    const ctx = document.getElementById('velocityChart')?.getContext('2d');
+    if (!ctx) return;
+    if (velocityChartInstance) velocityChartInstance.destroy();
+
+    const formatY = (v) => {
+      if (v == null || !isFinite(v)) return 'No data';
+      const isEw = metricKey === 'ewVelocity';
+      return isEw ? Number(v).toFixed(2) : String(Math.round(v));
+    };
+
+    velocityChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: axisDates.map(dateFmt),
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            intersect: false,
+            mode: 'index',
+            callbacks: {
+              label: function (ctx) {
+                const v = ctx.parsed?.y;
+                return `${ctx.dataset.label}: ${formatY(v)}`;
+              }
+            }
+          }
+        },
+        interaction: { mode: 'nearest', axis: 'x', intersect: false },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+
+  function drawVelocityCombinedChart(axisDates, datasets, metricKey) {
+    const ctx = document.getElementById('velocityCombinedChart')?.getContext('2d');
+    if (!ctx) return;
+    if (velocityCombinedChartInstance) velocityCombinedChartInstance.destroy();
+
+    const formatY = (v) => {
+      if (v == null || !isFinite(v)) return 'No data';
+      const isEw = metricKey === 'ewVelocity';
+      return isEw ? Number(v).toFixed(2) : String(Math.round(v));
+    };
+
+    velocityCombinedChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: axisDates.map(dateFmt),
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            intersect: false,
+            mode: 'index',
+            callbacks: {
+              label: function (ctx) {
+                const v = ctx.parsed?.y;
+                return `${ctx.dataset.label}: ${formatY(v)}`;
+              }
+            }
+          }
+        },
+        interaction: { mode: 'nearest', axis: 'x', intersect: false },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+
   return {
     destroyAll,
     drawPriceChartMulti,
     drawMiddleChartMulti,
-    drawInflationChart
+    drawInflationChart,
+    drawVelocityChartMulti,
+    drawVelocityCombinedChart
   };
 })();

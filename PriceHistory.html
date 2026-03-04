@@ -12,7 +12,6 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="topbar.js"></script>
     <link rel="stylesheet" href="css/pages/pricehistory.css">
-    <!-- NOTE: this repo currently ships `css/pages/pricehistory.css` (lowercase). Keep as-is to avoid breaking. -->
     <link rel="stylesheet" href="css/site-layout.css">
     <link rel="stylesheet" href="css/panels-paper.css">
     <link rel="stylesheet" href="css/shared/universal-dropdown.css">
@@ -63,40 +62,13 @@
             </select>
         </label>
 
-        <div class="selectWithInfo">
-            <label>
-                Middle Chart Metric:
-                <select id="metricSelect">
-                    <option value="stock" selected>Stock Amount</option>
-                    <option value="change">Daily Price Change (+/-)</option>
-                    <option value="changePct">Daily Price Change (%)</option>
-                    <option value="valuation">Total Valuation</option>
-                    <option value="goal">Goal Stock %</option>
-                    <option value="targetStock">Target stock stack</option>
-                </select>
-            </label>
-            <button class="infoBtn" type="button" data-info="metricSystem" title="About metrics">More info (metrics)</button>
-        </div>
-
-        <div class="selectWithInfo">
-            <label>
-                Inflation Index Category:
-                <select id="indexSelect">
-                    <option value="median" selected>Median Item Inflation Index (Weighted)</option>
-                    <option value="metals">Metal Index (Weighted)</option>
-                    <option value="common">Common Items Index (Weighted)</option>
-                    <option value="selected">Selected items index (Weighted)</option>
-                </select>
-            </label>
-            <button class="infoBtn" type="button" data-info="indexSystem" title="About categories">More info (categories)</button>
-        </div>
-
         <div id="selectedItemImages" aria-label="Selected item images"></div>
 
         <div id="warningBox" role="status" aria-live="polite"></div>
     </div>
 
     <div id="charts">
+        <!-- Price Trend -->
         <div class="chart-card">
             <div class="chart-header">
                 <div>
@@ -109,6 +81,7 @@
                 <div class="toggles">
                     <label class="toggleRow"><input type="checkbox" id="toggleCombinedPrice" /> Show combined</label>
                     <label class="toggleRow"><input type="checkbox" id="toggleNormalizeCombined" /> Normalize combined to100</label>
+                    <label class="toggleRow"><input type="checkbox" id="toggleNormalizePriceItems" /> Normalize all to100</label>
                 </div>
             </div>
             <div class="chart-body">
@@ -119,6 +92,7 @@
             </div>
         </div>
 
+        <!-- Middle Chart -->
         <div class="chart-card">
             <div class="chart-header">
                 <div>
@@ -127,6 +101,21 @@
                         <button class="infoBtn" type="button" data-info="middleDynamic" title="About this metric">More info</button>
                     </div>
                     <div class="chart-meta" id="middleChartDesc">Metric for selected items</div>
+
+                    <div class="selectWithInfo" style="margin-top:.5rem;">
+                        <label>
+                            Middle Chart Metric:
+                            <select id="metricSelect">
+                                <option value="stock" selected>Stock Amount</option>
+                                <option value="change">Daily Price Change (+/-)</option>
+                                <option value="changePct">Daily Price Change (%)</option>
+                                <option value="valuation">Total Valuation</option>
+                                <option value="goal">Goal Stock %</option>
+                                <option value="targetStock">Target stock stack</option>
+                            </select>
+                        </label>
+                        <button class="infoBtn" type="button" data-info="metricSystem" title="About metrics">More info (metrics)</button>
+                    </div>
                 </div>
                 <div class="toggles">
                     <label class="toggleRow"><input type="checkbox" id="toggleCombinedMiddle" /> Show combined sum</label>
@@ -140,6 +129,7 @@
             </div>
         </div>
 
+        <!-- Inflation Index -->
         <div class="chart-card">
             <div class="chart-header">
                 <div>
@@ -149,15 +139,93 @@
                     </div>
                     <div class="chart-meta" id="inflationChartDesc">
                         Weighted median of per-item price inflation factors. Weight = stock value (
-                        
-                        
-                        
                         )/1000 (prefers ValuationHistory; falls back to stock*price).
+                    </div>
+
+                    <div class="selectWithInfo" style="margin-top:.5rem;">
+                        <label>
+                            Inflation Index Category:
+                            <select id="indexSelect">
+                                <option value="median" selected>Median Item Inflation Index (Weighted)</option>
+                                <option value="metals">Metal Index (Weighted)</option>
+                                <option value="common">Common Items Index (Weighted)</option>
+                                <option value="selected">Selected items index (Weighted)</option>
+                            </select>
+                        </label>
+                        <button class="infoBtn" type="button" data-info="indexSystem" title="About categories">More info (categories)</button>
                     </div>
                 </div>
             </div>
             <div class="chart-wrapper">
                 <canvas id="inflationChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Velocity (per item) -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title" id="velocityChartTitle">
+                        Velocity (per item)
+                        <button class="infoBtn" type="button" data-info="velocityDynamic" title="About velocity charts">More info</button>
+                    </div>
+                    <div class="chart-meta" id="velocityChartDesc">Daily velocity metrics for your selected items</div>
+
+                    <div class="selectWithInfo" style="margin-top:.5rem;">
+                        <label>
+                            Velocity Metric:
+                            <select id="velocityMetricSelect">
+                                <option value="ewVelocity" selected>EW Velocity (Buy/Sell)</option>
+                                <option value="storeVolume">Store Volume (Bought/Sold)</option>
+                                <option value="ocmVolume">OCM Volume</option>
+                                <option value="uniqueTraders">Unique Traders (Store/OCM)</option>
+                                <option value="tradeCount">Trade Count (Store/OCM)</option>
+                            </select>
+                        </label>
+                        <button class="infoBtn" type="button" data-info="velocitySystem" title="About velocity">More info (velocity)</button>
+                    </div>
+                </div>
+
+                <!-- Per-item velocity toggles (independent) -->
+                <div class="toggles" style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center;">
+                    <label class="toggleRow"><input type="checkbox" id="toggleVelocityItemBreakdown" checked /> Show breakdown</label>
+                    <label class="toggleRow"><input type="checkbox" id="toggleVelocityItemShowA" checked /> Show A</label>
+                    <label class="toggleRow"><input type="checkbox" id="toggleVelocityItemShowB" checked /> Show B</label>
+                    <label class="toggleRow"><input type="checkbox" id="toggleVelocityItemNormalizeTo100" /> Normalize all to100</label>
+                </div>
+            </div>
+            <div class="chart-body">
+                <div class="chart-wrapper">
+                    <canvas id="velocityChart"></canvas>
+                </div>
+                <div class="legend" id="velocityLegend" aria-label="Velocity chart legend"></div>
+            </div>
+        </div>
+
+        <!-- Velocity (combined) -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div>
+                    <div class="chart-title" id="velocityCombinedChartTitle">
+                        Velocity (combined)
+                        <button class="infoBtn" type="button" data-info="velocityDynamic" title="About velocity charts">More info</button>
+                    </div>
+                    <div class="chart-meta" id="velocityCombinedChartDesc">Sum across selected items (and optional normalization)</div>
+                </div>
+
+                <!-- Combined velocity toggles (independent) -->
+                <div class="toggles" style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center;">
+                    <label class="toggleRow"><input type="checkbox" id="toggleVelocityCombinedBreakdown" /> Show breakdown</label>
+                    <label class="toggleRow"><input type="checkbox" id="toggleVelocityCombinedShowA" checked /> Show A</label>
+                    <label class="toggleRow"><input type="checkbox" id="toggleVelocityCombinedShowB" checked /> Show B</label>
+                    <label class="toggleRow"><input type="checkbox" id="toggleVelocityCombinedNormalizeTo100" /> Normalize all to100</label>
+                </div>
+            </div>
+            <div class="chart-body">
+                <div class="chart-wrapper">
+                    <canvas id="velocityCombinedChart"></canvas>
+                </div>
+                <div class="legend" id="velocityCombinedLegend" aria-label="Velocity combined chart legend"></div>
             </div>
         </div>
     </div>

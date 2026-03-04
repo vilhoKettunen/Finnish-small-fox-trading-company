@@ -2,8 +2,8 @@
 window.PriceHistory = window.PriceHistory || {};
 window.PriceHistory.UI = (function () {
  const { LIMITS, COMBINED_COLOR, DEFAULTS } = window.PriceHistory.Config;
- const { itemColor, assignUniqueColors, hexToRgba, dateFmt } = window.PriceHistory.Utils;
- const { loadAllSheets, buildUniqueItems } = window.PriceHistory.Data;
+ const { itemColor, assignUniqueColors, hexToRgba } = window.PriceHistory.Utils;
+ const { loadAllSheets, buildUniqueItems, loadVelocitySheet } = window.PriceHistory.Data;
  const Proc = window.PriceHistory.Processing;
  const Charts = window.PriceHistory.Charts;
  const Storage = window.PriceHistory.Storage;
@@ -16,7 +16,31 @@ window.PriceHistory.UI = (function () {
 
  let showCombinedPrice = DEFAULTS.showCombinedPrice;
  let normalizeCombinedTo100 = DEFAULTS.normalizeCombinedTo100;
+ let normalizePriceItemsTo100 = DEFAULTS.normalizePriceItemsTo100;
  let showCombinedMiddleSum = DEFAULTS.showCombinedMiddleSum;
+
+ // velocity (shared metric)
+ let velocityMetric = DEFAULTS.velocityMetric;
+
+ // Per-chart velocity toggles
+ let velocityItemToggles = {
+ showBreakdown: DEFAULTS.velocityShowBreakdown,
+ normalizeTo100: DEFAULTS.velocityNormalizeTo100,
+ showA: DEFAULTS.velocityShowA,
+ showB: DEFAULTS.velocityShowB
+ };
+
+ // Combined defaults: breakdown OFF for simplicity
+ let velocityCombinedToggles = {
+ showBreakdown: false,
+ normalizeTo100: DEFAULTS.velocityNormalizeTo100,
+ showA: DEFAULTS.velocityShowA,
+ showB: DEFAULTS.velocityShowB
+ };
+
+ // Remember last ShowB state when a B-less metric is selected
+ let velRememberedShowB_Item = true;
+ let velRememberedShowB_Combined = true;
 
  let dropdownApi = null;
 
@@ -175,7 +199,8 @@ window.PriceHistory.UI = (function () {
  }
 
  const model = Proc.processPriceSeriesMulti(appliedItems, range, {
- normalizeCombinedTo100
+ normalizeCombinedTo100,
+ normalizeItemsTo100: normalizePriceItemsTo100
  });
 
  const datasets = buildDatasetsForPerItemSeries(model.axisDates, model.perItemPrices, {
@@ -203,7 +228,6 @@ window.PriceHistory.UI = (function () {
  targetStock: 'Target Stock Stack History'
  };
 
- // Keep embedded button inside #middleChartTitle
  const titleEl = $('middleChartTitle');
  if (titleEl) {
  const desiredText = titles[metric] || 'Metric';
@@ -253,26 +277,299 @@ window.PriceHistory.UI = (function () {
  Charts.drawInflationChart(s.axisDates, s.indexValues, s.contributingCounts, category, s);
  }
 
+ function velocitySheetKeyFromUi_(metricUi) {
+ if (metricUi === 'ewVelocity') return 'EwVelocity';
+ if (metricUi === 'storeVolume') return 'VelocityVolume';
+ if (metricUi === 'ocmVolume') return 'OcmVolume';
+ if (metricUi === 'uniqueTraders') return 'UniqueTraders';
+ if (metricUi === 'tradeCount') return 'TradeCount';
+ return 'EwVelocity';
+ }
+
+ function velocityLineLabels_(metricUi) {
+ // A/B labels and title text
+ if (metricUi === 'ewVelocity') return { a: 'EW Buy', b: 'EW Sell', title: 'EW Velocity' };
+ if (metricUi === 'storeVolume') return { a: 'Bought', b: 'Sold', title: 'Store Volume' };
+ if (metricUi === 'uniqueTraders') return { a: 'Store', b: 'OCM', title: 'Unique Traders' };
+ if (metricUi === 'tradeCount') return { a: 'Store', b: 'OCM', title: 'Trade Count' };
+ if (metricUi === 'ocmVolume') return { a: 'OCM Volume', b: null, title: 'OCM Volume' };
+ return { a: 'A', b: 'B', title: 'Velocity' };
+ }
+
+ function buildVelocityDatasets_(perItemSeriesA, perItemSeriesB, perItemCombined, metricUi, toggles) {
+ const { a: aName, b: bName } = velocityLineLabels_(metricUi);
+ const colors = assignUniqueColors(appliedItems);
+
+ const datasets = [];
+ const dashed = [6,4];
+
+ if (toggles.showBreakdown) {
+ for (const item of appliedItems) {
+ const c = itemColor(item, colors);
+ if (toggles.showA) {
+ datasets.push({
+ label: `${item} (${aName})`,
+ data: perItemSeriesA.get(item) || [],
+ borderColor: c,
+ backgroundColor: hexToRgba(c,0.08),
+ borderWidth:2,
+ tension:0.2,
+ fill: false,
+ pointRadius:3,
+ spanGaps: false
+ });
+ }
+ if (bName && toggles.showB) {
+ datasets.push({
+ label: `${item} (${bName})`,
+ data: perItemSeriesB.get(item) || [],
+ borderColor: c,
+ backgroundColor: hexToRgba(c,0.08),
+ borderWidth:2,
+ tension:0.2,
+ fill: false,
+ pointRadius:3,
+ spanGaps: false,
+ borderDash: dashed
+ });
+ }
+ }
+ } else {
+ for (const item of appliedItems) {
+ const c = itemColor(item, colors);
+ datasets.push({
+ label: `${item} (Total)`,
+ data: perItemCombined.get(item) || [],
+ borderColor: c,
+ backgroundColor: hexToRgba(c,0.08),
+ borderWidth:2,
+ tension:0.2,
+ fill: false,
+ pointRadius:3,
+ spanGaps: false
+ });
+ }
+ }
+
+ return datasets;
+ }
+
+ function setToggleLabelText_(labelEl, text) {
+ if (!labelEl) return;
+ // Try to find an existing text node; else append.
+ const tn = [...labelEl.childNodes].find(n => n.nodeType === Node.TEXT_NODE);
+ if (tn) tn.nodeValue = ' ' + text;
+ else labelEl.appendChild(document.createTextNode(' ' + text));
+ }
+
+ function updateVelocitySubToggleLabels_() {
+ const { a, b } = velocityLineLabels_(velocityMetric);
+
+ const itemA = $('toggleVelocityItemShowA')?.closest('label');
+ const itemB = $('toggleVelocityItemShowB')?.closest('label');
+ const combA = $('toggleVelocityCombinedShowA')?.closest('label');
+ const combB = $('toggleVelocityCombinedShowB')?.closest('label');
+
+ setToggleLabelText_(itemA, `Show ${a}`);
+ setToggleLabelText_(combA, `Show ${a}`);
+
+ if (!b) {
+ // Remember previous B states, then force hide/disable B
+ velRememberedShowB_Item = velocityItemToggles.showB;
+ velRememberedShowB_Combined = velocityCombinedToggles.showB;
+
+ velocityItemToggles.showB = false;
+ velocityCombinedToggles.showB = false;
+
+ const itemBInput = $('toggleVelocityItemShowB');
+ const combBInput = $('toggleVelocityCombinedShowB');
+ if (itemBInput) itemBInput.checked = false;
+ if (combBInput) combBInput.checked = false;
+
+ if (itemB) itemB.style.display = 'none';
+ if (combB) combB.style.display = 'none';
+ } else {
+ // Restore remembered B states when switching back to a two-field metric
+ if (!velocityItemToggles.showB && velRememberedShowB_Item) velocityItemToggles.showB = true;
+ if (!velocityCombinedToggles.showB && velRememberedShowB_Combined) velocityCombinedToggles.showB = true;
+
+ const itemBInput = $('toggleVelocityItemShowB');
+ const combBInput = $('toggleVelocityCombinedShowB');
+ if (itemBInput) itemBInput.checked = !!velocityItemToggles.showB;
+ if (combBInput) combBInput.checked = !!velocityCombinedToggles.showB;
+
+ if (itemB) {
+ itemB.style.display = '';
+ setToggleLabelText_(itemB, `Show ${b}`);
+ }
+ if (combB) {
+ combB.style.display = '';
+ setToggleLabelText_(combB, `Show ${b}`);
+ }
+ }
+ }
+
+ async function getVelocityModel_() {
+ const range = $('rangeSelect')?.value;
+ if (!range) return null;
+
+ if (!appliedItems.length) return { axisDates: [], perItemA: new Map(), perItemB: new Map(), perItemCombined: new Map(), combinedSum: [] };
+
+ const sheetKey = velocitySheetKeyFromUi_(velocityMetric);
+ await loadVelocitySheet(sheetKey);
+
+ // We compute model twice if normalizations differ; keep this helper to minimize duplication.
+ return { range, sheetKey };
+ }
+
+ async function updateVelocityItemChart() {
+ const range = $('rangeSelect')?.value;
+ if (!range) return;
+
+ if (!appliedItems.length) {
+ Charts.drawVelocityChartMulti([], [], velocityMetric);
+ renderLegend('velocityLegend', []);
+ return;
+ }
+
+ const sheetKey = velocitySheetKeyFromUi_(velocityMetric);
+ await loadVelocitySheet(sheetKey);
+
+ const model = Proc.processVelocitySeriesMulti(appliedItems, range, sheetKey, {
+ normalizeTo100: velocityItemToggles.normalizeTo100
+ });
+
+ const datasets = buildVelocityDatasets_(model.perItemA, model.perItemB, model.perItemCombined, velocityMetric, velocityItemToggles);
+ Charts.drawVelocityChartMulti(model.axisDates, datasets, velocityMetric);
+ renderLegend('velocityLegend', datasets);
+ }
+
+ async function updateVelocityCombinedChart() {
+ const range = $('rangeSelect')?.value;
+ if (!range) return;
+
+ if (!appliedItems.length) {
+ Charts.drawVelocityCombinedChart([], [], velocityMetric);
+ renderLegend('velocityCombinedLegend', []);
+ return;
+ }
+
+ const sheetKey = velocitySheetKeyFromUi_(velocityMetric);
+ await loadVelocitySheet(sheetKey);
+
+ const model = Proc.processVelocitySeriesMulti(appliedItems, range, sheetKey, {
+ normalizeTo100: velocityCombinedToggles.normalizeTo100
+ });
+
+ const labels = velocityLineLabels_(velocityMetric);
+ const dashed = [6,4];
+ const combinedDatasets = [];
+
+ // If breakdown OFF, just show total sum.
+ if (velocityCombinedToggles.showBreakdown) {
+ if (velocityCombinedToggles.showA) {
+ const sumA = model.axisDates.map((_, i) => {
+ let s =0;
+ for (const item of appliedItems) s += model.perItemA.get(item)?.[i] ||0;
+ return s;
+ });
+ combinedDatasets.push({
+ label: `${labels.a} (Sum)`,
+ data: sumA,
+ borderColor: COMBINED_COLOR,
+ backgroundColor: hexToRgba(COMBINED_COLOR,0.08),
+ borderWidth:2,
+ tension:0.2,
+ fill: false,
+ pointRadius:0,
+ spanGaps: false
+ });
+ }
+
+ if (labels.b && velocityCombinedToggles.showB) {
+ const sumB = model.axisDates.map((_, i) => {
+ let s =0;
+ for (const item of appliedItems) s += model.perItemB.get(item)?.[i] ||0;
+ return s;
+ });
+ combinedDatasets.push({
+ label: `${labels.b} (Sum)`,
+ data: sumB,
+ borderColor: COMBINED_COLOR,
+ backgroundColor: hexToRgba(COMBINED_COLOR,0.08),
+ borderWidth:2,
+ tension:0.2,
+ fill: false,
+ pointRadius:0,
+ spanGaps: false,
+ borderDash: dashed
+ });
+ }
+ }
+
+ // Total always included
+ combinedDatasets.push({
+ label: 'Total (Sum)',
+ data: model.combinedSum,
+ borderColor: COMBINED_COLOR,
+ backgroundColor: hexToRgba(COMBINED_COLOR,0.12),
+ borderWidth:3,
+ tension:0.2,
+ fill: false,
+ pointRadius:0,
+ spanGaps: false
+ });
+
+ Charts.drawVelocityCombinedChart(model.axisDates, combinedDatasets, velocityMetric);
+ renderLegend('velocityCombinedLegend', combinedDatasets);
+ }
+
+ async function updateVelocityCharts() {
+ await updateVelocityItemChart();
+ await updateVelocityCombinedChart();
+ }
+
  function updateAll() {
  updatePriceChart();
  updateMiddleChart();
  updateInflationChart();
+ updateVelocityCharts();
  }
 
  function getStateForSave() {
+ const safeVal = (id, fallback) => {
+ const el = $(id);
+ if (!el) return fallback;
+ const v = el.value;
+ return (v === undefined || v === null || v === '') ? fallback : v;
+ };
+
  return {
- version:1,
+ version:3,
  appliedItems,
  settings: {
- type: $('typeSelect').value,
- range: $('rangeSelect').value,
- metric: $('metricSelect').value,
- index: $('indexSelect').value
+ type: safeVal('typeSelect', 'SellHistory'),
+ range: safeVal('rangeSelect', 'all'),
+ metric: safeVal('metricSelect', 'stock'),
+ index: safeVal('indexSelect', 'median'),
+ velocityMetric
  },
  toggles: {
  showCombinedPrice,
  normalizeCombinedTo100,
- showCombinedMiddleSum
+ normalizePriceItemsTo100,
+ showCombinedMiddleSum,
+
+ // New: split velocity toggles
+ velocityItemShowBreakdown: !!velocityItemToggles.showBreakdown,
+ velocityItemNormalizeTo100: !!velocityItemToggles.normalizeTo100,
+ velocityItemShowA: !!velocityItemToggles.showA,
+ velocityItemShowB: !!velocityItemToggles.showB,
+
+ velocityCombinedShowBreakdown: !!velocityCombinedToggles.showBreakdown,
+ velocityCombinedNormalizeTo100: !!velocityCombinedToggles.normalizeTo100,
+ velocityCombinedShowA: !!velocityCombinedToggles.showA,
+ velocityCombinedShowB: !!velocityCombinedToggles.showB
  }
  };
  }
@@ -288,7 +585,8 @@ window.PriceHistory.UI = (function () {
  saveState();
  updatePriceChart();
  updateMiddleChart();
- updateInflationChart(); // selected-index depends on applied items
+ updateInflationChart();
+ updateVelocityCharts();
  }
 
  function addStagedItem(item) {
@@ -343,7 +641,7 @@ window.PriceHistory.UI = (function () {
  }
 
  function openInfo(key) {
- if (key === 'controls' || key === 'price' || key === 'metricSystem' || key === 'indexSystem') {
+ if (key === 'controls' || key === 'price' || key === 'metricSystem' || key === 'indexSystem' || key === 'velocitySystem' || key === 'velocityDynamic') {
  modalFillFromHelpText(key);
  return;
  }
@@ -461,8 +759,6 @@ window.PriceHistory.UI = (function () {
 
  uniqueItems = buildUniqueItems(main);
 
- // old datalist removed; keep arrays only
-
  stagedItems = validateItems(stagedItems);
  appliedItems = validateItems(appliedItems);
 
@@ -472,7 +768,6 @@ window.PriceHistory.UI = (function () {
  renderChips();
  renderAppliedImages();
 
- // (Re)wire dropdown with fresh item list
  wireUniversalItemDropdown_();
  }
 
@@ -483,7 +778,6 @@ window.PriceHistory.UI = (function () {
 
  if (!(window.universalDropdown && typeof window.universalDropdown.attach === 'function')) return;
 
- // If we already wired it once, just refresh to pick up new uniqueItems.
  if (dropdownApi && typeof dropdownApi.refresh === 'function') {
  dropdownApi.refresh();
  return;
@@ -500,7 +794,6 @@ window.PriceHistory.UI = (function () {
  addStagedItem(name);
  input.value = '';
  try { input.focus(); } catch { }
- // refresh suggestions after modifying the input
  setTimeout(() => {
  try { input.dispatchEvent(new Event('input')); } catch { }
  },0);
@@ -508,8 +801,6 @@ window.PriceHistory.UI = (function () {
  });
  }
 
- // Restore from old PriceHistory UI (before universal dropdown).
- // Note: item validation depends on catalog load, so validation happens after loadDataAndCatalog().
  function applyPresetIfAny(preset) {
  if (!preset) return;
 
@@ -520,26 +811,83 @@ window.PriceHistory.UI = (function () {
  const rangeEl = $('rangeSelect');
  const metricEl = $('metricSelect');
  const indexEl = $('indexSelect');
+ const velEl = $('velocityMetricSelect');
 
  if (settings.type && typeEl) typeEl.value = settings.type;
  if (settings.range && rangeEl) rangeEl.value = settings.range;
  if (settings.metric && metricEl) metricEl.value = settings.metric;
  if (settings.index && indexEl) indexEl.value = settings.index;
 
+ velocityMetric = settings.velocityMetric || velocityMetric;
+ if (velEl && velocityMetric) velEl.value = velocityMetric;
+
  showCombinedPrice = !!toggles.showCombinedPrice;
  normalizeCombinedTo100 = !!toggles.normalizeCombinedTo100;
+ normalizePriceItemsTo100 = !!toggles.normalizePriceItemsTo100;
  showCombinedMiddleSum = !!toggles.showCombinedMiddleSum;
+
+ // Backward compatibility: old single velocity toggle keys
+ const oldBreak = toggles.velocityShowBreakdown;
+ const oldNorm = toggles.velocityNormalizeTo100;
+ const oldA = toggles.velocityShowA;
+ const oldB = toggles.velocityShowB;
+ const hasOld = oldBreak !== undefined || oldNorm !== undefined || oldA !== undefined || oldB !== undefined;
+
+ if (hasOld) {
+ velocityItemToggles.showBreakdown = oldBreak !== undefined ? !!oldBreak : velocityItemToggles.showBreakdown;
+ velocityItemToggles.normalizeTo100 = oldNorm !== undefined ? !!oldNorm : velocityItemToggles.normalizeTo100;
+ velocityItemToggles.showA = oldA !== undefined ? !!oldA : velocityItemToggles.showA;
+ velocityItemToggles.showB = oldB !== undefined ? !!oldB : velocityItemToggles.showB;
+
+ // Apply same old values to combined, but keep default breakdown OFF unless explicitly set
+ velocityCombinedToggles.showBreakdown = oldBreak !== undefined ? !!oldBreak : velocityCombinedToggles.showBreakdown;
+ velocityCombinedToggles.normalizeTo100 = oldNorm !== undefined ? !!oldNorm : velocityCombinedToggles.normalizeTo100;
+ velocityCombinedToggles.showA = oldA !== undefined ? !!oldA : velocityCombinedToggles.showA;
+ velocityCombinedToggles.showB = oldB !== undefined ? !!oldB : velocityCombinedToggles.showB;
+ } else {
+ velocityItemToggles.showBreakdown = toggles.velocityItemShowBreakdown !== undefined ? !!toggles.velocityItemShowBreakdown : velocityItemToggles.showBreakdown;
+ velocityItemToggles.normalizeTo100 = toggles.velocityItemNormalizeTo100 !== undefined ? !!toggles.velocityItemNormalizeTo100 : velocityItemToggles.normalizeTo100;
+ velocityItemToggles.showA = toggles.velocityItemShowA !== undefined ? !!toggles.velocityItemShowA : velocityItemToggles.showA;
+ velocityItemToggles.showB = toggles.velocityItemShowB !== undefined ? !!toggles.velocityItemShowB : velocityItemToggles.showB;
+
+ velocityCombinedToggles.showBreakdown = toggles.velocityCombinedShowBreakdown !== undefined ? !!toggles.velocityCombinedShowBreakdown : velocityCombinedToggles.showBreakdown;
+ velocityCombinedToggles.normalizeTo100 = toggles.velocityCombinedNormalizeTo100 !== undefined ? !!toggles.velocityCombinedNormalizeTo100 : velocityCombinedToggles.normalizeTo100;
+ velocityCombinedToggles.showA = toggles.velocityCombinedShowA !== undefined ? !!toggles.velocityCombinedShowA : velocityCombinedToggles.showA;
+ velocityCombinedToggles.showB = toggles.velocityCombinedShowB !== undefined ? !!toggles.velocityCombinedShowB : velocityCombinedToggles.showB;
+ }
 
  const tPrice = $('toggleCombinedPrice');
  const tNorm = $('toggleNormalizeCombined');
+ const tNormItems = $('toggleNormalizePriceItems');
  const tMiddle = $('toggleCombinedMiddle');
 
  if (tPrice) tPrice.checked = showCombinedPrice;
  if (tNorm) tNorm.checked = normalizeCombinedTo100;
+ if (tNormItems) tNormItems.checked = normalizePriceItemsTo100;
  if (tMiddle) tMiddle.checked = showCombinedMiddleSum;
 
+ // velocity control checkboxes
+ const itBreak = $('toggleVelocityItemBreakdown');
+ const itNorm = $('toggleVelocityItemNormalizeTo100');
+ const itA = $('toggleVelocityItemShowA');
+ const itB = $('toggleVelocityItemShowB');
+
+ if (itBreak) itBreak.checked = !!velocityItemToggles.showBreakdown;
+ if (itNorm) itNorm.checked = !!velocityItemToggles.normalizeTo100;
+ if (itA) itA.checked = !!velocityItemToggles.showA;
+ if (itB) itB.checked = !!velocityItemToggles.showB;
+
+ const cbBreak = $('toggleVelocityCombinedBreakdown');
+ const cbNorm = $('toggleVelocityCombinedNormalizeTo100');
+ const cbA = $('toggleVelocityCombinedShowA');
+ const cbB = $('toggleVelocityCombinedShowB');
+
+ if (cbBreak) cbBreak.checked = !!velocityCombinedToggles.showBreakdown;
+ if (cbNorm) cbNorm.checked = !!velocityCombinedToggles.normalizeTo100;
+ if (cbA) cbA.checked = !!velocityCombinedToggles.showA;
+ if (cbB) cbB.checked = !!velocityCombinedToggles.showB;
+
  appliedItems = Array.isArray(preset.appliedItems) ? preset.appliedItems.map(String) : [];
- // stagedItems is temporary; we restore it from appliedItems only.
  stagedItems = [...appliedItems];
  }
 
@@ -557,6 +905,8 @@ window.PriceHistory.UI = (function () {
  renderChips();
  renderAppliedImages();
 
+ updateVelocitySubToggleLabels_();
+
  // wire events
  $('addItemBtn').addEventListener('click', () => {
  addStagedItem($('itemSearchInput').value);
@@ -565,8 +915,7 @@ window.PriceHistory.UI = (function () {
 
  $('itemSearchInput').addEventListener('keydown', (e) => {
  if (e.key === 'Enter') {
- // If dropdown has an active selection, let dropdown handle it.
- const hasActive = (typeof $('itemSearchInput')._dropIndex === 'number' && $('itemSearchInput')._dropIndex >=0);
+ const hasActive = typeof $('itemSearchInput')._dropIndex === 'number' && $('itemSearchInput')._dropIndex >=0;
  if (hasActive) return;
 
  e.preventDefault();
@@ -603,6 +952,59 @@ window.PriceHistory.UI = (function () {
  updateInflationChart();
  });
 
+ $('velocityMetricSelect')?.addEventListener('change', async (e) => {
+ velocityMetric = String(e.target.value || 'ewVelocity');
+ updateVelocitySubToggleLabels_();
+ saveState();
+ await updateVelocityCharts();
+ });
+
+ // per-item velocity toggles
+ $('toggleVelocityItemBreakdown')?.addEventListener('change', async (e) => {
+ velocityItemToggles.showBreakdown = !!e.target.checked;
+ saveState();
+ await updateVelocityItemChart();
+ });
+ $('toggleVelocityItemShowA')?.addEventListener('change', async (e) => {
+ velocityItemToggles.showA = !!e.target.checked;
+ saveState();
+ await updateVelocityItemChart();
+ });
+ $('toggleVelocityItemShowB')?.addEventListener('change', async (e) => {
+ velocityItemToggles.showB = !!e.target.checked;
+ velRememberedShowB_Item = velocityItemToggles.showB;
+ saveState();
+ await updateVelocityItemChart();
+ });
+ $('toggleVelocityItemNormalizeTo100')?.addEventListener('change', async (e) => {
+ velocityItemToggles.normalizeTo100 = !!e.target.checked;
+ saveState();
+ await updateVelocityItemChart();
+ });
+
+ // combined velocity toggles
+ $('toggleVelocityCombinedBreakdown')?.addEventListener('change', async (e) => {
+ velocityCombinedToggles.showBreakdown = !!e.target.checked;
+ saveState();
+ await updateVelocityCombinedChart();
+ });
+ $('toggleVelocityCombinedShowA')?.addEventListener('change', async (e) => {
+ velocityCombinedToggles.showA = !!e.target.checked;
+ saveState();
+ await updateVelocityCombinedChart();
+ });
+ $('toggleVelocityCombinedShowB')?.addEventListener('change', async (e) => {
+ velocityCombinedToggles.showB = !!e.target.checked;
+ velRememberedShowB_Combined = velocityCombinedToggles.showB;
+ saveState();
+ await updateVelocityCombinedChart();
+ });
+ $('toggleVelocityCombinedNormalizeTo100')?.addEventListener('change', async (e) => {
+ velocityCombinedToggles.normalizeTo100 = !!e.target.checked;
+ saveState();
+ await updateVelocityCombinedChart();
+ });
+
  $('toggleCombinedPrice').addEventListener('change', (e) => {
  showCombinedPrice = !!e.target.checked;
  saveState();
@@ -611,6 +1013,12 @@ window.PriceHistory.UI = (function () {
 
  $('toggleNormalizeCombined').addEventListener('change', (e) => {
  normalizeCombinedTo100 = !!e.target.checked;
+ saveState();
+ updatePriceChart();
+ });
+
+ $('toggleNormalizePriceItems')?.addEventListener('change', (e) => {
+ normalizePriceItemsTo100 = !!e.target.checked;
  saveState();
  updatePriceChart();
  });

@@ -172,5 +172,30 @@ window.PriceHistory.HelpText = {
  ],
  example: 'Example: If you track only building materials, the Selected index shows inflation for that specific basket.'
  }
+ },
+ velocitySystem: {
+ title: 'More info (velocity)',
+ bullets: [
+ 'Velocity metrics are daily activity counters recorded from Store requests and OCM trades.',
+ 'Backend optimization note: days/items with all-zero activity may not be logged. On this page, missing days are filled as0 so the velocity charts are continuous.',
+ 'EW Velocity: shows EW buy vs EW sell totals for the day (two lines per item).',
+ 'Store Volume: shows quantities Bought vs Sold in the store for the day (two lines per item).',
+ 'OCM Volume: shows quantities traded on OCM for the day (single line per item).',
+ 'Unique Traders: shows Store vs OCM unique trader counts for the day (two lines per item).',
+ 'Trade Count: shows Store vs OCM trade counts for the day (two lines per item).'
+ ],
+ example:
+ 'Tip: Use the breakdown toggle to switch between two-line detail (Buy/Sell or Store/OCM) and a single combined total line per item.'
+ },
+
+ velocityDynamic: {
+ title: 'Velocity Charts',
+ bullets: [
+ 'The velocity charts use the SAME applied item selection and the SAME item colors as the price charts.',
+ 'Breakdown mode shows two lines per item (same color, different dash). You can toggle each sub-line (A/B) on or off.',
+ 'Combined-per-item mode shows one total line per item (A+B).',
+ 'Combined Sum (all selected items) adds a black line that sums the selected items.',
+ 'Normalize to100 scales each visible dataset so its first non-zero day in the selected range becomes100, making relative changes easier to compare.'
+ ]
  }
 };
