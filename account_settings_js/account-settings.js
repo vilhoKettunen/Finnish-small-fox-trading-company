@@ -251,8 +251,8 @@
  setText('st_ocmAsBuyer', fmtNumber_(st?.ocm?.asCustomerCount,0));
  setText('st_ocmAsMerchant', fmtNumber_(st?.ocm?.asMerchantCount,0));
  setText('st_ocmTotalValue', fmtNumber_(st?.ocm?.totalValueEW,2));
- setText('st_ocmFees', fmtNumber_(st?.ocm?.feesPaidBT,2));
- setText('st_ocmMax', fmtNumber_(st?.ocm?.maxTradeValueBT,2));
+ setText('st_ocmFees', fmtNumber_(st?.ocm?.feesPaidEW,2));
+ setText('st_ocmMax', fmtNumber_(st?.ocm?.maxTradeValueEW,2));
  setText('st_ocmLast', fmtIso_(st?.ocm?.lastTradeAt));
  setText('st_ocmActiveListings', fmtNumber_(st?.ocm?.activeListingsCount,0));
 
