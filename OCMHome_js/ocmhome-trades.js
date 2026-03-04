@@ -230,7 +230,7 @@
  <div>
  <div class="small">Listing</div>
  <div><strong>${O.escapeHtml_(listing.itemName)}</strong> (${O.escapeHtml_(listing.type)})</div>
- <div class="small">Customer: ${O.escapeHtml_(listing.playerName || 'Unknown')}</div>
+ <div class="small">Merchant: ${O.escapeHtml_(listing.playerName || 'Unknown')}</div>
  <div class="small muted">Stack size: <span class="mono">${Number(listing.stackSize ||1) ||1}</span></div>
  </div>
 
@@ -250,8 +250,8 @@
  <div class="mono" data-estimate>�</div>
  <div class="small muted" data-value-lines>�</div>
  <div class="small" data-fee-note>Fee:0% if Merchant completes,10% if admin completes.</div>
- <div class="trade-favor" data-favor-Merchant style="display:none;"></div>
  <div class="trade-favor" data-favor-Customer style="display:none;"></div>
+ <div class="trade-favor" data-favor-Merchant style="display:none;"></div>
  </div>
  </div>
 
@@ -272,8 +272,8 @@
  const msgEl = td.querySelector('[data-msg]');
  const estEl = td.querySelector('[data-estimate]');
  const valueEl = td.querySelector('[data-value-lines]');
- const customerFavorEl = td.querySelector('[data-favor-Merchant]');
- const merchantFavorEl = td.querySelector('[data-favor-Customer]');
+     const customerFavorEl = td.querySelector('[data-favor-Customer]');
+ const merchantFavorEl = td.querySelector('[data-favor-Merchant]');
  const payPegSel = td.querySelector('select[data-pay-peg]');
 
         function getPaymentChoice() {
@@ -363,14 +363,14 @@
             const v = computeValueLinesForTrade_(listing, u, chosenPegName, chosenRatio);
             valueEl.innerHTML = `${O.escapeHtml_(v.buy)}<br>${O.escapeHtml_(v.sell)}`;
 
-            // ===== Merchant favor / Customer favor =====
+            // ===== Customer favor / Merchant favor =====
             // Totals match the value lines shown.
             // SELL listings: keep existing behavior.
             // BUY listings: use new rules:
-            // - Merchant:
+            // - Customer:
             // * ITEM: (1 - traded BUY total / peg SELL total)*100
             // * EW: (1 - traded BUY total / peg BUY total)*100
-            // - Customer (both): (1 - peg BUY total / traded SELL total)*100
+            // - Merchant (both): (1 - peg BUY total / traded SELL total)*100
             try {
                 const listingName = String(listing?.itemName || '').trim();
                 const pegName = String(chosenPegName || '').trim();
@@ -441,8 +441,8 @@
                     el.style.display = '';
                 }
 
-                renderFavorLine_(customerFavorEl, 'Merchant', customerPct);
-                renderFavorLine_(merchantFavorEl, 'Customer', merchantPct);
+                renderFavorLine_(customerFavorEl, 'Customer', customerPct);
+                renderFavorLine_(merchantFavorEl, 'Merchant', merchantPct);
             } catch {
                 if (customerFavorEl) customerFavorEl.style.display = 'none';
                 if (merchantFavorEl) merchantFavorEl.style.display = 'none';

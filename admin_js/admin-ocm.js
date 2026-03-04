@@ -398,31 +398,31 @@
 
              if (listingType === 'BUY') {
                  // BUY (PEG statement uses ITEM-style formulas by requirement)
-                 // Merchant: (1 - (soldBuyTotal / pegSellTotal))*100
+                 // Customer: (1 - (soldBuyTotal / pegSellTotal))*100
                  if (soldBuyTotal != null && pegSellTotal != null && isFinite(soldBuyTotal) && isFinite(pegSellTotal) && pegSellTotal >0) {
                      customerPctRaw = (1 - (Number(soldBuyTotal) / Number(pegSellTotal))) *100;
                  }
 
-                 // Customer: (1 - (pegBuyTotal / soldSellTotal))*100
+                 // Merchant: (1 - (pegBuyTotal / soldSellTotal))*100
                  if (pegBuyTotal != null && soldSellTotal != null && isFinite(pegBuyTotal) && isFinite(soldSellTotal) && soldSellTotal >0) {
                      merchantPctRaw = (1 - (Number(pegBuyTotal) / Number(soldSellTotal))) *100;
                  }
              } else {
                  // SELL (keep existing behavior)
-                 // Merchant: (1 - (pegBuyTotal / soldSellTotal))*100
+                 // Customer: (1 - (pegBuyTotal / soldSellTotal))*100
                  if (soldSellTotal != null && pegBuyTotal != null && isFinite(soldSellTotal) && soldSellTotal >0 && isFinite(pegBuyTotal)) {
                      customerPctRaw = (1 - (Number(pegBuyTotal) / Number(soldSellTotal))) *100;
                  }
 
-                 // Customer: (1 - (soldBuyTotal / pegSellTotal))*100
+                 // Merchant: (1 - (soldBuyTotal / pegSellTotal))*100
                  if (soldBuyTotal != null && pegSellTotal != null && isFinite(pegSellTotal) && pegSellTotal >0 && isFinite(soldBuyTotal)) {
                      merchantPctRaw = (1 - (Number(soldBuyTotal) / Number(pegSellTotal))) *100;
                  }
              }
          } catch { customerPctRaw = null; merchantPctRaw = null; }
 
-         const customerHtml = pctLine_('Merchant', customerPctRaw);
-         const merchantHtml = pctLine_('Customer', merchantPctRaw);
+         const customerHtml = pctLine_('Customer', customerPctRaw);
+         const merchantHtml = pctLine_('Merchant', merchantPctRaw);
 
          statement.innerHTML = `${esc(eqLine)}<br><span class="muted">${esc(buyLine)}</span><br><span class="muted">${esc(sellLine)}</span>${customerHtml ? `<br>${customerHtml}` : ''}${merchantHtml ? `<br>${merchantHtml}` : ''}`;
      }
@@ -436,7 +436,7 @@
 
  input.addEventListener('input', () => { updatePriceInfo_(); updateStatement_(cfg.getSoldName, cfg.getSoldStackSize); cfg.onChange && cfg.onChange(); });
  priceBasis.addEventListener('change', () => { updateStatement_(cfg.getSoldName, cfg.getSoldStackSize); cfg.onChange && cfg.onChange(); });
- qtyInput.addEventListener('input', () => { updateStatement_(cfg.getSoldName, cfg.getSoldStackSize); cfg.onChange && cfg.onChange(); });
+     qtyInput.addEventListener('input', () => { updateStatement_(cfg.getSoldName, cfg.getSoldStackSize); cfg.onChange && cfg.onChange(); });
  qtyBasis.addEventListener('change', () => { updateStatement_(cfg.getSoldName, cfg.getSoldStackSize); cfg.onChange && cfg.onChange(); });
 
  updatePriceInfo_();
@@ -792,7 +792,7 @@
  (arr || []).forEach(tr => {
  const snap = safeJsonParse(tr.detailsJson || '{}') || {};
  const item = snap.listing?.itemName || '';
- const counterparty = mine ? (snap.Merchant?.playerName || '') : (snap.Customer?.playerName || '');
+ const counterparty = mine ? (snap.Customer?.playerName || '') : (snap.Merchant?.playerName || '');
  const payment = snap.payment?.method || '';
  const qty = Number(snap.request?.requestedUnits || tr.quantity ||0);
 
