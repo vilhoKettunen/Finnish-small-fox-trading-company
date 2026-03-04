@@ -3,7 +3,19 @@
 window.PriceHistory = window.PriceHistory || {};
 window.PriceHistory.Config = {
   USER_LOCALE: (navigator.languages && navigator.languages[0]) || 'en-GB',
+
+  // Legacy default spreadsheet id. Kept for backwards compatibility in older pages/utilities.
   SPREADSHEET_ID: '1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo',
+
+  // New: each history dataset lives in its own spreadsheet.
+  // All destination spreadsheets use tab name `History`.
+  HISTORY_SHEETS: {
+    BuyHistory:         { spreadsheetId: '1B3uNkzsep1JdZxTtBTL0xwm1-hhoJKh2pTtMzRmkuHY', tabName: 'History' },
+    SellHistory:        { spreadsheetId: '1siICPt1qzBfJFlXTtTWlwwZw4cUw0p9g3zoe2cUouBI', tabName: 'History' },
+    ValuationHistory:   { spreadsheetId: '14fHs-CDv53F4ZynAGem1ESKz-kngjjf0Tj0_K1OygsM', tabName: 'History' },
+    GoalHistory:        { spreadsheetId: '1DkPjABNTCqbOkasPnTI7DF9C8GNafujqWAuMb9SY4zk', tabName: 'History' },
+    TargetStockHistory: { spreadsheetId: '13TxnisJImLlYwDTme9ihuHj9CPRubFfAyYFWcPm-RmE', tabName: 'History' }
+  },
 
   // Keep true only when debugging inflation behavior.
   DEBUG_INFLATION: true,
