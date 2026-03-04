@@ -167,8 +167,8 @@ function renderTradeNiceHtml(snap, buyerLabel, sellerLabel) {
    rightLines.push(`${EW.toFixed(2)} EW`);
         }
 
-   const leftHeader = (listingType === 'BUY') ? 'Customer takes' : 'Customer gives';
-   const rightHeader = (listingType === 'BUY') ? 'Merchant receives' : 'Merchant pays';
+    const leftHeader = (listingType === 'BUY') ? 'Merchant takes' : 'Merchant gives';
+    const rightHeader = (listingType === 'BUY') ? 'Customer receives' : 'Customer pays';
 
         const primaryBasis = esc(String(pricing.pricingBasis || ''));
         const canonicalEW = payment.canonicalEW != null ? Number(payment.canonicalEW ||0) : null;
@@ -184,8 +184,8 @@ function renderTradeNiceHtml(snap, buyerLabel, sellerLabel) {
  let favorHtml = '';
  try {
  const fav = computeFavorPctsFromSnap_(snap);
- const cLine = renderFavorLine_('Merchant', fav.customerPctRaw);
- const mLine = renderFavorLine_('Customer', fav.merchantPctRaw);
+     const cLine = renderFavorLine_('Customer', fav.customerPctRaw);
+     const mLine = renderFavorLine_('Merchant', fav.merchantPctRaw);
  const joined = [cLine, mLine].filter(Boolean).join('<br>');
  if (joined) favorHtml = `<div style="margin-top:10px;">${joined}</div>`;
  } catch { /* ignore */ }
