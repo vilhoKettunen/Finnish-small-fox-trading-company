@@ -8,11 +8,14 @@ window.BankCharts = (function () {
     if (instances[id]) { instances[id].destroy(); delete instances[id]; }
   }
 
+  // Format a Date object as DD/MM/YYYY using UTC fields so that UTC-midnight
+  // dates (created with Date.UTC) are never shifted by the viewer's timezone.
   function fmtDate(ts) {
     if (!ts) return '';
     try {
-      const iso = ts.toISOString().slice(0, 10); // YYYY-MM-DD
-      const [y, m, d] = iso.split('-');
+      const d = String(ts.getUTCDate()).padStart(2, '0');
+      const m = String(ts.getUTCMonth() + 1).padStart(2, '0');
+   const y = ts.getUTCFullYear();
       return `${d}/${m}/${y}`;
     } catch { return String(ts); }
   }

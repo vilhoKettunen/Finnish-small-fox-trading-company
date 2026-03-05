@@ -32,12 +32,19 @@ window.BankUI = (function () {
   // ??? Helpers ??????????????????????????????????????????????????????????????
   function $(id) { return document.getElementById(id); }
 
+  // Produce a YYYY-MM-DD key using UTC fields so UTC-midnight dates are never
+  // shifted by the viewer's local timezone.
   function dateKey(ts) {
     if (!ts) return '';
-    try { return ts.toISOString().slice(0, 10); } catch { return ''; }
+    try {
+      const y = ts.getUTCFullYear();
+      const m = String(ts.getUTCMonth() + 1).padStart(2, '0');
+      const d = String(ts.getUTCDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    } catch { return ''; }
   }
 
-  // Display date as DD/MM/YYYY
+  // Display a YYYY-MM-DD ISO string as DD/MM/YYYY for the user.
   function fmtDateDisplay(isoStr) {
     if (!isoStr) return '';
     const [y, m, d] = isoStr.split('-');
