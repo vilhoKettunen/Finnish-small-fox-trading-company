@@ -468,8 +468,12 @@ stockVal = stockStacks * price;
 
   function applyAndRender() {
         _appliedItems = [..._stagedItems];
-        savePreset();
+   savePreset();
         renderInflationChart();
+        // Also update the per-item velocity chart so it shows the new selection
+        if (window.BankUI && typeof BankUI.renderVelocityItem === 'function') {
+            BankUI.renderVelocityItem();
+        }
     }
 
     // ??? Item selector wiring ?????????????????????????????????????????????????
@@ -561,6 +565,8 @@ await renderInflationChart();
 
     function isInited() { return _inited; }
 
-    return { init, onRangeChange, isInited };
+    function getAppliedItems() { return _appliedItems.slice(); }
+
+    return { init, onRangeChange, isInited, getAppliedItems };
 
 })();

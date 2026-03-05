@@ -6,21 +6,21 @@ window.BankUI = (function () {
     const state = {
         range: BankConfig.DEFAULT_RANGE,
         backingMode: 'raw',
-        backingShowMetal: true,
+      backingShowMetal: true,
         backingShowCirc: true,
-        issuanceShowDestroyed: true,
+issuanceShowDestroyed: true,
         issuanceShowStoreBuy: false,
-        issuanceShowOcmFees: false,
+     issuanceShowOcmFees: false,
         issuanceShowNet: false,
         metalAllocMode: 'line',
-        wealthMode: 'pct',
+    wealthMode: 'pct',
         wealthSelectedDate: null,
-        velLoaded: false,
+      velLoaded: false,
         // Per-item velocity toggles
-        velItem: { breakdown: true, showA: true, showB: true, norm: false },
+        velItem: { breakdown: true, showA: true, showB: true, norm: false, top10: false },
         // Combined velocity toggles
-        velComb: { breakdown: false, showA: true, showB: true, norm: false }
-    };
+    velComb: { breakdown: false, showA: true, showB: true, norm: false }
+  };
 
     // Cached processed data
     let ewCircRows = null;
@@ -475,6 +475,16 @@ window.BankUI = (function () {
         bindCheck('bankVelItemShowB', state.velItem, 'showB', () => state.velLoaded && renderVelocityItem());
         bindCheck('bankVelItemNorm', state.velItem, 'norm', () => state.velLoaded && renderVelocityItem());
 
+     // Top-10 toggle button (not a checkbox — uses the existing bank-toggle-btn pattern)
+        const btnTop10 = $('bankVelItemTop10');
+   if (btnTop10) {
+     btnTop10.addEventListener('click', () => {
+  state.velItem.top10 = !state.velItem.top10;
+            btnTop10.classList.toggle('active', state.velItem.top10);
+  if (state.velLoaded) renderVelocityItem();
+            });
+        }
+
         // Combined toggles
         bindCheck('bankVelCombBreakdown', state.velComb, 'breakdown', () => state.velLoaded && renderVelocityCombined());
         bindCheck('bankVelCombShowA', state.velComb, 'showA', () => state.velLoaded && renderVelocityCombined());
@@ -569,11 +579,49 @@ window.BankUI = (function () {
     }
 
     function renderVelocityItem() {
-        if (!_velRows) return;
-        const metricKey = _velMetricKey || 'ewVelocity';
-        const items = [...new Set(_velRows.map(r => r.item))].slice(0, 10);
+    if (!_velRows) return;
+   const metricKey = _velMetricKey || 'ewVelocity';
+
+        const subtitle = $('velItemSubtitle');
+
+     // ── Top-10 mode (button active) ──────────────────────────────────────
+        // Rank items by their total activity (sum of all a + b values across
+  // all dates) and take the top 10.
+        if (state.velItem.top10) {
+    const totals = {};
+  _velRows.forEach(r => {
+     if (!totals[r.item]) totals[r.item] = 0;
+            totals[r.item] += (isFinite(r.a) ? r.a : 0) + (isFinite(r.b) ? r.b : 0);
+            });
+            const items = Object.entries(totals)
+     .sort((a, b) => b[1] - a[1])
+.slice(0, 10)
+  .map(([name]) => name);
+
+         if (subtitle) subtitle.textContent = 'Top 10 most active items';
+
+     const { dates, datasets } = buildVelDatasets(_velRows, items, state.velItem, metricKey);
+          BankCharts.drawBankVelocityChart('bankVelocityItemChart', dates, datasets, state.range);
+  return;
+    }
+
+        // ── Selected-items mode (default) ─────────────────────────────────────
+        const selectedItems = (window.BankInflation && BankInflation.isInited())
+            ? BankInflation.getAppliedItems()
+            : [];
+
+     const items = selectedItems.length
+            ? selectedItems.filter(name => _velRows.some(r => r.item === name))
+            : [...new Set(_velRows.map(r => r.item))].slice(0, 10);
+
+        if (subtitle) {
+            subtitle.textContent = selectedItems.length
+    ? 'Showing ' + items.length + ' selected item' + (items.length !== 1 ? 's' : '')
+ : 'Showing top 10 items (no selection \u2014 use the item selector above)';
+     }
+
         const { dates, datasets } = buildVelDatasets(_velRows, items, state.velItem, metricKey);
-        BankCharts.drawBankVelocityChart('bankVelocityItemChart', dates, datasets, state.range);
+    BankCharts.drawBankVelocityChart('bankVelocityItemChart', dates, datasets, state.range);
     }
 
     function renderVelocityCombined() {
@@ -686,5 +734,5 @@ window.BankUI = (function () {
         if (modal) modal.style.display = 'none';
     }
 
-    return { init, renderWealthDonut };
+    return { init, renderWealthDonut, renderVelocityItem };
 })();
