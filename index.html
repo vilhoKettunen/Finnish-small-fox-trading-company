@@ -450,6 +450,39 @@
         <div id="onBehalfStatus" class="small"></div>
     </div>
 
+    <div id="infraInvestSection" class="section" style="display:none;">
+        <div class="collapsible-header">
+     <h2 style="margin:0">🏗️ Infrastructure Investment (Admin)</h2>
+            <button id="toggleInfraInvest" class="collapse-btn" aria-expanded="false"
+ onclick="toggleCollapse('infraInvestContent','toggleInfraInvest')">▸</button>
+  </div>
+        <div id="infraInvestContent" class="collapsible-content" style="display:none;">
+     <div class="small">
+     Admin only. Add items to the Buy cart above, fill in both descriptions,
+         then submit. Stock is deducted. No user balance is affected.
+          </div>
+            <label style="display:block;margin-top:8px;">
+            Short Description (max 100 chars, shown in list):
+                <input id="infraShortDesc" type="text" maxlength="100" style="width:100%;">
+     </label>
+  <label style="display:block;margin-top:8px;">
+      Long Description (max 2000 chars, shown in detail view):
+           <textarea id="infraLongDesc" maxlength="2000"
+           style="width:100%;min-height:80px;resize:vertical;"></textarea>
+ </label>
+   <div id="infraCartPreview" class="small"
+style="margin-top:8px;color:#555;font-style:italic;">
+          No items in buy cart yet.
+    </div>
+            <button id="btnInfraSubmit" type="button"
+   onclick="window.submitInfraInvestment && window.submitInfraInvestment()"
+  style="margin-top:8px;">
+              Send Infrastructure Investment
+            </button>
+            <div id="infraMsg" class="small" style="margin-top:6px;"></div>
+        </div>
+ </div>
+
     <div class="section links-section" id="usefulLinks">
         <h2>🔗 Useful Links</h2>
         <nav class="links-grid" aria-label="Useful links">
@@ -467,6 +500,7 @@
     </div>
 
     <script src="pay-converter.js"></script>
+    <script src="index_js/index-infra.js"></script>
 
     <script>
         // Boot only. All feature logic is in `index_js/*`.

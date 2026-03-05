@@ -197,6 +197,7 @@
         });
         document.getElementById('buyTotal').textContent = window.formatValue(total, curr, true);
         window.calculateNet && window.calculateNet();
+        window.updateInfraCartPreview && window.updateInfraCartPreview();
     };
 
     window.renderSellList = window.renderSellList || function renderSellList() {

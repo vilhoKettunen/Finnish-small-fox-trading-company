@@ -53,6 +53,7 @@ gap: 12px;
     <button type="button" data-nav="Merchant">OCM Merchant</button>
     <button type="button" data-nav="leaderboards">Leaderboards</button>
     <button type="button" data-nav="workpay">Work Pay Rates</button>
+  <button type="button" data-nav="bank">Bank</button>
     <button id="adminPanelBtn" style="display:none" type="button" data-nav="admin">Admin Panel</button>
     <div class="right">
       <span id="topBalance" class="balance-chip balance-you" style="display:none;"></span>
@@ -159,6 +160,7 @@ gap: 12px;
                 state.idToken = null; state.user = null; state.isAdmin = false; state.balanceBT = null;
                 if (window.clearSavedIdToken) window.clearSavedIdToken();
                 updateTopBarAuth();
+                window.hideInfraSection?.();
                 return;
             }
             if (btn.dataset && btn.dataset.nav) {
@@ -169,7 +171,8 @@ gap: 12px;
                 else if (nav === 'Merchant') window.location.href = 'OCMUser.html';
                 else if (nav === 'leaderboards') window.location.href = 'Leaderboards.html';
                 else if (nav === 'workpay') window.location.href = 'WorkPayRates.html';
-                else if (nav === 'admin') {
+     else if (nav === 'bank') window.location.href = 'Bank.html';
+      else if (nav === 'admin') {
                     if (!state.idToken || !state.isAdmin) { alert('Admin only'); return; }
                     window.location.href = 'Admin.html';
                 }

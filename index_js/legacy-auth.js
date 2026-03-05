@@ -298,6 +298,8 @@
  if (adminBtn) adminBtn.style.display = window.currentUser.isAdmin ? 'inline' : 'none';
  const ob = document.getElementById('onBehalfSection');
  if (ob) ob.style.display = window.currentUser.isAdmin ? 'block' : 'none';
+ const infraSec = document.getElementById('infraInvestSection');
+        if (infraSec) infraSec.style.display = window.currentUser.isAdmin ? 'block' : 'none';
 
  if (window.currentUser.isAdmin) { try { await window.adminLoadPlayers(); } catch { } }
 
