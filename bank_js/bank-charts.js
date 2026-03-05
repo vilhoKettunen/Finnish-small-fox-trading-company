@@ -10,7 +10,11 @@ window.BankCharts = (function () {
 
   function fmtDate(ts) {
     if (!ts) return '';
-    try { return ts.toISOString().slice(0, 10); } catch { return String(ts); }
+    try {
+      const iso = ts.toISOString().slice(0, 10); // YYYY-MM-DD
+      const [y, m, d] = iso.split('-');
+      return `${d}/${m}/${y}`;
+    } catch { return String(ts); }
   }
 
   function applyRangeFilter(axisDates, datasets, rangeOption) {
