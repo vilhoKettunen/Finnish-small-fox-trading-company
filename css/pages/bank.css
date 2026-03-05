@@ -1,237 +1,304 @@
-/* css/pages/bank.css � Bank page styles */
+﻿/* css/pages/bank.css — Bank page styles */
 
-/* ??? Chart containers ???????????????????????????????????????????????????? */
+/* ─── Chart containers ──────────────────────────────────────────────────── */
 .bank-chart-container {
-  position: relative;
-  height: 300px;
-  margin-bottom: 8px;
+    position: relative;
+    height: 300px;
+    margin-bottom: 8px;
 }
 
-/* ??? Controls row ???????????????????????????????????????????????????????? */
+/* ─── Controls row ──────────────────────────────────────────────────────── */
 .bank-chart-controls {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-  align-items: center;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    align-items: center;
 }
 
-/* ??? Toggle buttons ?????????????????????????????????????????????????????? */
+/* ─── Toggle buttons ────────────────────────────────────────────────────── */
 .bank-toggle-btn {
-  padding: 4px 12px;
-  border-radius: 4px;
-  border: 1px solid #d1d5db;
-  background: #f9fafb;
-  color: #374151;
-  cursor: pointer;
-  font-size: 13px;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+    padding: 4px 12px;
+    border-radius: 4px;
+    border: 1px solid #d1d5db;
+    background: #f9fafb;
+    color: #374151;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.bank-toggle-btn:hover {
-  background: #e5e7eb;
-}
+    .bank-toggle-btn:hover {
+        background: #e5e7eb;
+    }
 
-.bank-toggle-btn.active {
-  background: #2563eb;
-  color: #fff;
-  border-color: #2563eb;
-}
+    .bank-toggle-btn.active {
+        background: #2563eb;
+        color: #fff;
+        border-color: #2563eb;
+    }
 
-/* ??? Mode select dropdowns ??????????????????????????????????????????????? */
+/* ─── Mode select dropdowns ─────────────────────────────────────────────── */
 .bank-mode-select {
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid #d1d5db;
-  background: #fff;
-  font-size: 13px;
-color: #374151;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    font-size: 13px;
+    color: #374151;
 }
 
-/* ??? Wealth legend ??????????????????????????????????????????????????????? */
+/* ─── Wealth legend ─────────────────────────────────────────────────────── */
 .wealth-legend-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 6px;
-  flex-wrap: wrap;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
 }
 
 .wealth-swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  display: inline-block;
-  flex-shrink: 0;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    display: inline-block;
+    flex-shrink: 0;
 }
 
-/* ??? Infrastructure investment list ?????????????????????????????????????? */
+/* ─── Infrastructure investment list ────────────────────────────────────── */
 .infra-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .infra-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  padding: 12px;
-  background: #fafafa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 12px;
+    background: #fafafa;
 }
 
 .infra-card-meta {
-  font-size: 0.82em;
-  color: #6b7280;
-  margin-bottom: 2px;
+    font-size: 0.82em;
+    color: #6b7280;
+    margin-bottom: 2px;
 }
 
-/* ??? Infrastructure detail modal ????????????????????????????????????????? */
+/* ─── Infrastructure detail modal ───────────────────────────────────────── */
 .infra-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  z-index: 3000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .infra-modal {
-  background: #fff;
-  padding: 20px;
-  max-width: 600px;
-  width: 90%;
-  border-radius: 8px;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+    background: #fff;
+    padding: 20px;
+    max-width: 600px;
+    width: 90%;
+    border-radius: 8px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
 }
 
-/* ??? Collapsible section ????????????????????????????????????????????????? */
+/* ─── Collapsible section ───────────────────────────────────────────────── */
 #velInflSection .collapsible-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-/* ??? Section header with info button ????????????????????????????????????? */
+/* ─── Section header with info button ───────────────────────────────────── */
 .bank-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
 }
 
-.bank-section-header h2 {
-  margin: 0;
-  flex: 1;
-}
+    .bank-section-header h2 {
+        margin: 0;
+        flex: 1;
+    }
 
-/* ??? Info button (same style as PriceHistory) ???????????????????????????? */
+/* ─── Info button (same style as PriceHistory) ──────────────────────────── */
 .infoBtn {
-  flex-shrink: 0;
-  padding: 3px 10px;
-  border-radius: 4px;
-  border: 1px solid #93c5fd;
-  background: #eff6ff;
-  color: #1d4ed8;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  white-space: nowrap;
-  transition: background 0.12s, border-color 0.12s;
+    flex-shrink: 0;
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid #93c5fd;
+    background: #eff6ff;
+    color: #1d4ed8;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background 0.12s, border-color 0.12s;
 }
 
-.infoBtn:hover {
-  background: #dbeafe;
-  border-color: #3b82f6;
-}
+    .infoBtn:hover {
+        background: #dbeafe;
+        border-color: #3b82f6;
+    }
 
-/* ??? Info modal (identical pattern to PriceHistory) ????????????????????? */
+/* ─── Info modal (identical pattern to PriceHistory) ───────────────────── */
 #bankInfoModal {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-#bankInfoModal .modalCard {
-  background: #fff;
-  border-radius: 10px;
-  max-width: 540px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
-  padding: 0;
-}
+    #bankInfoModal .modalCard {
+        background: #fff;
+        border-radius: 10px;
+        max-width: 540px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+        padding: 0;
+    }
 
-#bankInfoModal .modalHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px 12px;
-  border-bottom: 1px solid #e5e7eb;
-}
+    #bankInfoModal .modalHeader {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px 12px;
+        border-bottom: 1px solid #e5e7eb;
+    }
 
-#bankInfoModal .modalTitle {
-  font-weight: 700;
-  font-size: 1.05em;
-}
+    #bankInfoModal .modalTitle {
+        font-weight: 700;
+        font-size: 1.05em;
+    }
 
-#bankInfoModal .modalClose {
-  border: 1px solid #d1d5db;
-  background: #f3f4f6;
-  border-radius: 4px;
-  padding: 3px 10px;
-  cursor: pointer;
-  font-size: 13px;
-}
+    #bankInfoModal .modalClose {
+        border: 1px solid #d1d5db;
+        background: #f3f4f6;
+        border-radius: 4px;
+        padding: 3px 10px;
+        cursor: pointer;
+        font-size: 13px;
+    }
 
-#bankInfoModal .modalClose:hover {
-  background: #e5e7eb;
-}
+        #bankInfoModal .modalClose:hover {
+            background: #e5e7eb;
+        }
 
-#bankInfoModal #bankInfoModalBody {
-  padding: 16px 20px 20px;
-  font-size: 0.92em;
-  line-height: 1.55;
-}
+    #bankInfoModal #bankInfoModalBody {
+        padding: 16px 20px 20px;
+        font-size: 0.92em;
+        line-height: 1.55;
+    }
 
-#bankInfoModal #bankInfoModalBody ul {
-  margin: 4px 0 8px 0;
-  padding-left: 20px;
-}
+        #bankInfoModal #bankInfoModalBody ul {
+            margin: 4px 0 8px 0;
+            padding-left: 20px;
+        }
 
-#bankInfoModal #bankInfoModalBody li {
-  margin-bottom: 4px;
-}
+        #bankInfoModal #bankInfoModalBody li {
+            margin-bottom: 4px;
+        }
 
 .helpExample {
-  background: #f0f9ff;
-  border-left: 3px solid #3b82f6;
-  border-radius: 0 4px 4px 0;
-  padding: 8px 12px;
-  margin-top: 10px;
+    background: #f0f9ff;
+    border-left: 3px solid #3b82f6;
+    border-radius: 0 4px 4px 0;
+    padding: 8px 12px;
+    margin-top: 10px;
 }
 
 .helpExampleTitle {
-  font-weight: 700;
-  font-size: 0.85em;
-  color: #1d4ed8;
-  margin-bottom: 3px;
+    font-weight: 700;
+    font-size: 0.85em;
+    color: #1d4ed8;
+    margin-bottom: 3px;
 }
 
-/* ??? Velocity toggle labels ??????????????????????????????????????????????? */
+/* ─── Velocity toggle labels ─────────────────────────────────────────────── */
 .bank-vel-toggle-label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: #374151;
-  cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #374151;
+    cursor: pointer;
 }
 
 .bank-vel-chart-block {
-  margin-top: 8px;
+    margin-top: 8px;
 }
+
+/* ─── Intro: currency block ─────────────────────────────────────────────── */
+.bank-intro-currency {
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-top: 12px;
+}
+
+.bank-intro-currency-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* ─── Intro: page guide collapsible ─────────────────────────────────────── */
+.bank-intro-guide-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    padding: 5px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+}
+
+    .bank-intro-guide-btn:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+    }
+
+    .bank-intro-guide-btn[aria-expanded="true"] {
+        background: #eff6ff;
+        border-color: #93c5fd;
+        color: #1d4ed8;
+    }
+
+.bank-intro-guide-panel {
+    margin-top: 8px;
+    background: #fafafa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 14px 18px;
+    font-size: 0.91em;
+    line-height: 1.6;
+}
+
+    .bank-intro-guide-panel ul {
+        margin: 4px 0 0 0;
+        padding-left: 20px;
+    }
+
+    .bank-intro-guide-panel li {
+        margin-bottom: 6px;
+    }
+
+        .bank-intro-guide-panel li strong {
+            color: #1d4ed8;
+        }
