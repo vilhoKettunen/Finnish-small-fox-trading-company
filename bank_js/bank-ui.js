@@ -121,6 +121,8 @@ window.BankUI = (function () {
         renderMetalAllocation();
         renderWealthDist();
         BankInfra.loadAndRender();
+        // Re-render inflation chart when range changes (only if section was opened)
+        if (window.BankInflation) BankInflation.onRangeChange();
     }
 
     // ─── Chart 1: EW Circulation ──────────────────────────────────────────────
@@ -447,6 +449,10 @@ window.BankUI = (function () {
             if (!isOpen && !state.velLoaded) {
                 state.velLoaded = true;
                 await renderVelocitySection();
+                // Also init the inflation chart the first time the section opens
+                if (window.BankInflation && !BankInflation.isInited()) {
+                    await BankInflation.init();
+                }
             }
         });
 

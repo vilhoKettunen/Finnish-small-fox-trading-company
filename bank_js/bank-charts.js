@@ -194,25 +194,121 @@ function drawStoreNetWorthChart(canvasId, axisDates, values, range) {
     instances[canvasId] = new Chart(ctx, {
       type: 'line',
       data: { labels: filtered.labels.map(fmtDate), datasets: filtered.datasets },
-options: {
-        responsive: true, maintainAspectRatio: false,
+      options: {
+      responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display: true, position: 'top' }, tooltip: { mode: 'index', intersect: false } },
-    scales: { y: { ticks: { callback: v => v.toLocaleString() } } }
+        scales: { y: { ticks: { callback: v => v.toLocaleString() } } }
       }
     });
   }
 
-  function drawBankInflationChart(canvasId, axisDates, datasets, range) {
+  function drawBankInflationChart(canvasId, axisDates, indexValues, contributingCounts, categoryKey, range, tooltipModel) {
     destroy(canvasId);
     const ctx = document.getElementById(canvasId); if (!ctx) return;
-    const filtered = applyRangeFilter(axisDates, datasets, range);
+
+    const isListCategory = categoryKey === 'common' || categoryKey === 'metals';
+
+    // Apply range filter to the parallel arrays
+    let filteredDates = axisDates;
+    let filteredValues = indexValues;
+    let filteredCounts = contributingCounts;
+
+    if (range && range !== 'all') {
+      const now = new Date();
+      let cutoff;
+      if (range === '7d')  cutoff = new Date(now - 7   * 86400000);
+      else if (range === '30d') cutoff = new Date(now - 30  * 86400000);
+      else if (range === '90d') cutoff = new Date(now - 90  * 86400000);
+      else if (range === '1y')  cutoff = new Date(now - 365 * 86400000);
+
+  if (cutoff) {
+    const indices = axisDates.reduce((a, d, i) => { if (d >= cutoff) a.push(i); return a; }, []);
+        filteredDates  = indices.map(i => axisDates[i]);
+        filteredValues = indices.map(i => indexValues[i]);
+        filteredCounts = indices.map(i => contributingCounts[i]);
+        // Remap tooltipModel arrays to the same filtered indices
+    if (tooltipModel) {
+          tooltipModel = {
+        totalWeightPerDay:   indices.map(i => tooltipModel.totalWeightPerDay[i]),
+      top5ByWeightPerDay:  indices.map(i => tooltipModel.top5ByWeightPerDay[i]),
+      missingCountByDay:   indices.map(i => tooltipModel.missingCountByDay[i]),
+    missingNamesByDay:   indices.map(i => tooltipModel.missingNamesByDay[i]),
+     existingCategoryCount: tooltipModel.existingCategoryCount,
+         medianFactorPerDay:  indices.map(i => tooltipModel.medianFactorPerDay[i])
+   };
+        }
+      }
+    }
+
     instances[canvasId] = new Chart(ctx, {
       type: 'line',
-      data: { labels: filtered.labels.map(fmtDate), datasets: filtered.datasets },
+  data: {
+        labels: filteredDates.map(fmtDate),
+      datasets: [{
+          label: 'Inflation Index (base=100)',
+    data: filteredValues,
+ borderColor: '#111827',
+          backgroundColor: 'rgba(17,24,39,0.08)',
+          borderWidth: 2,
+ tension: 0.2,
+      fill: true,
+          pointRadius: 3,
+          spanGaps: false
+    }]
+      },
       options: {
-  responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display: true, position: 'top' }, tooltip: { mode: 'index', intersect: false } },
-  scales: { y: { ticks: { callback: v => v.toFixed(1) } } }
+        responsive: true, maintainAspectRatio: false,
+   plugins: {
+          legend: { display: false },
+          tooltip: {
+            intersect: false,
+            mode: 'index',
+       callbacks: {
+     label: function (ctx) {
+ const v = ctx.parsed.y;
+    if (v == null) return 'No data';
+                return 'Index: ' + Number(v).toFixed(2);
+      },
+          afterBody: function (tooltipItems) {
+     if (!tooltipItems || !tooltipItems.length || !tooltipModel) return [];
+     const idx = tooltipItems[0].dataIndex;
+                const lines = [];
+   const n = filteredCounts && isFinite(filteredCounts[idx]) ? filteredCounts[idx] : 0;
+          const totalW = tooltipModel.totalWeightPerDay && tooltipModel.totalWeightPerDay[idx] != null ? tooltipModel.totalWeightPerDay[idx] : 0;
+             const medFactor = tooltipModel.medianFactorPerDay && tooltipModel.medianFactorPerDay[idx];
+        const denom = isListCategory ? (tooltipModel.existingCategoryCount != null ? tooltipModel.existingCategoryCount : null) : null;
+
+     lines.push('Items: ' + n + ' | Total weight: ' + Number(totalW).toFixed(2));
+       if (isFinite(medFactor)) lines.push('Median factor: ' + Number(medFactor).toFixed(4));
+
+      const top = (tooltipModel.top5ByWeightPerDay && tooltipModel.top5ByWeightPerDay[idx]) || [];
+             if (top.length) {
+        lines.push('Top 5 by weight:');
+       top.forEach(function (t, i) {
+          const pct = isFinite(t.sharePct) ? t.sharePct : 0;
+  const w = isFinite(t.weight) ? t.weight : 0;
+             lines.push((i + 1) + ') ' + t.name + ' \u2014 ' + pct.toFixed(1) + '% (w=' + w.toFixed(2) + ')');
+          });
+       }
+
+      if (isListCategory) {
+      const missingCount = tooltipModel.missingCountByDay && tooltipModel.missingCountByDay[idx];
+         const missingNames = (tooltipModel.missingNamesByDay && tooltipModel.missingNamesByDay[idx]) || [];
+if (isFinite(denom) && isFinite(missingCount)) lines.push('Missing: ' + missingCount + '/' + denom);
+   if (missingNames.length) {
+let missLine = 'Missing: ' + missingNames.join(', ');
+           if (isFinite(missingCount) && missingCount > missingNames.length) missLine += ' (+' + (missingCount - missingNames.length) + ' more)';
+      lines.push(missLine);
+}
+  }
+
+            if (n <= 2 && (denom == null || denom > n)) lines.push('Warning: very few items contributing today; index may look flat.');
+       return lines;
+     }
+       }
+  }
+        },
+     scales: { y: { beginAtZero: false, ticks: { callback: v => Number(v).toFixed(1) } } }
       }
     });
   }

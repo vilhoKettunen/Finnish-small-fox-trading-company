@@ -139,6 +139,24 @@ window.BankHelpText = {
             'Normalize to 100: scales each dataset so its first non-zero value becomes 100, showing relative change.'
         ],
         example: 'Example: Use the EW Velocity metric with breakdown ON to see whether store buys or sells dominate on a given day.'
+    },
+
+    inflationIndex: {
+        title: 'Inflation Index (base=100)',
+        bullets: [
+            'Shows how prices have changed relative to the start of the selected time range.',
+            'Base = 100: a value of 110 means prices are on average 10% higher than at the start of the range.',
+            'Weighted median: items with higher stock value (in EW) contribute more to the index.',
+            '"Median (all items)" category uses every item in the store — broadest view.',
+            '"Metal Index" uses only metal ingots — tracks metal price inflation specifically.',
+            '"Common Items" uses a fixed list of frequently traded everyday items.',
+            '"Selected items" uses only the items you add via the item selector above the chart.',
+            'Weight formula: stock value (price \u00d7 stock, or ValuationHistory when available) \u00f7 1000.',
+            'Days where an item has no price data appear as gaps in the chart line.',
+            'Use the item selector to add up to 10 items, then choose "Selected items" as the category to track your own basket of goods.',
+            'The global Time Range selector at the top of the page also applies to this chart.'
+        ],
+        example: 'Example: An index value of 120 on a given day means the weighted-average price of items in the selected category is 20% higher than on the first day of the chosen time range.'
     }
 
 };

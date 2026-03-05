@@ -302,3 +302,89 @@
         .bank-intro-guide-panel li strong {
             color: #1d4ed8;
         }
+/* ─── Inflation chart — item selector ──────────────────────────────────── */
+.bank-infl-item-select {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    flex: 1;
+    min-width: 280px;
+    max-width: 520px;
+}
+
+.bank-infl-item-row {
+    display: flex;
+    gap: .4rem;
+    align-items: center;
+}
+
+.bank-infl-item-row button {
+    padding: 5px 12px;
+    border-radius: 4px;
+  border: 1px solid #d1d5db;
+    background: #f9fafb;
+    color: #374151;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+    transition: background 0.12s;
+}
+
+.bank-infl-item-row button:hover {
+    background: #e5e7eb;
+}
+
+.bank-infl-apply-btn {
+    background: #111827 !important;
+    color: #fff !important;
+    border-color: #111827 !important;
+}
+
+.bank-infl-apply-btn:hover {
+    filter: brightness(1.08);
+}
+
+.bank-infl-chips {
+    display: flex;
+    flex-wrap: wrap;
+ gap: .4rem;
+    min-height: 28px;
+}
+
+/* ─── Chip elements (mirrors PriceHistory chips) ────────────────────────── */
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .2rem .45rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    background: #fafafa;
+    font-size: 13px;
+}
+
+.chipColor {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.chipText {
+    font-weight: 600;
+}
+
+.chipRemove {
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    line-height: 1;
+  padding: 0 .1rem;
+    color: #dc2626;
+  font-weight: 900;
+    cursor: pointer;
+}
+
+.chipRemove:hover {
+    color: #b91c1c;
+}

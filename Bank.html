@@ -16,9 +16,11 @@
     <link rel="stylesheet" href="css/site-layout.css">
     <link rel="stylesheet" href="css/panels-paper.css">
     <link rel="stylesheet" href="css/pages/bank.css">
+    <link rel="stylesheet" href="css/shared/universal-dropdown.css">
 
     <script src="shared/site-decor.js"></script>
     <script src="shared/site-footer.js"></script>
+    <script src="shared/universal-dropdown.js"></script>
 </head>
 
 <body class="no-side-decor">
@@ -234,6 +236,46 @@
                 </select>
             </div>
 
+            <!-- ─── Inflation Index chart ───────────────────────────────── -->
+            <div id="bankInflationBlock" class="bank-vel-chart-block">
+                <div class="bank-section-header" style="margin-bottom:6px;">
+                    <strong>Inflation Index (base=100)</strong>
+                    <button class="infoBtn" type="button" data-bank-info="inflationIndex" title="About inflation index">More info</button>
+                </div>
+
+                <!-- Item selector -->
+                <div class="bank-chart-controls" style="flex-wrap:wrap;gap:8px;align-items:flex-start;">
+                    <div class="bank-infl-item-select">
+                        <div class="bank-infl-item-row">
+                            <div class="dropdown-wrap" style="flex:1;">
+                                <input id="bankInflItemInput" class="dropdown-input" placeholder="Search items&hellip;" style="width:100%;" />
+                                <div id="bankInflItemList" class="dropdown-list" style="display:none;"></div>
+                            </div>
+                            <button id="bankInflAddBtn" type="button">Add</button>
+                            <button id="bankInflApplyBtn" type="button" class="bank-infl-apply-btn">Apply</button>
+                            <button id="bankInflClearBtn" type="button">Clear</button>
+                        </div>
+                        <div id="bankInflChips" class="bank-infl-chips"></div>
+                    </div>
+
+                    <!-- Index category selector -->
+                    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                        <label for="bankInflIndexSelect" style="font-weight:600;white-space:nowrap;">Category:</label>
+                        <select id="bankInflIndexSelect" class="bank-mode-select">
+                            <option value="median" selected>Median (all items, weighted)</option>
+                            <option value="metals">Metal Index (weighted)</option>
+                            <option value="common">Common Items (weighted)</option>
+                            <option value="selected">Selected items (weighted)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bank-chart-container">
+                    <canvas id="bankInflationChart"></canvas>
+                </div>
+            </div>
+            <!-- ─── end Inflation Index chart ──────────────────────────── -->
+
             <!-- Per-item velocity chart -->
             <div class="bank-vel-chart-block">
                 <div class="bank-section-header" style="margin-bottom:6px;">
@@ -286,6 +328,7 @@
     <script src="bank_js/bank-data.js"></script>
     <script src="bank_js/bank-charts.js"></script>
     <script src="bank_js/bank-helptext.js"></script>
+    <script src="bank_js/bank-inflation.js"></script>
     <script src="bank_js/bank-ui.js"></script>
     <script src="bank_js/bank-infra.js"></script>
     <script src="bank_js/bank-boot.js"></script>
