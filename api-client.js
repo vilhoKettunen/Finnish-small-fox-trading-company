@@ -64,7 +64,10 @@
         'ocmRepairTradeDetailsMailboxesV2',
 
         // Work pay rates (admin write)
-        'workPayUpsert'
+        'workPayUpsert',
+
+        // Infrastructure investment submission (admin-only)
+        'submitInfraInvestment'
     ];
 
     function normalize(j) {
