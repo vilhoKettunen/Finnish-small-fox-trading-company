@@ -8,151 +8,173 @@
 
     function printVelocityDebug_(label, resp) {
         try {
-            const d = resp?.data || resp?.result || resp;
-            const lines = d?.velocityDebugLog;
-            if (!Array.isArray(lines) || !lines.length) return;
+         const d = resp?.data || resp?.result || resp;
+  const lines = d?.velocityDebugLog;
+      if (!Array.isArray(lines) || !lines.length) return;
             console.groupCollapsed(label);
-            lines.forEach(l => console.log(l));
-            console.groupEnd();
+         lines.forEach(l => console.log(l));
+         console.groupEnd();
         } catch { /* ignore */ }
     }
 
     window.loadPendingRequests = async function loadPendingRequests() {
-    if (!Admin.state.googleIdToken) return;
+ if (!Admin.state.googleIdToken) return;
    const msgEl = byId('reqMsg');
-    const tableEl = byId('tbRequests');
-    msgEl.textContent = 'Loading...';
+        const tableEl = byId('tbRequests');
+        msgEl.textContent = 'Loading...';
 
-    try {
-   const response = await window.apiGet('listPendingRequests', { idToken: Admin.state.googleIdToken, status: 'PENDING' });
-        const dataObj = response.data || response.result || response;
-        const requestsList = Array.isArray(dataObj) ? dataObj : (dataObj.requests || []);
+        try {
+ const response = await window.apiGet('listPendingRequests', { idToken: Admin.state.googleIdToken, status: 'PENDING' });
+    const dataObj = response.data || response.result || response;
+       const requestsList = Array.isArray(dataObj) ? dataObj : (dataObj.requests || []);
 
- if (requestsList.length === 0) {
- tableEl.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#777;">0 pending requests</td></tr>';
-     msgEl.textContent = 'Loaded 0';
-      return;
-   }
+  if (requestsList.length === 0) {
+      tableEl.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#777;">0 pending requests</td></tr>';
+          msgEl.textContent = 'Loaded 0';
+           return;
+            }
 
-       renderRequests(requestsList);
-   msgEl.textContent = `Loaded ${requestsList.length}`;
+         renderRequests(requestsList);
+            msgEl.textContent = `Loaded ${requestsList.length}`;
         } catch (e) {
-   console.error(e);
-   msgEl.textContent = 'Error: ' + e.message;
-        tableEl.innerHTML = `<tr><td colspan="8" style="color:red; text-align:center;">Error: ${esc(e.message)}</td></tr>`;
-  }
+console.error(e);
+    msgEl.textContent = 'Error: ' + e.message;
+         tableEl.innerHTML = `<tr><td colspan="10" style="color:red; text-align:center;">Error: ${esc(e.message)}</td></tr>`;
+        }
     };
 
-function renderRequests(arr) {
-        const tb = byId('tbRequests');
-   tb.innerHTML = '';
-    arr.forEach(r => {
-   const net = Number(r.totals?.netEW || 0);
-  const mailbox = r.user?.mailbox || '-';
-   const tr = document.createElement('tr');
-  tr.innerHTML = `
- <td><button type="button" onclick="showRequestDetails('${esc(r.requestId)}')">${esc(r.requestId)}</button></td>
-      <td>${esc(r.user?.playerName || '')}</td>
-      <td style="font-weight:bold; color:#0066cc;">${esc(mailbox)}</td>
-     <td>
-     <div class="small">Buy: ${(Number(r.totals?.buyEW || 0)).toFixed(2)}</div>
+    function renderRequests(arr) {
+  const tb = byId('tbRequests');
+        tb.innerHTML = '';
+        arr.forEach(r => {
+            const net = Number(r.totals?.netEW || 0);
+            const mailbox = r.user?.mailbox || '-';
+
+            // Creator label
+      const creatorRaw = String(r.creator || 'User');
+  const creatorLabel = creatorRaw === 'Admin' ? 'Admin (on behalf of)' : 'User';
+            const creatorColor = creatorRaw === 'Admin' ? '#7b3f00' : '#0066cc';
+
+         // After EW display
+  const afterEWDisplay = (r.afterEW != null && isFinite(Number(r.afterEW)))
+     ? Number(r.afterEW).toFixed(2)
+    : '—';
+
+     const tr = document.createElement('tr');
+            tr.innerHTML = `
+        <td><button type="button" onclick="showRequestDetails('${esc(r.requestId)}')">${esc(r.requestId)}</button></td>
+                <td>${esc(r.user?.playerName || '')}</td>
+     <td style="font-weight:bold; color:#0066cc;">${esc(mailbox)}</td>
+          <td>
+    <div class="small">Buy: ${(Number(r.totals?.buyEW || 0)).toFixed(2)}</div>
      <div class="small">Sell: ${(Number(r.totals?.sellEW || 0)).toFixed(2)}</div>
-       </td>
- <td class="mono">${(Number(r.manualBalanceDeltaBT || 0)).toFixed(2)}</td>
-      <td class="mono" style="color:${net >= 0 ? 'green' : 'red'}">${net.toFixed(2)}</td>
-      <td class="small">${new Date(r.createdAt).toLocaleString()}</td>
-     <td>
-     <button type="button" onclick="approveRequest('${esc(r.requestId)}')" style="background:#dff0d8;">? Approve</button>
-     <button type="button" onclick="denyRequest('${esc(r.requestId)}')" style="background:#f2dede;">? Deny</button>
-      </td>`;
-   tb.appendChild(tr);
-   });
+             </td>
+       <td class="mono">${(Number(r.manualBalanceDeltaBT || 0)).toFixed(2)}</td>
+       <td class="mono" style="color:${net >= 0 ? 'green' : 'red'}">${net.toFixed(2)}</td>
+    <td class="mono" style="color:#555;">${afterEWDisplay}</td>
+ <td class="small" style="color:${creatorColor};">${creatorLabel}</td>
+<td class="small">${new Date(r.createdAt).toLocaleString()}</td>
+         <td>
+          <button type="button" onclick="approveRequest('${esc(r.requestId)}')" style="background:#dff0d8;">? Approve</button>
+           <button type="button" onclick="denyRequest('${esc(r.requestId)}')" style="background:#f2dede;">? Deny</button>
+    </td>`;
+            tb.appendChild(tr);
+        });
     }
 
     window.showRequestDetails = async function showRequestDetails(id) {
-  if (!Admin.state.googleIdToken) return;
-    const container = byId('reqDetails');
-    container.innerHTML = 'Loading details...';
+        if (!Admin.state.googleIdToken) return;
+        const container = byId('reqDetails');
+        container.innerHTML = 'Loading details...';
 
-  try {
-  const r = await window.apiGet('getRequest', { idToken: Admin.state.googleIdToken, requestId: id });
-       const data = r.data || r.result || r;
-  const details = data.details || {};
-   const user = data.user || details.user || {};
-        const carts = details.carts || { buy: [], sell: [] };
- const buyItems = carts.buy || [];
-      const sellItems = carts.sell || [];
+        try {
+ const r = await window.apiGet('getRequest', { idToken: Admin.state.googleIdToken, requestId: id });
+            const data = r.data || r.result || r;
+         const details = data.details || {};
+    const user = data.user || details.user || {};
+         const carts = details.carts || { buy: [], sell: [] };
+      const buyItems = carts.buy || [];
+       const sellItems = carts.sell || [];
 
-        const buildList = (items) => {
-       if (!items.length) return '<div class="picklist-empty">Nothing</div>';
+          // Extract new metadata
+     const totals = details.totals || {};
+     const afterEW = (totals.afterEW != null && isFinite(Number(totals.afterEW)))
+          ? Number(totals.afterEW).toFixed(2) + ' EW'
+     : null;
+       const creatorRaw = String(details.creator || 'User');
+     const creatorLabel = creatorRaw === 'Admin' ? 'Admin (on behalf of)' : 'User';
+
+   const buildList = (items) => {
+    if (!items.length) return '<div class="picklist-empty">Nothing</div>';
        return items.map(it => {
-     let qtyDisp = `${it.qty}x`;
-     if (it.bundleSize && it.bundleSize > 1) qtyDisp = `${it.qty}x${it.bundleSize}`;
+            let qtyDisp = `${it.qty}x`;
+       if (it.bundleSize && it.bundleSize > 1) qtyDisp = `${it.qty}x${it.bundleSize}`;
      return `
-   <div class="picklist-item">
-  <span class="picklist-qty">${esc(qtyDisp)}</span>
-   ${esc(it.itemName || it.name)}
-   <span class="small" style="color:#777">(${esc(it.priceBT || it.price)} EW)</span>
+  <div class="picklist-item">
+             <span class="picklist-qty">${esc(qtyDisp)}</span>
+              ${esc(it.itemName || it.name)}
+           <span class="small" style="color:#777">(${esc(it.priceBT || it.price)} EW)</span>
     </div>`;
-      }).join('');
+                }).join('');
+       };
+
+            container.innerHTML = `
+       <div class="picklist-container">
+          <div class="picklist-header">
+                 <div>
+         <div style="font-size:1.1em; font-weight:bold;">${esc(user.playerName || 'Unknown Player')}</div>
+      <div class="small">Request ID: ${esc(id)}</div>
+            <div class="small">Submitted by: <strong>${creatorLabel}</strong></div>
+            ${afterEW ? `<div class="small">Balance After (expected): <strong>${afterEW}</strong></div>` : ''}
+          </div>
+     <div>
+           <span style="margin-right:8px;">Mailbox:</span>
+  <span class="mailbox-badge">${esc(user.mailbox || '???')}</span>
+   </div>
+  </div>
+         <div class="picklist-grid">
+                <div class="picklist-col give">
+   <h4>?? GIVE TO PLAYER</h4>
+       <div class="small" style="margin-bottom:8px;">Put these items into <b>Box ${esc(user.mailbox)}</b></div>
+             ${buildList(buyItems)}
+          </div>
+           <div class="picklist-col take">
+       <h4>?? TAKE FROM PLAYER</h4>
+     <div class="small" style="margin-bottom:8px;">Collect these from <b>Box ${esc(user.mailbox)}</b></div>
+  ${buildList(sellItems)}
+            </div>
+          </div>
+         <div style="margin-top:15px; text-align:right; border-top:1px solid #eee; padding-top:10px;">
+      <strong>Net Balance Change: </strong>
+   <span style="font-size:1.2em; color:${details.totals?.netEW >= 0 ? 'green' : 'red'}">
+             ${(Number(details.totals?.netEW || 0)).toFixed(2)} EW
+    </span>
+  </div>
+    </div>`;
+ } catch (e) {
+            container.textContent = 'Error loading details: ' + e.message;
+        }
   };
 
-        container.innerHTML = `
-     <div class="picklist-container">
-     <div class="picklist-header">
-    <div>
-  <div style="font-size:1.1em; font-weight:bold;">${esc(user.playerName || 'Unknown Player')}</div>
-    <div class="small">Request ID: ${esc(id)}</div>
-    </div>
-    <div>
-  <span style="margin-right:8px;">Mailbox:</span>
-   <span class="mailbox-badge">${esc(user.mailbox || '???')}</span>
-     </div>
-     </div>
- <div class="picklist-grid">
-         <div class="picklist-col give">
-  <h4>?? GIVE TO PLAYER</h4>
-    <div class="small" style="margin-bottom:8px;">Put these items into <b>Box ${esc(user.mailbox)}</b></div>
-  ${buildList(buyItems)}
-   </div>
-     <div class="picklist-col take">
-         <h4>?? TAKE FROM PLAYER</h4>
-   <div class="small" style="margin-bottom:8px;">Collect these from <b>Box ${esc(user.mailbox)}</b></div>
-   ${buildList(sellItems)}
-    </div>
-     </div>
-     <div style="margin-top:15px; text-align:right; border-top:1px solid #eee; padding-top:10px;">
-     <strong>Net Balance Change: </strong>
-    <span style="font-size:1.2em; color:${details.totals?.netEW >= 0 ? 'green' : 'red'}">
-   ${(Number(details.totals?.netEW || 0)).toFixed(2)} EW
-    </span>
-     </div>
- </div>`;
-    } catch (e) {
-  container.textContent = 'Error loading details: ' + e.message;
-  }
-    };
-
     window.approveRequest = async function approveRequest(id) {
-   if (!confirm('Approve request ' + id + '?')) return;
-        try {
-      const resp = await window.apiPost('approveRequest', { idToken: Admin.state.googleIdToken, requestId: id });
+        if (!confirm('Approve request ' + id + '?')) return;
+ try {
+   const resp = await window.apiPost('approveRequest', { idToken: Admin.state.googleIdToken, requestId: id });
   printVelocityDebug_('Approve Request Debug Log', resp);
   window.loadPendingRequests();
-  } catch (e) {
- // api-client.js throws on {ok:false}. It attaches extras on err.extra sometimes.
- try { printVelocityDebug_('Approve Request Debug Log (error)', e?.extra); } catch { }
- alert(e.message);
- }
+        } catch (e) {
+    try { printVelocityDebug_('Approve Request Debug Log (error)', e?.extra); } catch { }
+            alert(e.message);
+        }
     };
 
     window.denyRequest = async function denyRequest(id) {
-        if (!confirm('Deny request ' + id + '?')) return;
+ if (!confirm('Deny request ' + id + '?')) return;
         try {
-      await window.apiPost('denyRequest', { idToken: Admin.state.googleIdToken, requestId: id });
-      window.loadPendingRequests();
-   } catch (e) {
-        alert(e.message);
-    }
+ await window.apiPost('denyRequest', { idToken: Admin.state.googleIdToken, requestId: id });
+         window.loadPendingRequests();
+  } catch (e) {
+alert(e.message);
+        }
     };
 })();

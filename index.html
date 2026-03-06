@@ -446,11 +446,11 @@
     <div id="requestControls" class="section">
         <h2>🔹 Transaction Request</h2>
         <div id="requestGuard" class="guard-msg" style="display:none;">You need to login for this tool.</div>
-        <button onclick="guardedSubmitPurchaseRequest()">Submit Purchase Request</button>
+        <button id="btnSubmitRequest" onclick="guardedSubmitPurchaseRequest()">Submit Purchase Request</button>
         <button class="copy-btn" onclick="guardedCopyTransactionData()">Copy Transaction Data</button>
         <button class="copy-btn" onclick="importTransactionData()">Import Transaction Data</button>
         <input id="importFile" type="file" accept="application/json" style="display:none" onchange="importTransactionDataFromFile(this.files[0])">
-        <div id="requestMsg" class="small"></div>
+      <div id="requestMsg" class="small"></div>
     </div>
 
     <div id="onBehalfSection" class="section" style="display:none;">

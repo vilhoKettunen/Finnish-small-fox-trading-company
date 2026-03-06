@@ -239,16 +239,25 @@
  const buy = carts.buy || [];
  const sell = carts.sell || [];
  const totals = d.totals || {};
- const net = Number(totals.netEW ||0);
+ const net = Number(totals.netEW || 0);
  const manual = d.manualBalanceDeltaBT != null ? Number(d.manualBalanceDeltaBT) : null;
 
- const deltaStr = fmt(h.deltaBT ||0);
- const balStr = fmt(h.balanceAfterBT ||0);
+ const deltaStr = fmt(h.deltaBT || 0);
  const prettyAt = formatDatePretty(h.at || '');
+
+ // afterEW: use expected value from detailsJson if present, else fall back to recorded balanceAfterBT
+ const hasAfterEW = d.afterEW != null && isFinite(Number(d.afterEW));
+ const balanceAfterLabel = hasAfterEW ? 'Balance After (expected)' : 'Balance After (recorded)';
+ const balanceAfterValue = hasAfterEW ? fmt(d.afterEW) : fmt(h.balanceAfterBT || 0);
+
+ // creator field
+ const creatorRaw = String(d.creator || '');
+ const creatorLabel = creatorRaw === 'Admin' ? 'Admin (on behalf of)' : (creatorRaw === 'User' ? 'User' : null);
 
  return `<div class="history-details-box">
  <div class="small" style="margin-bottom:6px;">Date: <strong>${prettyAt || (h.at || '')}</strong></div>
- <div class="small" style="margin-bottom:6px;">Delta: <strong>${deltaStr} EW</strong> &nbsp;|&nbsp; Balance after: <strong>${balStr} EW</strong></div>
+ <div class="small" style="margin-bottom:6px;">Delta: <strong>${deltaStr} EW</strong> &nbsp;|&nbsp; ${balanceAfterLabel}: <strong>${balanceAfterValue} EW</strong></div>
+ ${creatorLabel ? `<div class="small" style="margin-bottom:6px;">Submitted by: <strong>${creatorLabel}</strong></div>` : ''}
  <div class="history-details-grid">
  <div class="history-details-col">
  <h4>Items bought</h4>
@@ -381,12 +390,18 @@
  const detailsRaw = h.detailsJson || '';
  const hasDetails = !!tryParseDetails(detailsRaw);
 
+ // Balance After: prefer afterEW from detailsJson, fall back to recorded balanceAfterBT
+ const d = tryParseDetails(detailsRaw);
+ const balAfterDisplay = (d && d.afterEW != null && isFinite(Number(d.afterEW)))
+     ? fmt(d.afterEW)
+: fmt(h.balanceAfterBT || 0);
+
  tr.innerHTML = `
  <td>${prettyAt || (h.at || '')}</td>
  <td>${h.txId || ''}</td>
  <td>${h.type || ''}</td>
  <td>${fmt(h.deltaBT ||0)}</td>
- <td>${fmt(h.balanceAfterBT ||0)}</td>
+ <td>${balAfterDisplay}</td>
  <td>${hasDetails ? `<button type="button" data-details-toggle="1">See details</button>` : `<span class="small">No details</span>`}</td>
  `;
 
