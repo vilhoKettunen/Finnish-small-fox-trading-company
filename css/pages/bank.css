@@ -65,326 +65,156 @@
     flex-shrink: 0;
 }
 
-/* ─── Infrastructure investment list ────────────────────────────────────── */
-.infra-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.infra-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
-    padding: 12px;
-    background: #fafafa;
-}
-
-.infra-card-meta {
-    font-size: 0.82em;
-    color: #6b7280;
-    margin-bottom: 2px;
-}
-
-/* ─── Infrastructure detail modal ───────────────────────────────────────── */
-.infra-modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.55);
-    z-index: 3000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.infra-modal {
-    background: #fff;
-    padding: 20px;
-    max-width: 600px;
-    width: 90%;
-    border-radius: 8px;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
-}
-
-/* ─── Collapsible section ───────────────────────────────────────────────── */
-#velInflSection .collapsible-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-/* ─── Section header with info button ───────────────────────────────────── */
-.bank-section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+/* ─── Infrastructure table ──────────────────────────────────────────────── */
+.infra-table-wrap {
+overflow-x: auto;
+    margin-top: 8px;
     margin-bottom: 4px;
 }
 
-    .bank-section-header h2 {
-        margin: 0;
-        flex: 1;
-    }
-
-/* ─── Info button (same style as PriceHistory) ──────────────────────────── */
-.infoBtn {
-    flex-shrink: 0;
-    padding: 3px 10px;
-    border-radius: 4px;
-    border: 1px solid #93c5fd;
-    background: #eff6ff;
-    color: #1d4ed8;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
-    transition: background 0.12s, border-color 0.12s;
+#infraTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92em;
 }
 
-    .infoBtn:hover {
-        background: #dbeafe;
-        border-color: #3b82f6;
-    }
-
-/* ─── Info modal (identical pattern to PriceHistory) ───────────────────── */
-#bankInfoModal {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-    #bankInfoModal .modalCard {
-        background: #fff;
-        border-radius: 10px;
-        max-width: 540px;
-        width: 90%;
-        max-height: 80vh;
-        overflow-y: auto;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.22);
-        padding: 0;
-    }
-
-    #bankInfoModal .modalHeader {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 16px 20px 12px;
-        border-bottom: 1px solid #e5e7eb;
-    }
-
-    #bankInfoModal .modalTitle {
-        font-weight: 700;
-        font-size: 1.05em;
-    }
-
-    #bankInfoModal .modalClose {
-        border: 1px solid #d1d5db;
-        background: #f3f4f6;
-        border-radius: 4px;
-        padding: 3px 10px;
-        cursor: pointer;
-        font-size: 13px;
-    }
-
-        #bankInfoModal .modalClose:hover {
-            background: #e5e7eb;
-        }
-
-    #bankInfoModal #bankInfoModalBody {
-        padding: 16px 20px 20px;
-        font-size: 0.92em;
-        line-height: 1.55;
-    }
-
-        #bankInfoModal #bankInfoModalBody ul {
-            margin: 4px 0 8px 0;
-            padding-left: 20px;
-        }
-
-        #bankInfoModal #bankInfoModalBody li {
-            margin-bottom: 4px;
-        }
-
-.helpExample {
-    background: #f0f9ff;
-    border-left: 3px solid #3b82f6;
-    border-radius: 0 4px 4px 0;
+#infraTable th {
+ text-align: left;
     padding: 8px 12px;
-    margin-top: 10px;
-}
-
-.helpExampleTitle {
+    background: #f3f4f6;
+    border-bottom: 2px solid #d1d5db;
     font-weight: 700;
-    font-size: 0.85em;
-    color: #1d4ed8;
-    margin-bottom: 3px;
-}
-
-/* ─── Velocity toggle labels ─────────────────────────────────────────────── */
-.bank-vel-toggle-label {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 13px;
     color: #374151;
-    cursor: pointer;
+    white-space: nowrap;
 }
 
-.bank-vel-chart-block {
-    margin-top: 8px;
+#infraTable td {
+ padding: 8px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: top;
+    color: #111827;
 }
 
-/* ─── Intro: currency block ─────────────────────────────────────────────── */
-.bank-intro-currency {
-    background: #f0f9ff;
-    border: 1px solid #bae6fd;
-    border-radius: 6px;
-    padding: 12px 16px;
-    margin-top: 12px;
+#infraTable .infra-data-row:hover td {
+    background: #f9fafb;
 }
 
-.bank-intro-currency-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
+#infraTable .infra-data-row td:first-child {
+    white-space: nowrap;
+    color: #6b7280;
+    font-size: 0.88em;
 }
 
-/* ─── Intro: page guide collapsible ─────────────────────────────────────── */
-.bank-intro-guide-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: none;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-    padding: 5px 12px;
-    font-size: 13px;
+#infraTable .infra-data-row td:nth-child(3) {
+    white-space: nowrap;
     font-weight: 600;
-    color: #374151;
-    cursor: pointer;
-    transition: background 0.12s, border-color 0.12s;
 }
 
-    .bank-intro-guide-btn:hover {
-        background: #f3f4f6;
-        border-color: #9ca3af;
-    }
+#infraTable .infra-data-row td:last-child {
+    white-space: nowrap;
+}
 
-    .bank-intro-guide-btn[aria-expanded="true"] {
-        background: #eff6ff;
-        border-color: #93c5fd;
-        color: #1d4ed8;
-    }
+/* ─── Inline details row ─────────────────────────────────────────────────── */
+.infra-details-row td {
+ padding: 0;
+    background: #f0f9ff;
+    border-bottom: 1px solid #bae6fd;
+}
 
-.bank-intro-guide-panel {
-    margin-top: 8px;
-    background: #fafafa;
-    border: 1px solid #e5e7eb;
-    border-radius: 6px;
+.infra-details-box {
     padding: 14px 18px;
-    font-size: 0.91em;
+  font-size: 0.91em;
     line-height: 1.6;
 }
 
-    .bank-intro-guide-panel ul {
-        margin: 4px 0 0 0;
-        padding-left: 20px;
-    }
-
-    .bank-intro-guide-panel li {
-        margin-bottom: 6px;
-    }
-
-        .bank-intro-guide-panel li strong {
-            color: #1d4ed8;
-        }
-/* ─── Inflation chart — item selector ──────────────────────────────────── */
-.bank-infl-item-select {
-    display: flex;
-    flex-direction: column;
-    gap: .4rem;
-    flex: 1;
-    min-width: 280px;
-    max-width: 520px;
+.infra-details-meta {
+    color: #6b7280;
+    font-size: 0.87em;
+    margin-bottom: 6px;
 }
 
-.bank-infl-item-row {
-    display: flex;
-    gap: .4rem;
-    align-items: center;
+.infra-details-title {
+margin: 0 0 6px 0;
+    font-size: 1em;
+    font-weight: 700;
+    color: #1e3a5f;
 }
 
-.bank-infl-item-row button {
-    padding: 5px 12px;
+.infra-details-long {
+    white-space: pre-wrap;
+    color: #374151;
+    margin-bottom: 10px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
     border-radius: 4px;
-  border: 1px solid #d1d5db;
+    padding: 8px 10px;
+    font-size: 0.9em;
+}
+
+.infra-details-items-label {
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #374151;
+}
+
+.infra-details-items {
+    margin-bottom: 10px;
+}
+
+.infra-detail-item {
+    padding: 2px 0;
+    font-size: 0.9em;
+    color: #374151;
+}
+
+.infra-detail-qty {
+  font-weight: 700;
+    color: #1d4ed8;
+    margin-right: 4px;
+}
+
+.infra-details-total {
+    font-size: 0.92em;
+    color: #374151;
+    border-top: 1px solid #bae6fd;
+    padding-top: 8px;
+    margin-top: 4px;
+}
+
+/* ─── Infra controls bar (page size selector) ───────────────────────────── */
+.bank-infra-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+/* ─── Infra pager ────────────────────────────────────────────────────────── */
+.bank-infra-pager {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.bank-infra-pager button {
+    padding: 5px 16px;
+    border-radius: 4px;
+    border: 1px solid #d1d5db;
     background: #f9fafb;
     color: #374151;
     cursor: pointer;
     font-size: 13px;
-    white-space: nowrap;
     transition: background 0.12s;
 }
 
-.bank-infl-item-row button:hover {
+.bank-infra-pager button:hover:not(:disabled) {
     background: #e5e7eb;
 }
 
-.bank-infl-apply-btn {
-    background: #111827 !important;
-    color: #fff !important;
-    border-color: #111827 !important;
-}
-
-.bank-infl-apply-btn:hover {
-    filter: brightness(1.08);
-}
-
-.bank-infl-chips {
-    display: flex;
-    flex-wrap: wrap;
- gap: .4rem;
-    min-height: 28px;
-}
-
-/* ─── Chip elements (mirrors PriceHistory chips) ────────────────────────── */
-.chip {
-    display: inline-flex;
-    align-items: center;
-    gap: .35rem;
-    padding: .2rem .45rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 999px;
-    background: #fafafa;
-    font-size: 13px;
-}
-
-.chipColor {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-    flex-shrink: 0;
-}
-
-.chipText {
-    font-weight: 600;
-}
-
-.chipRemove {
-    border: none;
-    background: transparent;
-    font-size: 1rem;
-    line-height: 1;
-  padding: 0 .1rem;
-    color: #dc2626;
-  font-weight: 900;
-    cursor: pointer;
-}
-
-.chipRemove:hover {
-    color: #b91c1c;
+.bank-infra-pager button:disabled {
+    opacity: 0.45;
+ cursor: default;
 }

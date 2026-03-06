@@ -14,23 +14,23 @@
     };
 
     window.updateInfraCartPreview = function updateInfraCartPreview() {
-const preview = document.getElementById('infraCartPreview');
+        const preview = document.getElementById('infraCartPreview');
         if (!preview) return;
 
-  const cart = window.buyCart || [];
+ const cart = window.buyCart || [];
         const storeItems = cart.filter(e => !e.isBalance && e.source !== 'OCM');
 
         if (storeItems.length === 0) {
             preview.textContent = 'No items in buy cart yet.';
- return;
-   }
+   return;
+        }
 
         const lines = storeItems.map(e => {
-     if (e.bundleSize && e.bundleSize > 1) {
-     return `${e.qty} × ${e.bundleSize} ${e.name}`;
-     }
-            return `${e.qty} × ${e.name}`;
-      });
+       if (e.bundleSize && e.bundleSize > 1) {
+          return `${e.qty} x ${e.bundleSize} ${e.name}`;
+      }
+            return `${e.qty} x ${e.name}`;
+  });
 
         const ewTotal = storeItems.reduce((sum, e) => {
         const rowTotal = (e.bundleSize && !e.isFullyCustom)
@@ -108,7 +108,7 @@ msgEl.style.color = '#2e7d32';
             msgEl.textContent = `? Investment submitted (ID: ${result.investmentId}). Cart cleared.`;
 
    // Clear the buy cart store items
-            window.buyCart = (window.buyCart || []).filter(e => e.isBalance || e.source === 'OCM');
+          window.buyCart = (window.buyCart || []).filter(e => e.isBalance || e.source === 'OCM');
           window.renderBuyList && window.renderBuyList();
   window.updateInfraCartPreview && window.updateInfraCartPreview();
 
