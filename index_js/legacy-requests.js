@@ -1,4 +1,4 @@
-// Request payload, submit, import/export, and open orders
+﻿// Request payload, submit, import/export, and open orders
 (function () {
     'use strict';
 
@@ -69,22 +69,47 @@
     };
 
     window.guardedSubmitPurchaseRequest = window.guardedSubmitPurchaseRequest || function guardedSubmitPurchaseRequest() {
- if (!window.googleIdToken) { alert('You need to login for this tool'); return; }
+        // Guard: require login
+        if (!window.googleIdToken) { alert('You need to login for this tool'); return; }
 
-    const isAdmin = !!(window.currentUser?.isAdmin);
+        const isAdmin = !!(window.currentUser?.isAdmin);
 
-     // Admins are completely unrestricted � no cooldown, no in-flight guard
-      if (!isAdmin) {
-         if (_submitInFlight) return; // already sending, ignore extra clicks
+        // Admins are unrestricted for rate-limit/cooldown; keep existing behavior for them.
+        if (!isAdmin) {
+            // If a submission is already in-flight, ignore extra clicks.
+            if (_submitInFlight) return;
 
+            // If client-side cooldown is active, show remaining time and stop.
             if (Date.now() < _submitCooldownUntil) {
-      const secsLeft = Math.ceil((_submitCooldownUntil - Date.now()) / 1000);
-     document.getElementById('requestMsg').textContent =
-              `? Please wait ${secsLeft} second(s) before sending another request.`;
-       return;
-        }
+                const secsLeft = Math.ceil((_submitCooldownUntil - Date.now()) / 1000);
+                document.getElementById('requestMsg').textContent =
+                    `⏳ Please wait ${secsLeft} second(s) before sending another request.`;
+                return;
+            }
+
+            // NEW: Ask user to confirm or cancel submission.
+            // This uses the native confirm dialog to keep integration minimal.
+            const confirmMsg = 'Confirm submit transaction request?\n\nClick OK to send the request now, or Cancel to return and review your request.';
+            const ok = window.confirm(confirmMsg);
+
+            if (!ok) {
+                // User cancelled — show an informative message and do nothing.
+                const el = document.getElementById('requestMsg');
+                if (el) el.textContent = 'Submission canceled.';
+                return;
+            }
+
+            // User confirmed — give immediate feedback while submitPurchaseRequest
+            // prepares/enters the in-flight state.
+            const el = document.getElementById('requestMsg');
+            if (el) el.textContent = '📤 Sending request... (please wait)';
+        } else {
+            // Optional: admins may want an explicit quick visual as well.
+            const el = document.getElementById('requestMsg');
+            if (el) el.textContent = '📤 Sending request... (admin)';
         }
 
+        // Trigger the actual submit handler (it contains the existing in-flight/cooldown logic).
         window.submitPurchaseRequest();
     };
 
@@ -104,7 +129,7 @@
         if (!isAdmin) {
          _submitInFlight = true;
             _setSubmitBtnDisabled(true);
-    if (msgEl) msgEl.textContent = '?? Sending request...';
+    if (msgEl) msgEl.textContent = '📤 Sending request...';
     }
 
    const doRequestViaGet = (tokenOrNull) => {
@@ -132,7 +157,7 @@ method: 'GET',
         // Backend rate-limited: the first request already went through
   if (!j.ok && j.error === 'RATE_LIMITED') {
        if (msgEl) msgEl.textContent =
-        '? Your request was already submitted and is being processed. ID: ' + (payload.requestId || '');
+        '✅ Your request was already submitted and is being processed. ID: ' + (payload.requestId || '');
        if (!isAdmin) {
        _submitCooldownUntil = Date.now() + 60000;
     }
@@ -144,7 +169,7 @@ method: 'GET',
       const responseData = j.data || j.result || {};
     const finalId = responseData.requestId || payload.requestId;
 
-    if (msgEl) msgEl.textContent = '? Request submitted. ID: ' + finalId;
+    if (msgEl) msgEl.textContent = '✅ Request submitted. ID: ' + finalId;
                 window.editedFromRequestId = null;
        window.refreshOpenOrders && window.refreshOpenOrders();
 
@@ -156,7 +181,7 @@ method: 'GET',
        .catch(e => {
 console.error(e);
                 if (msgEl) msgEl.textContent = 'Error: ' + e.message;
-    // No cooldown on network/server errors � let user retry immediately
+    // No cooldown on network/server errors — let user retry immediately
       })
             .finally(() => {
   // Always release in-flight lock and re-enable button
