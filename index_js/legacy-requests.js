@@ -193,11 +193,22 @@ console.error(e);
     };
 
     window.copyTransactionData = window.copyTransactionData || function copyTransactionData() {
- const payload = window.buildRequestPayload();
+        const payload = window.buildRequestPayload();
         navigator.clipboard.writeText(JSON.stringify(payload, null, 2))
-       .then(() => document.getElementById('requestMsg').textContent = 'Transaction data copied.')
-.catch(e => document.getElementById('requestMsg').textContent = 'Copy failed: ' + e.message);
-  };
+     .then(() => document.getElementById('requestMsg').textContent = 'Transaction data copied.')
+            .catch(e => document.getElementById('requestMsg').textContent = 'Copy failed: ' + e.message);
+    };
+
+    window.clearAllCarts = window.clearAllCarts || function clearAllCarts() {
+        // Clear both buy and sell carts (preserving no rows, including any stale pinned rows).
+        window.buyCart = [];
+        window.sellCart = [];
+   try { window.renderBuyList && window.renderBuyList(); } catch { }
+ try { window.renderSellList && window.renderSellList(); } catch { }
+        try { window.calculateNet && window.calculateNet(); } catch { }
+        const msgEl = document.getElementById('requestMsg');
+  if (msgEl) msgEl.textContent = 'Carts cleared.';
+    };
 
     window.importTransactionData = window.importTransactionData || async function importTransactionData() {
         if (!window.googleIdToken) { alert('You need to login for this tool'); return; }

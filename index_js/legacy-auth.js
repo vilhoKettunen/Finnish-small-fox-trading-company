@@ -205,17 +205,19 @@
  if (!target || !window.googleIdToken) return;
  try {
  const bal = await window.fetchBalanceForUser(target);
+ // Always update the Combined Totals baseline with whatever the active target's balance is.
+ // For admins with a target set this will be the target's balance;
+ // when no target is set it will be the admin's own balance.
  window.setCurrentBalance(bal);
- if (window.currentUser?.isAdmin) {
- window.upsertPinnedBalanceRow(bal);
- } else {
- // Non-admin: clear pinned row if any
+
+ // No pinned sell row is inserted — balance lives only in Combined Totals (per design).
+ // Always strip any stale pinned row that may exist from before this fix.
  if (Array.isArray(window.sellCart)) {
  window.sellCart = window.sellCart.filter(e => !e.isAccountBalancePinned);
- }
  try { window.renderSellList && window.renderSellList(); } catch { }
  try { window.calculateNet && window.calculateNet(); } catch { }
  }
+
  const st = document.getElementById('onBehalfStatus');
  if (st && window.submitForUser) {
  st.textContent = `Target set: ${target.playerName || target.email || target.userId}. Balance: ${Number(bal).toFixed(2)} EW`;
@@ -329,20 +331,39 @@
  }
  };
 
- // Provide a small wrapper to refresh top-bar balances used by multiple places
- window.refreshTopBarBalances = window.refreshTopBarBalances || async function refreshTopBarBalances() {
- // try to compute and fetch balances for current user and target then call topbarSetAuthState
+ // Provide a small wrapper to refresh top-bar balances used by multiple places.
+ // Accepts optional opts = { targetBalanceBT: number } so callers can pass an already-fetched
+ // target balance without triggering a second network call.
+ window.refreshTopBarBalances = window.refreshTopBarBalances || async function refreshTopBarBalances(opts) {
  try {
- const selfBal = (typeof window.fetchBalanceForUser === 'function' && window.currentUser) ? await window.fetchBalanceForUser(window.currentUser) : (window.currentBalanceBT ||0);
- let targetBal = null;
- if (window.currentUser?.isAdmin && window.submitForUser) {
- targetBal = (typeof window.fetchBalanceForUser === 'function') ? await window.fetchBalanceForUser(window.submitForUser) : null;
+ const selfBal = (typeof window.fetchBalanceForUser === 'function' && window.currentUser)
+  ? await window.fetchBalanceForUser(window.currentUser)
+  : (window.currentBalanceBT || 0);
+
+ // Always store self-balance so the Send EW modal can read it.
+ window.topBalanceSelfBT = selfBal;
+
+ // Only overwrite currentBalanceBT (Combined Totals baseline) with the admin's own balance
+ // when NO target is set. When a target IS set, refreshPinnedBalanceForActiveTarget owns it.
+ if (!window.submitForUser) {
+  window.setCurrentBalance && window.setCurrentBalance(selfBal);
  }
- window.setCurrentBalance && window.setCurrentBalance(selfBal);
+
+ // Thread target balance into the top bar chip.
+ // opts.targetBalanceBT is provided by the caller (setOnBehalfTarget) to avoid a second fetch.
+ const tBal = (opts && opts.targetBalanceBT != null) ? opts.targetBalanceBT : null;
+
  if (window.topbarSetAuthState) {
- window.topbarSetAuthState({ idToken: window.googleIdToken || null, user: window.currentUser || null, isAdmin: !!window.currentUser?.isAdmin, balanceBT: selfBal });
+  window.topbarSetAuthState({
+   idToken: window.googleIdToken || null,
+   user: window.currentUser || null,
+   isAdmin: !!window.currentUser?.isAdmin,
+   balanceBT: selfBal,
+   targetUser: window.submitForUser || null,
+   targetBalanceBT: tBal
+  });
  }
- return { selfBal, targetBal };
+ return { selfBal };
  } catch (e) {
  // swallow; callers handle error messages
  return null;

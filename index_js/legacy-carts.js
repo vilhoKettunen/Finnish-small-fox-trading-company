@@ -282,19 +282,26 @@
         const netRaw = parseFloat(netSpan?.dataset?.raw ?? '0') || 0;
 
         const abEl = document.getElementById('accountBalanceCurrent');
-        if (abEl && window.formatValue) abEl.textContent = window.formatValue(window.currentBalanceBT || 0, curr, false);
+        if (abEl && window.formatValue) {
+            let balText = window.formatValue(window.currentBalanceBT || 0, curr, false);
+            // When an on-behalf target is active, label the balance with their name.
+      if (window.submitForUser?.playerName) {
+          balText += ` (${window.submitForUser.playerName})`;
+            }
+            abEl.textContent = balText;
+        }
 
         if (netSpan && window.formatValue) {
-            netSpan.textContent = window.formatValue(netRaw, curr, netRaw < 0);
-            netSpan.className = netRaw >= 0 ? 'positive' : 'negative';
-        }
+      netSpan.textContent = window.formatValue(netRaw, curr, netRaw < 0);
+    netSpan.className = netRaw >= 0 ? 'positive' : 'negative';
+    }
 
         const after = (Number(window.currentBalanceBT) || 0) + netRaw;
         const afterEl = document.getElementById('accountBalanceAfter');
         if (afterEl && window.formatValue) {
             afterEl.dataset.raw = String(after);
-            afterEl.textContent = window.formatValue(after, curr, after < 0);
-            afterEl.className = after >= 0 ? 'positive' : 'negative';
+       afterEl.textContent = window.formatValue(after, curr, after < 0);
+       afterEl.className = after >= 0 ? 'positive' : 'negative';
         }
     };
 

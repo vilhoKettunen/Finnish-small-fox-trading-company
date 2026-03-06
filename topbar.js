@@ -13,7 +13,7 @@
     align-items: center;
     padding: 0 20px;
     z-index: 1000;
-    font-size: 14px;
+ font-size: 14px;
     gap: 12px;
   }
   #topBar button {
@@ -21,7 +21,7 @@
 background: none;
     border: none;
     cursor: pointer;
-    margin-right: 16px;
+  margin-right: 16px;
     font-size: 14px;
   }
   #topBar .right {
@@ -56,6 +56,7 @@ gap: 12px;
   <button type="button" data-nav="bank">Bank</button>
     <button id="adminPanelBtn" style="display:none" type="button" data-nav="admin">Admin Panel</button>
     <div class="right">
+      <span id="topBalanceTarget" class="balance-chip balance-target" style="display:none;"></span>
       <span id="topBalance" class="balance-chip balance-you" style="display:none;"></span>
       <span id="topUser"></span>
       <button id="btnSettings" type="button" style="display:none;">Settings</button>
@@ -66,126 +67,160 @@ gap: 12px;
 
     function ensureTopBar() {
         // Always ensure the shared top-bar stylesheet is present (but only insert it once)
-        if (!document.getElementById('topbar-shared-style')) {
+if (!document.getElementById('topbar-shared-style')) {
             const s = document.createElement('style');
-            s.id = 'topbar-shared-style';
-            s.textContent = css;
+   s.id = 'topbar-shared-style';
+        s.textContent = css;
             document.head.appendChild(s);
         }
 
         // If markup is missing, insert the default top bar HTML
         if (!document.getElementById('topBar')) {
             const wrap = document.createElement('div');
-            wrap.innerHTML = html;
+       wrap.innerHTML = html;
             document.body.insertBefore(wrap.firstElementChild, document.body.firstChild);
             document.body.classList.add('withTopBar');
         } else {
-            // If page already provided markup, still ensure the body padding class is set
+    // If page already provided markup, still ensure the body padding class is set
             document.body.classList.add('withTopBar');
-        }
+    }
     }
 
-    const state = { idToken: null, user: null, isAdmin: false, balanceBT: null };
+    const state = {
+        idToken: null,
+        user: null,
+   isAdmin: false,
+        balanceBT: null,
+      targetUser: null,
+        targetBalanceBT: null,
+        targetLoading: false
+    };
 
     function displayName(u) {
-        if (!u) return '';
+     if (!u) return '';
         const name = (u.playerName && u.playerName.trim()) || '';
         const email = (u.email && u.email.trim()) || '';
-        if (name && email) return `${name} (${email})`;
-        return email || name || '';
+    if (name && email) return `${name} (${email})`;
+   return email || name || '';
     }
 
     function updateTopBarAuth() {
-        const logged = !!state.idToken;
-        const admin = !!state.isAdmin;
+    const logged = !!state.idToken;
+   const admin = !!state.isAdmin;
         const balEl = document.getElementById('topBalance');
+        const balTargetEl = document.getElementById('topBalanceTarget');
         const topUser = document.getElementById('topUser');
-        const btnLogin = document.getElementById('btnLogin');
+   const btnLogin = document.getElementById('btnLogin');
         const btnLogout = document.getElementById('btnLogout');
-        const btnSettings = document.getElementById('btnSettings');
-        const adminBtn = document.getElementById('adminPanelBtn');
+      const btnSettings = document.getElementById('btnSettings');
+      const adminBtn = document.getElementById('adminPanelBtn');
 
         if (logged) {
             const b = Number(state.balanceBT); const safe = isFinite(b) ? b : 0;
             if (balEl) {
-                balEl.style.display = 'inline-block';
-                balEl.textContent = `Balance: ${safe.toFixed(0)} EW`;
-                balEl.classList.remove('positive', 'negative');
-                balEl.classList.add(safe >= 0 ? 'positive' : 'negative');
-            }
-            if (topUser) topUser.textContent = displayName(state.user);
-            if (btnSettings) btnSettings.style.display = 'inline-block';
-            if (btnLogin) btnLogin.style.display = 'none';
+      balEl.style.display = 'inline-block';
+       balEl.textContent = `Balance: ${safe.toFixed(0)} EW`;
+ balEl.classList.remove('positive', 'negative');
+      balEl.classList.add(safe >= 0 ? 'positive' : 'negative');
+  }
+   if (topUser) topUser.textContent = displayName(state.user);
+      if (btnSettings) btnSettings.style.display = 'inline-block';
+      if (btnLogin) btnLogin.style.display = 'none';
             if (btnLogout) btnLogout.style.display = 'inline-block';
+
+     // Target chip — shown when a target user is active (admin on-behalf)
+   if (balTargetEl) {
+              if (state.targetUser) {
+    const tName = (state.targetUser.playerName || state.targetUser.email || 'Target');
+        if (state.targetLoading) {
+       balTargetEl.textContent = `${tName}: ... EW`;
+  } else {
+     const tb = Number(state.targetBalanceBT);
+   const safeTb = isFinite(tb) ? tb : 0;
+      balTargetEl.textContent = `${tName}: ${safeTb.toFixed(0)} EW`;
+    }
+              balTargetEl.style.display = 'inline-block';
+                } else {
+      balTargetEl.style.display = 'none';
+        balTargetEl.textContent = '';
+              }
+    }
         } else {
-            if (balEl) { balEl.style.display = 'none'; balEl.textContent = ''; }
-            if (topUser) topUser.textContent = '';
-            if (btnSettings) btnSettings.style.display = 'none';
-            if (btnLogin) btnLogin.style.display = 'inline-block';
-            if (btnLogout) btnLogout.style.display = 'none';
+        if (balEl) { balEl.style.display = 'none'; balEl.textContent = ''; }
+            if (balTargetEl) { balTargetEl.style.display = 'none'; balTargetEl.textContent = ''; }
+      if (topUser) topUser.textContent = '';
+   if (btnSettings) btnSettings.style.display = 'none';
+     if (btnLogin) btnLogin.style.display = 'inline-block';
+ if (btnLogout) btnLogout.style.display = 'none';
         }
-        if (adminBtn) adminBtn.style.display = admin ? 'inline-block' : 'none';
+ if (adminBtn) adminBtn.style.display = admin ? 'inline-block' : 'none';
     }
 
     function scrollToGoogleButton() {
-        // Prefer element with id="googleBtn" or any Google sign-in button container
-        var el = document.getElementById('googleBtn') || document.querySelector('[data-google-login], .g_id_signin');
+  // Prefer element with id="googleBtn" or any Google sign-in button container
+   var el = document.getElementById('googleBtn') || document.querySelector('[data-google-login], .g_id_signin');
         if (el && el.scrollIntoView) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.focus && el.focus();
-        }
+        el.focus && el.focus();
+  }
     }
 
     function wireTopbarEvents() {
         const root = document.getElementById('topBar');
-        if (!root) return;
-        root.addEventListener('click', ev => {
+ if (!root) return;
+    root.addEventListener('click', ev => {
             const btn = ev.target.closest('button');
-            if (!btn) return;
-            if (btn.id === 'btnLogin') {
-                // Do NOT call google.accounts.id.prompt() here; just bring user to the main Google button.
-                scrollToGoogleButton();
-                return;
+    if (!btn) return;
+          if (btn.id === 'btnLogin') {
+   // Do NOT call google.accounts.id.prompt() here; just bring user to the main Google button.
+     scrollToGoogleButton();
+  return;
             }
-            if (btn.id === 'btnSettings') {
+if (btn.id === 'btnSettings') {
                 if (!state.idToken) {
-                    scrollToGoogleButton();
-                    return;
+            scrollToGoogleButton();
+           return;
                 }
-                window.location.href = 'AccountSettings.html';
+           window.location.href = 'AccountSettings.html';
                 return;
             }
-            if (btn.id === 'btnLogout') {
+ if (btn.id === 'btnLogout') {
                 if (typeof window.logout === 'function') window.logout();
-                state.idToken = null; state.user = null; state.isAdmin = false; state.balanceBT = null;
-                if (window.clearSavedIdToken) window.clearSavedIdToken();
-                updateTopBarAuth();
-                window.hideInfraSection?.();
-                return;
-            }
-            if (btn.dataset && btn.dataset.nav) {
+    state.idToken = null; state.user = null; state.isAdmin = false; state.balanceBT = null;
+        state.targetUser = null; state.targetBalanceBT = null; state.targetLoading = false;
+       if (window.clearSavedIdToken) window.clearSavedIdToken();
+   updateTopBarAuth();
+    window.hideInfraSection?.();
+   return;
+  }
+if (btn.dataset && btn.dataset.nav) {
                 const nav = btn.dataset.nav;
                 if (nav === 'store') window.location.href = 'index.html';
-                else if (nav === 'history') window.location.href = 'AccountHistory.html';
-                else if (nav === 'ocm') window.location.href = 'OCMHome.html';
-                else if (nav === 'Merchant') window.location.href = 'OCMUser.html';
-                else if (nav === 'leaderboards') window.location.href = 'Leaderboards.html';
-                else if (nav === 'workpay') window.location.href = 'WorkPayRates.html';
+    else if (nav === 'history') window.location.href = 'AccountHistory.html';
+    else if (nav === 'ocm') window.location.href = 'OCMHome.html';
+        else if (nav === 'Merchant') window.location.href = 'OCMUser.html';
+        else if (nav === 'leaderboards') window.location.href = 'Leaderboards.html';
+    else if (nav === 'workpay') window.location.href = 'WorkPayRates.html';
      else if (nav === 'bank') window.location.href = 'Bank.html';
       else if (nav === 'admin') {
-                    if (!state.idToken || !state.isAdmin) { alert('Admin only'); return; }
-                    window.location.href = 'Admin.html';
-                }
+          if (!state.idToken || !state.isAdmin) { alert('Admin only'); return; }
+      window.location.href = 'Admin.html';
+   }
             }
         });
-    }
+ }
 
-    // Page calls this whenever auth or balance changes
+    // Page calls this whenever auth or balance changes.
+    // Accepts optional targetUser / targetBalanceBT / targetLoading for admin on-behalf chip.
     window.topbarSetAuthState = function (info) {
-        state.idToken = info && info.idToken || null;
+  state.idToken = info && info.idToken || null;
         state.user = info && info.user || null;
         state.isAdmin = !!(info && info.isAdmin);
-        state.balanceBT = (info && info.balanceBT != null) ? info.balanceBT : null;
+   state.balanceBT = (info && info.balanceBT != null) ? info.balanceBT : null;
+// Target chip fields (optional — other pages don't pass these and chip stays hidden)
+        state.targetUser = (info && info.targetUser) || null;
+        state.targetBalanceBT = (info && info.targetBalanceBT != null) ? info.targetBalanceBT : null;
+        state.targetLoading = !!(info && info.targetLoading);
         updateTopBarAuth();
     };
 
