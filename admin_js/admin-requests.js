@@ -29,7 +29,7 @@
        const requestsList = Array.isArray(dataObj) ? dataObj : (dataObj.requests || []);
 
   if (requestsList.length === 0) {
-      tableEl.innerHTML = '<tr><td colspan="10" style="text-align:center; color:#777;">0 pending requests</td></tr>';
+      tableEl.innerHTML = '<tr><td colspan="9" style="text-align:center; color:#777;">0 pending requests</td></tr>';
           msgEl.textContent = 'Loaded 0';
            return;
             }
@@ -39,7 +39,7 @@
         } catch (e) {
 console.error(e);
     msgEl.textContent = 'Error: ' + e.message;
-         tableEl.innerHTML = `<tr><td colspan="10" style="color:red; text-align:center;">Error: ${esc(e.message)}</td></tr>`;
+         tableEl.innerHTML = `<tr><td colspan="9" style="color:red; text-align:center;">Error: ${esc(e.message)}</td></tr>`;
         }
     };
 
@@ -55,29 +55,28 @@ console.error(e);
   const creatorLabel = creatorRaw === 'Admin' ? 'Admin (on behalf of)' : 'User';
             const creatorColor = creatorRaw === 'Admin' ? '#7b3f00' : '#0066cc';
 
-         // After EW display
-  const afterEWDisplay = (r.afterEW != null && isFinite(Number(r.afterEW)))
-     ? Number(r.afterEW).toFixed(2)
-    : '—';
+   // Balance after display
+            const afterDisp = (r.afterEW != null && isFinite(Number(r.afterEW)))
+    ? Number(r.afterEW).toFixed(2)
+            : '—';
 
-     const tr = document.createElement('tr');
-            tr.innerHTML = `
-        <td><button type="button" onclick="showRequestDetails('${esc(r.requestId)}')">${esc(r.requestId)}</button></td>
-                <td>${esc(r.user?.playerName || '')}</td>
-     <td style="font-weight:bold; color:#0066cc;">${esc(mailbox)}</td>
-          <td>
-    <div class="small">Buy: ${(Number(r.totals?.buyEW || 0)).toFixed(2)}</div>
-     <div class="small">Sell: ${(Number(r.totals?.sellEW || 0)).toFixed(2)}</div>
-             </td>
-       <td class="mono">${(Number(r.manualBalanceDeltaBT || 0)).toFixed(2)}</td>
-       <td class="mono" style="color:${net >= 0 ? 'green' : 'red'}">${net.toFixed(2)}</td>
-    <td class="mono" style="color:#555;">${afterEWDisplay}</td>
- <td class="small" style="color:${creatorColor};">${creatorLabel}</td>
-<td class="small">${new Date(r.createdAt).toLocaleString()}</td>
-         <td>
+            const tr = document.createElement('tr');
+    tr.innerHTML = `
+              <td><button type="button" onclick="showRequestDetails('${esc(r.requestId)}')">${esc(r.requestId)}</button></td>
+              <td>${esc(r.user?.playerName || '')}</td>
+    <td style="font-weight:bold; color:#0066cc;">${esc(mailbox)}</td>
+                <td>
+        <div class="small">Buy: ${(Number(r.totals?.buyEW || 0)).toFixed(2)}</div>
+      <div class="small">Sell: ${(Number(r.totals?.sellEW || 0)).toFixed(2)}</div>
+          </td>
+      <td class="mono">Balance after: ${afterDisp}</td>
+    <td class="mono" style="color:${net >= 0 ? 'green' : 'red'}">Net: ${net.toFixed(2)}</td>
+       <td class="small" style="color:${creatorColor};">${creatorLabel}</td>
+   <td class="small">${new Date(r.createdAt).toLocaleString()}</td>
+       <td>
           <button type="button" onclick="approveRequest('${esc(r.requestId)}')" style="background:#dff0d8;">? Approve</button>
-           <button type="button" onclick="denyRequest('${esc(r.requestId)}')" style="background:#f2dede;">? Deny</button>
-    </td>`;
+      <button type="button" onclick="denyRequest('${esc(r.requestId)}')" style="background:#f2dede;">? Deny</button>
+         </td>`;
             tb.appendChild(tr);
         });
     }
@@ -101,6 +100,10 @@ console.error(e);
      const afterEW = (totals.afterEW != null && isFinite(Number(totals.afterEW)))
           ? Number(totals.afterEW).toFixed(2) + ' EW'
      : null;
+     const manualDelta = Number(details.manualBalanceDeltaBT || 0);
+     const manualDeltaLine = (manualDelta !== 0)
+          ? `<div class="small">Manual adjustment: <strong style="color:${manualDelta >= 0 ? 'green' : 'red'}">${manualDelta >= 0 ? '+' : ''}${manualDelta.toFixed(2)} EW</strong></div>`
+      : '';
        const creatorRaw = String(details.creator || 'User');
      const creatorLabel = creatorRaw === 'Admin' ? 'Admin (on behalf of)' : 'User';
 
@@ -126,6 +129,7 @@ console.error(e);
       <div class="small">Request ID: ${esc(id)}</div>
             <div class="small">Submitted by: <strong>${creatorLabel}</strong></div>
             ${afterEW ? `<div class="small">Balance After (expected): <strong>${afterEW}</strong></div>` : ''}
+     ${manualDeltaLine}
           </div>
      <div>
            <span style="margin-right:8px;">Mailbox:</span>
