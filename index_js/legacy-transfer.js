@@ -3,7 +3,7 @@
 
 
 
-transfer UI and actions
+//transfer UI and actions
 (function () {
     'use strict';
 
