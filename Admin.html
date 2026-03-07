@@ -64,6 +64,7 @@
     <button id="tabAccountEdit" onclick="showTab('accountEdit')">Account Editing</button>
     <button id="tabStock" onclick="showTab('stock')">Stock</button>
         <button id="tabInsurance" onclick="showTab('insurance')">Insurance Requests</button>
+        <button id="tabInsuranceUser" onclick="showTab('insuranceUser')">Insurance (User)</button>
     </div>
 
     <!-- Target User -->
@@ -622,7 +623,39 @@
   </thead>
           <tbody id="tbInsuranceRequests"></tbody>
    </table>
-        <div id="insuranceForceWithdrawSection"></div>
+    </div>
+
+
+    <!-- Insurance (User) -->
+ <div class="section" id="insuranceUserSection" style="display:none;">
+     <h2>Insurance (User)</h2>
+
+        <div id="insuranceUserNoTarget" class="banner">
+            <div><strong>Select a target user first.</strong></div>
+    <div class="small">Use the <span class="mono">Target User</span> tab to select a player. Insurance policies will load automatically.</div>
+        </div>
+
+        <div id="insuranceUserContent" style="display:none;">
+     <div class="small">Selected user: <span id="insuranceUserLabel">-</span></div>
+ <div class="flex" style="margin-top:8px;">
+          <button id="btnReloadInsuranceUser" type="button">Reload</button>
+         <span id="insuranceUserMsg" class="small"></span>
+         </div>
+       <table style="margin-top:8px;">
+              <thead>
+          <tr>
+    <th>Policy ID</th>
+              <th>Policy Name</th>
+   <th>Status</th>
+  <th>Units</th>
+     <th>Insurance EW</th>
+                 <th>Metals %</th>
+     <th>More Info</th>
+           </tr>
+       </thead>
+         <tbody id="tbInsuranceUser"></tbody>
+      </table>
+        </div>
     </div>
 
 

@@ -16,7 +16,8 @@
             accountHistory: 'accountHistorySection',
             accountEdit: 'accountEditSection',
             stock: 'stockSection',
-            insurance: 'insuranceSection'
+            insurance: 'insuranceSection',
+            insuranceUser: 'insuranceUserSection'
         };
 
         Object.keys(mapping).forEach(k => {
@@ -34,7 +35,8 @@
             AccountHistory: 'accountHistory',
             AccountEdit: 'accountEdit',
             Stock: 'stock',
-            Insurance: 'insurance'
+            Insurance: 'insurance',
+            InsuranceUser: 'insuranceUser'
         };
 
         Object.keys(tabMap).forEach(suf => {
@@ -74,6 +76,10 @@
 
         if (name === 'insurance') {
             window.loadAdminInsurancePending && window.loadAdminInsurancePending();
+        }
+
+        if (name === 'insuranceUser') {
+            window.loadAdminInsuranceUser && window.loadAdminInsuranceUser();
         }
     };
 
