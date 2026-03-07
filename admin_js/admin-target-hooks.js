@@ -15,9 +15,12 @@
  window.refreshAdminHistoryTargetUI_ && window.refreshAdminHistoryTargetUI_();
  window.refreshAdminAccountEditTargetUI_ && window.refreshAdminAccountEditTargetUI_();
 
- // Reload insurance user panel if it is currently visible
- if (byId && byId('insuranceUserSection')?.style.display !== 'none') {
+ // Reload insurance user panel — attempt regardless of visibility (safe no-op if not ready)
+ try {
+ console.debug('onAdminTargetUserChanged_: invoking loadAdminInsuranceUser');
  window.loadAdminInsuranceUser && window.loadAdminInsuranceUser();
+ } catch (e) {
+ console.debug('onAdminTargetUserChanged_: loadAdminInsuranceUser failed', e);
  }
 
  // If currently viewing OCM admin, reload lists (best-effort)

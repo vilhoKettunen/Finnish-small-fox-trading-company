@@ -49,6 +49,9 @@
 
         fireTargetChanged_();
 
+        // Best-effort: ensure Insurance (User) panel reloads when a target is selected
+        try { window.loadAdminInsuranceUser && window.loadAdminInsuranceUser(); } catch (e) { /* ignore */ }
+
         if (byId('ocmAdminSection')?.style.display !== 'none') {
             const p = window.ensureOcmCatalogLoaded ? window.ensureOcmCatalogLoaded() : Promise.resolve();
             Promise.resolve(p).then(() => {

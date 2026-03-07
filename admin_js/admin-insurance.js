@@ -236,6 +236,7 @@ if (!confirm('Force metals withdrawal for policy ' + insuranceId + '? No EW will
 
  // Load insurance policies for selected target user (Admin — per-user view)
  window.loadAdminInsuranceUser = async function loadAdminInsuranceUser() {
+ try {
  const sec = byId('insuranceUserSection');
  const noTarget = byId('insuranceUserNoTarget');
  const content = byId('insuranceUserContent');
@@ -243,13 +244,47 @@ if (!confirm('Force metals withdrawal for policy ' + insuranceId + '? No EW will
  const msg = byId('insuranceUserMsg');
  const btn = byId('btnReloadInsuranceUser');
 
- if (!sec || !noTarget || !content || !label || !msg) return;
+ if (!sec || !noTarget || !content || !label || !msg) {
+ console.debug('loadAdminInsuranceUser: missing DOM elements');
+ return;
+ }
 
- const target = Admin.state.globalTargetUser;
+ // Try to resolve target from state, fallback to dataset or selected label
+ let target = Admin.state.globalTargetUser;
+ // If no target in state, try dataset selectedUser
+ if (!target) {
+ const ps = byId('playerSearch');
+ const uid = ps?.dataset?.selectedUser;
+ if (uid) {
+ target = window.resolvePlayerById_ ? window.resolvePlayerById_(uid) : null;
+ if (target) Admin.state.globalTargetUser = target; // backfill
+ }
+ }
+
+ // If still no target, try globalUserSelected label (text) or globalUserInput value
+ if (!target) {
+ const gu = byId('globalUserSelected');
+ const ginput = byId('globalUserInput');
+ const nameToFind = (gu?.textContent || ginput?.value || '').trim();
+ if (nameToFind) {
+ // Ensure players cache loaded
+ if (!Admin.state.playersCache || !Admin.state.playersCache.length) {
+ try { await window.loadPlayers(); } catch (e) { /* ignore */ }
+ }
+ // find by name (case-insensitive)
+ const found = (Admin.state.playersCache || []).find(p => (p.playerName || '').toLowerCase() === nameToFind.toLowerCase() || (p.email||'').toLowerCase() === nameToFind.toLowerCase());
+ if (found) {
+ target = found;
+ Admin.state.globalTargetUser = found;
+ }
+ }
+ }
+
  if (!target) {
  noTarget.style.display = '';
  content.style.display = 'none';
  label.textContent = '-';
+ console.debug('loadAdminInsuranceUser: no target selected');
  return;
  }
 
@@ -257,10 +292,11 @@ if (!confirm('Force metals withdrawal for policy ' + insuranceId + '? No EW will
  content.style.display = '';
  label.textContent = target.playerName || target.email || target.userId || '-';
 
- if (!Admin.state.googleIdToken) { msg.textContent = 'Not logged in.'; return; }
+ if (!Admin.state.googleIdToken) { msg.textContent = 'Not logged in.'; console.debug('loadAdminInsuranceUser: no id token'); return; }
 
  msg.textContent = 'Loading...';
  if (btn) btn.disabled = true;
+ console.debug('loadAdminInsuranceUser: calling backend for userId=', target.userId);
  try {
  const r = await window.apiGet('insuranceAdminListByUser', {
  idToken: Admin.state.googleIdToken,
@@ -272,8 +308,12 @@ if (!confirm('Force metals withdrawal for policy ' + insuranceId + '? No EW will
  msg.textContent = 'Loaded ' + policies.length + ' policy(ies).';
  } catch (e) {
  msg.textContent = 'Error: ' + e.message;
+ console.error('loadAdminInsuranceUser error', e);
  } finally {
  if (btn) btn.disabled = false;
+ }
+ } catch (err) {
+ console.error('loadAdminInsuranceUser unexpected error', err);
  }
  };
 
