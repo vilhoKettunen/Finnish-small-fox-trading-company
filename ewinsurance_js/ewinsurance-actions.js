@@ -21,21 +21,13 @@
     async function reloadPage_() {
      await window.EWIns.loadPolicies();
     window.EWIns.renderAll();
-        // wireAll_ is called inside the overridden renderAll below
-    }
-
-    function showMsg_(el, txt, isErr) {
-     if (!el) return;
-     el.textContent = txt;
-        el.style.color = isErr ? '#c00' : '#155724';
-        setTimeout(() => { if (el.textContent === txt) el.textContent = ''; }, 4000);
     }
 
     // ===== Create Policy =====
 
   async function createPolicy() {
-        try {
-         await window.apiPost('insuranceCreate', { idToken: idToken() });
+  try {
+    await window.apiPost('insuranceCreate', { idToken: idToken() });
          await reloadPage_();
         } catch (e) {
        alert('Error creating policy: ' + e.message);
@@ -44,56 +36,81 @@
 
     // ===== Rename Policy =====
 
- async function renamePolicy(inner) {
-   const insuranceId = inner.dataset.id;
-        const inp  = inner.querySelector('.policy-name-input');
-  const name = inp ? inp.value.trim() : '';
-   if (!validatePolicyName_(name)) {
-   alert('Policy name may only contain letters, numbers and spaces (max 40 characters).');
-   return;
-        }
-   try {
-    await window.apiPost('insuranceRenamePolicy', {
-   idToken: idToken(),
-      insuranceId,
-       policyName: name
-    });
-   await reloadPage_();
- } catch (e) {
-     alert('Rename failed: ' + e.message);
+    async function renamePolicy(inner) {
+ const insuranceId = inner.dataset.id;
+        const inp      = inner.querySelector('.policy-name-input');
+        const notifier = inner.querySelector('.rename-notifier');
+        const name     = inp ? inp.value.trim() : '';
+
+        if (!validatePolicyName_(name)) {
+    if (notifier) { notifier.textContent = 'Error: Name may only contain letters, numbers and spaces (max 40 chars).'; notifier.style.color = '#c00'; }
+    else alert('Policy name may only contain letters, numbers and spaces (max 40 characters).');
+         return;
+     }
+
+        if (notifier) { notifier.textContent = 'Now saving...'; notifier.style.color = '#888'; }
+
+      try {
+            await window.apiPost('insuranceRenamePolicy', {
+      idToken: idToken(),
+       insuranceId,
+            policyName: name
+        });
+    if (notifier) { notifier.textContent = 'Now saved as ' + name; notifier.style.color = '#155724'; }
+       // Update the row label without full reload to keep notifier visible
+      await window.EWIns.loadPolicies();
+   window.EWIns.renderAll();
+        } catch (e) {
+        if (notifier) { notifier.textContent = 'Error: ' + e.message; notifier.style.color = '#c00'; }
+     else alert('Rename failed: ' + e.message);
         }
     }
 
     // ===== Save Allocation =====
 
     async function saveAllocation(inner) {
-        const insuranceId = inner.dataset.id;
-   const inputs = inner.querySelectorAll('.alloc-input');
-        const allocObj = {};
-    let sum = 0;
+ const insuranceId = inner.dataset.id;
+        const notifier    = inner.querySelector('.alloc-notifier');
+const inputs   = inner.querySelectorAll('.alloc-input');
+        const allocObj    = {};
+        let sum = 0;
+
         inputs.forEach(inp => {
-      const metal = inp.dataset.metal;
-    const val   = parseFloat(inp.value) || 0;
-   if (val > 0) allocObj[metal] = val;
-       sum += val;
-        });
+            const metal = inp.dataset.metal;
+     const val   = parseFloat(inp.value) || 0;
+            if (val > 0) allocObj[metal] = val;
+            sum += val;
+     });
 
         if (sum > 100) {
-          alert('Allocation exceeds 100%.');
+      if (notifier) { notifier.textContent = 'Error: Allocation exceeds 100%.'; notifier.style.color = '#c00'; }
+     else alert('Allocation exceeds 100%.');
             return;
-        }
+   }
 
-  try {
-         await window.apiPost('insuranceUpdateAllocation', {
-        idToken:        idToken(),
-    insuranceId,
-      allocationJson: JSON.stringify(allocObj)
-       });
-     await reloadPage_();
+        if (notifier) { notifier.textContent = 'Now saving...'; notifier.style.color = '#888'; }
+
+        try {
+            await window.apiPost('insuranceUpdateAllocation', {
+ idToken:        idToken(),
+                insuranceId,
+            allocationJson: JSON.stringify(allocObj)
+            });
+
+     // Build summary string for notifier
+   const summary = Object.entries(allocObj)
+      .filter(([, v]) => Number(v) > 0)
+    .map(([k, v]) => k + ' ' + v + '%')
+      .join(', ');
+
+     if (notifier) { notifier.textContent = 'Now saved: ' + (summary || '(empty)'); notifier.style.color = '#155724'; }
+        await window.EWIns.loadPolicies();
+            window.EWIns.renderAll();
         } catch (e) {
-   alert('Save allocation failed: ' + e.message);
-     }
-}
+            if (notifier) { notifier.textContent = 'Error: ' + e.message; notifier.style.color = '#c00'; }
+      else alert('Save allocation failed: ' + e.message);
+        }
+    }
 
     // ===== Request Deposit =====
 
@@ -118,7 +135,7 @@ return;
    await window.apiPost('insuranceRequestDeposit', {
          idToken:     idToken(),
        insuranceId,
-       requestedUnits: units
+  requestedUnits: units
       });
   await reloadPage_();
     } catch (e) {
@@ -136,44 +153,59 @@ return;
   if (!Number.isInteger(units) || units < 1) {
   alert('Withdraw units must be a positive integer.');
       return;
-        }
+      }
 
-        // Client-side guard vs stored units
-  const stored = safeJsonParse(
+        const stored = safeJsonParse(
     (window.EWIns.state.policies.find(p => p.InsuranceID === insuranceId) || {}).StoredJson,
-        { units: 0 }
-        );
+  { units: 0 }
+     );
    if (units > stored.units) {
-      alert(`Cannot withdraw more than ${stored.units} unit(s).`);
+    alert(`Cannot withdraw more than ${stored.units} unit(s).`);
           return;
    }
 
     try {
-  await window.apiPost('insuranceRequestWithdrawUnits', {
+await window.apiPost('insuranceRequestWithdrawUnits', {
       idToken:      idToken(),
    insuranceId,
-          withdrawUnits: units
-      });
+       withdrawUnits: units
+   });
      await reloadPage_();
      } catch (e) {
  alert('Withdrawal request failed: ' + e.message);
         }
     }
 
+    // ===== Request Metals Withdrawal =====
+
+    async function requestWithdrawMetals(inner) {
+        const insuranceId = inner.dataset.id;
+        if (!confirm('Are you sure? Your EW balance will NOT be credited. This closes the insured position after admin approval.')) return;
+        try {
+         await window.apiPost('insuranceRequestWithdrawMetals', {
+    idToken: idToken(),
+            insuranceId
+       });
+ await reloadPage_();
+   } catch (e) {
+            alert('Metals withdrawal request failed: ' + e.message);
+      }
+    }
+
   // ===== Cancel Pending =====
 
     async function cancelPending(inner) {
-        const insuranceId = inner.dataset.id;
-   if (!confirm('Cancel the pending request for this policy?')) return;
+     const insuranceId = inner.dataset.id;
+if (!confirm('Cancel the pending request for this policy?')) return;
         try {
             await window.apiPost('insuranceCancelPending', {
         idToken: idToken(),
-          insuranceId
+      insuranceId
       });
         await reloadPage_();
       } catch (e) {
   alert('Cancel failed: ' + e.message);
-     }
+ }
     }
 
     // ===== Wire Events to a details inner container =====
@@ -183,19 +215,20 @@ return;
     inner.querySelector('.btn-save-alloc')?.addEventListener('click', () => saveAllocation(inner));
         inner.querySelector('.btn-deposit')?.addEventListener('click', () => requestDeposit(inner));
      inner.querySelector('.btn-withdraw')?.addEventListener('click', () => requestWithdraw(inner));
+    inner.querySelector('.btn-withdraw-metals')?.addEventListener('click', () => requestWithdrawMetals(inner));
     inner.querySelector('.btn-cancel-pending')?.addEventListener('click', () => cancelPending(inner));
     }
 
   function wireAll_() {
    document.querySelectorAll('.ins-details-inner').forEach(wireInner_);
 
-        // Create button — clone to remove stale listeners
-        const createBtn = document.getElementById('btnCreatePolicy');
+   // Create button — clone to remove stale listeners
+const createBtn = document.getElementById('btnCreatePolicy');
    if (createBtn) {
 const fresh = createBtn.cloneNode(true);
      createBtn.parentNode.replaceChild(fresh, createBtn);
-     fresh.addEventListener('click', createPolicy);
-     }
+  fresh.addEventListener('click', createPolicy);
+  }
     }
 
     // Override renderAll to also wire after render

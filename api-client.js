@@ -78,6 +78,8 @@
         'insuranceCancelPending',
         'insuranceAdminApprove',
         'insuranceAdminDeny',
+        'insuranceRequestWithdrawMetals',
+        'insuranceAdminForceWithdrawMetals',
     ];
 
     function normalize(j) {

@@ -157,62 +157,163 @@ if (!p || p <= 0) continue;
         if (totalUnins)   totalUnins.textContent   = tu > 0 ? tu.toFixed(0) + ' EW' : '&mdash;';
     }
 
+    // ===== Dual-row deposit estimate preview =====
+
+    function updateDepositEstimatePreview_(inner, policy, depositUnits) {
+        const previewEl  = inner.querySelector('.deposit-estimate-preview');
+        const mismatchEl = inner.querySelector('.deposit-alloc-mismatch-warn');
+        if (!previewEl) return;
+
+        const stored   = window.EWIns._safeJsonParse(policy.StoredJson, { units: 0 });
+        const savedAlloc = window.EWIns._safeJsonParse(policy.AllocationJson, {});
+
+        // Read live allocation from on-screen inputs
+        const liveAlloc = {};
+        inner.querySelectorAll('.alloc-input').forEach(inp => {
+  const val = parseFloat(inp.value) || 0;
+            if (val > 0) liveAlloc[inp.dataset.metal] = val;
+        });
+
+        const allocMismatch = JSON.stringify(savedAlloc) !== JSON.stringify(liveAlloc);
+      if (mismatchEl) {
+    mismatchEl.style.display = allocMismatch ? '' : 'none';
+        }
+
+        const existingUnits = stored.units || 0;
+        const currentEW     = existingUnits * 500;
+        const afterEW       = (existingUnits + (depositUnits || 0)) * 500;
+
+  const priceItems = window.EWIns.state.priceItems;
+
+        function doRender(items) {
+            const hasAlloc = Object.values(savedAlloc).some(v => Number(v) > 0);
+            if (!hasAlloc) {
+     previewEl.innerHTML = '<span class="small" style="color:#888;">Save an allocation to see estimate preview.</span>';
+           return;
+}
+
+         const calcRow = (ewAmt) => {
+  if (ewAmt <= 0) return { metals: {}, totalInsuredEW: 0, totalLeftoverEW: 0 };
+        return window.EWIns.calcEstimate(ewAmt, savedAlloc, items);
+      };
+
+       const curEst   = calcRow(currentEW);
+         const afterEst = calcRow(afterEW);
+
+   function metalSummary(est) {
+    const parts = [];
+                for (const [key, data] of Object.entries(est.metals || {})) {
+         if (!data) continue;
+const metalName = key.replace(' Ingot', '');
+         let s = `${metalName}: ${data.ingots || 0} ingot(s)`;
+         if (data.nuggets > 0) s += `, ${data.nuggets} nugget(s)`;
+    parts.push(s);
+     }
+          return parts.length ? parts.join('; ') : '&mdash;';
+            }
+
+            previewEl.innerHTML = `
+<table class="deposit-estimate-table">
+  <thead>
+    <tr>
+      <th></th>
+ <th>Total EW</th>
+      <th>Insured EW</th>
+      <th>Metals</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Current</strong></td>
+      <td>${currentEW} EW</td>
+      <td>${curEst.totalInsuredEW.toFixed(0)} EW</td>
+      <td class="small">${metalSummary(curEst)}</td>
+    </tr>
+    <tr>
+      <td><strong>After deposit</strong></td>
+      <td>${afterEW} EW</td>
+      <td>${afterEst.totalInsuredEW.toFixed(0)} EW</td>
+      <td class="small">${metalSummary(afterEst)}</td>
+    </tr>
+  </tbody>
+</table>`;
+  }
+
+        if (!priceItems || !priceItems.length) {
+            previewEl.innerHTML = '<span class="small" style="color:#888;">Loading prices...</span>';
+         window.EWIns.loadPriceItems().then(items => {
+                window.EWIns.state.priceItems = items;
+  doRender(items);
+ });
+   } else {
+         doRender(priceItems);
+        }
+  }
+
     // ===== Deposit section =====
 
     function renderDepositSection(policy, container) {
         const section = container.querySelector('.deposit-section');
         if (!section) return;
         const activity  = String(policy.Activity || 'Empty');
-        const isPending = activity === 'Pending';
+    const isPending = activity === 'Pending';
 
         section.style.display = isPending ? 'none' : '';
         if (isPending) return;
 
-        const costEl     = section.querySelector('.deposit-cost-display');
-        const balEl  = section.querySelector('.deposit-balance-display');
- const warnEl     = section.querySelector('.deposit-warn');
-        const unitsInput = section.querySelector('.deposit-units-input');
-        const balance    = window.EWIns.state.balance || 0;
+     const costEl     = section.querySelector('.deposit-cost-display');
+   const balEl      = section.querySelector('.deposit-balance-display');
+        const warnEl     = section.querySelector('.deposit-warn');
+     const unitsInput = section.querySelector('.deposit-units-input');
+const balance    = window.EWIns.state.balance || 0;
 
-    function update() {
+        function update() {
             const units = parseInt(unitsInput.value, 10) || 1;
-            const cost  = units * 500;
-      if (costEl) costEl.textContent = `Cost: ${units} x 500 = ${cost} EW`;
-            if (balEl)  balEl.textContent  = `Your balance: ${balance} EW`;
-   if (warnEl) warnEl.style.display = balance < cost ? '' : 'none';
-        }
+    const cost  = units * 500;
+     if (costEl) costEl.textContent = `Cost: ${units} x 500 = ${cost} EW`;
+   if (balEl)  balEl.textContent  = `Your balance: ${balance} EW`;
+      if (warnEl) warnEl.style.display = balance < cost ? '' : 'none';
+        updateDepositEstimatePreview_(container, policy, units);
+ }
 
         unitsInput.value = 1;
         unitsInput.addEventListener('input', update);
         update();
     }
 
- // ===== Withdraw section =====
+    // ===== Withdraw section =====
 
     function renderWithdrawSection(policy, container) {
-        const section = container.querySelector('.withdraw-section');
+const section = container.querySelector('.withdraw-section');
         if (!section) return;
         const activity  = String(policy.Activity || 'Empty');
         const isPending = activity === 'Pending';
-        const stored    = safeJsonParse(policy.StoredJson, { units: 0 });
+        const stored= safeJsonParse(policy.StoredJson, { units: 0 });
         const maxUnits  = stored.units || 0;
 
         section.style.display = (activity === 'Active' && !isPending) ? '' : 'none';
+
+        // Also show/hide metals-withdraw section
+        const metalsWdSection = container.querySelector('.metals-withdraw-section');
+        if (metalsWdSection) {
+     metalsWdSection.style.display = (activity === 'Active' && !isPending) ? '' : 'none';
+        }
+
         if (activity !== 'Active' || isPending) return;
 
         const valEl      = section.querySelector('.withdraw-value-display');
-        const unitsInput = section.querySelector('.withdraw-units-input');
-        const maxHint  = section.querySelector('.withdraw-max-hint');
+     const unitsInput = section.querySelector('.withdraw-units-input');
+ const maxHint    = section.querySelector('.withdraw-max-hint');
 
-        if (unitsInput) { unitsInput.max = maxUnits; unitsInput.value = 1; }
-        if (maxHint)    maxHint.textContent = maxUnits;
+    if (unitsInput) { unitsInput.max = maxUnits; unitsInput.value = 1; }
+  if (maxHint)    maxHint.textContent = maxUnits;
 
         function update() {
             const units = parseInt(unitsInput ? unitsInput.value : 1, 10) || 1;
-    if (valEl) valEl.textContent = `You receive: ${units} x 500 = ${units * 500} EW`;
+            if (valEl) valEl.textContent = `You receive: ${units} x 500 = ${units * 500} EW`;
         }
         if (unitsInput) unitsInput.addEventListener('input', update);
-     update();
+  update();
     }
 
     // ===== Pending section =====
@@ -245,20 +346,22 @@ if (!p || p <= 0) continue;
 <!-- Rename + status -->
   <div class="ins-details-header">
     <label>Policy Name:
-  <input class="policy-name-input" value="${esc(policy.PolicyName || '')}" maxlength="40" ${isPending ? 'disabled' : ''}>
+      <input class="policy-name-input" value="${esc(policy.PolicyName || '')}" maxlength="40" ${isPending ? 'disabled' : ''}>
     </label>
     <button class="btn-rename" ${isPending ? 'disabled' : ''}>Save Name</button>
-    <span class="status-badge ${activity.toLowerCase()}">${esc(activity)}</span>
+    <span class="ins-notifier rename-notifier"></span>
+  <span class="status-badge ${activity.toLowerCase()}">${esc(activity)}</span>
     <span class="ins-full-id small">ID: ${esc(policy.InsuranceID)}</span>
   </div>
 
-  <!-- Allocation editor -->
+<!-- Allocation editor -->
   <details class="alloc-editor"${activity === 'Empty' ? ' open' : ''}>
     <summary>Metal Allocations</summary>
     <div class="alloc-rows"></div>
     <div class="alloc-sum">Total: <span class="alloc-total">0</span>% (max 100%)</div>
-    <div class="alloc-warn" style="display:none;">&#x26A0; Allocation exceeds 100%</div>
+<div class="alloc-warn" style="display:none;">&#x26A0; Allocation exceeds 100%</div>
     <button class="btn-save-alloc" ${isPending ? 'disabled' : ''}>Save Allocation</button>
+    <span class="ins-notifier alloc-notifier"></span>
     <div class="small">When Active: saving sends a reallocation request to admin.</div>
   </details>
 
@@ -267,17 +370,17 @@ if (!p || p <= 0) continue;
     <summary>&#x1F4CA; Metal Estimate (current prices, from last load)</summary>
     <div class="small estimate-note">Estimate computed server-side at last load. Final amounts set at admin approval.</div>
     <table class="metal-estimate-table">
-      <thead>
-        <tr>
+  <thead>
+     <tr>
           <th>Metal</th><th>%</th><th>EW Alloc</th>
-    <th>Ingots</th><th>Nuggets</th>
-  <th>Covered EW</th><th>Uninsured EW</th>
+          <th>Ingots</th><th>Nuggets</th>
+     <th>Covered EW</th><th>Uninsured EW</th>
         </tr>
-      </thead>
-      <tbody class="estimate-tbody"></tbody>
-   <tfoot>
-        <tr>
-        <td colspan="5"><strong>Total</strong></td>
+  </thead>
+    <tbody class="estimate-tbody"></tbody>
+      <tfoot>
+      <tr>
+          <td colspan="5"><strong>Total</strong></td>
           <td class="total-insured"></td>
           <td class="total-uninsured"></td>
         </tr>
@@ -285,16 +388,21 @@ if (!p || p <= 0) continue;
     </table>
   </details>
 
-  <!-- Deposit section -->
+<!-- Deposit section -->
   <div class="deposit-section">
-<h4>Deposit</h4>
+    <h4>Deposit</h4>
     <label>Units to deposit (1 unit = 500 EW):
       <input type="number" class="deposit-units-input" min="1" step="1" value="1">
     </label>
     <div class="deposit-cost-display">Cost: 1 x 500 = 500 EW</div>
     <div class="deposit-balance-display">Your balance: ${esc(window.EWIns.state.balance || 0)} EW</div>
-<div class="deposit-warn" style="display:none;">&#x26A0; Insufficient balance</div>
+    <div class="deposit-warn" style="display:none;">&#x26A0; Insufficient balance</div>
     <button class="btn-deposit" ${isPending ? 'disabled' : ''}>Request Deposit</button>
+    <div class="deposit-estimate-preview"></div>
+    <span class="deposit-alloc-mismatch-warn" style="display:none;">
+      Your current allocation edits are not reflected in this estimate preview.
+      Please save your allocation to see the updated estimate.
+    </span>
   </div>
 
   <!-- Withdraw section -->
@@ -304,14 +412,24 @@ if (!p || p <= 0) continue;
       <input type="number" class="withdraw-units-input" min="1" step="1"
         max="${esc(stored.units || 0)}" value="1">
     </label>
-    <div class="withdraw-value-display">You receive: 1 x 500 = 500 EW</div>
+    <div class="withdraw-value-display">You receive: 1 x 500 = ${(stored.units || 1) * 500} EW</div>
     <button class="btn-withdraw">Request Withdrawal</button>
     <div class="small">Withdrawing all units closes the policy (status becomes Empty).</div>
   </div>
 
+  <!-- Metals Withdrawal section -->
+  <div class="metals-withdraw-section" style="display:none;">
+    <h4>Metals Withdrawal</h4>
+    <p class="small">Use this if you physically collected your insured metals.
+      Your EW balance will NOT be credited &mdash; this simply closes out the insured
+      position. Admin approval required.</p>
+    <button class="btn-withdraw-metals">Request Metals Withdrawal</button>
+    <div class="small warn">This action cannot be undone after admin approval.</div>
+  </div>
+
   <!-- Pending section -->
   <div class="pending-section" style="display:none;">
-    <div class="pending-banner"></div>
+  <div class="pending-banner"></div>
     <button class="btn-cancel-pending">Cancel Pending Request</button>
   </div>
 
