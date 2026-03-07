@@ -465,3 +465,156 @@ highlight-action {
  font-size:12px;
  color: #555;
 }
+
+/* ===== Section Toggle Panel (idx- prefix, mirrors bank page) ===== */
+
+/* On wide screens reserve space for the fixed side panel */
+@media (min-width: 901px) {
+    body {
+        padding-right: 188px;
+    }
+}
+
+/* Toggle button base (shared by all idx panel buttons) */
+.idx-toggle-btn {
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #f9fafb;
+    color: #374151;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.idx-toggle-btn:hover {
+    background: #e5e7eb;
+}
+
+.idx-toggle-btn.active {
+  background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+}
+
+/* Fixed panel */
+.idx-section-panel {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 200;
+    background: #fff;
+    border-radius: 12px 0 0 12px;
+    box-shadow: -2px 0 14px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    transition: transform 0.25s ease;
+    max-height: calc(100vh - 80px);
+    overflow: visible;
+}
+
+/* Collapsed: slide off to the right, leaving only the toggle tab */
+.idx-section-panel.collapsed {
+  transform: translateY(-50%) translateX(calc(100% - 28px));
+}
+
+.idx-section-panel-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 12px 10px 12px 10px;
+    overflow-y: auto;
+    max-height: calc(100vh - 100px);
+}
+
+.idx-section-panel-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 4px;
+    white-space: nowrap;
+}
+
+/* Section toggle buttons inside the panel */
+.idx-section-panel .idx-section-toggle-btn {
+    width: 100%;
+    text-align: left;
+    font-size: 12px;
+    padding: 5px 9px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+/* Panel collapse handle (left-edge tab) */
+.idx-panel-toggle {
+    flex-shrink: 0;
+    width: 22px;
+    background: #f3f4f6;
+    border: none;
+    border-right: 1px solid #e5e7eb;
+  border-radius: 12px 0 0 12px;
+    cursor: pointer;
+    font-size: 16px;
+ color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  transition: background 0.15s;
+    padding: 0;
+}
+
+.idx-panel-toggle:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+/* Mobile: panel hidden by default, floating open button shown */
+.idx-panel-open-btn {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  body {
+    padding-right: 12px;
+    }
+
+    .idx-section-panel {
+     transform: translateY(-50%) translateX(100%);
+     border-radius: 12px 0 0 12px;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.18);
+    }
+
+    .idx-section-panel.mobile-open {
+        transform: translateY(-50%) translateX(0);
+    }
+
+    .idx-section-panel.collapsed {
+        transform: translateY(-50%) translateX(calc(100% - 28px));
+    }
+
+    /* Floating open button, bottom-right */
+    .idx-panel-open-btn {
+        display: block;
+        position: fixed;
+        bottom: 20px;
+        right: 16px;
+        z-index: 199;
+   background: #2563eb;
+  color: #fff;
+        border: none;
+        border-radius: 24px;
+   padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        cursor: pointer;
+    }
+
+    .idx-panel-open-btn:hover {
+        background: #1d4ed8;
+    }
+}

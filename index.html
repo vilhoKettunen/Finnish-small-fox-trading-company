@@ -2,7 +2,7 @@
 <html>
 <head>
     <script src="auth-storage.js"></script>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
     <title>Vak Store Trading Calculator</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="description" content="We organize and facilitate trade among players in Vintage Story on The Official Public Server (TOPS). Instant trades via our main store, pricing data tracking, and the OCM player marketplace. This site is a player-driven in-game trading hub and calculator for the Vintage Story TOPS server — no real‑world goods or money are exchanged; all prices refer to in‑game items only." />
@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="css/shared/universal-dropdown.css">
     <script src="shared/site-decor.js"></script>
     <script src="shared/site-footer.js"></script>
-    
+
     <script src="app-config.js"></script>
     <script src="api-client.js"></script>
     <script src="topbar.js"></script>
@@ -23,7 +23,7 @@
     <script src="shared/login-panel.js"></script>
     <script src="shared/universal-dropdown.js"></script>
 
-    <!-- Index page modules (split out from inline script) -->
+ <!-- Index page modules (split out from inline script) -->
     <script src="index_js/index-core.js"></script>
     <script src="index_js/legacy-utils.js"></script>
     <script src="index_js/index-formatting.js"></script>
@@ -34,12 +34,15 @@
     <!-- Auth / transfer / admin / carts / requests (logical order) -->
     <script src="index_js/legacy-auth.js"></script>
     <script src="index_js/legacy-transfer.js"></script>
-    <script src="index_js/legacy-admin.js"></script>
+<script src="index_js/legacy-admin.js"></script>
     <script src="index_js/legacy-carts.js"></script>
     <script src="index_js/legacy-requests.js"></script>
 
     <!-- Minimal aggregator / navigation state (keeps globals) -->
     <script src="index_js/index-legacy-app.js"></script>
+
+    <!-- Section visibility panel -->
+    <script src="index_js/index-section-panel.js"></script>
 
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
@@ -61,119 +64,131 @@
 <body class="index-page">
     <!-- top bar injected by topbar.js -->
 
+    <!-- ─── Fixed Section Toggle Panel ──────────────────────────────────── -->
+    <div id="idxSectionPanel" class="idx-section-panel">
+<button type="button" id="idxPanelToggle" class="idx-panel-toggle" title="Hide section panel">&#8249;</button>
+        <div class="idx-section-panel-inner">
+      <div class="idx-section-panel-title">Sections</div>
+            <!-- Buttons injected by IndexSectionPanel.init() -->
+  </div>
+    </div>
+
+    <!-- Mobile floating open button (hidden on desktop via CSS) -->
+    <button type="button" id="idxPanelOpenBtn" class="idx-panel-open-btn" title="Show sections panel">&#9776; Sections</button>
+
     <div id="loginPanelMount"></div>
 
     <h1>🛒 Vak Store Trading Calculator</h1>
 
-    <!-- Business model / service explanation (visible on page + aligns with meta description) -->
+    <!-- "What this service is" — NOT toggleable -->
     <div class="section" id="serviceIntro">
-        <h2>What this service is</h2>
+     <h2>What this service is</h2>
         <p>
-            <strong>We organize and facilitate trade among players in Vintage Story on The Official Public Server (TOPS).</strong>
-            We run a main store for instant trades, track pricing data across traded items, and provide a player-to-player trading platform (OCM).
-        </p>
-        <p>This site is a player-driven in-game trading hub and calculator for the Vintage Story TOPS server — no real‑world goods or money are exchanged; all prices refer to in‑game items only.</p>
+         <strong>We organize and facilitate trade among players in Vintage Story on The Official Public Server (TOPS).</strong>
+      We run a main store for instant trades, track pricing data across traded items, and provide a player-to-player trading platform (OCM).
+  </p>
+   <p>This site is a player-driven in-game trading hub and calculator for the Vintage Story TOPS server — no real‑world goods or money are exchanged; all prices refer to in‑game items only.</p>
         <button class="more-info-btn" type="button" onclick="toggleInfo('serviceIntroInfo')">More Info</button>
-        <div id="serviceIntroInfo" class="info-box">
-            <p style="margin-top:0;">
-                <strong>Main store (instant trades):</strong> buy/sell common items quickly at listed prices.<br>
-                <strong>Price tracking:</strong> we record historical trade pricing to improve transparency and help with fair trading.<br>
-                <strong>OCM marketplace:</strong> players can list and trade directly with each other, using the same pricing and tooling.
+<div id="serviceIntroInfo" class="info-box">
+     <p style="margin-top:0;">
+  <strong>Main store (instant trades):</strong> buy/sell common items quickly at listed prices.<br>
+            <strong>Price tracking:</strong> we record historical trade pricing to improve transparency and help with fair trading.<br>
+     <strong>OCM marketplace:</strong> players can list and trade directly with each other, using the same pricing and tooling.
             </p>
-
-            <p>
-                <strong>About the currency (EW)(Eange Weight):</strong><br>
-                EW is designed to be a fully liquid trading currency. Its value is not permanently pegged to one specific metal or item.
-                The goal is to make trading smoother by giving players a common “trade-anything” medium: you can earn EW by selling items
-                and spend EW to buy many other items the store offers.
+    <p>
+     <strong>About the currency (EW)(Eange Weight):</strong><br>
+    EW is designed to be a fully liquid trading currency. Its value is not permanently pegged to one specific metal or item.
+           The goal is to make trading smoother by giving players a common "trade-anything" medium: you can earn EW by selling items
+         and spend EW to buy many other items the store offers.
             </p>
-
-            <p>
-                <strong>Backing / insurance (when funded):</strong><br>
-                When the system has sufficient reserves, we back EW with metals. If you hold more than <strong>500 EW</strong>, you can request
-                the equivalent value in metals to be delivered to your deposit box as an always-accessible “insurance” option.
-                The long-term goal is to maintain <strong>more value in metal reserves than EW in circulation</strong>, so even a “bank run”
-                would not collapse the system (this was achieved last wipe; 2026 wipe will depend on how quickly reserves build up again).
-            </p>
-
-            <button type="button" onclick="toggleInfo('serviceIntroInfo')">❌ Close</button>
+        <p>
+         <strong>Backing / insurance (when funded):</strong><br>
+      When the system has sufficient reserves, we back EW with metals. If you hold more than <strong>500 EW</strong>, you can request
+         the equivalent value in metals to be delivered to your deposit box as an always-accessible "insurance" option.
+         The long-term goal is to maintain <strong>more value in metal reserves than EW in circulation</strong>, so even a "bank run"
+          would not collapse the system (this was achieved last wipe; 2026 wipe will depend on how quickly reserves build up again).
+    </p>
+    <button type="button" onclick="toggleInfo('serviceIntroInfo')">❌ Close</button>
         </div>
     </div>
 
-    <div class="section">
+    <!-- Display Currency — locked visible, no toggle -->
+    <div class="section" id="idxDisplayCurrency">
         <label for="currencyInput"><b>Display Currency:</b></label>
-        <input id="currencyInput" list="currencyDatalist" placeholder="Search currency / item">
-        <input id="currencySelect" type="hidden" value="EW">
+     <input id="currencyInput" list="currencyDatalist" placeholder="Search currency / item">
+ <input id="currencySelect" type="hidden" value="EW">
         <datalist id="currencyDatalist"></datalist>
-        <!-- Add this button inside the Display Currency section, after the existing inputs -->
         <button id="btnSendBT" type="button" onclick="openTransferModal()">Send EW</button>
     </div>
-    <!-- Add this modal just before the closing </body> (or anywhere after the Display Currency section) -->
+
     <div id="transferModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:3000;">
-        <div style="background:#fff;padding:16px;max-width:440px;margin:60px auto;border-radius:8px;position:relative;">
-            <h3 style="margin-top:0;">Send EW</h3>
-            <div class="small" style="margin-bottom:8px;">
-                Transfer EW directly to another player. Minimum 0.01 EW. No fees. Your balance: <span id="transferYourBalance">0.00</span> EW.
-            </div>
+      <div style="background:#fff;padding:16px;max-width:440px;margin:60px auto;border-radius:8px;position:relative;">
+     <h3 style="margin-top:0;">Send EW</h3>
+    <div class="small" style="margin-bottom:8px;">
+             Transfer EW directly to another player. Minimum 0.01 EW. No fees. Your balance: <span id="transferYourBalance">0.00</span> EW.
+       </div>
             <label style="display:block;margin-bottom:8px;">
-                Target Player Name:
-                <input id="transferPlayerNameInput" type="text" placeholder="Exact player name" autocomplete="off" style="width:100%;">
-            </label>
-            <div id="transferSuggestions" class="small" style="max-height:140px;overflow:auto;border:1px solid #ddd;border-radius:4px;padding:4px;display:none;"></div>
-            <label style="display:block;margin:8px 0;">
+       Target Player Name:
+              <input id="transferPlayerNameInput" type="text" placeholder="Exact player name" autocomplete="off" style="width:100%;">
+         </label>
+  <div id="transferSuggestions" class="small" style="max-height:140px;overflow:auto;border:1px solid #ddd;border-radius:4px;padding:4px;display:none;"></div>
+  <label style="display:block;margin:8px 0;">
                 Amount (EW):
-                <input id="transferAmountInput" type="number" min="0.01" step="0.01" placeholder="0.01" style="width:140px;">
-            </label>
-            <label style="display:block;margin:8px 0;">
-                Note (optional):
-                <input id="transferNoteInput" type="text" maxlength="120" placeholder="Memo for history (optional)" style="width:100%;">
-            </label>
+        <input id="transferAmountInput" type="number" min="0.01" step="0.01" placeholder="0.01" style="width:140px;">
+          </label>
+     <label style="display:block;margin:8px 0;">
+Note (optional):
+         <input id="transferNoteInput" type="text" maxlength="120" placeholder="Memo for history (optional)" style="width:100%;">
+         </label>
             <div id="transferError" class="small" style="color:#c00;margin-top:4px;"></div>
-            <div id="transferSuccess" class="small" style="color:#2e7d32;margin-top:4px;"></div>
+     <div id="transferSuccess" class="small" style="color:#2e7d32;margin-top:4px;"></div>
             <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
-                <button type="button" onclick="performDirectTransfer()">Send</button>
+  <button type="button" onclick="performDirectTransfer()">Send</button>
                 <button type="button" onclick="closeTransferModal()">Close</button>
-            </div>
-        </div>
+</div>
+   </div>
     </div>
-    <div class="section">
+
+    <!-- Quick Calculator -->
+    <div class="section" id="idxQuickCalc">
         <h2>🔹 Quick Individual Item Calculator</h2>
         <button class="more-info-btn" onclick="toggleInfo('quickInfo')">More Info</button>
         <div id="quickInfo" class="info-box">
-            <p>Quick calc for a stack or individual item. Pick item and qty to see buy & sell totals.</p>
-            <button onclick="toggleInfo('quickInfo')">❌ Close</button>
+        <p>Quick calc for a stack or individual item. Pick item and qty to see buy & sell totals.</p>
+    <button onclick="toggleInfo('quickInfo')">❌ Close</button>
         </div>
         <div>
-            <label>Select Full Stack Item:</label>
-            <div class="dropdown-wrap">
-                <input id="quickStackSelect" class="dropdown-input" placeholder="Type to search stack item">
-                <div id="quickStackSelectList" class="dropdown-list" style="display:none;"></div>
+         <label>Select Full Stack Item:</label>
+   <div class="dropdown-wrap">
+  <input id="quickStackSelect" class="dropdown-input" placeholder="Type to search stack item">
+      <div id="quickStackSelectList" class="dropdown-list" style="display:none;"></div>
             </div>
             <input type="number" id="quickStackQty" value="1" min="1">
             <button onclick="quickStackCalc()">Calculate Stack</button>
             <div id="quickStackResult" class="result"></div>
         </div>
-        <div>
-            <label>Select Individual Item:</label>
-            <div class="dropdown-wrap">
-                <input id="quickIndivSelect" class="dropdown-input" placeholder="Type to search indiv item">
-                <div id="quickIndivSelectList" class="dropdown-list" style="display:none;"></div>
-            </div>
-            <input type="number" id="quickIndivQty" value="1" min="1">
-            <button onclick="quickIndivCalc()">Calculate Individual</button>
-            <div id="quickIndivResult" class="result"></div>
+     <div>
+   <label>Select Individual Item:</label>
+         <div class="dropdown-wrap">
+        <input id="quickIndivSelect" class="dropdown-input" placeholder="Type to search indiv item">
+           <div id="quickIndivSelectList" class="dropdown-list" style="display:none;"></div>
+</div>
+       <input type="number" id="quickIndivQty" value="1" min="1">
+    <button onclick="quickIndivCalc()">Calculate Individual</button>
+      <div id="quickIndivResult" class="result"></div>
         </div>
     </div>
 
+  <!-- Buy Items -->
     <div class="section" id="buySection">
         <h2>🔹 Buy Multiple Items</h2>
         <button class="more-info-btn" onclick="toggleInfo('buyInfo')">More Info</button>
-        <div id="buyInfo" class="info-box">
-            <p>Add stacks/individuals you want to buy. Includes OCM listings if desired.</p>
-            <button onclick="toggleInfo('buyInfo')">❌ Close</button>
+      <div id="buyInfo" class="info-box">
+     <p>Add stacks/individuals you want to buy. Includes OCM listings if desired.</p>
+    <button onclick="toggleInfo('buyInfo')">❌ Close</button>
         </div>
         <h3>Full Stacks (Store)</h3>
-        <div class="dropdown-wrap">
+  <div class="dropdown-wrap">
             <input id="stackSelect" class="dropdown-input" placeholder="Search stack item">
             <div id="stackSelectList" class="dropdown-list" style="display:none;"></div>
         </div>
@@ -182,235 +197,239 @@
 
         <h3>Individual Items (Store)</h3>
         <div class="dropdown-wrap">
-            <input id="indivSelect" class="dropdown-input" placeholder="Search individual item">
+      <input id="indivSelect" class="dropdown-input" placeholder="Search individual item">
             <div id="indivSelectList" class="dropdown-list" style="display:none;"></div>
-        </div>
-        <input type="number" id="indivQty" value="1" min="1">
+   </div>
+   <input type="number" id="indivQty" value="1" min="1">
         <button onclick="addIndividual()">Add Individual</button>
 
         <div class="section">
-            <div class="collapsible-header">
-                <h3 style="margin:0">OCM Listings (Buy)</h3>
-                <button id="toggleOCMBuy" class="collapse-btn" aria-expanded="false" onclick="toggleCollapse('ocmBuyContent','toggleOCMBuy')">▸</button>
-            </div>
-            <div id="ocmBuyContent" class="collapsible-content" style="display:none">
-                <input type="text" id="ocmBuyQuery" placeholder="Search OCM items">
-                <button onclick="refreshOCMBuy()">Search</button>
-                <div id="ocmBuyListings"></div>
-                <label>Quantity: <input type="number" id="ocmBuyQty" value="1" min="1"></label>
-                <button onclick="addOCMBuy()">Add OCM Item</button>
-            </div>
+        <div class="collapsible-header">
+         <h3 style="margin:0">OCM Listings (Buy)</h3>
+         <button id="toggleOCMBuy" class="collapse-btn" aria-expanded="false" onclick="toggleCollapse('ocmBuyContent','toggleOCMBuy')">▸</button>
+        </div>
+  <div id="ocmBuyContent" class="collapsible-content" style="display:none">
+         <input type="text" id="ocmBuyQuery" placeholder="Search OCM items">
+            <button onclick="refreshOCMBuy()">Search</button>
+     <div id="ocmBuyListings"></div>
+            <label>Quantity: <input type="number" id="ocmBuyQty" value="1" min="1"></label>
+          <button onclick="addOCMBuy()">Add OCM Item</button>
+   </div>
         </div>
 
-        <h3>Account Balance</h3>
+     <h3>Account Balance</h3>
         <label>Enter Balance (EW): <input type="number" id="buyAccountBalanceInput" value="0"></label>
-        <button onclick="addBuyAccountBalance()">➕ Add Balance</button>
+     <button onclick="addBuyAccountBalance()">➕ Add Balance</button>
 
-        <div class="section" style="padding:12px;margin-top:12px;">
-            <div class="collapsible-header">
-                <h3 style="margin:0">Custom Inputs (Store)</h3>
-                <button id="toggleCustomBuy" class="collapse-btn" aria-expanded="false" onclick="toggleCollapse('customBuyContent','toggleCustomBuy')">▸</button>
+   <div class="section" style="padding:12px;margin-top:12px;">
+<div class="collapsible-header">
+<h3 style="margin:0">Custom Inputs (Store)</h3>
+  <button id="toggleCustomBuy" class="collapse-btn" aria-expanded="false" onclick="toggleCollapse('customBuyContent','toggleCustomBuy')">▸</button>
             </div>
             <div id="customBuyContent" class="collapsible-content" style="display:none">
-                <div style="margin-top:8px">
-                    <strong>From Spreadsheet — Stack</strong><br>
-                    <div class="dropdown-wrap">
-                        <input id="customBuyStackSelect" class="dropdown-input" placeholder="Item name">
-                        <div id="customBuyStackSelectList" class="dropdown-list" style="display:none;"></div>
-                    </div>
-                    <input type="number" id="customBuyStackQty" placeholder="Quantity" min="1">
-                    <input type="number" id="customBuyStackPrice" placeholder="Price per Stack" step="0.01">
-                    <button onclick="addCustomBuyStack()">Add Custom Stack</button>
-                </div>
-                <div style="margin-top:8px">
-                    <strong>From Spreadsheet — Individual</strong><br>
-                    <div class="dropdown-wrap">
-                        <input id="customBuyIndivSelect" class="dropdown-input" placeholder="Item name">
-                        <div id="customBuyIndivSelectList" class="dropdown-list" style="display:none;"></div>
-                    </div>
-                    <input type="number" id="customBuyIndivQty" placeholder="Quantity" min="1">
-                    <input type="number" id="customBuyIndivPrice" placeholder="Price per Each" step="0.01">
-                    <button onclick="addCustomBuyIndividual()">Add Custom Individual</button>
-                </div>
-                <div style="margin-top:8px">
-                    <strong>Fully Custom</strong><br>
-                    <input type="text" id="customBuyName" placeholder="Name">
-                    <input type="number" id="customBuyQty" placeholder="Quantity (pieces)" min="1">
-                    <input type="number" id="customBuyStackSize" placeholder="Stack size" min="1">
-                    <input type="number" id="customBuyPrice" placeholder="Price per Stack" step="0.01">
-                    <button onclick="addFullyCustomBuy()">Add Fully Custom</button>
-                </div>
+      <div style="margin-top:8px">
+          <strong>From Spreadsheet — Stack</strong><br>
+      <div class="dropdown-wrap">
+       <input id="customBuyStackSelect" class="dropdown-input" placeholder="Item name">
+       <div id="customBuyStackSelectList" class="dropdown-list" style="display:none;"></div>
+        </div>
+ <input type="number" id="customBuyStackQty" placeholder="Quantity" min="1">
+           <input type="number" id="customBuyStackPrice" placeholder="Price per Stack" step="0.01">
+          <button onclick="addCustomBuyStack()">Add Custom Stack</button>
+     </div>
+       <div style="margin-top:8px">
+  <strong>From Spreadsheet — Individual</strong><br>
+         <div class="dropdown-wrap">
+  <input id="customBuyIndivSelect" class="dropdown-input" placeholder="Item name">
+   <div id="customBuyIndivSelectList" class="dropdown-list" style="display:none;"></div>
             </div>
+   <input type="number" id="customBuyIndivQty" placeholder="Quantity" min="1">
+      <input type="number" id="customBuyIndivPrice" placeholder="Price per Each" step="0.01">
+         <button onclick="addCustomBuyIndividual()">Add Custom Individual</button>
+     </div>
+                <div style="margin-top:8px">
+        <strong>Fully Custom</strong><br>
+          <input type="text" id="customBuyName" placeholder="Name">
+  <input type="number" id="customBuyQty" placeholder="Quantity (pieces)" min="1">
+     <input type="number" id="customBuyStackSize" placeholder="Stack size" min="1">
+        <input type="number" id="customBuyPrice" placeholder="Price per Stack" step="0.01">
+           <button onclick="addFullyCustomBuy()">Add Fully Custom</button>
+  </div>
+    </div>
         </div>
 
-        <ul id="buyList"></ul>
+  <ul id="buyList"></ul>
         <div id="buyTotalBox" class="negative">Buy Total: <span id="buyTotal">0.00</span></div>
     </div>
 
+    <!-- Sell Items -->
     <div class="section" id="sellSection">
         <h2>🔹 Sell Multiple Items</h2>
         <button class="more-info-btn" onclick="toggleInfo('sellInfo')">More Info</button>
         <div id="sellInfo" class="info-box">
             <p>Add items you sell. Includes OCM interaction and Pay With.</p>
             <button onclick="toggleInfo('sellInfo')">❌ Close</button>
-        </div>
+    </div>
         <h3>Full Stacks (Store)</h3>
-        <div class="dropdown-wrap">
-            <input id="sellStackSelect" class="dropdown-input" placeholder="Search stack item">
-            <div id="sellStackSelectList" class="dropdown-list" style="display:none;"></div>
+     <div class="dropdown-wrap">
+ <input id="sellStackSelect" class="dropdown-input" placeholder="Search stack item">
+   <div id="sellStackSelectList" class="dropdown-list" style="display:none;"></div>
         </div>
         <input type="number" id="sellStackQty" value="1" min="1">
         <button onclick="addSellStack()">Add Stack</button>
 
-        <h3>Individual Items (Store)</h3>
+<h3>Individual Items (Store)</h3>
         <div class="dropdown-wrap">
             <input id="sellIndivSelect" class="dropdown-input" placeholder="Search individual item">
-            <div id="sellIndivSelectList" class="dropdown-list" style="display:none;"></div>
+   <div id="sellIndivSelectList" class="dropdown-list" style="display:none;"></div>
         </div>
-        <input type="number" id="sellIndivQty" value="1" min="1">
+  <input type="number" id="sellIndivQty" value="1" min="1">
         <button onclick="addSellIndividual()">Add Individual</button>
 
         <div class="section">
-            <div class="collapsible-header">
+    <div class="collapsible-header">
                 <h3 style="margin:0">OCM Listings (Sell)</h3>
-                <button id="toggleOCMSell" class="collapse-btn" aria-expanded="false" onclick="toggleCollapse('ocmSellContent','toggleOCMSell')">▸</button>
+ <button id="toggleOCMSell" class="collapse-btn" aria-expanded="false" onclick="toggleCollapse('ocmSellContent','toggleOCMSell')">▸</button>
             </div>
-            <div id="ocmSellContent" class="collapsible-content" style="display:none">
-                <input type="text" id="ocmSellQuery" placeholder="Search OCM items">
-                <button onclick="refreshOCMSell()">Search</button>
-                <div id="ocmSellListings"></div>
-                <label>Quantity: <input type="number" id="ocmSellQty" value="1" min="1"></label>
-                <button onclick="addOCMSell()">Add OCM Item</button>
-            </div>
-        </div>
+   <div id="ocmSellContent" class="collapsible-content" style="display:none">
+   <input type="text" id="ocmSellQuery" placeholder="Search OCM items">
+         <button onclick="refreshOCMSell()">Search</button>
+          <div id="ocmSellListings"></div>
+         <label>Quantity: <input type="number" id="ocmSellQty" value="1" min="1"></label>
+            <button onclick="addOCMSell()">Add OCM Item</button>
+     </div>
+ </div>
 
         <h3>Account Balance</h3>
         <label>Enter Balance (EW): <input type="number" id="accountBalanceInput" value="0"></label>
-        <button onclick="addAccountBalance()">➕ Add Balance</button>
+      <button onclick="addAccountBalance()">➕ Add Balance</button>
 
         <div class="section" style="padding:12px;margin-top:12px;">
-            <div class="collapsible-header">
-                <h3 style="margin:0">Custom Inputs (Sell)</h3>
+<div class="collapsible-header">
+       <h3 style="margin:0">Custom Inputs (Sell)</h3>
                 <button id="toggleCustomSell" class="collapse-btn" aria-expanded="false" onclick="toggleCollapse('customSellContent','toggleCustomSell')">▸</button>
             </div>
-            <div id="customSellContent" class="collapsible-content" style="display:none">
-                <div style="margin-top:8px">
-                    <strong>From Spreadsheet — Stack</strong><br>
-                    <div class="dropdown-wrap">
-                        <input id="customSellStackSelect" class="dropdown-input" placeholder="Item name">
-                        <div id="customSellStackSelectList" class="dropdown-list" style="display:none;"></div>
-                    </div>
-                    <input type="number" id="customSellStackQty" placeholder="Quantity" min="1">
+         <div id="customSellContent" class="collapsible-content" style="display:none">
+         <div style="margin-top:8px">
+    <strong>From Spreadsheet — Stack</strong><br>
+          <div class="dropdown-wrap">
+          <input id="customSellStackSelect" class="dropdown-input" placeholder="Item name">
+    <div id="customSellStackSelectList" class="dropdown-list" style="display:none;"></div>
+  </div>
+        <input type="number" id="customSellStackQty" placeholder="Quantity" min="1">
                     <input type="number" id="customSellStackPrice" placeholder="Price per Stack" step="0.01">
-                    <button onclick="addCustomSellStack()">Add Custom Stack</button>
-                </div>
-                <div style="margin-top:8px">
-                    <strong>From Spreadsheet — Individual</strong><br>
-                    <div class="dropdown-wrap">
-                        <input id="customSellIndivSelect" class="dropdown-input" placeholder="Item name">
-                        <div id="customSellIndivSelectList" class="dropdown-list" style="display:none;"></div>
-                    </div>
-                    <input type="number" id="customSellIndivQty" placeholder="Quantity" min="1">
+          <button onclick="addCustomSellStack()">Add Custom Stack</button>
+   </div>
+       <div style="margin-top:8px">
+          <strong>From Spreadsheet — Individual</strong><br>
+               <div class="dropdown-wrap">
+    <input id="customSellIndivSelect" class="dropdown-input" placeholder="Item name">
+            <div id="customSellIndivSelectList" class="dropdown-list" style="display:none;"></div>
+          </div>
+           <input type="number" id="customSellIndivQty" placeholder="Quantity" min="1">
                     <input type="number" id="customSellIndivPrice" placeholder="Price per Each" step="0.01">
-                    <button onclick="addCustomSellIndividual()">Add Custom Individual</button>
-                </div>
-                <div style="margin-top:8px">
-                    <strong>Fully Custom</strong><br>
-                    <input type="text" id="customSellName" placeholder="Name">
-                    <input type="number" id="customSellQty" placeholder="Quantity (pieces)" min="1">
-                    <input type="number" id="customSellStackSize" placeholder="Stack size" min="1">
-                    <input type="number" id="customSellPrice" placeholder="Price per Stack" step="0.01">
-                    <button onclick="addFullyCustomSell()">Add Fully Custom</button>
-                </div>
-            </div>
-        </div>
+   <button onclick="addCustomSellIndividual()">Add Custom Individual</button>
+           </div>
+      <div style="margin-top:8px">
+      <strong>Fully Custom</strong><br>
+            <input type="text" id="customSellName" placeholder="Name">
+         <input type="number" id="customSellQty" placeholder="Quantity (pieces)" min="1">
+           <input type="number" id="customSellStackSize" placeholder="Stack size" min="1">
+     <input type="number" id="customSellPrice" placeholder="Price per Stack" step="0.01">
+        <button onclick="addFullyCustomSell()">Add Fully Custom</button>
+    </div>
+      </div>
+   </div>
 
         <ul id="sellList"></ul>
         <div id="sellTotalBox" class="positive">Sell Total: <span id="sellTotal">0.00</span></div>
     </div>
 
-    <div class="section">
+    <!-- Combined Totals -->
+    <div class="section" id="idxCombinedTotals">
         <h2>🔹 Combined Totals</h2>
-        <button class="more-info-btn" onclick="toggleInfo('combinedInfo')">More Info</button>
-        <div id="combinedInfo" class="info-box">
-            <p>
-                - Account Balance shows your current store balance.<br>
-                - Net Balance = Sell items − Buy items (ignores pinned auto balance).<br>
-                - Account Balance After Transaction = Account Balance + Net Balance (projection).
-            </p>
-            <button onclick="toggleInfo('combinedInfo')">❌ Close</button>
+      <button class="more-info-btn" onclick="toggleInfo('combinedInfo')">More Info</button>
+      <div id="combinedInfo" class="info-box">
+     <p>
+           - Account Balance shows your current store balance.<br>
+       - Net Balance = Sell items − Buy items (ignores pinned auto balance).<br>
+          - Account Balance After Transaction = Account Balance + Net Balance (projection).
+    </p>
+  <button onclick="toggleInfo('combinedInfo')">❌ Close</button>
         </div>
         <div id="combinedTotalBox">
             <div>Account Balance: <span id="accountBalanceCurrent">0.00 EW</span></div>
-            <div>Net Balance: <span id="netTotal" data-raw="0">0.00 EW</span></div>
+    <div>Net Balance: <span id="netTotal" data-raw="0">0.00 EW</span></div>
             <div>Account Balance After Transaction: <span id="accountBalanceAfter" data-raw="0">0.00 EW</span></div>
         </div>
     </div>
 
-    <div class="section">
-        <h2>🔹 Pay With</h2>
-        <button class="more-info-btn" onclick="toggleInfo('payInfo')">More Info</button>
+    <!-- Pay With -->
+    <div class="section" id="idxPayWith">
+     <h2>🔹 Pay With</h2>
+   <button class="more-info-btn" onclick="toggleInfo('payInfo')">More Info</button>
         <div id="payInfo" class="info-box">
-            <p>Cover a negative net with item payments.</p>
+   <p>Cover a negative net with item payments.</p>
             <button onclick="toggleInfo('payInfo')">❌ Close</button>
-        </div>
+  </div>
 
         <div class="tool-controls" id="payWithControls">
-            <label>
-                Result type:
-                <select id="payWithResultType">
+   <label>
+      Result type:
+            <select id="payWithResultType">
                     <option value="NET" selected>Net Balance</option>
-                    <option value="ACCOUNT">Account Balance</option>
-                </select>
-            </label>
+            <option value="ACCOUNT">Account Balance</option>
+       </select>
+        </label>
 
-            <label>
-                % preset:
-                <select id="payWithPercentPreset">
-                    <option value="DEFAULT_100" selected>Default100%</option>
-                    <option value="EQUALIZER">Equalizer</option>
-                </select>
-            </label>
+<label>
+  % preset:
+           <select id="payWithPercentPreset">
+ <option value="DEFAULT_100" selected>Default100%</option>
+        <option value="EQUALIZER">Equalizer</option>
+     </select>
+      </label>
 
             <button id="btnPayWithApplyPreset" type="button" onclick="applyPayWithPreset()">Apply</button>
-            <span class="small" id="payWithPresetMsg"></span>
+ <span class="small" id="payWithPresetMsg"></span>
         </div>
 
         <div id="payOptions"></div>
         <button onclick="addPayRow()">➕ Add Item</button>
-        <ul id="payList"></ul>
-        <button onclick="calculatePayment()">Calculate Payment</button>
+      <ul id="payList"></ul>
+     <button onclick="calculatePayment()">Calculate Payment</button>
         <div id="paymentResult" class="result"></div>
-    </div>
+  </div>
 
-    <div class="section">
-        <h2>🔹 Item Converter</h2>
+    <!-- Item Converter -->
+    <div class="section" id="idxItemConverter">
+ <h2>🔹 Item Converter</h2>
         <button class="more-info-btn" onclick="toggleInfo('converterInfo')">More Info</button>
-        <div id="converterInfo" class="info-box">
-            <p>Allocate % of positive Net Balance into items.</p>
-            <button onclick="toggleInfo('converterInfo')">❌ Close</button>
-        </div>
+   <div id="converterInfo" class="info-box">
+     <p>Allocate % of positive Net Balance into items.</p>
+       <button onclick="toggleInfo('converterInfo')">❌ Close</button>
+</div>
 
         <div class="tool-controls" id="converterControls">
-            <label>
-                Result type:
-                <select id="converterResultType">
-                    <option value="NET" selected>Net Balance</option>
-                    <option value="ACCOUNT">Account Balance</option>
-                </select>
-            </label>
+  <label>
+          Result type:
+        <select id="converterResultType">
+               <option value="NET" selected>Net Balance</option>
+<option value="ACCOUNT">Account Balance</option>
+         </select>
+          </label>
 
-            <label>
-                % preset:
-                <select id="converterPercentPreset">
-                    <option value="DEFAULT_100" selected>Default100%</option>
-                    <option value="EQUALIZER">Equalizer</option>
-                </select>
-            </label>
+ <label>
+   % preset:
+  <select id="converterPercentPreset">
+             <option value="DEFAULT_100" selected>Default100%</option>
+  <option value="EQUALIZER">Equalizer</option>
+   </select>
+       </label>
 
-            <button id="btnConverterApplyPreset" type="button" onclick="applyConverterPreset()">Apply</button>
+      <button id="btnConverterApplyPreset" type="button" onclick="applyConverterPreset()">Apply</button>
             <span class="small" id="converterPresetMsg"></span>
-        </div>
+  </div>
 
         <div id="converterOptions"></div>
         <button onclick="addConverterRow()">➕ Add Item</button>
@@ -419,109 +438,116 @@
         <div id="converterResult" class="result"></div>
     </div>
 
+    <!-- Transaction Request — locked visible, no toggle -->
     <div id="requestControls" class="section">
-        <h2>🔹 Transaction Request</h2>
+   <h2>🔹 Transaction Request</h2>
         <div id="requestGuard" class="guard-msg" style="display:none;">You need to login for this tool.</div>
         <button id="btnSubmitRequest" onclick="guardedSubmitPurchaseRequest()">Submit Purchase Request</button>
         <button class="copy-btn" onclick="guardedCopyTransactionData()">Copy Transaction Data</button>
         <button class="copy-btn" onclick="importTransactionData()">Import Transaction Data</button>
         <button class="copy-btn" id="btnClearCarts" type="button" onclick="clearAllCarts()">Clear Carts</button>
      <input id="importFile" type="file" accept="application/json" style="display:none" onchange="importTransactionDataFromFile(this.files[0])">
-   <div id="requestMsg" class="small"></div>
+        <div id="requestMsg" class="small"></div>
     </div>
 
+    <!-- Admin: Submit on Behalf — shown by legacy-auth.js when isAdmin -->
     <div id="onBehalfSection" class="section" style="display:none;">
-        <h2>👤 Submit on behalf of (Admin)</h2>
-        <div class="small">Search a player and set them as the target for the next submission. The request will be recorded in their history.</div>
+     <h2>👤 Submit on behalf of (Admin)</h2>
+<div class="small">Search a player and set them as the target for the next submission. The request will be recorded in their history.</div>
         <div class="dropdown-wrap" style="margin-top:6px;">
-            <input id="obPlayerSearchInput" class="dropdown-input" placeholder="Type player name or email">
-            <div id="obPlayerSearchList" class="dropdown-list" style="display:none;"></div>
-        </div>
-        <button id="btnSetOnBehalf" type="button" onclick="setOnBehalfTarget()">Set as target</button>
-        <button id="btnClearOnBehalf" type="button" onclick="clearOnBehalfTarget()">Clear</button>
+    <input id="obPlayerSearchInput" class="dropdown-input" placeholder="Type player name or email">
+     <div id="obPlayerSearchList" class="dropdown-list" style="display:none;"></div>
+    </div>
+    <button id="btnSetOnBehalf" type="button" onclick="setOnBehalfTarget()">Set as target</button>
+    <button id="btnClearOnBehalf" type="button" onclick="clearOnBehalfTarget()">Clear</button>
         <div id="onBehalfStatus" class="small"></div>
-    </div>
-
-    <div id="infraInvestSection" class="section" style="display:none;">
-        <div class="collapsible-header">
-     <h2 style="margin:0">🏗️ Infrastructure Investment (Admin)</h2>
-            <button id="toggleInfraInvest" class="collapse-btn" aria-expanded="false"
- onclick="toggleCollapse('infraInvestContent','toggleInfraInvest')">▸</button>
   </div>
-        <div id="infraInvestContent" class="collapsible-content" style="display:none;">
-     <div class="small">
-     Admin only. Add items to the Buy cart above, fill in both descriptions,
-         then submit. Stock is deducted. No user balance is affected.
-          </div>
-            <label style="display:block;margin-top:8px;">
-            Short Description (max 100 chars, shown in list):
-                <input id="infraShortDesc" type="text" maxlength="100" style="width:100%;">
-     </label>
-  <label style="display:block;margin-top:8px;">
-      Long Description (max 2000 chars, shown in detail view):
-           <textarea id="infraLongDesc" maxlength="2000"
-           style="width:100%;min-height:80px;resize:vertical;"></textarea>
- </label>
-   <div id="infraCartPreview" class="small"
-style="margin-top:8px;color:#555;font-style:italic;">
-          No items in buy cart yet.
-    </div>
-            <button id="btnInfraSubmit" type="button"
-   onclick="window.submitInfraInvestment && window.submitInfraInvestment()"
-  style="margin-top:8px;">
-              Send Infrastructure Investment
-            </button>
-            <div id="infraMsg" class="small" style="margin-top:6px;"></div>
-        </div>
- </div>
 
+    <!-- Admin: Infrastructure Investment — shown by legacy-auth.js when isAdmin -->
+    <div id="infraInvestSection" class="section" style="display:none;">
+   <div class="collapsible-header">
+    <h2 style="margin:0">🏗️ Infrastructure Investment (Admin)</h2>
+        <button id="toggleInfraInvest" class="collapse-btn" aria-expanded="false"
+   onclick="toggleCollapse('infraInvestContent','toggleInfraInvest')">▸</button>
+        </div>
+     <div id="infraInvestContent" class="collapsible-content" style="display:none;">
+            <div class="small">
+ Admin only. Add items to the Buy cart above, fill in both descriptions,
+      then submit. Stock is deducted. No user balance is affected.
+            </div>
+    <label style="display:block;margin-top:8px;">
+Short Description (max 100 chars, shown in list):
+ <input id="infraShortDesc" type="text" maxlength="100" style="width:100%;">
+            </label>
+      <label style="display:block;margin-top:8px;">
+ Long Description (max 2000 chars, shown in detail view):
+           <textarea id="infraLongDesc" maxlength="2000"
+         style="width:100%;min-height:80px;resize:vertical;"></textarea>
+            </label>
+            <div id="infraCartPreview" class="small"
+     style="margin-top:8px;color:#555;font-style:italic;">
+                No items in buy cart yet.
+ </div>
+         <button id="btnInfraSubmit" type="button"
+    onclick="window.submitInfraInvestment && window.submitInfraInvestment()"
+       style="margin-top:8px;">
+  Send Infrastructure Investment
+      </button>
+          <div id="infraMsg" class="small" style="margin-top:6px;"></div>
+   </div>
+    </div>
+
+    <!-- Useful Links -->
     <div class="section links-section" id="usefulLinks">
         <h2>🔗 Useful Links</h2>
-        <nav class="links-grid" aria-label="Useful links">
-            <a class="link-btn" href="https://translocator.moe/" target="_blank" rel="noopener">TL route calculator</a>
+      <nav class="links-grid" aria-label="Useful links">
+       <a class="link-btn" href="https://translocator.moe/" target="_blank" rel="noopener">TL route calculator</a>
             <a class="link-btn" href="https://map.tops.vintagestory.at/?x=-419&y=416&zoom=6" target="_blank" rel="noopener">TOPS map</a>
-            <a class="link-btn" href="https://wiki.vintagestory.at/Main_Page" target="_blank" rel="noopener">Wiki</a>
+    <a class="link-btn" href="https://wiki.vintagestory.at/Main_Page" target="_blank" rel="noopener">Wiki</a>
             <a class="link-btn" href="https://docs.google.com/spreadsheets/d/1W9ByTiwX3lPakqoYXTHgnOiMNNzwSVnkgmTPqvMrSUc/edit?gid=0#gid=0" target="_blank" rel="noopener">Mailbox names</a>
-            <a class="link-btn" href="https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/edit?gid=0#gid=0" target="_blank" rel="noopener">PRICE SHEET</a>
+ <a class="link-btn" href="https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/edit?gid=0#gid=0" target="_blank" rel="noopener">PRICE SHEET</a>
             <a class="link-btn" href="https://www.vintagestory.at/" target="_blank" rel="noopener">Vintage Story</a>
-            <a class="link-btn" href="https://mods.vintagestory.at/" target="_blank" rel="noopener">Official mods</a>
-            <a class="link-btn internal" href="BTIncurance.html">EW Insurance Calculator</a>
+         <a class="link-btn" href="https://mods.vintagestory.at/" target="_blank" rel="noopener">Official mods</a>
+   <a class="link-btn internal" href="BTIncurance.html">EW Insurance Calculator</a>
             <a class="link-btn internal" href="EWInsurance.html">EW Insurance Policies</a>
             <a class="link-btn internal" href="PriceHistory.html">Price History</a>
             <a class="link-btn internal" href="VintageStoryEconomics.html">Vintage Story Economics</a>
-        </nav>
+      </nav>
     </div>
 
     <script src="pay-converter.js"></script>
     <script src="index_js/index-infra.js"></script>
 
-    <script>
+  <script>
         // Boot only. All feature logic is in `index_js/*`.
         window.onload = () => {
             window.initSharedTopBar && window.initSharedTopBar();
-    window.SharedLogin && window.SharedLogin.init({ showRecaptcha: true });
+         window.SharedLogin && window.SharedLogin.init({ showRecaptcha: true });
 
             window.tryRestoreAuthOnLoad && window.tryRestoreAuthOnLoad();
-     document.body.classList.add('withTopBar');
+   document.body.classList.add('withTopBar');
 
- window.attachSetupInputHelpers && window.attachSetupInputHelpers();
-         window.checkHashForIdToken && window.checkHashForIdToken();
-            window.loadData && window.loadData();
+         window.attachSetupInputHelpers && window.attachSetupInputHelpers();
+            window.checkHashForIdToken && window.checkHashForIdToken();
+         window.loadData && window.loadData();
 
-         window.initRecaptcha && window.initRecaptcha();
+            window.initRecaptcha && window.initRecaptcha();
 
-      const gsiWait = setInterval(() => {
-      if (window.google && google.accounts && google.accounts.id) {
+   const gsiWait = setInterval(() => {
+    if (window.google && google.accounts && google.accounts.id) {
    window.initGoogleIdentity && window.initGoogleIdentity();
-      clearInterval(gsiWait);
-              }
-  }, 200);
-  setTimeout(() => clearInterval(gsiWait), 4000);
+         clearInterval(gsiWait);
+    }
+       }, 200);
+            setTimeout(() => clearInterval(gsiWait), 4000);
 
             window.initCollapsibles && window.initCollapsibles();
-            window.updateTopBarAuth && window.updateTopBarAuth();
-            window.attachOnBehalfSearch && window.attachOnBehalfSearch();
-        window.refreshOpenOrders && window.refreshOpenOrders();
+ window.updateTopBarAuth && window.updateTopBarAuth();
+window.attachOnBehalfSearch && window.attachOnBehalfSearch();
+            window.refreshOpenOrders && window.refreshOpenOrders();
+
+         // Section visibility panel
+            window.IndexSectionPanel && window.IndexSectionPanel.init();
         };
     </script>
 </body>

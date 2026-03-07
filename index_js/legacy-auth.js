@@ -228,6 +228,9 @@
  window.currentUser = window.normalizeUser(meJson.data.user || {}) || {};
  window.currentUser.isAdmin = !!meJson.data.isAdmin;
 
+ // Notify section panel of admin status (safe no-op if module not loaded)
+ window.IndexSectionPanel && window.IndexSectionPanel.onAdminChange(!!window.currentUser.isAdmin);
+
  updateLoginTermsWarning_();
 
  // ? NEW: evaluate setup form visibility via shared panel
