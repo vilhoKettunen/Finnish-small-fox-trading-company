@@ -60,7 +60,7 @@ if (savedToken) {
 // Called after token obtained (GSI callback or storage restore)
 window.applyAuthFromToken = async function (idToken) {
 const statusEl = document.getElementById('loginStatus');
-    if (statusEl) statusEl.textContent = 'Verifying…';
+    if (statusEl) statusEl.textContent = 'Verifying...';
     try {
         const r = await window.apiGet('me', { idToken });
         const d = r.data || r.result || r;
@@ -88,11 +88,8 @@ const statusEl = document.getElementById('loginStatus');
       // Evaluate setup form — BLOCKS page content for EWInsurance when profile is incomplete
         window.SharedLogin && window.SharedLogin.evaluateSetupForm(user);
 
-        // Load policies + price sheet in parallel
-     await Promise.all([
-  window.EWIns.loadPolicies(),
-  window.EWIns.loadPriceSheet()
-   ]);
+    // Single backend call — server attaches currentEstimate inside insuranceListMy
+     await window.EWIns.loadPolicies();
         window.EWIns.renderAll();
 
     } catch (e) {

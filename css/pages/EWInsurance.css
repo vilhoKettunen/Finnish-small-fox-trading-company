@@ -3,37 +3,72 @@
    Inherits from css/site-layout.css + css/panels-paper.css
 */
 
-/* ---- Policy card ---- */
-.policy-card {
-    margin-bottom: 20px;
-    padding: 16px;
-    border-radius: 8px;
+/* ---- Create button ---- */
+#btnCreatePolicy {
+    margin-bottom: 18px;
 }
 
-/* ---- Policy header row ---- */
-.policy-header {
+/* ====================================================
+   Policy table
+   ==================================================== */
+#policyTable {
+    width: 100%;
+ border-collapse: collapse;
+    font-size: 0.92rem;
+    margin-top: 10px;
+}
+
+#policyTable th,
+#policyTable td {
+    padding: 7px 10px;
+    border: 1px solid #d8d8d8;
+    text-align: left;
+    vertical-align: middle;
+}
+
+#policyTable thead th {
+    background: #f0f0f0;
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+#policyTable tbody tr:nth-child(4n+1),
+#policyTable tbody tr:nth-child(4n+3) {
+    /* zebra only on main rows — details rows are styled separately */
+    background: rgba(255,255,255,0.55);
+}
+
+.mono { font-family: monospace; }
+
+/* ====================================================
+   Expanded details row
+   ==================================================== */
+.ins-details-row > td {
+    padding: 0;
+    border-top: none;
+}
+
+.ins-details-inner {
+    padding: 16px 18px;
+    background: rgba(245, 248, 252, 0.97);
+  border-top: 2px solid #c0cfe0;
+    border-bottom: 2px solid #c0cfe0;
+}
+
+.ins-details-header {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
+    gap: 10px;
+    margin-bottom: 14px;
 }
 
-.policy-name-input {
-    border: none;
-    border-bottom: 2px solid #bbb;
-    font-weight: bold;
-    font-size: 1.05rem;
-    background: transparent;
-    padding: 2px 4px;
-  min-width: 140px;
-    max-width: 280px;
-    outline: none;
-    flex: 1;
-}
-
-.policy-name-input:focus {
-    border-bottom-color: #1f8cff;
+.ins-full-id {
+    color: #888;
+    font-family: monospace;
+    margin-left: auto;
 }
 
 /* ---- Status badge / pill ---- */
@@ -41,29 +76,43 @@
     display: inline-block;
     padding: 2px 10px;
     border-radius: 12px;
-font-size: 0.82rem;
-    font-weight: 600;
+    font-size: 0.82rem;
+  font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    white-space: nowrap;
 }
 
 .status-badge.active  { background: #c3e6cb; color: #155724; }
 .status-badge.pending { background: #ffeeba; color: #856404; }
 .status-badge.empty   { background: #e2e3e5; color: #383d41; }
 
-/* ---- Policy stats row ---- */
-.policy-stats {
-    font-size: 0.95rem;
-    margin-bottom: 8px;
-    color: #444;
+/* ---- Policy name input ---- */
+.policy-name-input {
+    border: none;
+    border-bottom: 2px solid #bbb;
+    font-weight: bold;
+    font-size: 1rem;
+    background: transparent;
+    padding: 2px 4px;
+    min-width: 140px;
+    max-width: 280px;
+    outline: none;
 }
 
-/* ---- Allocation editor (<details>) ---- */
+.policy-name-input:focus {
+    border-bottom-color: #1f8cff;
+}
+
+/* ====================================================
+   Allocation editor (<details>)
+   ==================================================== */
 .alloc-editor {
     margin: 10px 0;
     padding: 10px 12px;
     border-radius: 6px;
-    background: rgba(255,255,255,0.6) !important;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid #e0e0e0;
 }
 
 .alloc-editor summary {
@@ -103,60 +152,72 @@ font-size: 0.82rem;
 .alloc-warn {
     color: #c00;
     font-size: 0.88rem;
-    font-weight: 600;
+ font-weight: 600;
     margin-top: 4px;
 }
 
-/* ---- Metal estimate table ---- */
+/* ====================================================
+   Metal estimate table (<details>)
+   ==================================================== */
 .metal-estimate {
     margin: 10px 0;
     padding: 10px 12px;
- border-radius: 6px;
-    background: rgba(255,255,255,0.6) !important;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.7);
+ border: 1px solid #e0e0e0;
 }
 
 .metal-estimate summary {
     cursor: pointer;
- font-weight: 600;
+    font-weight: 600;
     user-select: none;
 }
 
 .estimate-note {
     margin-bottom: 6px;
+    color: #666;
 }
 
 .metal-estimate-table {
     width: 100%;
     border-collapse: collapse;
-  font-size: 0.88rem;
+    font-size: 0.88rem;
+    margin-top: 6px;
 }
 
 .metal-estimate-table th,
 .metal-estimate-table td {
     padding: 5px 8px;
     border: 1px solid #e0e0e0;
-    text-align: left;
+  text-align: left;
 }
 
 .metal-estimate-table th {
     background: #f5f5f5;
+font-weight: 600;
+}
+
+.uninsured-warn {
+    color: #c00;
     font-weight: 600;
 }
 
-/* ---- Deposit / Withdraw inner cards ---- */
+/* ====================================================
+   Deposit / Withdraw inner cards
+==================================================== */
 .deposit-section,
 .withdraw-section {
     margin: 10px 0;
     padding: 10px 14px;
     border: 1px solid #d9e3f0;
     border-radius: 6px;
-    background: rgba(240,248,255,0.85) !important;
+    background: rgba(235, 245, 255, 0.85);
 }
 
 .deposit-section h4,
 .withdraw-section h4 {
     margin: 0 0 8px 0;
-    font-size: 0.97rem;
+  font-size: 0.97rem;
 }
 
 .deposit-cost-display,
@@ -164,50 +225,50 @@ font-size: 0.82rem;
 .withdraw-value-display {
     font-size: 0.88rem;
     color: #555;
-    margin-top: 4px;
+ margin-top: 4px;
 }
 
 .deposit-warn {
     color: #c00;
-    font-weight: 600;
+  font-weight: 600;
     font-size: 0.88rem;
     margin-top: 4px;
 }
 
-/* ---- Pending section / banner ---- */
+/* ====================================================
+   Pending section / banner
+   ==================================================== */
 .pending-section {
     margin: 10px 0;
     padding: 10px 14px;
     border-radius: 6px;
-    background: rgba(255, 243, 205, 0.95) !important;
+    background: rgba(255, 243, 205, 0.97);
     border: 1px solid #e0c36a;
 }
 
 .pending-banner {
-    font-size: 0.93rem;
+  font-size: 0.93rem;
     margin-bottom: 8px;
- color: #856404;
+    color: #856404;
 }
 
-/* ---- Disabled state (when policy is Pending) ---- */
+/* ---- Disabled state ---- */
 .policy-disabled {
-  opacity: 0.55;
- pointer-events: none;
+    opacity: 0.55;
+    pointer-events: none;
 }
 
-/* ---- Create policy button ---- */
-#btnCreatePolicy {
-    margin-bottom: 18px;
-}
-
-/* ---- Responsive ---- */
-@media (max-width: 600px) {
-    .policy-header {
-   flex-direction: column;
-        align-items: flex-start;
+/* ====================================================
+   Responsive
+   ==================================================== */
+@media (max-width: 700px) {
+    #policyTable th:nth-child(1),
+    #policyTable td:nth-child(1),
+    #policyTable th:nth-child(6),
+    #policyTable td:nth-child(6) {
+      display: none;
     }
 
-    .alloc-row label {
-     width: 100px;
-    }
+    .alloc-row label { width: 100px; }
+    .ins-full-id { display: none; }
 }

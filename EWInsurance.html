@@ -2,11 +2,11 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>EW Insurance — Policy Manager</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>EW Insurance - Policy Manager</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="icon" href="favicon.ico">
 
-  <!-- Dependencies -->
+    <!-- Dependencies -->
     <script src="app-config.js"></script>
     <script src="auth-storage.js"></script>
     <script src="api-client.js"></script>
@@ -27,34 +27,34 @@
 
     <div id="loginPanelMount"></div>
 
-    <h1>?? EW Insurance — Policy Manager</h1>
+    <h1>EW Insurance - Policy Manager</h1>
 
     <!-- Explainer -->
     <div class="section" style="max-width:700px;">
         <p>
-    <strong>EW Insurance</strong> lets you lock in the current sell-price value of your EW as physical metals.
-     You deposit EW in <strong>units of 500 EW</strong>. Your chosen % allocation across metals determines which
-       ingots and nuggets are reserved for you. Admin approves every change. On approval, your EW balance is
-     debited (deposit) or credited (withdrawal) automatically.
-        </p>
-        <ul class="small">
- <li>Each unit = 500 EW. No fractions.</li>
+        <strong>EW Insurance</strong> lets you lock in the current sell-price value of your EW as physical metals.
+        You deposit EW in <strong>units of 500 EW</strong>. Your chosen % allocation across metals determines which
+            ingots and nuggets are reserved for you. Admin approves every change. On approval, your EW balance is
+        debited (deposit) or credited (withdrawal) automatically.
+      </p>
+  <ul class="small">
+            <li>Each unit = 500 EW. No fractions.</li>
           <li>All metal prices use the current <strong>SELL</strong> price at time of admin approval.</li>
-     <li>Steel is ingot-only; any EW remainder after steel ingots is shown as "Uninsured EW".</li>
-       <li>Up to 5 policies per account.</li>
+            <li>Steel is ingot-only; any EW remainder after steel ingots is shown as "Uninsured EW".</li>
+    <li>Up to 5 policies per account.</li>
         </ul>
     </div>
 
     <!-- Create policy button -->
     <button id="btnCreatePolicy" type="button">+ Create New Policy</button>
 
-    <!-- Policy list (rendered by ewinsurance-ui.js) -->
+    <!-- Policy list (rendered by ewinsurance-ui.js as a table) -->
     <div id="policyList"></div>
 
     <!-- JS modules -->
     <script src="ewinsurance_js/ewinsurance-core.js"></script>
-    <script src="ewinsurance_js/ewinsurance-ui.js"></script>
+  <script src="ewinsurance_js/ewinsurance-ui.js"></script>
     <script src="ewinsurance_js/ewinsurance-actions.js"></script>
-    <script src="ewinsurance_js/ewinsurance-boot.js"></script>
+  <script src="ewinsurance_js/ewinsurance-boot.js"></script>
 </body>
 </html>
