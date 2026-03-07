@@ -433,6 +433,18 @@ const section = container.querySelector('.withdraw-section');
     <button class="btn-cancel-pending">Cancel Pending Request</button>
   </div>
 
+  <!-- Delete Policy section -->
+  <div class="delete-section" style="margin-top:12px;padding:10px;border:1px solid #e2c0c0;border-radius:6px;background:rgba(255,235,235,0.5);">
+    <h4 style="margin:0 0 6px;">Delete Policy</h4>
+ <p class="small" style="margin:0 0 8px;">A policy can only be deleted when it is Empty (no units stored, no pending requests).</p>
+    <button class="btn-delete-policy"
+      style="background:${activity !== 'Empty' ? '#aaa' : '#c0392b'};color:#fff;border:none;padding:4px 14px;border-radius:4px;cursor:${activity !== 'Empty' ? 'not-allowed' : 'pointer'};"
+      ${activity !== 'Empty' ? 'disabled title="Policy must be Empty to delete"' : ''}>
+      Delete Policy
+    </button>
+    ${activity !== 'Empty' ? '<span class="small" style="margin-left:8px;color:#888;">Withdraw all units first to enable deletion.</span>' : ''}
+  </div>
+
 </div>`;
     }
 

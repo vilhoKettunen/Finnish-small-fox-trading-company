@@ -198,15 +198,28 @@ await window.apiPost('insuranceRequestWithdrawUnits', {
      const insuranceId = inner.dataset.id;
 if (!confirm('Cancel the pending request for this policy?')) return;
         try {
-            await window.apiPost('insuranceCancelPending', {
+  await window.apiPost('insuranceCancelPending', {
         idToken: idToken(),
       insuranceId
       });
-        await reloadPage_();
-      } catch (e) {
+      await reloadPage_();
+ } catch (e) {
   alert('Cancel failed: ' + e.message);
  }
-    }
+ }
+
+    // ===== Delete Policy =====
+
+    async function deletePolicy(inner) {
+     const insuranceId = inner.dataset.id;
+        if (!confirm('Permanently delete this policy? This cannot be undone.')) return;
+        try {
+await window.apiPost('insuranceDelete', { idToken: idToken(), insuranceId });
+            await reloadPage_();
+        } catch (e) {
+   alert('Delete failed: ' + e.message);
+        }
+ }
 
     // ===== Wire Events to a details inner container =====
 
@@ -217,6 +230,7 @@ if (!confirm('Cancel the pending request for this policy?')) return;
      inner.querySelector('.btn-withdraw')?.addEventListener('click', () => requestWithdraw(inner));
     inner.querySelector('.btn-withdraw-metals')?.addEventListener('click', () => requestWithdrawMetals(inner));
     inner.querySelector('.btn-cancel-pending')?.addEventListener('click', () => cancelPending(inner));
+      inner.querySelector('.btn-delete-policy')?.addEventListener('click', () => deletePolicy(inner));
     }
 
   function wireAll_() {

@@ -80,6 +80,14 @@
         'insuranceAdminDeny',
         'insuranceRequestWithdrawMetals',
         'insuranceAdminForceWithdrawMetals',
+        'insuranceAdminRenamePolicy',
+        'insuranceAdminUpdateAllocation',
+        'insuranceAdminDeposit',
+        'insuranceAdminWithdrawUnits',
+        'insuranceAdminCancelPending',
+        'insuranceAdminCreate',
+        'insuranceDelete',
+        'insuranceAdminDelete',
     ];
 
     function normalize(j) {
