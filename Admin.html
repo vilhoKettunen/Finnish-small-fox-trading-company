@@ -60,9 +60,10 @@
         <button id="tabTrades" onclick="showTab('trades')">Trades</button>
         <button id="tabPlayers" onclick="showTab('players')">Players / Transfer</button>
         <button id="tabOcm" onclick="showTab('ocmAdmin')">OCM Admin</button>
-        <button id="tabAccountHistory" onclick="showTab('accountHistory')">Account History</button>
-        <button id="tabAccountEdit" onclick="showTab('accountEdit')">Account Editing</button>
-        <button id="tabStock" onclick="showTab('stock')">Stock</button>
+      <button id="tabAccountHistory" onclick="showTab('accountHistory')">Account History</button>
+    <button id="tabAccountEdit" onclick="showTab('accountEdit')">Account Editing</button>
+    <button id="tabStock" onclick="showTab('stock')">Stock</button>
+        <button id="tabInsurance" onclick="showTab('insurance')">Insurance Requests</button>
     </div>
 
     <!-- Target User -->
@@ -596,6 +597,33 @@
         </table>
     </div>
 
+    <!-- Insurance Requests -->
+    <div class="section" id="insuranceSection" style="display:none;">
+    <h2>Insurance Requests (Pending)</h2>
+        <div class="flex">
+  <button id="btnReloadInsurance" type="button" onclick="loadAdminInsurancePending()">Reload</button>
+       <span id="insuranceMsg" class="small"></span>
+        </div>
+        <table>
+  <thead>
+                <tr>
+        <th>Policy ID</th>
+     <th>Player</th>
+         <th>Policy Name</th>
+       <th>Request Type</th>
+          <th>Current EW</th>
+          <th>Units Change</th>
+        <th>User Balance (live)</th>
+            <th>Previous Metals</th>
+        <th>New Metals (final)</th>
+      <th>Submitted</th>
+ <th>Actions</th>
+</tr>
+  </thead>
+          <tbody id="tbInsuranceRequests"></tbody>
+        </table>
+    </div>
+
 
     <!-- Admin scripts (segmented) -->
     <script src="shared/trade-more-info.js?v=stack2"></script>
@@ -611,6 +639,7 @@
     <script src="admin_js/admin-target-hooks.js"></script>
     <script src="admin_js/admin-target-user.js"></script>
     <script src="admin_js/admin-auth.js"></script>
+    <script src="admin_js/admin-insurance.js"></script>
     <script src="admin_js/admin-tabs.js"></script>
     <script src="admin_js/admin-players-transfer.js"></script>
     <script src="admin_js/admin-boot.js"></script>

@@ -15,7 +15,8 @@
             ocmAdmin: 'ocmAdminSection',
             accountHistory: 'accountHistorySection',
             accountEdit: 'accountEditSection',
-            stock: 'stockSection'
+            stock: 'stockSection',
+            insurance: 'insuranceSection'
         };
 
         Object.keys(mapping).forEach(k => {
@@ -32,7 +33,8 @@
             Ocm: 'ocmAdmin',
             AccountHistory: 'accountHistory',
             AccountEdit: 'accountEdit',
-            Stock: 'stock'
+            Stock: 'stock',
+            Insurance: 'insurance'
         };
 
         Object.keys(tabMap).forEach(suf => {
@@ -68,6 +70,10 @@
 
         if (name === 'accountEdit') {
             window.refreshAdminAccountEditTargetUI_ && window.refreshAdminAccountEditTargetUI_();
+        }
+
+        if (name === 'insurance') {
+            window.loadAdminInsurancePending && window.loadAdminInsurancePending();
         }
     };
 

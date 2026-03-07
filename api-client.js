@@ -67,7 +67,17 @@
         'workPayUpsert',
 
         // Infrastructure investment submission (admin-only)
-        'submitInfraInvestment'
+        'submitInfraInvestment',
+
+        // Insurance policy management
+        'insuranceCreate',
+        'insuranceRenamePolicy',
+        'insuranceUpdateAllocation',
+        'insuranceRequestDeposit',
+        'insuranceRequestWithdrawUnits',
+        'insuranceCancelPending',
+        'insuranceAdminApprove',
+        'insuranceAdminDeny',
     ];
 
     function normalize(j) {

@@ -1,0 +1,213 @@
+/* css/pages/EWInsurance.css
+   EW Insurance Policy Manager page styles.
+   Inherits from css/site-layout.css + css/panels-paper.css
+*/
+
+/* ---- Policy card ---- */
+.policy-card {
+    margin-bottom: 20px;
+    padding: 16px;
+    border-radius: 8px;
+}
+
+/* ---- Policy header row ---- */
+.policy-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.policy-name-input {
+    border: none;
+    border-bottom: 2px solid #bbb;
+    font-weight: bold;
+    font-size: 1.05rem;
+    background: transparent;
+    padding: 2px 4px;
+  min-width: 140px;
+    max-width: 280px;
+    outline: none;
+    flex: 1;
+}
+
+.policy-name-input:focus {
+    border-bottom-color: #1f8cff;
+}
+
+/* ---- Status badge / pill ---- */
+.status-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.status-badge.active  { background: #c3e6cb; color: #155724; }
+.status-badge.pending { background: #ffeeba; color: #856404; }
+.status-badge.empty   { background: #e2e3e5; color: #383d41; }
+
+/* ---- Policy stats row ---- */
+.policy-stats {
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    color: #444;
+}
+
+/* ---- Allocation editor (<details>) ---- */
+.alloc-editor {
+    margin: 10px 0;
+    padding: 10px 12px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.6) !important;
+}
+
+.alloc-editor summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.97rem;
+    user-select: none;
+}
+
+.alloc-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+}
+
+.alloc-row label {
+    width: 130px;
+    font-size: 0.92rem;
+}
+
+.alloc-input {
+    width: 64px;
+    padding: 4px 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    text-align: right;
+}
+
+.alloc-sum {
+    margin-top: 6px;
+    font-size: 0.88rem;
+    text-align: right;
+    color: #444;
+}
+
+.alloc-warn {
+    color: #c00;
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+/* ---- Metal estimate table ---- */
+.metal-estimate {
+    margin: 10px 0;
+    padding: 10px 12px;
+ border-radius: 6px;
+    background: rgba(255,255,255,0.6) !important;
+}
+
+.metal-estimate summary {
+    cursor: pointer;
+ font-weight: 600;
+    user-select: none;
+}
+
+.estimate-note {
+    margin-bottom: 6px;
+}
+
+.metal-estimate-table {
+    width: 100%;
+    border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.metal-estimate-table th,
+.metal-estimate-table td {
+    padding: 5px 8px;
+    border: 1px solid #e0e0e0;
+    text-align: left;
+}
+
+.metal-estimate-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+}
+
+/* ---- Deposit / Withdraw inner cards ---- */
+.deposit-section,
+.withdraw-section {
+    margin: 10px 0;
+    padding: 10px 14px;
+    border: 1px solid #d9e3f0;
+    border-radius: 6px;
+    background: rgba(240,248,255,0.85) !important;
+}
+
+.deposit-section h4,
+.withdraw-section h4 {
+    margin: 0 0 8px 0;
+    font-size: 0.97rem;
+}
+
+.deposit-cost-display,
+.deposit-balance-display,
+.withdraw-value-display {
+    font-size: 0.88rem;
+    color: #555;
+    margin-top: 4px;
+}
+
+.deposit-warn {
+    color: #c00;
+    font-weight: 600;
+    font-size: 0.88rem;
+    margin-top: 4px;
+}
+
+/* ---- Pending section / banner ---- */
+.pending-section {
+    margin: 10px 0;
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: rgba(255, 243, 205, 0.95) !important;
+    border: 1px solid #e0c36a;
+}
+
+.pending-banner {
+    font-size: 0.93rem;
+    margin-bottom: 8px;
+ color: #856404;
+}
+
+/* ---- Disabled state (when policy is Pending) ---- */
+.policy-disabled {
+  opacity: 0.55;
+ pointer-events: none;
+}
+
+/* ---- Create policy button ---- */
+#btnCreatePolicy {
+    margin-bottom: 18px;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 600px) {
+    .policy-header {
+   flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .alloc-row label {
+     width: 100px;
+    }
+}
