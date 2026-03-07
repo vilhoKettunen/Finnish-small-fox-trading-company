@@ -9,7 +9,7 @@
  *   window.SharedLogin.evaluateSetupForm(user)
  *   window.SharedLogin.onSetupInput_()
  *   window.setLoginTermsWarningVisible_(bool)
- *   window.submitSetup()   ? moved here so all pages share one copy
+ *   window.submitSetup()   ? central copy for all pages
  *
  * options:
  *   showRecaptcha  {boolean}  — include #recaptchaContainer (index.html only)
@@ -20,25 +20,57 @@
     // ?? Inject styles once ??????????????????????????????????????????????????
     (function injectStyles_() {
         if (document.getElementById('shared-login-panel-style')) return;
-        const style = document.createElement('style');
-        style.id = 'shared-login-panel-style';
+    const style = document.createElement('style');
+  style.id = 'shared-login-panel-style';
         style.textContent = [
-     '#authPanel.section { max-width:520px; margin:20px auto 24px; padding:16px 20px; }',
-   '#loginTermsWarning { margin-bottom:12px; }',
-     '#googleLoginArea   { display:flex; flex-direction:column; align-items:flex-start; gap:8px; }',
-        '#loginStatus       { color:#555; font-size:0.9rem; }',
-            '#setupForm         { margin-top:14px; border-top:1px solid #eee; padding-top:12px; }',
-         '#setupForm.setup-highlight { border:2px solid #f0a500; border-radius:6px; padding:12px; background:#fffbe6; }'
-        ].join('\n');
-        document.head.appendChild(style);
-    })();
+  /* Panel wrapper — rounded corners matching index.css .section */
+       '#authPanel.section {',
+       '  max-width:520px; margin:20px auto 24px; padding:16px 20px;',
+'  border-radius:8px;',
+      '}',
+
+/* Terms warning — red tint, matches index.css exactly */
+          '#loginTermsWarning {',
+    '  margin:0 0 10px 0; padding:10px 12px;',
+            '  border:1px solid #f3b3b3; background:#fff2f2;',
+ '  border-radius:8px; color:#a40000;',
+            '  font-size:12px; line-height:1.35;',
+  '}',
+            '#loginTermsWarning a { color:#a40000; text-decoration:underline; }',
+
+/* Google login area */
+  '#googleLoginArea { display:flex; flex-direction:column; align-items:flex-start; gap:8px; }',
+     '#loginStatus     { color:#555; font-size:0.9rem; }',
+
+     /* Setup form — base (hidden state, no border) */
+       '#setupForm { margin-top:14px; padding-top:12px; border-top:1px solid #eee; }',
+
+            /* Setup form highlight — green border/bg/shadow, matches index.css exactly */
+            '#setupForm.setup-highlight {',
+            '  background:#eaffe7; border:1px solid #2e7d32;',
+    '  border-radius:8px; padding:10px;',
+'  box-shadow:0 4px 10px rgba(46,125,50,0.12);',
+    '}',
+
+/* Deletion note — always green when visible */
+            '#setupDeletionNote {',
+            '  margin-top:8px; font-size:12px; color:#2e7d32;',
+       '}',
+            '#setupDeletionNote a { color:#2e7d32; text-decoration:underline; }',
+
+ /* Overlay dismiss button */
+            '#setupBlockOverlay .overlay-dismiss {',
+            '  margin-top:14px; padding:7px 20px;',
+        '  background:#2e7d32; color:#fff;',
+        '  border:none; border-radius:6px;',
+      '  cursor:pointer; font-size:14px;',
+    '}',
+            '#setupBlockOverlay .overlay-dismiss:hover { background:#1b5e20; }'
+   ].join('\n');
+     document.head.appendChild(style);
+  })();
 
     // ?? init ????????????????????????????????????????????????????????????????
-    /**
-     * Build the panel HTML and replace the mount point.
-     * @param {object} [options]
-     * @param {boolean} [options.showRecaptcha]
-     */
     function init(options) {
         options = options || {};
 
@@ -46,253 +78,263 @@
         if (!mount) return;
 
         // Avoid double-init
-        if (document.getElementById('authPanel')) return;
+   if (document.getElementById('authPanel')) return;
 
-        const panel = document.createElement('div');
-        panel.id = 'authPanel';
+    const panel = document.createElement('div');
+  panel.id = 'authPanel';
         panel.className = 'section';
 
-    // --- Terms warning (display:block by default — always visible pre-login) ---
-   const termsWarning = document.createElement('div');
+   // --- Terms warning (display:block by default — always visible pre-login) ---
+        const termsWarning = document.createElement('div');
         termsWarning.id = 'loginTermsWarning';
- termsWarning.style.display = 'block';
-        termsWarning.innerHTML =
-            '<strong>By logging in you accept the ' +
-  '<a href="TermsAndConditions.html" rel="noopener" target="_blank">Terms and Conditions</a>' +
-            ' of this page.</strong>' +
-            '<div class="small">In short: we store your email for login identification, ' +
+        termsWarning.style.display = 'block';
+    termsWarning.innerHTML =
+       '<strong>By logging in you accept the ' +
+   '<a href="TermsAndConditions.html" rel="noopener" target="_blank">Terms and Conditions</a>' +
+         ' of this page.</strong>' +
+      '<div class="small">In short: we store your email for login identification, ' +
             'and we use trading data for transparency and research purposes.</div>';
         panel.appendChild(termsWarning);
 
-     // --- Google login area ---
+        // --- Google login area ---
         const googleArea = document.createElement('div');
-        googleArea.id = 'googleLoginArea';
+    googleArea.id = 'googleLoginArea';
         googleArea.innerHTML =
- '<div id="googleBtn"></div>' +
-   '<div id="loginStatus" class="small"></div>';
- panel.appendChild(googleArea);
+            '<div id="googleBtn"></div>' +
+            '<div id="loginStatus" class="small"></div>';
+  panel.appendChild(googleArea);
 
         // --- Recaptcha (index.html only, hidden by default) ---
         const recap = document.createElement('div');
         recap.id = 'recaptchaContainer';
-        recap.style.display = 'none';
-        recap.style.marginTop = '10px';
+ recap.style.display = 'none';
+   recap.style.marginTop = '10px';
         panel.appendChild(recap);
 
         // --- Setup form (ALWAYS rendered; hidden by default; revealed by evaluateSetupForm) ---
         const setup = document.createElement('div');
         setup.id = 'setupForm';
-    setup.style.display = 'none';
+ setup.style.display = 'none';
         setup.innerHTML =
- '<h3>Account Setup</h3>' +
-     '<p class="small">Please set your player name and mailbox number before continuing.</p>' +
- '<label>Player Name:<br>' +
-      '<input type="text" id="setupPlayerName" oninput="SharedLogin.onSetupInput_()"></label><br>' +
-   '<label>Mailbox (e.g. 1A / 2B / F1):<br>' +
-'<input type="text" id="setupMailbox" oninput="SharedLogin.onSetupInput_()"></label><br>' +
-   '<button id="btnSaveSetup" onclick="submitSetup()" disabled>Save Setup</button>' +
-            '<div id="setupMsg" class="small"></div>' +
-            '<div id="setupDeletionNote" style="display:none;">' +
-   'You can delete your account/email at any time from ' +
-     '<a href="AccountSettings.html">Account Settings</a>' +
-    ' (this disables login).' +
+          '<h3>Account Setup</h3>' +
+   '<p class="small">Please set your player name and mailbox number before continuing.</p>' +
+            '<label>Player Name:<br>' +
+   '<input type="text" id="setupPlayerName" oninput="SharedLogin.onSetupInput_()"></label><br>' +
+            '<label>Mailbox (e.g. 1A / 2B / F1):<br>' +
+      '<input type="text" id="setupMailbox" oninput="SharedLogin.onSetupInput_()"></label><br>' +
+         '<button id="btnSaveSetup" onclick="submitSetup()" disabled>Save Setup</button>' +
+          '<div id="setupMsg" class="small"></div>' +
+  /* Deletion note: always visible whenever the setup form is shown */
+          '<div id="setupDeletionNote">' +
+        'You can delete your account/email at any time from ' +
+       '<a href="AccountSettings.html">Account Settings</a>' +
+            ' (this disables login).' +
             '</div>';
         panel.appendChild(setup);
 
-        mount.replaceWith(panel);
+      mount.replaceWith(panel);
     }
 
     // ?? evaluateSetupForm ???????????????????????????????????????????????????
     /**
      * Called by every page's auth flow after login / profile load.
-     * Shows/hides #setupForm and #loginTermsWarning based on profile completeness.
-     *
-     * Pages that should BLOCK content when profile incomplete:
-     *   OCMHome.html, OCMUser.html, EWInsurance.html
-     * Pages that should NOT block:
-     *   AccountSettings.html, AccountHistory.html
-     * index.html uses its own showSetupOnly / hideSetupShowApp hooks.
-     *
      * @param {object|null} user
      */
-    function evaluateSetupForm(user) {
+  function evaluateSetupForm(user) {
         const loggedIn = !!(user);
-        const incomplete = loggedIn && (
- !String(user.playerName || '').trim() ||
-            !String(user.mailbox || '').trim()
-        );
+    const incomplete = loggedIn && (
+   !String(user.playerName || '').trim() ||
+ !String(user.mailbox || '').trim()
+    );
 
-      // Show/hide setup form
         const setupEl = document.getElementById('setupForm');
- if (setupEl) setupEl.style.display = (loggedIn && incomplete) ? 'block' : 'none';
+        const shouldShowSetup = loggedIn && incomplete;
 
-        // Terms: hide only when logged in AND profile is complete (plan Q9 answer B)
+        if (setupEl) {
+    setupEl.style.display = shouldShowSetup ? 'block' : 'none';
+   // Apply green highlight class whenever the form is visible
+            setupEl.classList.toggle('setup-highlight', shouldShowSetup);
+   }
+
+        // Terms: hide only when logged in AND profile complete (Q9 answer B)
         setLoginTermsWarningVisible_(!loggedIn || incomplete);
 
-// Reset save button state
- onSetupInput_();
+        // Reset save button state
+    onSetupInput_();
 
         // --- Blocking logic for trading pages ---
-        // We detect which page we're on by looking for known sentinel elements.
-        const isIndex = !!document.getElementById('requestControls');
-  const isOCMHome = !!document.getElementById('tbListings');
-    const isOCMUser = !!document.getElementById('tbSellListings');
+        const isIndex       = !!document.getElementById('requestControls');
+        const isOCMHome   = !!document.getElementById('tbListings');
+        const isOCMUser     = !!document.getElementById('tbSellListings');
         const isEWInsurance = !!document.getElementById('policyList');
 
-        if (isIndex) {
-            // index.html manages its own gating via showSetupOnly / hideSetupShowApp
-            if (loggedIn && incomplete) {
-  try { window.showSetupOnly && window.showSetupOnly(); } catch { }
-  try { window.showRecaptchaWidget && window.showRecaptchaWidget(); } catch { }
-            } else if (loggedIn) {
-       // Let legacy-auth handle hideSetupShowApp via its own captcha check
-            }
-return;
+ if (isIndex) {
+     if (loggedIn && incomplete) {
+   try { window.showSetupOnly && window.showSetupOnly(); } catch { }
+        try { window.showRecaptchaWidget && window.showRecaptchaWidget(); } catch { }
+  }
+      return;
         }
 
         if (isOCMHome || isOCMUser || isEWInsurance) {
-    // Blocking pages: show/hide main content
-     _setPageContentBlocked(incomplete && loggedIn);
+            _setPageContentBlocked(shouldShowSetup);
         }
-        // AccountSettings and AccountHistory: non-blocking, nothing extra to do
+     // AccountSettings and AccountHistory: non-blocking, nothing extra to do
     }
 
+    // ?? _setPageContentBlocked ??????????????????????????????????????????????
     /**
-     * Show or hide a page-level blocking overlay for trading pages.
-     * @param {boolean} blocked
+     * Creates/shows a dismissible overlay for blocking trading pages.
+  * The OK button scrolls to the top of the page so the user can see the
+     * setup form in the login panel, then hides the overlay.
      */
     function _setPageContentBlocked(blocked) {
         const OVERLAY_ID = 'setupBlockOverlay';
         let overlay = document.getElementById(OVERLAY_ID);
 
-    if (blocked) {
-       if (!overlay) {
-    overlay = document.createElement('div');
-  overlay.id = OVERLAY_ID;
- overlay.style.cssText =
-          'position:fixed;top:0;left:0;right:0;bottom:0;' +
-        'background:rgba(255,255,255,0.85);z-index:500;' +
-      'display:flex;align-items:center;justify-content:center;';
+        if (blocked) {
+     if (!overlay) {
+        overlay = document.createElement('div');
+         overlay.id = OVERLAY_ID;
+        overlay.style.cssText =
+        'position:fixed;top:0;left:0;right:0;bottom:0;' +
+            'background:rgba(255,255,255,0.88);z-index:500;' +
+                    'display:flex;align-items:center;justify-content:center;';
       overlay.innerHTML =
-               '<div style="text-align:center;padding:24px;max-width:400px;">' +
-            '<strong>Account setup required</strong><br>' +
-     '<p class="small">Please complete your account setup above (player name and mailbox) before using this page.</p>' +
-      '</div>';
-            document.body.appendChild(overlay);
-       }
-            overlay.style.display = 'flex';
-        } else {
-       if (overlay) overlay.style.display = 'none';
+  '<div style="text-align:center;padding:28px 24px;max-width:420px;' +
+      'background:#fff;border-radius:10px;border:2px solid #2e7d32;' +
+      'box-shadow:0 4px 24px rgba(46,125,50,0.15);">' +
+     '<div style="font-size:1.15rem;font-weight:bold;color:#2e7d32;margin-bottom:8px;">' +
+         '?? Account setup required</div>' +
+      '<p class="small" style="color:#333;margin:0 0 16px 0;">' +
+  'Please complete your account setup (player name and mailbox) ' +
+        'in the login panel above before using this page.</p>' +
+        '<button class="overlay-dismiss" onclick="SharedLogin._dismissSetupOverlay_()">' +
+         'OK — go to setup form' +
+           '</button>' +
+     '</div>';
+ document.body.appendChild(overlay);
+            }
+   overlay.style.display = 'flex';
+   } else {
+      if (overlay) overlay.style.display = 'none';
    }
+    }
+
+    // ?? _dismissSetupOverlay_ ???????????????????????????????????????????????
+    /**
+     * Called by the overlay OK button. Hides the overlay and scrolls the
+     * login panel into view so the user can fill in their details.
+     */
+    function _dismissSetupOverlay_() {
+   const overlay = document.getElementById('setupBlockOverlay');
+     if (overlay) overlay.style.display = 'none';
+        // Scroll the auth panel (or setup form) into view
+        const target = document.getElementById('setupForm') ||
+      document.getElementById('authPanel');
+        if (target) {
+         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+     // Give a brief focus pulse so the user knows where to look
+            const nameInput = document.getElementById('setupPlayerName');
+      if (nameInput) setTimeout(() => nameInput.focus(), 400);
+        }
     }
 
     // ?? onSetupInput_ ???????????????????????????????????????????????????????
-    /**
-     * Enables/disables #btnSaveSetup based on whether both fields are non-empty.
-     * Called via oninput on the setup form fields.
-     */
-    function onSetupInput_() {
-     const nameVal = String(document.getElementById('setupPlayerName')?.value || '').trim();
-  const mboxVal = String(document.getElementById('setupMailbox')?.value || '').trim();
+  function onSetupInput_() {
+        const nameVal = String(document.getElementById('setupPlayerName')?.value || '').trim();
+        const mboxVal = String(document.getElementById('setupMailbox')?.value || '').trim();
         const btn = document.getElementById('btnSaveSetup');
-     if (btn) btn.disabled = !(nameVal && mboxVal);
+        if (btn) btn.disabled = !(nameVal && mboxVal);
     }
 
     // ?? setLoginTermsWarningVisible_ ????????????????????????????????????????
-    /**
-   * Show or hide the Terms warning inside the shared login panel.
-   * @param {boolean} visible
-     */
- function setLoginTermsWarningVisible_(visible) {
-   const el = document.getElementById('loginTermsWarning');
-        if (el) el.style.display = visible ? 'block' : 'none';
+    function setLoginTermsWarningVisible_(visible) {
+        const el = document.getElementById('loginTermsWarning');
+      if (el) el.style.display = visible ? 'block' : 'none';
     }
 
     // ?? submitSetup (central copy for all pages) ????????????????????????????
-    /**
-     * Saves player name + mailbox via the backend, then re-evaluates the setup form.
-     * index.html's legacy-auth.js no longer needs its own copy.
-     * All other pages also use this via onclick="submitSetup()".
-   */
- window.submitSetup = window.submitSetup || async function submitSetup() {
-        const msg = document.getElementById('setupMsg');
-  const playerName = String(document.getElementById('setupPlayerName')?.value || '').trim();
-        const mailbox = String(document.getElementById('setupMailbox')?.value || '').trim();
+  window.submitSetup = window.submitSetup || async function submitSetup() {
+      const msg = document.getElementById('setupMsg');
+    const playerName = String(document.getElementById('setupPlayerName')?.value || '').trim();
+        const mailbox    = String(document.getElementById('setupMailbox')?.value    || '').trim();
 
         // Resolve idToken from whichever page's state holds it
         const idToken = window.googleIdToken ||
-      (window.OCMHome && window.OCMHome.state && window.OCMHome.state.googleIdToken) ||
-    (window.OCMUser && window.OCMUser.state && window.OCMUser.state.googleIdToken) ||
-          (window.EWIns && window.EWIns.state && window.EWIns.state.idToken) ||
-        (window.getSavedIdToken && window.getSavedIdToken()) ||
-       null;
+  (window.OCMHome && window.OCMHome.state && window.OCMHome.state.googleIdToken) ||
+            (window.OCMUser && window.OCMUser.state && window.OCMUser.state.googleIdToken) ||
+            (window.EWIns   && window.EWIns.state && window.EWIns.state.idToken)       ||
+     (window.getSavedIdToken && window.getSavedIdToken())       ||
+            null;
 
         if (!idToken) {
-    if (msg) msg.textContent = 'You need to login first.';
-   return;
+            if (msg) msg.textContent = 'You need to login first.';
+     return;
         }
-     if (!playerName || !mailbox) {
-        if (msg) msg.textContent = 'Both player name and mailbox are required.';
-    return;
+    if (!playerName || !mailbox) {
+            if (msg) msg.textContent = 'Both player name and mailbox are required.';
+            return;
         }
 
-        if (msg) msg.textContent = 'Saving...';
+      if (msg) msg.textContent = 'Saving...';
 
         try {
-         await window.apiPost('updateMyProfile', {
-    idToken,
-            payload: { playerName, mailbox }
-     });
+  await window.apiPost('updateMyProfile', {
+         idToken,
+     payload: { playerName, mailbox }
+            });
 
-   // Refresh current user from backend
-  const meResp = await fetch(`${window.WEB_APP_URL}?action=me&idToken=${encodeURIComponent(idToken)}`);
-  const meJson = await meResp.json();
-   if (!meJson.ok) throw new Error(meJson.error || 'Backend error');
-            const freshUser = meJson.data.user || {};
+  // Refresh current user from backend
+   const meResp = await fetch(`${window.WEB_APP_URL}?action=me&idToken=${encodeURIComponent(idToken)}`);
+            const meJson = await meResp.json();
+        if (!meJson.ok) throw new Error(meJson.error || 'Backend error');
+      const freshUser = meJson.data.user || {};
 
-            if (msg) msg.textContent = 'Saved!';
+    if (msg) msg.textContent = 'Saved!';
 
-          // Re-evaluate — hides form if now complete
-   evaluateSetupForm(freshUser);
+      // Re-evaluate — hides form and overlay if now complete
+            evaluateSetupForm(freshUser);
 
-            // Update page-specific state so the rest of the page reflects the new profile
-     if (window.currentUser) {
-         window.currentUser.playerName = freshUser.playerName;
-   window.currentUser.mailbox = freshUser.mailbox;
-      }
-          if (window.OCMHome && window.OCMHome.state) {
-    window.OCMHome.state.currentUser = Object.assign(window.OCMHome.state.currentUser || {}, freshUser);
+     // Update page-specific state
+      if (window.currentUser) {
+          window.currentUser.playerName = freshUser.playerName;
+        window.currentUser.mailbox    = freshUser.mailbox;
+            }
+  if (window.OCMHome && window.OCMHome.state) {
+      window.OCMHome.state.currentUser = Object.assign(window.OCMHome.state.currentUser || {}, freshUser);
+            }
+            if (window.OCMUser && window.OCMUser.state) {
+  window.OCMUser.state.currentUser = Object.assign(window.OCMUser.state.currentUser || {}, freshUser);
+         }
+            if (window.EWIns && window.EWIns.state) {
+             window.EWIns.state.user = Object.assign(window.EWIns.state.user || {}, freshUser);
     }
-         if (window.OCMUser && window.OCMUser.state) {
-     window.OCMUser.state.currentUser = Object.assign(window.OCMUser.state.currentUser || {}, freshUser);
-   }
-         if (window.EWIns && window.EWIns.state) {
- window.EWIns.state.user = Object.assign(window.EWIns.state.user || {}, freshUser);
-     }
 
-// index.html post-setup gating
-       const hasSetup = !(!String(freshUser.playerName || '').trim() || !String(freshUser.mailbox || '').trim());
-            const passedCaptcha = !!freshUser.captchaPassed;
-        if (hasSetup && passedCaptcha) {
-     localStorage.setItem('vak_captcha_ok', '1');
-  try { window.hideRecaptchaWidget && window.hideRecaptchaWidget(); } catch { }
-      try { window.hideSetupShowApp && window.hideSetupShowApp(); } catch { }
-      }
+            // index.html post-setup gating
+            const hasSetup     = !(!String(freshUser.playerName || '').trim() || !String(freshUser.mailbox || '').trim());
+  const passedCaptcha = !!freshUser.captchaPassed;
+          if (hasSetup && passedCaptcha) {
+        localStorage.setItem('vak_captcha_ok', '1');
+       try { window.hideRecaptchaWidget && window.hideRecaptchaWidget(); } catch { }
+      try { window.hideSetupShowApp    && window.hideSetupShowApp(); } catch { }
+            }
 
-            // Refresh topbar balances if available
-   try { window.refreshTopBarBalances && await window.refreshTopBarBalances(); } catch { }
-  try { window.refreshPinnedBalanceForActiveTarget && await window.refreshPinnedBalanceForActiveTarget(); } catch { }
+    // Refresh topbar balances if available
+ try { window.refreshTopBarBalances      && await window.refreshTopBarBalances();       } catch { }
+            try { window.refreshPinnedBalanceForActiveTarget && await window.refreshPinnedBalanceForActiveTarget(); } catch { }
 
         } catch (e) {
-            if (msg) msg.textContent = 'Error: ' + (e.message || e);
+         if (msg) msg.textContent = 'Error: ' + (e.message || e);
         }
     };
 
     // ?? Expose ??????????????????????????????????????????????????????????????
     window.SharedLogin = {
-    init: init,
-    evaluateSetupForm: evaluateSetupForm,
-  onSetupInput_: onSetupInput_
+        init:    init,
+        evaluateSetupForm:     evaluateSetupForm,
+        onSetupInput_: onSetupInput_,
+     _dismissSetupOverlay_: _dismissSetupOverlay_
     };
     window.setLoginTermsWarningVisible_ = setLoginTermsWarningVisible_;
 
