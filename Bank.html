@@ -1,5 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,13 +26,26 @@
 
 <body class="no-side-decor">
 
-    <!-- ─── Intro ──────────────────────────────────────────────────────────── -->
+    <!-- ─── Section Toggle Panel (fixed right side) ───────────────────────── -->
+    <div id="bankSectionPanel" class="bank-section-panel">
+        <button type="button" id="bankPanelToggle" class="bank-panel-toggle" title="Hide section panel">&#8249;</button>
+        <div class="bank-section-panel-inner">
+            <div class="bank-section-panel-title">Sections</div>
+            <!-- Buttons injected by bank-ui.js wireSectionPanel() -->
+        </div>
+    </div>
+
+    <!-- ─── Mobile panel open button (hidden on desktop) ─────────────────── -->
+    <button type="button" id="bankPanelOpenBtn" class="bank-panel-open-btn" title="Show sections panel">&#9776; Sections
+    </button>
+
+    <!-- ─── Intro (not toggleable) ────────────────────────────────────────── -->
     <div id="bankIntro" class="section">
         <h1 style="margin-top:0;">EW Bank Dashboard</h1>
         <p>
             This dashboard provides a transparent view of the EW currency ecosystem &mdash;
             how much EW is in circulation, how it is issued and destroyed,
-            how the store's metal reserves back the currency, and how wealth is distributed among players.
+            how the store&rsquo;s metal reserves back the currency, and how wealth is distributed among players.
         </p>
 
         <!-- ─── About the currency ─────────────────────────────────────────── -->
@@ -66,7 +80,8 @@
             </div>
         </div>
 
-        <p class="small" style="color:#666;margin-top:10px;">All data is updated once per day at midnight. No login required.</p>
+        <p class="small" style="color:#666;margin-top:10px;">All data is updated once per day at midnight. No login required.
+        </p>
 
         <!-- Global range selector -->
         <div class="bank-chart-controls" style="margin-top:12px;">
@@ -79,7 +94,8 @@
     <div id="ewCircSection" class="section">
         <div class="bank-section-header">
             <h2>EW in Circulation</h2>
-            <button class="infoBtn" type="button" data-bank-info="circulation" title="About this chart">More info</button>
+            <button class="infoBtn" type="button" data-bank-info="circulation" title="About this chart">More info
+            </button>
         </div>
         <p class="small">Total EW held by all active players combined.</p>
         <div class="bank-chart-container">
@@ -91,11 +107,13 @@
     <div id="issuanceSection" class="section">
         <div class="bank-section-header">
             <h2>Currency Issuance &amp; Destruction</h2>
-            <button class="infoBtn" type="button" data-bank-info="issuance" title="About this chart">More info</button>
+            <button class="infoBtn" type="button" data-bank-info="issuance" title="About this chart">More info
+            </button>
         </div>
         <p class="small">Daily EW issued (store sells) vs EW destroyed (store buys + OCM fees).</p>
         <div class="bank-chart-controls">
-            <button type="button" class="bank-toggle-btn active" id="btnIssuanceDestroyed">EW Destroyed (combined)</button>
+            <button type="button" class="bank-toggle-btn active" id="btnIssuanceDestroyed">EW Destroyed (combined)
+            </button>
             <button type="button" class="bank-toggle-btn" id="btnIssuanceStoreBuy">Store Buy</button>
             <button type="button" class="bank-toggle-btn" id="btnIssuanceOcmFees">OCM Fees</button>
             <button type="button" class="bank-toggle-btn" id="btnIssuanceNet">Net EW Change</button>
@@ -109,9 +127,11 @@
     <div id="backingSection" class="section">
         <div class="bank-section-header">
             <h2>Metal Backing vs EW in Circulation</h2>
-            <button class="infoBtn" type="button" data-bank-info="backing" title="About this chart">More info</button>
+            <button class="infoBtn" type="button" data-bank-info="backing" title="About this chart">More info
+            </button>
         </div>
-        <p class="small">How well the EW supply is backed by metal reserves. 100% = fully backed; &gt;100% = over-backed.</p>
+        <p class="small">How well the EW supply is backed by metal reserves. 100% = fully backed; &gt;100% = over-backed.
+        </p>
         <div class="bank-chart-controls">
             <label for="backingModeSelect" style="font-weight:600;">Mode:</label>
             <select id="backingModeSelect" class="bank-mode-select">
@@ -132,7 +152,8 @@
     <div id="storeNetWorthSection" class="section">
         <div class="bank-section-header">
             <h2>Store Net Worth</h2>
-            <button class="infoBtn" type="button" data-bank-info="storeNetWorth" title="About this chart">More info</button>
+            <button class="infoBtn" type="button" data-bank-info="storeNetWorth" title="About this chart">More info
+            </button>
         </div>
         <p class="small">Total asset valuation of the store inventory in EW (measured daily).</p>
         <div class="bank-chart-container">
@@ -144,9 +165,10 @@
     <div id="metalAllocSection" class="section">
         <div class="bank-section-header">
             <h2>Metal Allocation %</h2>
-            <button class="infoBtn" type="button" data-bank-info="metalAlloc" title="About this chart">More info</button>
+            <button class="infoBtn" type="button" data-bank-info="metalAlloc" title="About this chart">More info
+            </button>
         </div>
-        <p class="small">Each metal's share of total metal backing held by the store.</p>
+        <p class="small">Each metal&rsquo;s share of total metal backing held by the store.</p>
         <div class="bank-chart-controls">
             <label for="metalAllocModeSelect" style="font-weight:600;">Display:</label>
             <select id="metalAllocModeSelect" class="bank-mode-select">
@@ -163,11 +185,12 @@
     <div id="wealthDistSection" class="section">
         <div class="bank-section-header">
             <h2>Wealth Distribution Over Time</h2>
-            <button class="infoBtn" type="button" data-bank-info="wealthDist" title="About this chart">More info</button>
+            <button class="infoBtn" type="button" data-bank-info="wealthDist" title="About this chart">More info
+            </button>
         </div>
         <p class="small">
             How EW is distributed across the player base over time.
-            "Top 1%" = the wealthiest ~1% of players, etc.
+            &ldquo;Top 1%&rdquo; = the wealthiest ~1% of players, etc.
         </p>
 
         <!-- Wealth legend -->
@@ -178,9 +201,16 @@
             <span class="wealth-swatch" style="background:#DC2626;"></span><span>Bottom 70%</span>
         </div>
 
+        <!-- Controls row: pct/raw toggle + chart style selector -->
         <div class="bank-chart-controls">
             <button type="button" class="bank-toggle-btn active" id="btnWealthMode">Switch to Raw EW</button>
+            <label for="wealthChartStyleSelect" style="font-weight:600;margin-left:8px;">Display:</label>
+            <select id="wealthChartStyleSelect" class="bank-mode-select">
+                <option value="line" selected>Multi-line</option>
+                <option value="stacked">Stacked Bar</option>
+            </select>
         </div>
+
         <div class="bank-chart-container">
             <canvas id="bankWealthChart"></canvas>
         </div>
@@ -198,148 +228,157 @@
 
     <!-- ─── Infrastructure Investments ────────────────────────────────────── -->
     <div id="infraSection" class="section">
-   <div class="bank-section-header">
-  <h2>Infrastructure Investments</h2>
-   <button class="infoBtn" type="button" data-bank-info="infra" title="About this section">More info</button>
+        <div class="bank-section-header">
+            <h2>Infrastructure Investments</h2>
+            <button class="infoBtn" type="button" data-bank-info="infra" title="About this section">More info
+            </button>
         </div>
         <p class="small">Items removed from store inventory for infrastructure purposes.</p>
 
- <!-- Controls row: page size selector + page info -->
+        <!-- Controls row: page size selector + page info -->
         <div class="bank-infra-controls">
-       <label for="infraPgSize" style="font-weight:600;">Page size:</label>
- <select id="infraPgSize" class="bank-mode-select">
-          <option value="10" selected>10</option>
-     <option value="20">20</option>
- <option value="50">50</option>
+            <label for="infraPgSize" style="font-weight:600;">Page size:</label>
+            <select id="infraPgSize" class="bank-mode-select">
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
             </select>
- <span id="infraPgInfo" class="small"></span>
+            <span id="infraPgInfo" class="small"></span>
         </div>
 
         <!-- Table -->
         <div class="infra-table-wrap">
             <table id="infraTable">
-      <thead id="infraThead">
-       <tr>
-      <th>Date</th>
-           <th>Quantity of Items</th>
-   <th>Total EW</th>
-             <th>More Info</th>
-     </tr>
-</thead>
-      <tbody id="infraTbody"></tbody>
-  </table>
+                <thead id="infraThead">
+                    <tr>
+                        <th>Date</th>
+                        <th>Quantity of Items</th>
+                        <th>Total EW</th>
+                        <th>More Info</th>
+                    </tr>
+                </thead>
+                <tbody id="infraTbody"></tbody>
+            </table>
         </div>
 
- <!-- Pager -->
-   <div class="bank-infra-pager">
+        <!-- Pager -->
+        <div class="bank-infra-pager">
             <button type="button" id="infraPrev">Prev</button>
- <span id="infraPgInfoBottom" class="small"></span>
- <button type="button" id="infraNext">Next</button>
+            <span id="infraPgInfoBottom" class="small"></span>
+            <button type="button" id="infraNext">Next</button>
         </div>
     </div>
 
-    <!-- ─── Section 7: Velocity & Inflation (collapsible, lazy-loaded) ─────── -->
+    <!-- ─── Velocity & Inflation (always visible, no collapse) ────────────── -->
     <div id="velInflSection" class="section">
-        <div class="collapsible-header bank-section-header" id="velInflHeader" style="cursor:pointer;user-select:none;" aria-expanded="false">
-            <h2 style="margin:0;">Velocity &amp; Inflation</h2>
-            <div style="display:flex;align-items:center;gap:8px;">
-                <button class="infoBtn" type="button" data-bank-info="velocity" title="About velocity" style="pointer-events:auto;" id="velInfoBtn">More info</button>
-                <button type="button" class="collapse-btn" style="pointer-events:none;" id="velCollapseArrow">&#9658;</button>
-            </div>
+        <div class="bank-section-header">
+            <h2>Velocity &amp; Inflation</h2>
+            <button class="infoBtn" type="button" data-bank-info="velocity" title="About velocity">More info</button>
         </div>
-        <div id="velInflContent" style="display:none;margin-top:12px;">
 
-            <!-- Metric selector (shared) -->
-            <div class="bank-chart-controls">
-                <label for="bankVelMetricSelect" style="font-weight:600;">Velocity metric:</label>
-                <select id="bankVelMetricSelect" class="bank-mode-select">
-                    <option value="ewVelocity" selected>EW Velocity (Buy/Sell)</option>
-                    <option value="storeVolume">Store Volume (Bought/Sold)</option>
-                    <option value="ocmVolume">OCM Volume</option>
-                    <option value="uniqueTraders">Unique Traders (Store/OCM)</option>
-                    <option value="tradeCount">Trade Count (Store/OCM)</option>
-                </select>
+        <!-- Metric selector (shared between both velocity charts) -->
+        <div class="bank-chart-controls" style="margin-bottom:16px;">
+            <label for="bankVelMetricSelect" style="font-weight:600;">Velocity metric:</label>
+            <select id="bankVelMetricSelect" class="bank-mode-select">
+                <option value="ewVelocity" selected>EW Velocity (Buy/Sell)</option>
+                <option value="storeVolume">Store Volume (Bought/Sold)</option>
+                <option value="ocmVolume">OCM Volume</option>
+                <option value="uniqueTraders">Unique Traders (Store/OCM)</option>
+                <option value="tradeCount">Trade Count (Store/OCM)</option>
+            </select>
+        </div>
+
+        <!-- ─── Inflation Index sub-section ───────────────────────────────── -->
+        <div id="bankInflationBlock" class="bank-vel-chart-block">
+            <div class="bank-section-header" style="margin-bottom:6px;">
+                <strong>Inflation Index (base=100)</strong>
+                <button class="infoBtn" type="button" data-bank-info="inflationIndex" title="About inflation index">
+                    More info</button>
             </div>
 
-            <!-- ─── Inflation Index chart ───────────────────────────────── -->
-            <div id="bankInflationBlock" class="bank-vel-chart-block">
-                <div class="bank-section-header" style="margin-bottom:6px;">
-                    <strong>Inflation Index (base=100)</strong>
-                    <button class="infoBtn" type="button" data-bank-info="inflationIndex" title="About inflation index">More info</button>
-                </div>
-
-                <!-- Item selector -->
-                <div class="bank-chart-controls" style="flex-wrap:wrap;gap:8px;align-items:flex-start;">
-                    <div class="bank-infl-item-select">
-                        <div class="bank-infl-item-row">
-                            <div class="dropdown-wrap" style="flex:1;">
-                                <input id="bankInflItemInput" class="dropdown-input" placeholder="Search items&hellip;" style="width:100%;" />
-                                <div id="bankInflItemList" class="dropdown-list" style="display:none;"></div>
-                            </div>
-                            <button id="bankInflAddBtn" type="button">Add</button>
-                            <button id="bankInflApplyBtn" type="button" class="bank-infl-apply-btn">Apply</button>
-                            <button id="bankInflClearBtn" type="button">Clear</button>
+            <!-- Item selector -->
+            <div class="bank-chart-controls" style="flex-wrap:wrap;gap:8px;align-items:flex-start;">
+                <div class="bank-infl-item-select">
+                    <div class="bank-infl-item-row">
+                        <div class="dropdown-wrap" style="flex:1;">
+                            <input id="bankInflItemInput" class="dropdown-input" placeholder="Search items&hellip;"
+                                style="width:100%;" />
+                            <div id="bankInflItemList" class="dropdown-list" style="display:none;"></div>
                         </div>
-                        <div id="bankInflChips" class="bank-infl-chips"></div>
+                        <button id="bankInflAddBtn" type="button">Add</button>
+                        <button id="bankInflApplyBtn" type="button" class="bank-infl-apply-btn">Apply</button>
+                        <button id="bankInflClearBtn" type="button">Clear</button>
                     </div>
-
-                    <!-- Index category selector -->
-                    <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-                        <label for="bankInflIndexSelect" style="font-weight:600;white-space:nowrap;">Category:</label>
-                        <select id="bankInflIndexSelect" class="bank-mode-select">
-                            <option value="median" selected>Median (all items, weighted)</option>
-                            <option value="metals">Metal Index (weighted)</option>
-                            <option value="common">Common Items (weighted)</option>
-                            <option value="selected">Selected items (weighted)</option>
-                        </select>
-                    </div>
+                    <div id="bankInflChips" class="bank-infl-chips"></div>
                 </div>
 
-                <div class="bank-chart-container">
-                    <canvas id="bankInflationChart"></canvas>
-                </div>
-            </div>
-            <!-- ─── end Inflation Index chart ──────────────────────────── -->
-
-            <!-- Per-item velocity chart -->
-            <div class="bank-vel-chart-block">
-                <div class="bank-section-header" style="margin-bottom:6px;">
-                    <strong>Velocity (per item)</strong>
-                    <span class="small" style="color:#666;margin-left:8px;" id="velItemSubtitle">Daily velocity metrics for top items</span>
-                </div>
-                <div class="bank-chart-controls" id="velItemToggles">
-                    <label class="bank-vel-toggle-label"><input type="checkbox" id="bankVelItemBreakdown" checked> Show breakdown</label>
-                    <label class="bank-vel-toggle-label" id="bankVelItemLabelA"><input type="checkbox" id="bankVelItemShowA" checked> Show A</label>
-                    <label class="bank-vel-toggle-label" id="bankVelItemLabelB"><input type="checkbox" id="bankVelItemShowB" checked> Show B</label>
-                    <label class="bank-vel-toggle-label"><input type="checkbox" id="bankVelItemNorm"> Normalize to 100</label>
-                    <button type="button" class="bank-toggle-btn" id="bankVelItemTop10" title="Override item selection and show the 10 most active items instead">Top 10 most active</button>
-                </div>
-                <div class="bank-chart-container">
-                    <canvas id="bankVelocityItemChart"></canvas>
+                <!-- Index category selector -->
+                <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                    <label for="bankInflIndexSelect" style="font-weight:600;white-space:nowrap;">Category:</label>
+                    <select id="bankInflIndexSelect" class="bank-mode-select">
+                        <option value="median" selected>Median (all items, weighted)</option>
+                        <option value="metals">Metal Index (weighted)</option>
+                        <option value="common">Common Items (weighted)</option>
+                        <option value="selected">Selected items (weighted)</option>
+                    </select>
                 </div>
             </div>
 
-            <!-- Combined velocity chart -->
-            <div class="bank-vel-chart-block" style="margin-top:20px;">
-                <div class="bank-section-header" style="margin-bottom:6px;">
-                    <strong>Velocity (combined &mdash; all items summed)</strong>
-                </div>
-                <div class="bank-chart-controls" id="velCombToggles">
-                    <label class="bank-vel-toggle-label"><input type="checkbox" id="bankVelCombBreakdown"> Show breakdown</label>
-                    <label class="bank-vel-toggle-label" id="bankVelCombLabelA"><input type="checkbox" id="bankVelCombShowA" checked> Show A</label>
-                    <label class="bank-vel-toggle-label" id="bankVelCombLabelB"><input type="checkbox" id="bankVelCombShowB" checked> Show B</label>
-                    <label class="bank-vel-toggle-label"><input type="checkbox" id="bankVelCombNorm"> Normalize to 100</label>
-                </div>
-                <div class="bank-chart-container">
-                    <canvas id="bankVelocityCombinedChart"></canvas>
-                </div>
+            <div class="bank-chart-container">
+                <canvas id="bankInflationChart"></canvas>
             </div>
-
         </div>
-    </div>
+        <!-- ─── end Inflation Index ──────────────────────────────────────── -->
 
-    <!-- ─── Info Modal (identical pattern to PriceHistory) ─────────────────── -->
-    <div id="bankInfoModal" role="dialog" aria-modal="true" aria-labelledby="bankInfoModalTitle" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:4000;align-items:center;justify-content:center;">
+        <!-- ─── Velocity per-item sub-section ─────────────────────────────── -->
+        <div id="bankVelItemBlock" class="bank-vel-chart-block" style="margin-top:20px;">
+            <div class="bank-section-header" style="margin-bottom:6px;">
+                <strong>Velocity (per item)</strong>
+                <span class="small" style="color:#666;margin-left:8px;" id="velItemSubtitle">Daily velocity metrics
+                    for top items</span>
+            </div>
+            <div class="bank-chart-controls" id="velItemToggles">
+                <label class="bank-vel-toggle-label"><input type="checkbox" id="bankVelItemBreakdown" checked> Show
+                    breakdown</label>
+                <label class="bank-vel-toggle-label" id="bankVelItemLabelA"><input type="checkbox" id="bankVelItemShowA"
+                    checked> Show A</label>
+                <label class="bank-vel-toggle-label" id="bankVelItemLabelB"><input type="checkbox" id="bankVelItemShowB"
+                    checked> Show B</label>
+                <label class="bank-vel-toggle-label"><input type="checkbox" id="bankVelItemNorm"> Normalize to 100
+                </label>
+                <button type="button" class="bank-toggle-btn" id="bankVelItemTop10" title="Show the 10 most active items">
+                    Top 10 most active</button>
+            </div>
+            <div class="bank-chart-container">
+                <canvas id="bankVelocityItemChart"></canvas>
+            </div>
+        </div>
+
+        <!-- ─── Velocity combined sub-section ─────────────────────────────── -->
+        <div id="bankVelCombBlock" class="bank-vel-chart-block" style="margin-top:20px;">
+            <div class="bank-section-header" style="margin-bottom:6px;">
+                <strong>Velocity (combined &mdash; all items summed)</strong>
+            </div>
+            <div class="bank-chart-controls" id="velCombToggles">
+                <label class="bank-vel-toggle-label"><input type="checkbox" id="bankVelCombBreakdown"> Show breakdown</label>
+                <label class="bank-vel-toggle-label" id="bankVelCombLabelA"><input type="checkbox" id="bankVelCombShowA"
+                    checked> Show A</label>
+                <label class="bank-vel-toggle-label" id="bankVelCombLabelB"><input type="checkbox" id="bankVelCombShowB"
+                    checked> Show B</label>
+                <label class="bank-vel-toggle-label"><input type="checkbox" id="bankVelCombNorm"> Normalize to 100
+                </label>
+            </div>
+            <div class="bank-chart-container">
+                <canvas id="bankVelocityCombinedChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+    <!-- ─── end Velocity & Inflation ─────────────────────────────────────── -->
+
+    <!-- ─── Info Modal ─────────────────────────────────────────────────────── -->
+    <div id="bankInfoModal" role="dialog" aria-modal="true" aria-labelledby="bankInfoModalTitle"
+        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:4000;align-items:center;justify-content:center;">
         <div class="modalCard">
             <div class="modalHeader">
                 <div class="modalTitle" id="bankInfoModalTitle">Info</div>
@@ -360,4 +399,5 @@
     <script src="bank_js/bank-boot.js"></script>
 
 </body>
+
 </html>

@@ -205,12 +205,12 @@
       'background:#fff;border-radius:10px;border:2px solid #2e7d32;' +
       'box-shadow:0 4px 24px rgba(46,125,50,0.15);">' +
      '<div style="font-size:1.15rem;font-weight:bold;color:#2e7d32;margin-bottom:8px;">' +
-         '?? Account setup required</div>' +
+         'Account setup required</div>' +
       '<p class="small" style="color:#333;margin:0 0 16px 0;">' +
   'Please complete your account setup (player name and mailbox) ' +
         'in the login panel above before using this page.</p>' +
         '<button class="overlay-dismiss" onclick="SharedLogin._dismissSetupOverlay_()">' +
-         'OK — go to setup form' +
+         'OK. (go to setup form)' +
            '</button>' +
      '</div>';
  document.body.appendChild(overlay);
