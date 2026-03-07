@@ -141,6 +141,46 @@ let unitsChange = '?';
       });
     }
 
+    // Renders per-user insurance policies table in Insurance (User) tab
+    function renderInsuranceUserTable_(policies, liveBalance) {
+        const tb = byId('tbInsuranceUser');
+        tb.innerHTML = '';
+        if (!policies || !policies.length) {
+        tb.innerHTML = '<tr><td colspan="7" class="small">No policies for this user.</td></tr>';
+  return;
+ }
+
+ policies.forEach(policy => {
+  const stored = safeJsonParse(policy.StoredJson || '{}', { units:0, metals: {} });
+  const alloc = safeJsonParse(policy.AllocationJson || '{}', {});
+  const currentEstimate = policy.currentEstimate || {};
+
+  const row = document.createElement('tr');
+  row.innerHTML = `
+ <td class="mono" style="font-size:0.78em;">${esc(policy.InsuranceID || '?')}</td>
+ <td>${esc(policy.PolicyName || '')}</td>
+ <td>${esc(String(policy.Activity || '-'))}</td>
+ <td class="mono">${esc(String((stored && stored.units) ||0))}</td>
+ <td class="mono">${esc(String(policy.InsuranceEW || (stored.units ||0) *500))} EW</td>
+ <td class="small">${esc(Object.keys(alloc).length ? JSON.stringify(alloc) : '-')}</td>
+ <td><button type="button" data-info>More</button></td>
+ `;
+
+ row.querySelector('[data-info]').addEventListener('click', () => {
+ const info = [];
+ info.push(`Units: ${(stored && stored.units) ||0}`);
+ if (currentEstimate && currentEstimate.totalInsuredEW !== undefined) {
+ info.push(`Estimated insured EW: ${currentEstimate.totalInsuredEW}`);
+ if (currentEstimate.totalLeftoverEW >0) info.push(`Estimated leftover EW: ${currentEstimate.totalLeftoverEW}`);
+ }
+ info.push(`Live balance: ${liveBalance != null ? liveBalance : '?'} EW`);
+ alert(info.join('\n'));
+ });
+
+ tb.appendChild(row);
+ });
+    }
+
     function renderForceWithdrawUI_() {
         const container = byId('insuranceForceWithdrawSection');
   if (!container) return;
@@ -193,5 +233,54 @@ if (!confirm('Force metals withdrawal for policy ' + insuranceId + '? No EW will
      byId('insuranceMsg').textContent = 'Error: ' + e.message;
   }
     };
+
+ // Load insurance policies for selected target user (Admin — per-user view)
+ window.loadAdminInsuranceUser = async function loadAdminInsuranceUser() {
+ const sec = byId('insuranceUserSection');
+ const noTarget = byId('insuranceUserNoTarget');
+ const content = byId('insuranceUserContent');
+ const label = byId('insuranceUserLabel');
+ const msg = byId('insuranceUserMsg');
+ const btn = byId('btnReloadInsuranceUser');
+
+ if (!sec || !noTarget || !content || !label || !msg) return;
+
+ const target = Admin.state.globalTargetUser;
+ if (!target) {
+ noTarget.style.display = '';
+ content.style.display = 'none';
+ label.textContent = '-';
+ return;
+ }
+
+ noTarget.style.display = 'none';
+ content.style.display = '';
+ label.textContent = target.playerName || target.email || target.userId || '-';
+
+ if (!Admin.state.googleIdToken) { msg.textContent = 'Not logged in.'; return; }
+
+ msg.textContent = 'Loading...';
+ if (btn) btn.disabled = true;
+ try {
+ const r = await window.apiGet('insuranceAdminListByUser', {
+ idToken: Admin.state.googleIdToken,
+ userId: target.userId
+ });
+ const policies = (r.data || {}).policies || [];
+ const liveBalance = (r.data || {}).liveBalance;
+ renderInsuranceUserTable_(policies, liveBalance);
+ msg.textContent = 'Loaded ' + policies.length + ' policy(ies).';
+ } catch (e) {
+ msg.textContent = 'Error: ' + e.message;
+ } finally {
+ if (btn) btn.disabled = false;
+ }
+ };
+
+ // Wire up reload button if present
+ document.addEventListener('DOMContentLoaded', () => {
+ const btn = byId('btnReloadInsuranceUser');
+ if (btn) btn.addEventListener('click', () => window.loadAdminInsuranceUser());
+ });
 
 })();
