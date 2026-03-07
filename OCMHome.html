@@ -7,6 +7,7 @@
     <script src="auth-storage.js"></script>
     <script src="api-client.js"></script>
     <script src="topbar.js"></script>
+    <script src="shared/login-panel.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <meta charset="UTF-8">
     <title>OCM Marketplace</title>
@@ -30,22 +31,8 @@
 </head>
 
 <body>
-    <div id="authPanel">
-        <div id="loginTermsWarning">
-            <div><strong>By logging in you accept the <a href="TermsAndConditions.html" target="_blank" rel="noopener">Terms and Conditions</a> of this page.</strong></div>
-            <div>In short: we store your email for login identification, and we use trading data for transparency and research purposes.</div>
-        </div>
-
-        <div id="googleLoginArea">
-            <div id="googleBtn"></div>
-            <div class="login-hint">If the Google button does not appear, use fallback:</div>
-            <div class="fallback-login">
-                <button id="fallbackBtn" type="button" onclick="startFallbackLogin()">Fallback Google Login</button>
-            </div>
-            <div id="loginStatus" class="small"></div>
-        </div>
-        <div id="authStatus" class="small muted">Not logged in.</div>
-    </div>
+    <div id="loginPanelMount"></div>
+    <div id="authStatus" class="small muted">Not logged in.</div>
 
     <h1>OCM Marketplace</h1>
 

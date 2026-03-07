@@ -20,6 +20,7 @@
     <script src="api-client.js"></script>
     <script src="topbar.js"></script>
 
+    <script src="shared/login-panel.js"></script>
     <script src="shared/universal-dropdown.js"></script>
 
     <!-- Index page modules (split out from inline script) -->
@@ -60,32 +61,7 @@
 <body class="index-page">
     <!-- top bar injected by topbar.js -->
 
-    <div id="authPanel">
-        <div id="loginTermsWarning" style="display:block;">
-            <div><strong>By logging in you accept the <a href="TermsAndConditions.html" target="_blank" rel="noopener">Terms and Conditions</a> of this page.</strong></div>
-            <div>In short: we store your email for login identification, and we use trading data for transparency and research purposes.</div>
-        </div>
-
-        <div id="googleLoginArea">
-            <div id="googleBtn"></div>
-            <div class="login-hint">If the Google button does not appear, use fallback:</div>
-            <div class="fallback-login">
-                <button id="fallbackBtn" type="button" onclick="startFallbackLogin()">Fallback Google Login</button>
-            </div>
-            <div id="loginStatus" class="small"></div>
-        </div>
-        <div id="recaptchaContainer" style="margin-top:10px;"></div>
-        <div id="setupForm">
-            <h3>Account Setup</h3>
-            <label>Player Name: <input type="text" id="setupPlayerName"></label><br>
-            <label>Mailbox (e.g. 1A / 2B / F1): <input type="text" id="setupMailbox"></label><br>
-            <button onclick="submitSetup()">Save Setup</button>
-            <div id="setupMsg" class="small"></div>
-            <div id="setupDeletionNote">
-                You can delete your account/email at any time from <a href="AccountSettings.html">Account Settings</a> (this disables login).
-            </div>
-        </div>
-    </div>
+    <div id="loginPanelMount"></div>
 
     <h1>🛒 Vak Store Trading Calculator</h1>
 
@@ -106,7 +82,7 @@
             </p>
 
             <p>
-                <strong>About the currency (EW)(Echange Weight):</strong><br>
+                <strong>About the currency (EW)(Eange Weight):</strong><br>
                 EW is designed to be a fully liquid trading currency. Its value is not permanently pegged to one specific metal or item.
                 The goal is to make trading smoother by giving players a common “trade-anything” medium: you can earn EW by selling items
                 and spend EW to buy many other items the store offers.
@@ -523,6 +499,7 @@ style="margin-top:8px;color:#555;font-style:italic;">
         // Boot only. All feature logic is in `index_js/*`.
         window.onload = () => {
             window.initSharedTopBar && window.initSharedTopBar();
+window.SharedLogin && window.SharedLogin.init({ showSetupForm: true, showRecaptcha: true });
 
             window.tryRestoreAuthOnLoad && window.tryRestoreAuthOnLoad();
             document.body.classList.add('withTopBar');
@@ -549,6 +526,8 @@ style="margin-top:8px;color:#555;font-style:italic;">
             window.attachOnBehalfSearch && window.attachOnBehalfSearch();
             window.refreshOpenOrders && window.refreshOpenOrders();
         };
+
+        SharedLogin.init();
     </script>
 </body>
 </html>

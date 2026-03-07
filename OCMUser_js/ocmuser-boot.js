@@ -16,6 +16,7 @@
         try { O.enforceLettersOnlyInput_(byId('editItemCustom')); } catch { }
 
         try { window.initSharedTopBar && window.initSharedTopBar(); } catch (e) { console.warn('topbar init failed', e); }
+        window.SharedLogin && window.SharedLogin.init({ showSetupForm: true });
         document.body.classList.add('withTopBar');
 
         on(byId('tabCreateStore'), 'click', () => O.setCreationTab('store'));

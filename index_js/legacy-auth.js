@@ -11,8 +11,12 @@
  }
 
  function updateLoginTermsWarning_() {
- // Show warning only when logged out
- setDisplay_('loginTermsWarning', !window.googleIdToken);
+ // Delegate to shared panel helper when available, fall back to direct DOM
+ if (typeof window.setLoginTermsWarningVisible_ === 'function') {
+     window.setLoginTermsWarningVisible_(!window.googleIdToken);
+ } else {
+     setDisplay_('loginTermsWarning', !window.googleIdToken);
+ }
  }
 
  // Ensure warning updates if some other script overwrites `window.googleIdToken` after this file loads.
@@ -245,23 +249,10 @@
 
  window.handleCredentialResponse = window.handleCredentialResponse || function handleCredentialResponse(resp) { window.onGoogleSignIn(resp); };
 
- window.startFallbackLogin = window.startFallbackLogin || function startFallbackLogin() {
- const nonce = window.cryptoRandomId();
- const redirectUri = location.origin + location.pathname;
- const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
- + '?client_id=' + encodeURIComponent(window.OAUTH_CLIENT_ID)
- + '&redirect_uri=' + encodeURIComponent(redirectUri)
- + '&response_type=id_token'
- + '&scope=' + encodeURIComponent('openid email profile')
- + '&nonce=' + encodeURIComponent(nonce)
- + '&prompt=select_account';
- window.location.href = authUrl;
- };
-
  window.startLogin = window.startLogin || function startLogin() {
- if (window.google && google.accounts && google.accounts.id) {
- try { google.accounts.id.prompt(); } catch { window.startFallbackLogin(); }
- } else window.startFallbackLogin();
+  if (window.google && google.accounts && google.accounts.id) {
+    try { google.accounts.id.prompt(); } catch { window.startFallbackLogin && window.startFallbackLogin(); }
+  } else if (window.startFallbackLogin) window.startFallbackLogin();
  };
 
  window.checkHashForIdToken = window.checkHashForIdToken || function checkHashForIdToken() {

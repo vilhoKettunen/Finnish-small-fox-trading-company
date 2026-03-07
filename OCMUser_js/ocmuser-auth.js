@@ -14,7 +14,11 @@
  }
 
  function updateTermsWarning_() {
+ if (typeof window.setLoginTermsWarningVisible_ === 'function') {
+ window.setLoginTermsWarningVisible_(!S.googleIdToken);
+ } else {
  setTermsWarningVisible_(!S.googleIdToken);
+ }
  }
 
  function normalizeUser(u) {
@@ -76,7 +80,7 @@
  );
  }
 
- window.startFallbackLogin = function startFallbackLogin() {
+ window.startFallbackLogin = window.startFallbackLogin || function startFallbackLogin() {
  const nonce = crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
  const redirectUri = location.origin + location.pathname;
  const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth'

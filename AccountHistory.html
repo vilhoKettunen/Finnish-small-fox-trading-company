@@ -12,26 +12,13 @@
  <script src="app-config.js"></script>
  <script src="https://accounts.google.com/gsi/client" async defer></script>
  <script src="topbar.js"></script>
+ <script src="shared/login-panel.js"></script>
  <script src="api-client.js"></script>
 </head>
 <body>
  <!-- Shared top bar injected by topbar.js -->
 
- <div id="authPanel">
- <div id="loginTermsWarning">
- <div><strong>By logging in you accept the <a href="TermsAndConditions.html" target="_blank" rel="noopener">Terms and Conditions</a> of this page.</strong></div>
- <div>In short: we store your email for login identification, and we use trading data for transparency and research purposes.</div>
- </div>
-
- <div id="googleLoginArea">
- <div id="googleBtn"></div>
- <div class="login-hint">If the Google button does not appear, use fallback:</div>
- <div class="fallback-login">
- <button id="fallbackBtn" type="button" onclick="startFallbackLogin()">Fallback Google Login</button>
- </div>
- <div id="loginStatus" class="small"></div>
- </div>
- </div>
+ <div id="loginPanelMount"></div>
 
  <h1>History</h1>
  <div id="authStatus" class="small">Checking auth...</div>
@@ -59,7 +46,7 @@
  </select>
  </label>
 
- <button id="btnLoad">Load</button>
+ <button id="btnLoad" class="green">Load</button>
  <span id="msg" class="small"></span>
  </div>
 
@@ -514,7 +501,8 @@
 
  window.onload = () => {
  window.initSharedTopBar && window.initSharedTopBar();
- updateTermsWarning_();
+  window.SharedLogin && window.SharedLogin.init({ showSetupForm: true });
+  updateTermsWarning_();
  const gsiWait = setInterval(() => {
  if (window.google && google.accounts && google.accounts.id) {
  initGoogleIdentity();

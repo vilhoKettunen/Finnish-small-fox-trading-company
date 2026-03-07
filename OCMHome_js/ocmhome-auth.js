@@ -10,13 +10,16 @@
 
  function setTermsWarningVisible_(visible) {
  const el = document.getElementById('loginTermsWarning');
- if (!el) return;
- el.style.display = visible ? 'block' : 'none';
+ if (el) el.style.display = visible ? 'block' : 'none';
  }
 
  function updateTermsWarning_() {
- // Default to showing warning unless we are sure we have a token
+ // Delegate to shared panel helper when available
+ if (typeof window.setLoginTermsWarningVisible_ === 'function') {
+ window.setLoginTermsWarningVisible_(!S.googleIdToken);
+ } else {
  setTermsWarningVisible_(!S.googleIdToken);
+ }
  }
 
  // Ensure warning is visible by default (logged out) even if this script executes before DOM is fully ready.
@@ -45,19 +48,6 @@
  );
  }
 
- function startFallbackLogin() {
- const nonce = crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
- const redirectUri = location.origin + location.pathname;
- const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
- + '?client_id=' + encodeURIComponent(OAUTH_CLIENT_ID)
- + '&redirect_uri=' + encodeURIComponent(redirectUri)
- + '&response_type=id_token'
- + '&scope=' + encodeURIComponent('openid email profile')
- + '&nonce=' + encodeURIComponent(nonce)
- + '&prompt=select_account';
- window.location.href = authUrl;
- }
-
  async function onGoogleSignIn(resp) {
  const statusEl = byId('loginStatus');
  S.googleIdToken = resp && resp.credential;
@@ -81,7 +71,19 @@
  }
  }
 
- window.startFallbackLogin = startFallbackLogin;
+ window.startFallbackLogin = window.startFallbackLogin || function startFallbackLogin() {
+ const nonce = crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
+ const redirectUri = location.origin + location.pathname;
+ const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
+ + '?client_id=' + encodeURIComponent(OAUTH_CLIENT_ID)
+ + '&redirect_uri=' + encodeURIComponent(redirectUri)
+ + '&response_type=id_token'
+ + '&scope=' + encodeURIComponent('openid email profile')
+ + '&nonce=' + encodeURIComponent(nonce)
+ + '&prompt=select_account';
+ window.location.href = authUrl;
+ };
+
  O.initGoogleIdentity = initGoogleIdentity;
  O.onGoogleSignIn = onGoogleSignIn;
 
