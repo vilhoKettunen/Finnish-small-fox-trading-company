@@ -28,7 +28,14 @@
  }
 
  function updateLoginTermsWarning_() {
- setVisible('loginTermsWarning', !googleIdToken);
+ // Plan Q9-B: hide only when logged in AND profile is complete
+ const incomplete = !googleIdToken ? true :
+ (!String(currentUser?.playerName || '').trim() || !String(currentUser?.mailbox || '').trim());
+ if (typeof window.setLoginTermsWarningVisible_ === 'function') {
+ window.setLoginTermsWarningVisible_(!googleIdToken || incomplete);
+ } else {
+ setVisible('loginTermsWarning', !googleIdToken || incomplete);
+ }
  }
 
  function setBusy(isBusy) {
@@ -266,7 +273,7 @@
  setText('st_ocmFavItemSold', st?.ocm?.favoriteItemSoldAsMerchant?.itemName || '—');
  setText('st_ocmFavItemBought', st?.ocm?.favoriteItemBoughtAsBuyer?.itemName || '—');
  setText('st_ocmFavPegUsed', st?.ocm?.favoritePegUsedAsBuyer?.itemName || '—');
- setText('st_ocmFavPegReceived', st?.ocm?.favoritePegReceivedAsMerchant?.itemName || '—');
+ setText('st_ocmFavPegReceived', st?.ocm?.favoriteItemReceivedAsMerchant?.itemName || '—');
 
  // Top5 panel
  renderTop5_();
@@ -329,22 +336,19 @@
  currentUser = user;
 
  // Use getBalance for the chip
- let bal =0;
+ let bal = 0;
  try {
  const b = await window.apiGet('getBalance', { idToken: googleIdToken });
  const bd = b && (b.data || b.result || b);
- bal = Number(bd?.balanceBT ?? bd?.data?.balanceBT ??0) ||0;
+ bal = Number(bd?.balanceBT ?? bd?.data?.balanceBT ?? 0) || 0;
  } catch {
- bal = Number(user.balanceBT ||0) ||0;
+ bal = Number(user.balanceBT || 0) || 0;
  }
 
  if (window.topbarSetAuthState) {
  window.topbarSetAuthState({
  idToken: googleIdToken,
- user: {
- ...user,
- balanceBT: bal
- },
+ user: { ...user, balanceBT: bal },
  isAdmin: !!d?.isAdmin,
  balanceBT: bal
  });
@@ -352,6 +356,11 @@
 
  setText('authStatus', 'Logged in as ' + (user.playerName || user.email || user.userId));
  applyUserToForm(user);
+
+ // Evaluate setup form (non-blocking on AccountSettings)
+ window.SharedLogin && window.SharedLogin.evaluateSetupForm(user);
+ // Also update terms warning with profile completeness
+ updateLoginTermsWarning_();
 
  // Now load statistics (cached)
  await loadStats_(false);
@@ -398,19 +407,6 @@
  document.getElementById('googleBtn'),
  { theme: 'outline', size: 'large', type: 'standard', shape: 'rectangular', logo_alignment: 'left' }
  );
- };
-
- window.startFallbackLogin = function startFallbackLogin() {
- const nonce = crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
- const redirectUri = location.origin + location.pathname;
- const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
- + '?client_id=' + encodeURIComponent(OAUTH_CLIENT_ID)
- + '&redirect_uri=' + encodeURIComponent(redirectUri)
- + '&response_type=id_token'
- + '&scope=' + encodeURIComponent('openid email profile')
- + '&nonce=' + encodeURIComponent(nonce)
- + '&prompt=select_account';
- window.location.href = authUrl;
  };
 
  window.onGoogleSignIn = function onGoogleSignIn(resp) {
@@ -599,6 +595,7 @@
  // ===== Boot =====
  window.addEventListener('load', async () => {
  window.initSharedTopBar && window.initSharedTopBar();
+ window.SharedLogin && window.SharedLogin.init({});
  document.body.classList.add('withTopBar');
 
  // initial warning state

@@ -7,17 +7,12 @@
 
  const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '';
 
- function setTermsWarningVisible_(visible) {
- const el = document.getElementById('loginTermsWarning');
- if (!el) return;
- el.style.display = visible ? 'block' : 'none';
- }
-
  function updateTermsWarning_() {
  if (typeof window.setLoginTermsWarningVisible_ === 'function') {
  window.setLoginTermsWarningVisible_(!S.googleIdToken);
  } else {
- setTermsWarningVisible_(!S.googleIdToken);
+ const el = document.getElementById('loginTermsWarning');
+ if (el) el.style.display = S.googleIdToken ? 'none' : 'block';
  }
  }
 
@@ -34,9 +29,12 @@
  const me = await apiGet('me', { idToken });
  const d = me.data || me.result || me;
  S.currentUser = normalizeUser(d.user || d) || {};
- const bal = Number(S.currentUser.balanceBT ||0);
+ const bal = Number(S.currentUser.balanceBT || 0);
  if (window.topbarSetAuthState) window.topbarSetAuthState({ idToken, user: S.currentUser, isAdmin: !!d.isAdmin, balanceBT: bal });
  byId('authStatus').textContent = 'Logged as ' + (S.currentUser.playerName || S.currentUser.email || '');
+
+ // Evaluate setup form after profile is loaded
+ window.SharedLogin && window.SharedLogin.evaluateSetupForm(S.currentUser);
 
  await window.OCMUser.ensureCatalogLoaded();
  await window.OCMUser.loadMyListings();
@@ -80,19 +78,6 @@
  );
  }
 
- window.startFallbackLogin = window.startFallbackLogin || function startFallbackLogin() {
- const nonce = crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
- const redirectUri = location.origin + location.pathname;
- const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
- + '?client_id=' + encodeURIComponent(OAUTH_CLIENT_ID)
- + '&redirect_uri=' + encodeURIComponent(redirectUri)
- + '&response_type=id_token'
- + '&scope=' + encodeURIComponent('openid email profile')
- + '&nonce=' + encodeURIComponent(nonce)
- + '&prompt=select_account';
- window.location.href = authUrl;
- };
-
  async function tryRestoreAuthOnLoad() {
  if (!window.initAuthFromStorage) return;
  try {
@@ -124,10 +109,9 @@
  tryRestoreAuthOnLoad();
  const gsiWait = setInterval(() => {
  if (window.google && google.accounts && google.accounts.id) { initGoogleIdentity(); clearInterval(gsiWait); }
- },200);
- setTimeout(() => clearInterval(gsiWait),4000);
+ }, 200);
+ setTimeout(() => clearInterval(gsiWait), 4000);
  };
 
- // initial
  try { updateTermsWarning_(); } catch { }
 })();

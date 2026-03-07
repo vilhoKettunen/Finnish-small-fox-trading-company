@@ -499,35 +499,30 @@ style="margin-top:8px;color:#555;font-style:italic;">
         // Boot only. All feature logic is in `index_js/*`.
         window.onload = () => {
             window.initSharedTopBar && window.initSharedTopBar();
-window.SharedLogin && window.SharedLogin.init({ showSetupForm: true, showRecaptcha: true });
+    window.SharedLogin && window.SharedLogin.init({ showRecaptcha: true });
 
             window.tryRestoreAuthOnLoad && window.tryRestoreAuthOnLoad();
-            document.body.classList.add('withTopBar');
+     document.body.classList.add('withTopBar');
 
-            window.attachSetupInputHelpers && window.attachSetupInputHelpers();
-            window.checkHashForIdToken && window.checkHashForIdToken();
+ window.attachSetupInputHelpers && window.attachSetupInputHelpers();
+         window.checkHashForIdToken && window.checkHashForIdToken();
             window.loadData && window.loadData();
 
-            //if (document.getElementById('payOptions')) window.addPayRow && window.addPayRow();
-            //if (document.getElementById('converterOptions')) window.addConverterRow && window.addConverterRow();
+         window.initRecaptcha && window.initRecaptcha();
 
-            window.initRecaptcha && window.initRecaptcha();
-
-            const gsiWait = setInterval(() => {
-                if (window.google && google.accounts && google.accounts.id) {
-                    window.initGoogleIdentity && window.initGoogleIdentity();
-                    clearInterval(gsiWait);
-                }
-            }, 200);
-            setTimeout(() => clearInterval(gsiWait), 4000);
+      const gsiWait = setInterval(() => {
+      if (window.google && google.accounts && google.accounts.id) {
+   window.initGoogleIdentity && window.initGoogleIdentity();
+      clearInterval(gsiWait);
+              }
+  }, 200);
+  setTimeout(() => clearInterval(gsiWait), 4000);
 
             window.initCollapsibles && window.initCollapsibles();
             window.updateTopBarAuth && window.updateTopBarAuth();
             window.attachOnBehalfSearch && window.attachOnBehalfSearch();
-            window.refreshOpenOrders && window.refreshOpenOrders();
+        window.refreshOpenOrders && window.refreshOpenOrders();
         };
-
-        SharedLogin.init();
     </script>
 </body>
 </html>

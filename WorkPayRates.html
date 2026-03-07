@@ -9,6 +9,7 @@
  <script src="api-client.js"></script>
  <script src="auth-storage.js"></script>
  <script src="topbar.js"></script>
+ <script src="shared/login-panel.js"></script>
  <link rel="stylesheet" href="css/pages/WorkPayRates.css">
  <link rel="stylesheet" href="css/site-layout.css">
  <link rel="stylesheet" href="css/panels-paper.css">
@@ -17,18 +18,7 @@
 </head>
 <body class="workpay">
  <div class="container">
- <div id="googleLoginArea" class="card">
- <div class="row">
- <div>
- <div style="font-weight:bold;">Login (admin to edit)</div>
- <div class="muted">Public can view pay rates without logging in.</div>
- </div>
- <div style="margin-left:auto;"></div>
- <div id="googleBtn"></div>
- <button id="fallbackBtn" type="button" onclick="startFallbackLogin()">Use fallback login</button>
- </div>
- <div id="loginStatus" class="muted"></div>
- </div>
+ <div id="loginPanelMount"></div>
 
  <div class="card" style="margin-bottom:12px;">
  <div class="row">
@@ -168,24 +158,11 @@
 
  function handleCredentialResponse(resp) { onGoogleSignIn(resp); }
 
- function startFallbackLogin() {
- const nonce = crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
- const redirectUri = location.origin + location.pathname;
- const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
- + '?client_id=' + encodeURIComponent(OAUTH_CLIENT_ID)
- + '&redirect_uri=' + encodeURIComponent(redirectUri)
- + '&response_type=id_token'
- + '&scope=' + encodeURIComponent('openid email profile')
- + '&nonce=' + encodeURIComponent(nonce)
- + '&prompt=select_account';
- window.location.href = authUrl;
- }
-
  async function onGoogleSignIn(resp) {
  const statusEl = byId('loginStatus');
  googleIdToken = resp && resp.credential;
- if (!googleIdToken) { statusEl.textContent = 'Login error: no credential'; return; }
- statusEl.textContent = 'Verifying token...';
+ if (!googleIdToken) { if (statusEl) statusEl.textContent = 'Login error: no credential'; return; }
+ if (statusEl) statusEl.textContent = 'Verifying token...';
  try {
  const tResp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`);
  if (!tResp.ok) throw new Error('tokeninfo failed ' + tResp.status);
@@ -193,15 +170,15 @@
  if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
 
  window.saveIdToken && window.saveIdToken(googleIdToken);
- statusEl.textContent = 'Loading profile...';
+ if (statusEl) statusEl.textContent = 'Loading profile...';
 
  // Apply auth via page helper (shared with restore flow)
  if (typeof window.workpayApplyAuthFromToken === 'function') {
  await window.workpayApplyAuthFromToken(googleIdToken, false);
  }
- statusEl.textContent = 'Logged in.';
+ if (statusEl) statusEl.textContent = 'Logged in.';
  } catch (e) {
- statusEl.textContent = 'Login error: ' + (e.message || e);
+ if (statusEl) statusEl.textContent = 'Login error: ' + (e.message || e);
  }
  }
 
@@ -213,22 +190,21 @@
  const params = new URLSearchParams(hash.replace(/^#/, ''));
  const tok = params.get('id_token');
  if (!tok) return;
- // clean URL
  history.replaceState(null, '', location.pathname + location.search);
- // treat like popup result
  onGoogleSignIn({ credential: tok });
  } catch {}
  })();
 
  window.onload = () => {
  window.initSharedTopBar && window.initSharedTopBar();
+ window.SharedLogin && window.SharedLogin.init({});
  const gsiWait = setInterval(() => {
  if (window.google && google.accounts && google.accounts.id) {
  initGoogleIdentity();
  clearInterval(gsiWait);
  }
- },200);
- setTimeout(() => clearInterval(gsiWait),4000);
+ }, 200);
+ setTimeout(() => clearInterval(gsiWait), 4000);
  };
  </script>
 </body>

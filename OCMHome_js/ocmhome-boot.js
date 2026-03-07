@@ -44,7 +44,7 @@
 
  window.onload = () => {
  window.initSharedTopBar && window.initSharedTopBar();
- window.SharedLogin && window.SharedLogin.init({ showSetupForm: true });
+ window.SharedLogin && window.SharedLogin.init({});
  document.body.classList.add('withTopBar');
 
  // Default UI

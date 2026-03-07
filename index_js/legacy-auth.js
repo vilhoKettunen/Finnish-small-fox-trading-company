@@ -11,7 +11,7 @@
  }
 
  function updateLoginTermsWarning_() {
- // Delegate to shared panel helper when available, fall back to direct DOM
+ // Delegate to shared panel helper
  if (typeof window.setLoginTermsWarningVisible_ === 'function') {
      window.setLoginTermsWarningVisible_(!window.googleIdToken);
  } else {
@@ -20,7 +20,6 @@
  }
 
  // Ensure warning updates if some other script overwrites `window.googleIdToken` after this file loads.
- // (Index page has multiple legacy modules that re-initialize globals.)
  (function installGoogleIdTokenWatcher_() {
  try {
  if (window.__loginWarningGoogleIdTokenWatcherInstalled) return;
@@ -80,64 +79,14 @@
  const n = document.getElementById('setupDeletionNote');
  if (n) n.style.display = 'none';
  setupDeletionNoteTimer_ = null;
- },120000);
+ }, 120000);
  }
 
- // expose minimal hooks (used by other modules if needed)
+ // expose minimal hook
  window.updateLoginTermsWarning = window.updateLoginTermsWarning || updateLoginTermsWarning_;
 
- // ===== Account setup submit (required by index.html) =====
- // Some older versions had this inline; index.html still calls it via `onclick="submitSetup()"`.
- window.submitSetup = window.submitSetup || async function submitSetup() {
- const msg = document.getElementById('setupMsg');
- const playerName = String(document.getElementById('setupPlayerName')?.value || '').trim();
- const mailbox = String(document.getElementById('setupMailbox')?.value || '').trim();
-
- if (!window.googleIdToken) {
- if (msg) msg.textContent = 'You need to login first.';
- return;
- }
-
- if (msg) msg.textContent = 'Saving...';
-
- try {
- // Re-use existing update profile endpoint
- await window.apiPost('updateMyProfile', {
- idToken: window.googleIdToken,
- payload: { playerName, mailbox }
- });
-
- // Refresh current user
- const meResp = await fetch(`${window.WEB_APP_URL}?action=me&idToken=${encodeURIComponent(window.googleIdToken)}`);
- const meJson = await meResp.json();
- if (!meJson.ok) throw new Error(meJson.error || 'Backend error');
- window.currentUser = window.normalizeUser(meJson.data.user || {}) || {};
- window.currentUser.isAdmin = !!meJson.data.isAdmin;
-
- // Update UI
- if (msg) msg.textContent = 'Saved.';
- updateLoginTermsWarning_();
- setSetupHighlightAndNote_(window.currentUser);
-
- // Re-evaluate gating logic used in onGoogleSignIn
- const hasSetup = !computeProfileIncomplete_(window.currentUser);
- const passedCaptcha = !!window.currentUser.captchaPassed;
- if (hasSetup && passedCaptcha) {
- localStorage.setItem('vak_captcha_ok', '1');
- try { window.hideRecaptchaWidget(); } catch { }
- try { window.hideSetupShowApp(); } catch { }
- } else {
- localStorage.removeItem('vak_captcha_ok');
- try { window.showSetupOnly(); } catch { }
- try { window.showRecaptchaWidget(); } catch { }
- }
-
- try { await window.refreshPinnedBalanceForActiveTarget(); } catch { }
- try { await window.refreshTopBarBalances(); } catch { }
- } catch (e) {
- if (msg) msg.textContent = 'Error: ' + (e.message || e);
- }
- };
+ // submitSetup is now defined in shared/login-panel.js and available globally.
+ // We do NOT re-define it here to avoid overwriting the shared version.
 
  // ===== Missing UI helpers (ported behavior) =====
  window.showRecaptchaWidget = window.showRecaptchaWidget || function showRecaptchaWidget() {
@@ -168,20 +117,20 @@
  if (g) g.style.display = 'none';
  };
 
- // ===== Balance fetch & pin (needed by login + admin on-behalf) =====
+ // ===== Balance fetch & pin =====
  window.getActiveTarget = window.getActiveTarget || function getActiveTarget() {
  return window.submitForUser || window.currentUser;
  };
 
  window.fetchBalanceForUser = window.fetchBalanceForUser || async function fetchBalanceForUser(user) {
- if (!window.googleIdToken || !user) return0;
+ if (!window.googleIdToken || !user) return 0;
  const qs = new URLSearchParams({ action: 'getBalance', idToken: window.googleIdToken });
  if (user.userId) qs.append('userId', user.userId);
  const r = await fetch(`${window.WEB_APP_URL}?${qs.toString()}`);
  const j = await r.json();
  if (!j.ok) throw new Error(j.error || 'getBalance failed');
- const v = Number(j.data?.balanceBT ?? j.balanceBT ?? j.data?.balance ??0);
- return isNaN(v) ?0 : v;
+ const v = Number(j.data?.balanceBT ?? j.balanceBT ?? j.data?.balance ?? 0);
+ return isNaN(v) ? 0 : v;
  };
 
  window.upsertPinnedBalanceRow = window.upsertPinnedBalanceRow || function upsertPinnedBalanceRow(balanceBT) {
@@ -189,8 +138,8 @@
  window.sellCart = window.sellCart.filter(e => !e.isAccountBalancePinned);
  window.sellCart.unshift({
  name: 'Account Balance',
- qty:1,
- price: Number(balanceBT) ||0,
+ qty: 1,
+ price: Number(balanceBT) || 0,
  isBalance: true,
  isAccountBalancePinned: true,
  source: 'BALANCE'
@@ -200,7 +149,7 @@
  };
 
  window.setCurrentBalance = window.setCurrentBalance || function setCurrentBalance(bal) {
- window.currentBalanceBT = Number(bal) ||0;
+ window.currentBalanceBT = Number(bal) || 0;
  try { window.updateCombinedTotals && window.updateCombinedTotals(); } catch { }
  };
 
@@ -209,13 +158,8 @@
  if (!target || !window.googleIdToken) return;
  try {
  const bal = await window.fetchBalanceForUser(target);
- // Always update the Combined Totals baseline with whatever the active target's balance is.
- // For admins with a target set this will be the target's balance;
- // when no target is set it will be the admin's own balance.
  window.setCurrentBalance(bal);
 
- // No pinned sell row is inserted — balance lives only in Combined Totals (per design).
- // Always strip any stale pinned row that may exist from before this fix.
  if (Array.isArray(window.sellCart)) {
  window.sellCart = window.sellCart.filter(e => !e.isAccountBalancePinned);
  try { window.renderSellList && window.renderSellList(); } catch { }
@@ -251,8 +195,8 @@
 
  window.startLogin = window.startLogin || function startLogin() {
   if (window.google && google.accounts && google.accounts.id) {
-    try { google.accounts.id.prompt(); } catch { window.startFallbackLogin && window.startFallbackLogin(); }
-  } else if (window.startFallbackLogin) window.startFallbackLogin();
+    try { google.accounts.id.prompt(); } catch { }
+  }
  };
 
  window.checkHashForIdToken = window.checkHashForIdToken || function checkHashForIdToken() {
@@ -286,13 +230,16 @@
 
  updateLoginTermsWarning_();
 
+ // ? NEW: evaluate setup form visibility via shared panel
+ window.SharedLogin && window.SharedLogin.evaluateSetupForm(window.currentUser);
+
  window.updateTopBarAuth();
  const adminBtn = document.getElementById('adminPanelBtn');
  if (adminBtn) adminBtn.style.display = window.currentUser.isAdmin ? 'inline' : 'none';
  const ob = document.getElementById('onBehalfSection');
  if (ob) ob.style.display = window.currentUser.isAdmin ? 'block' : 'none';
  const infraSec = document.getElementById('infraInvestSection');
-        if (infraSec) infraSec.style.display = window.currentUser.isAdmin ? 'block' : 'none';
+if (infraSec) infraSec.style.display = window.currentUser.isAdmin ? 'block' : 'none';
 
  if (window.currentUser.isAdmin) { try { await window.adminLoadPlayers(); } catch { } }
 
@@ -322,26 +269,18 @@
  }
  };
 
- // Provide a small wrapper to refresh top-bar balances used by multiple places.
- // Accepts optional opts = { targetBalanceBT: number } so callers can pass an already-fetched
- // target balance without triggering a second network call.
  window.refreshTopBarBalances = window.refreshTopBarBalances || async function refreshTopBarBalances(opts) {
  try {
  const selfBal = (typeof window.fetchBalanceForUser === 'function' && window.currentUser)
   ? await window.fetchBalanceForUser(window.currentUser)
   : (window.currentBalanceBT || 0);
 
- // Always store self-balance so the Send EW modal can read it.
  window.topBalanceSelfBT = selfBal;
 
- // Only overwrite currentBalanceBT (Combined Totals baseline) with the admin's own balance
- // when NO target is set. When a target IS set, refreshPinnedBalanceForActiveTarget owns it.
  if (!window.submitForUser) {
   window.setCurrentBalance && window.setCurrentBalance(selfBal);
  }
 
- // Thread target balance into the top bar chip.
- // opts.targetBalanceBT is provided by the caller (setOnBehalfTarget) to avoid a second fetch.
  const tBal = (opts && opts.targetBalanceBT != null) ? opts.targetBalanceBT : null;
 
  if (window.topbarSetAuthState) {
@@ -356,7 +295,6 @@
  }
  return { selfBal };
  } catch (e) {
- // swallow; callers handle error messages
  return null;
  }
  };

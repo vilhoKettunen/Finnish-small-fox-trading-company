@@ -73,13 +73,16 @@
  function fmt(n) { const v = Number(n) ||0; return v.toFixed(2).replace(/\.?0+$/, ''); }
 
  function setTermsWarningVisible_(visible) {
- const el = document.getElementById('loginTermsWarning');
- if (!el) return;
- el.style.display = visible ? 'block' : 'none';
+     if (typeof window.setLoginTermsWarningVisible_ === 'function') {
+         window.setLoginTermsWarningVisible_(visible);
+     } else {
+     const el = document.getElementById('loginTermsWarning');
+         if (el) el.style.display = visible ? 'block' : 'none';
+     }
  }
 
  function updateTermsWarning_() {
- setTermsWarningVisible_(!googleIdToken);
+     setTermsWarningVisible_(!googleIdToken);
  }
 
  function normalizeResult(j) {
@@ -322,7 +325,11 @@
  updateTermsWarning_();
  const me = await apiGet('me', { idToken: googleIdToken });
  const d = normalizeResult(me);
- st.textContent = 'Logged as ' + (d?.user?.email || '');
+ const user = d?.user || {};
+ st.textContent = 'Logged as ' + (user.playerName || user.email || '');
+
+ // Evaluate setup form (non-blocking on AccountHistory)
+ window.SharedLogin && window.SharedLogin.evaluateSetupForm(user);
 
  // Preload catalog for OCM history details (best-effort)
  await ensureOcmCatalogLoadedForHistory_();
@@ -434,19 +441,6 @@
 
  function handleCredentialResponse(resp) { onGoogleSignIn(resp); }
 
- function startFallbackLogin() {
- const nonce = crypto.getRandomValues(new Uint32Array(1))[0].toString(16);
- const redirectUri = location.origin + location.pathname;
- const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
- + '?client_id=' + encodeURIComponent(OAUTH_CLIENT_ID)
- + '&redirect_uri=' + encodeURIComponent(redirectUri)
- + '&response_type=id_token'
- + '&scope=' + encodeURIComponent('openid email profile')
- + '&nonce=' + encodeURIComponent(nonce)
- + '&prompt=select_account';
- window.location.href = authUrl;
- }
-
  async function onGoogleSignIn(resp) {
  const statusEl = byId('loginStatus');
  googleIdToken = resp && resp.credential;
@@ -469,15 +463,18 @@
  idToken: googleIdToken,
  user,
  isAdmin: !!meJson.data.isAdmin,
- balanceBT: user.balanceBT ||0
+ balanceBT: user.balanceBT || 0
  });
  }
  byId('authStatus').textContent = 'Logged as ' + (user.playerName || user.email || '');
 
+ // Evaluate setup form (non-blocking on AccountHistory)
+ window.SharedLogin && window.SharedLogin.evaluateSetupForm(user);
+
  // Preload catalog for OCM history details (best-effort)
  await ensureOcmCatalogLoadedForHistory_();
 
- page =1;
+ page = 1;
  loadHistory();
  statusEl.textContent = 'Logged in.';
  updateTermsWarning_();
@@ -501,15 +498,15 @@
 
  window.onload = () => {
  window.initSharedTopBar && window.initSharedTopBar();
-  window.SharedLogin && window.SharedLogin.init({ showSetupForm: true });
-  updateTermsWarning_();
+ window.SharedLogin && window.SharedLogin.init({});
+ updateTermsWarning_();
  const gsiWait = setInterval(() => {
  if (window.google && google.accounts && google.accounts.id) {
  initGoogleIdentity();
  clearInterval(gsiWait);
  }
- },200);
- setTimeout(() => clearInterval(gsiWait),4000);
+ }, 200);
+ setTimeout(() => clearInterval(gsiWait), 4000);
  };
  </script>
 </body>

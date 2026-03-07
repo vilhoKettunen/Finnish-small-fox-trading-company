@@ -549,7 +549,7 @@
  const d = me.data || me.result || me;
  S.currentUser = normalizeUser(d.user || d) || {};
  const isAdmin = !!d.isAdmin;
- const bal = Number(S.currentUser.balanceBT ||0);
+ const bal = Number(S.currentUser.balanceBT || 0);
 
  if (window.topbarSetAuthState) {
  window.topbarSetAuthState({ idToken, user: S.currentUser, isAdmin, balanceBT: bal });
@@ -557,13 +557,15 @@
 
  byId('authStatus').textContent = 'Logged as ' + (S.currentUser.playerName || S.currentUser.email || '');
 
+ // ? Evaluate setup form after profile is loaded
+ window.SharedLogin && window.SharedLogin.evaluateSetupForm(S.currentUser);
+
  // Fetch listings only after authentication (anti-bot)
  const fetcher = (window.OCMHome && typeof window.OCMHome.fetchListingsOnceOrRefresh === 'function')
  ? window.OCMHome.fetchListingsOnceOrRefresh
  : null;
- if (fetcher) await fetcher({ force:true });
+ if (fetcher) await fetcher({ force: true });
 
- // Pending trades loader lives in `ocmhome-trades.js` and may not be available if scripts load out-of-order.
  const pendingLoader = (window.OCMHome && typeof window.OCMHome.loadMyPending === 'function')
  ? window.OCMHome.loadMyPending
  : null;

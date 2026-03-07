@@ -6,79 +6,98 @@ window.onload = function () {
     if (window.initSharedTopBar) window.initSharedTopBar();
     document.body.classList.add('withTopBar');
 
-    // Try restoring auth from local storage
-    const savedToken = window.getSavedIdToken ? window.getSavedIdToken() : null;
-    if (savedToken) {
-        window.applyAuthFromToken(savedToken);
-    } else {
-    showLoginArea_();
-  }
+    // Initialize the shared login panel (terms + GSI button + setup form)
+    window.SharedLogin && window.SharedLogin.init({});
 
-    // GSI init
+    // Handle redirect-fallback returning id_token in URL hash
+    try {
+        const hash = String(location.hash || '');
+   if (hash.includes('id_token=')) {
+  const params = new URLSearchParams(hash.replace(/^#/, ''));
+            const tok = params.get('id_token');
+ if (tok) {
+         history.replaceState(null, '', location.pathname + location.search);
+       window.applyAuthFromToken(tok);
+    // GSI init still needed for button render, fall through
+            }
+        }
+    } catch (e) { /* ignore */ }
+
+    // Try restoring auth from local storage (only if no hash token consumed above)
+    if (!location.hash) {
+        const savedToken = window.getSavedIdToken ? window.getSavedIdToken() : null;
+if (savedToken) {
+       window.applyAuthFromToken(savedToken);
+        }
+    }
+
+    // GSI init — renders the Google Sign-In button into #googleBtn (injected by shared panel)
     const gsiWait = setInterval(() => {
         if (window.google && google.accounts && google.accounts.id) {
- clearInterval(gsiWait);
-     google.accounts.id.initialize({
-        client_id: window.GOOGLE_CLIENT_ID || (window.APP_CONFIG && window.APP_CONFIG.GOOGLE_CLIENT_ID) || '',
-        callback: (resp) => {
-if (resp && resp.credential) {
-       window.applyAuthFromToken(resp.credential);
+            clearInterval(gsiWait);
+            google.accounts.id.initialize({
+        client_id: window.OAUTH_CLIENT_ID ||
+         window.GOOGLE_CLIENT_ID ||
+       (window.APP_CONFIG && window.APP_CONFIG.GOOGLE_CLIENT_ID) || '',
+       callback: function (resp) {
+        if (resp && resp.credential) {
+  window.applyAuthFromToken(resp.credential);
         }
-      },
-  auto_select: false
-  });
-        google.accounts.id.renderButton(
+        },
+     auto_select: false,
+    ux_mode: 'popup',
+  use_fedcm_for_prompt: true
+            });
+            google.accounts.id.renderButton(
        document.getElementById('googleBtn'),
-            { theme: 'outline', size: 'large', text: 'sign_in_with_google' }
-    );
+        { theme: 'outline', size: 'large', type: 'standard', shape: 'rectangular', logo_alignment: 'left' }
+       );
         }
-    }, 200);
+ }, 200);
     setTimeout(() => clearInterval(gsiWait), 6000);
-};
-
-window.startFallbackLogin = function () {
- const clientId = window.GOOGLE_CLIENT_ID || (window.APP_CONFIG && window.APP_CONFIG.GOOGLE_CLIENT_ID) || '';
-    const redirectUri = location.origin + location.pathname;
-    const scope = 'openid email profile';
-    const url = `https://accounts.google.com/o/oauth2/v2/auth?response_type=token+id_token&client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}&nonce=${Math.random().toString(36).slice(2)}`;
-    location.href = url;
 };
 
 // Called after token obtained (GSI callback or storage restore)
 window.applyAuthFromToken = async function (idToken) {
-    const statusEl = document.getElementById('loginStatus');
+const statusEl = document.getElementById('loginStatus');
     if (statusEl) statusEl.textContent = 'Verifying…';
     try {
         const r = await window.apiGet('me', { idToken });
         const d = r.data || r.result || r;
         const user = d.user || d;
-        if (window.saveIdToken) window.saveIdToken(idToken);
-        if (window.topbarSetAuthState) {
-            window.topbarSetAuthState({
-        idToken,
-       user,
-      isAdmin:   d.isAdmin || false,
-    balanceBT: user.balanceBT || 0
-      });
-        }
-        hideLoginArea_();
 
-  // Store in EWIns state
-   window.EWIns.state.idToken    = idToken;
-  window.EWIns.state.user    = user;
-      window.EWIns.state.isAdmin    = d.isAdmin || false;
- window.EWIns.state.balance    = user.balanceBT || 0;
+      if (window.saveIdToken) window.saveIdToken(idToken);
+
+   if (window.topbarSetAuthState) {
+            window.topbarSetAuthState({
+            idToken,
+           user,
+     isAdmin:   !!d.isAdmin,
+    balanceBT: user.balanceBT || 0
+     });
+   }
+
+        // Store in EWIns state
+        window.EWIns.state.idToken  = idToken;
+        window.EWIns.state.user   = user;
+        window.EWIns.state.isAdmin  = !!d.isAdmin;
+        window.EWIns.state.balance  = user.balanceBT || 0;
+
+        if (statusEl) statusEl.textContent = '';
+
+      // Evaluate setup form — BLOCKS page content for EWInsurance when profile is incomplete
+        window.SharedLogin && window.SharedLogin.evaluateSetupForm(user);
 
         // Load policies + price sheet in parallel
-        await Promise.all([
-            window.EWIns.loadPolicies(),
-            window.EWIns.loadPriceSheet()
-        ]);
-     window.EWIns.renderAll();
+     await Promise.all([
+  window.EWIns.loadPolicies(),
+  window.EWIns.loadPriceSheet()
+   ]);
+        window.EWIns.renderAll();
+
     } catch (e) {
-        if (statusEl) statusEl.textContent = 'Login failed: ' + e.message;
-        showLoginArea_();
-    }
+    if (statusEl) statusEl.textContent = 'Login failed: ' + e.message;
+  }
 };
 
 window.logout = function () {
@@ -89,15 +108,6 @@ window.logout = function () {
     window.EWIns.state.policies = [];
     const pl = document.getElementById('policyList');
     if (pl) pl.innerHTML = '';
-    showLoginArea_();
+    // Reset panel to logged-out state (shows terms warning + GSI button, hides setup form)
+    window.SharedLogin && window.SharedLogin.evaluateSetupForm(null);
 };
-
-function showLoginArea_() {
-    const a = document.getElementById('googleLoginArea');
-    if (a) a.style.display = '';
-}
-
-function hideLoginArea_() {
-    const a = document.getElementById('googleLoginArea');
-    if (a) a.style.display = 'none';
-}

@@ -221,10 +221,13 @@
  dbgLine(`Auth OK: isAdmin=${isAdmin ? 'true' : 'false'}`);
 
  const b = await fetchBalanceIfLoggedIn();
- S.balanceBT = (b!=null) ? Number(b) : (user && user.balanceBT!=null) ? Number(user.balanceBT) :0;
+ S.balanceBT = (b!=null) ? Number(b) : (user && user.balanceBT!=null) ? Number(user.balanceBT) : 0;
 
  setTopbar();
  showLoginStatus(isAdmin ? 'Logged in (admin).' : 'Logged in.');
+
+ // Evaluate setup form (non-blocking on WorkPayRates)
+ window.SharedLogin && window.SharedLogin.evaluateSetupForm(user);
 
  // init admin module
  if(window.workpayAdmin){

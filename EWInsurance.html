@@ -11,53 +11,21 @@
     <script src="auth-storage.js"></script>
     <script src="api-client.js"></script>
     <script src="topbar.js"></script>
+    <script src="shared/login-panel.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <!-- Styles -->
-<link rel="stylesheet" href="css/site-layout.css">
+    <link rel="stylesheet" href="css/site-layout.css">
     <link rel="stylesheet" href="css/panels-paper.css">
     <link rel="stylesheet" href="css/pages/EWInsurance.css">
 
     <script src="shared/site-decor.js"></script>
+    <script src="shared/site-footer.js"></script>
 </head>
 <body>
-    <!-- Top bar (standard pattern) -->
-    <div id="topBar">
-      <div><strong>Vak Store</strong></div>
-        <button onclick="location.href='index.html'">Store</button>
-        <button onclick="location.href='AccountHistory.html'">Account History</button>
-        <button onclick="location.href='OCMHome.html'">OCM</button>
-        <button onclick="location.href='OCMUser.html'">OCM Customer</button>
- <button id="adminPanelBtn" style="display:none;" onclick="location.href='Admin.html'">Admin Panel</button>
-        <div class="right">
-            <button id="btnLogin" onclick="startFallbackLogin()">Login</button>
-      <div id="orderStatusBall" title="Orders status"></div>
-  <div id="orderPopup">
-  <div style="font-weight:bold;margin-bottom:6px;">Your open orders</div>
- <div id="orderPopupBody" class="small"></div>
-            </div>
-            <span id="topBalanceTarget" class="small balance-chip balance-target" style="display:none;"></span>
-     <span id="topBalance" class="small balance-chip balance-you" style="display:none;"></span>
-            <span id="topUser" class="small"></span>
-<button id="btnLogout" style="display:none;" onclick="logout()">Logout</button>
-   </div>
-    </div>
-    <script>
-      document.body.classList.add('withTopBar');
-        if (window.initSharedTopBar) window.initSharedTopBar();
-    </script>
+    <!-- Top bar injected by topbar.js -->
 
-    <!-- Google login area -->
-    <div id="googleLoginArea" class="section" style="max-width:460px;margin:20px auto;">
- <div id="googleBtn"></div>
-        <div class="login-hint small" style="margin-top:8px;">
- If the Google button does not appear, use fallback:
-        </div>
-        <div>
- <button id="fallbackBtn" type="button" onclick="startFallbackLogin()">Fallback Google Login</button>
-        </div>
-  <div id="loginStatus" class="small"></div>
-    </div>
+    <div id="loginPanelMount"></div>
 
     <h1>?? EW Insurance — Policy Manager</h1>
 
