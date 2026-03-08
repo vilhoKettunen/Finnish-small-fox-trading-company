@@ -7,8 +7,11 @@
  <link rel="icon" href="favicon.ico">
 
  <script src="app-config.js"></script>
+ <script src="auth-storage.js"></script>
  <script src="api-client.js"></script>
  <script src="topbar.js"></script>
+ <script src="shared/login-panel.js"></script>
+ <script src="https://accounts.google.com/gsi/client" async defer></script>
  <link rel="stylesheet" href="css/pages/Leaderboards.css">
  <link rel="stylesheet" href="css/site-layout.css">
  <link rel="stylesheet" href="css/panels-paper.css">
@@ -19,6 +22,8 @@
 </head>
 <body>
  <h1>Leaderboards</h1>
+
+ <div id="loginPanelMount"></div>
 
  <section class="section" aria-label="Leaderboard meta">
  <div class="row">
@@ -31,7 +36,7 @@
  </label>
  <span id="lbStatus" class="small muted" style="margin-left:10px;"></span>
  </div>
- <div class="small" style="margin-top:8px;">Last updated: <span id="lbUpdatedAt" class="mono">�</span></div>
+ <div class="small" style="margin-top:8px;">Last updated: <span id="lbUpdatedAt" class="mono">&mdash;</span></div>
  <div class="small muted" style="margin-top:6px;">Only players who opted in appear here. Half opt-in shows a stable anonymous alias.</div>
  </section>
 
@@ -43,13 +48,13 @@
  <h3>Biggest buy transaction (EW)</h3>
  <table>
  <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
- <tbody id="tb_storeMaxBuyValueBT"></tbody>
+ <tbody id="tb_storeMaxBuyValueEW"></tbody>
  </table>
 
  <h3 style="margin-top:14px;">Biggest sale transaction (EW)</h3>
  <table>
  <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
- <tbody id="tb_storeMaxSellValueBT"></tbody>
+ <tbody id="tb_storeMaxSellValueEW"></tbody>
  </table>
 
  <h3 style="margin-top:14px;">Trades with store</h3>
@@ -61,7 +66,7 @@
 
  <section class="section" aria-label="Store participation" style="margin-top:14px;">
  <h2>Store participation</h2>
- <div class="small muted" style="margin-top:4px;">Values are totals in EW. Period start/end follow Script timezone and start at00:05.</div>
+ <div class="small muted" style="margin-top:4px;">Values are totals in EW. Period start/end follow Script timezone and start at 00:05.</div>
 
  <h3 style="margin-top:14px;">Week bought (EW)</h3>
  <table>
