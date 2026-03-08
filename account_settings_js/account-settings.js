@@ -28,7 +28,6 @@
  }
 
  function updateLoginTermsWarning_() {
- // Plan Q9-B: hide only when logged in AND profile is complete
  const incomplete = !googleIdToken ? true :
  (!String(currentUser?.playerName || '').trim() || !String(currentUser?.mailbox || '').trim());
  if (typeof window.setLoginTermsWarningVisible_ === 'function') {
@@ -149,85 +148,99 @@
  return d.toISOString().replace('T', ' ').replace('Z', '');
  }
 
- function pickStoreFavorite_(side, mode) {
- const st = statsState.stats;
- const fav = st?.store?.favorites?.[side]?.[mode];
- return fav && typeof fav === 'object' ? fav : null;
+ // ?? Store favorites: rank source label ??????????????????????????????????
+ function modeLabel_(mode) {
+ if (mode === 'byQty') return '#1 by quantity';
+ if (mode === 'byValue') return '#1 by EW value';
+ if (mode === 'byRows') return '#1 by distinct requests';
+ return '#1';
  }
 
+ // A2 fix: read from top5.storeTop5, not stats.store.favorites
  function renderStoreFavorites_() {
- const buyMode = String(byId('selStoreBuyMode')?.value || 'byQty');
- const sellMode = String(byId('selStoreSellMode')?.value || 'byQty');
+ const buyMode  = String(byId('selStoreBuyMode')?.value  || 'byValue');
+ const sellMode = String(byId('selStoreSellMode')?.value || 'byValue');
 
- const favBuy = pickStoreFavorite_('buy', buyMode);
- setText('st_storeFavBuyName', favBuy?.itemName || '—');
- setText('st_storeFavBuyQty', favBuy ? fmtNumber_(favBuy.totalQty,0) : '—');
- setText('st_storeFavBuyValue', favBuy ? fmtNumber_(favBuy.totalValueEW,2) : '—');
- setText('st_storeFavBuyRows', favBuy ? fmtNumber_(favBuy.rows,0) : '—');
+ // Update rank source labels
+ const buyRankEl = byId('st_storeFavBuyRank');
+ if (buyRankEl) buyRankEl.textContent = modeLabel_(buyMode);
+ const sellRankEl = byId('st_storeFavSellRank');
+ if (sellRankEl) sellRankEl.textContent = modeLabel_(sellMode);
 
- const favSell = pickStoreFavorite_('sell', sellMode);
- setText('st_storeFavSellName', favSell?.itemName || '—');
- setText('st_storeFavSellQty', favSell ? fmtNumber_(favSell.totalQty,0) : '—');
- setText('st_storeFavSellValue', favSell ? fmtNumber_(favSell.totalValueEW,2) : '—');
- setText('st_storeFavSellRows', favSell ? fmtNumber_(favSell.rows,0) : '—');
+ const favBuy  = statsState.top5?.storeTop5?.buy?.[buyMode]?.[0]  ?? null;
+ const favSell = statsState.top5?.storeTop5?.sell?.[sellMode]?.[0] ?? null;
+
+ setText('st_storeFavBuyName',   favBuy?.itemName  || 'No data');
+ setText('st_storeFavBuyQty',    favBuy  ? fmtNumber_(favBuy.totalQty,    0) : '0');
+ setText('st_storeFavBuyValue',  favBuy  ? fmtNumber_(favBuy.totalValueEW, 2) : '0');
+ setText('st_storeFavBuyRows',   favBuy  ? fmtNumber_(favBuy.rows,      0) : '0');
+
+ setText('st_storeFavSellName',  favSell?.itemName || 'No data');
+ setText('st_storeFavSellQty',   favSell ? fmtNumber_(favSell.totalQty,    0) : '0');
+ setText('st_storeFavSellValue', favSell ? fmtNumber_(favSell.totalValueEW, 2) : '0');
+ setText('st_storeFavSellRows',  favSell ? fmtNumber_(favSell.rows,         0) : '0');
  }
 
+ // A6 fix: empty array returns "No data" instead of "—"
  function fmtList_(arr, lineFn) {
  const a = Array.isArray(arr) ? arr : [];
- if (!a.length) return '—';
+ if (!a.length) return 'No data';
  return a.map((x, i) => lineFn(x, i)).join('\n');
  }
 
+ // A3 fix: corrected OCM property paths to match actual backend schema
  function renderTop5_() {
  const t = statsState.top5;
  if (!t) {
- setText('top5_store_buy_byQty', '—');
- setText('top5_store_buy_byValue', '—');
- setText('top5_store_buy_byRows', '—');
- setText('top5_store_sell_byQty', '—');
- setText('top5_store_sell_byValue', '—');
- setText('top5_store_sell_byRows', '—');
- setText('top5_ocm_counterparties', '—');
- setText('top5_ocm_itemsSold_byCount', '—');
- setText('top5_ocm_itemsSold_byValue', '—');
- setText('top5_ocm_itemsBought_byCount', '—');
- setText('top5_ocm_itemsBought_byValue', '—');
- setText('top5_ocm_pegsUsed_byCount', '—');
- setText('top5_ocm_pegsUsed_byValue', '—');
- setText('top5_ocm_pegsRecv_byCount', '—');
- setText('top5_ocm_pegsRecv_byValue', '—');
+ setText('top5_store_buy_byQty',   'No data');
+ setText('top5_store_buy_byValue', 'No data');
+ setText('top5_store_buy_byRows',  'No data');
+ setText('top5_store_sell_byQty',  'No data');
+ setText('top5_store_sell_byValue', 'No data');
+ setText('top5_store_sell_byRows', 'No data');
+ setText('top5_ocm_counterparties',       'No data');
+ setText('top5_ocm_itemsSold_byCount',    'No data');
+ setText('top5_ocm_itemsSold_byValue',    'No data');
+ setText('top5_ocm_itemsBought_byCount',  'No data');
+ setText('top5_ocm_itemsBought_byValue',  'No data');
+ setText('top5_ocm_pegsUsed_byCount',     'No data');
+ setText('top5_ocm_pegsUsed_byValue',     'No data');
+ setText('top5_ocm_pegsRecv_byCount',     'No data');
+ setText('top5_ocm_pegsRecv_byValue',     'No data');
  return;
  }
 
- const storeBuy = t?.storeTop5?.buy;
+ const storeBuy  = t?.storeTop5?.buy;
  const storeSell = t?.storeTop5?.sell;
 
- const fmtStoreItem_ = (x, i) => `${i +1}. ${x?.itemName || '—'} | qty=${fmtNumber_(x?.totalQty,0)} | value=${fmtNumber_(x?.totalValueEW,2)} | requests=${fmtNumber_(x?.rows,0)}`;
+ const fmtStoreItem_ = (x, i) => `${i + 1}. ${x?.itemName || '—'} | qty=${fmtNumber_(x?.totalQty, 0)} | value=${fmtNumber_(x?.totalValueEW, 2)} | requests=${fmtNumber_(x?.rows, 0)}`;
 
- setText('top5_store_buy_byQty', fmtList_(storeBuy?.byQty, fmtStoreItem_));
+ setText('top5_store_buy_byQty',   fmtList_(storeBuy?.byQty,   fmtStoreItem_));
  setText('top5_store_buy_byValue', fmtList_(storeBuy?.byValue, fmtStoreItem_));
- setText('top5_store_buy_byRows', fmtList_(storeBuy?.byRows, fmtStoreItem_));
+ setText('top5_store_buy_byRows',  fmtList_(storeBuy?.byRows,  fmtStoreItem_));
 
- setText('top5_store_sell_byQty', fmtList_(storeSell?.byQty, fmtStoreItem_));
+ setText('top5_store_sell_byQty',   fmtList_(storeSell?.byQty,   fmtStoreItem_));
  setText('top5_store_sell_byValue', fmtList_(storeSell?.byValue, fmtStoreItem_));
- setText('top5_store_sell_byRows', fmtList_(storeSell?.byRows, fmtStoreItem_));
+ setText('top5_store_sell_byRows',  fmtList_(storeSell?.byRows,  fmtStoreItem_));
 
- const fmtCp_ = (x, i) => `${i +1}. ${x?.playerName || x?.userId || '—'} | trades=${fmtNumber_(x?.tradesCount,0)} | value=${fmtNumber_(x?.totalValueEW,2)}`;
+ const fmtCp_ = (x, i) => `${i + 1}. ${x?.playerName || x?.userId || '—'} | trades=${fmtNumber_(x?.tradesCount ?? x?.count ?? 0, 0)} | value=${fmtNumber_(x?.totalValueEW, 2)}`;
  setText('top5_ocm_counterparties', fmtList_(t?.ocmTop5?.counterparties, fmtCp_));
 
- const fmtOcmItem_ = (x, i) => `${i +1}. ${x?.itemName || '—'} | trades=${fmtNumber_(x?.tradesCount,0)} | value=${fmtNumber_(x?.totalValueEW,2)}`;
- setText('top5_ocm_itemsSold_byCount', fmtList_(t?.ocmTop5?.itemsSoldAsMerchant?.byCount, fmtOcmItem_));
- setText('top5_ocm_itemsSold_byValue', fmtList_(t?.ocmTop5?.itemsSoldAsMerchant?.byValueBT, fmtOcmItem_));
+ const fmtOcmItem_ = (x, i) => `${i + 1}. ${x?.itemName || '—'} | trades=${fmtNumber_(x?.tradesCount, 0)} | value=${fmtNumber_(x?.totalValueEW, 2)}`;
 
- setText('top5_ocm_itemsBought_byCount', fmtList_(t?.ocmTop5?.itemsBoughtAsBuyer?.byCount, fmtOcmItem_));
- setText('top5_ocm_itemsBought_byValue', fmtList_(t?.ocmTop5?.itemsBoughtAsBuyer?.byValueBT, fmtOcmItem_));
+ // A3 fix: itemsSoldAsMerchant, itemsBoughtAsCustomer, pegsUsedAsCustomer, byValueEW
+ setText('top5_ocm_itemsSold_byCount', fmtList_(t?.ocmTop5?.itemsSoldAsMerchant?.byCount,     fmtOcmItem_));
+ setText('top5_ocm_itemsSold_byValue', fmtList_(t?.ocmTop5?.itemsSoldAsMerchant?.byValueEW,   fmtOcmItem_));
 
- const fmtPeg_ = (x, i) => `${i +1}. ${x?.itemName || '—'} | trades=${fmtNumber_(x?.tradesCount,0)} | value=${fmtNumber_(x?.totalValueEW,2)}`;
- setText('top5_ocm_pegsUsed_byCount', fmtList_(t?.ocmTop5?.pegsUsedAsBuyer?.byCount, fmtPeg_));
- setText('top5_ocm_pegsUsed_byValue', fmtList_(t?.ocmTop5?.pegsUsedAsBuyer?.byValueBT, fmtPeg_));
+ setText('top5_ocm_itemsBought_byCount', fmtList_(t?.ocmTop5?.itemsBoughtAsCustomer?.byCount,   fmtOcmItem_));
+ setText('top5_ocm_itemsBought_byValue', fmtList_(t?.ocmTop5?.itemsBoughtAsCustomer?.byValueEW, fmtOcmItem_));
 
- setText('top5_ocm_pegsRecv_byCount', fmtList_(t?.ocmTop5?.pegsReceivedAsMerchant?.byCount, fmtPeg_));
- setText('top5_ocm_pegsRecv_byValue', fmtList_(t?.ocmTop5?.pegsReceivedAsMerchant?.byValueBT, fmtPeg_));
+ const fmtPeg_ = (x, i) => `${i + 1}. ${x?.itemName || '—'} | trades=${fmtNumber_(x?.tradesCount, 0)} | value=${fmtNumber_(x?.totalValueEW, 2)}`;
+ setText('top5_ocm_pegsUsed_byCount', fmtList_(t?.ocmTop5?.pegsUsedAsCustomer?.byCount,       fmtPeg_));
+ setText('top5_ocm_pegsUsed_byValue', fmtList_(t?.ocmTop5?.pegsUsedAsCustomer?.byValueEW,     fmtPeg_));
+
+ setText('top5_ocm_pegsRecv_byCount', fmtList_(t?.ocmTop5?.pegsReceivedAsMerchant?.byCount,   fmtPeg_));
+ setText('top5_ocm_pegsRecv_byValue', fmtList_(t?.ocmTop5?.pegsReceivedAsMerchant?.byValueEW, fmtPeg_));
  }
 
  function renderStats_() {
@@ -243,37 +256,54 @@
  setText('statsUpdatedAt', fmtIso_(statsState.statisticsUpdatedAt || st.computedAt));
 
  // Store
- setText('st_storeTrades', fmtNumber_(st?.store?.tradesWithStoreCount,0));
- setText('st_storeNet', fmtNumber_(st?.store?.netDeltaBT,2));
- setText('st_storeLast', fmtNumber_(st?.store?.lastStoreAt));
- setText('st_storeMaxBuy', fmtNumber_(st?.store?.maxBuyValueEW,2));
- setText('st_storeMaxSell', fmtNumber_(st?.store?.maxSellValueEW,2));
+ setText('st_storeTrades',   fmtNumber_(st?.store?.tradesWithStoreCount, 0));
+ setText('st_storeNet',      fmtNumber_(st?.store?.netDeltaBT, 2));
+ // A1 fix: use fmtIso_ not fmtNumber_ for date field
+ setText('st_storeLast',     fmtIso_(st?.store?.lastStoreAt));
+ setText('st_storeMaxBuy',   fmtNumber_(st?.store?.maxBuyValueEW, 2));
+ setText('st_storeMaxSell',  fmtNumber_(st?.store?.maxSellValueEW, 2));
  renderStoreFavorites_();
 
  // OCM
- setText('st_ocmTrades', fmtNumber_(st?.ocm?.totalTradesCount,0));
- setText('st_ocmCompletedMerchant', fmtNumber_(st?.ocm?.completedByMerchantCount,0));
- setText('st_ocmCompletedAdmin', fmtNumber_(st?.ocm?.completedByAdminCount,0));
- // Merchant/Customer terminology: keep ids unchanged for compatibility
- setText('st_ocmAsBuyer', fmtNumber_(st?.ocm?.asCustomerCount,0));
- setText('st_ocmAsMerchant', fmtNumber_(st?.ocm?.asMerchantCount,0));
- setText('st_ocmTotalValue', fmtNumber_(st?.ocm?.totalValueEW,2));
- setText('st_ocmFees', fmtNumber_(st?.ocm?.feesPaidEW,2));
- setText('st_ocmMax', fmtNumber_(st?.ocm?.maxTradeValueEW,2));
- setText('st_ocmLast', fmtIso_(st?.ocm?.lastTradeAt));
- setText('st_ocmActiveListings', fmtNumber_(st?.ocm?.activeListingsCount,0));
+ setText('st_ocmTrades',             fmtNumber_(st?.ocm?.totalTradesCount, 0));
+ setText('st_ocmCompletedMerchant',  fmtNumber_(st?.ocm?.completedByMerchantCount, 0));
+ setText('st_ocmCompletedAdmin',     fmtNumber_(st?.ocm?.completedByAdminCount, 0));
+ setText('st_ocmAsBuyer',    fmtNumber_(st?.ocm?.asCustomerCount, 0));
+ setText('st_ocmAsMerchant',         fmtNumber_(st?.ocm?.asMerchantCount, 0));
+ setText('st_ocmTotalValue',         fmtNumber_(st?.ocm?.totalValueEW, 2));
+ setText('st_ocmFees',           fmtNumber_(st?.ocm?.feesPaidEW, 2));
+ setText('st_ocmMax',     fmtNumber_(st?.ocm?.maxTradeValueEW, 2));
+ setText('st_ocmLast',  fmtIso_(st?.ocm?.lastTradeAt));
+ setText('st_ocmActiveListings',     fmtNumber_(st?.ocm?.activeListingsCount, 0));
 
- // Counterparty
- const cp = st?.ocm?.favoriteCounterparty;
- setText('st_ocmFavCounterparty', cp?.playerName || '—');
- setText('st_ocmFavCounterpartyCount', cp ? fmtNumber_(cp.tradesCount,0) : '—');
- setText('st_ocmFavCounterpartyValue', cp ? fmtNumber_(cp.totalValueEW,2) : '—');
+ // A4 fix: pull counterparty top5[0] from sidecar — split into merchant (you=customer) and customer (you=merchant)
+ const top5 = statsState.top5;
+ // "Favorite merchant" = the merchant you bought from most = entries where you were the customer
+ // "Favorite customer" = the customer who bought from you most = entries where you were the merchant
+ // The sidecar counterparties array is a unified list; split by role field if available,
+ // otherwise show the same top entry for both (best available approximation).
+ const allCp = Array.isArray(top5?.ocmTop5?.counterparties) ? top5.ocmTop5.counterparties : [];
+ const cpAsMerchant  = allCp.find(x => x?.role === 'merchant' || x?.asMerchant) ?? allCp[0] ?? null;
+ const cpAsCustomer  = allCp.find(x => x?.role === 'customer' || x?.asCustomer) ?? (allCp.length > 1 ? allCp[1] : null) ?? null;
 
- // OCM favorites mirrored into core
- setText('st_ocmFavItemSold', st?.ocm?.favoriteItemSoldAsMerchant?.itemName || '—');
- setText('st_ocmFavItemBought', st?.ocm?.favoriteItemBoughtAsBuyer?.itemName || '—');
- setText('st_ocmFavPegUsed', st?.ocm?.favoritePegUsedAsBuyer?.itemName || '—');
- setText('st_ocmFavPegReceived', st?.ocm?.favoriteItemReceivedAsMerchant?.itemName || '—');
+ setText('st_ocmFavMerchant',       cpAsMerchant?.playerName || cpAsMerchant?.userId || 'No data');
+ setText('st_ocmFavMerchantCount',  cpAsMerchant ? fmtNumber_(cpAsMerchant.tradesCount ?? cpAsMerchant.count ?? 0, 0) : '0');
+ setText('st_ocmFavMerchantValue',  cpAsMerchant ? fmtNumber_(cpAsMerchant.totalValueEW ?? 0, 2) : '0');
+
+ setText('st_ocmFavCustomer',       cpAsCustomer?.playerName || cpAsCustomer?.userId || 'No data');
+ setText('st_ocmFavCustomerCount',  cpAsCustomer ? fmtNumber_(cpAsCustomer.tradesCount ?? cpAsCustomer.count ?? 0, 0) : '0');
+ setText('st_ocmFavCustomerValue',  cpAsCustomer ? fmtNumber_(cpAsCustomer.totalValueEW ?? 0, 2) : '0');
+
+ // A4 fix: pull item/peg favorites from sidecar top5[0]
+ const favSold   = top5?.ocmTop5?.itemsSoldAsMerchant?.byCount?.[0]    ?? null;
+ const favBought = top5?.ocmTop5?.itemsBoughtAsCustomer?.byCount?.[0]  ?? null;
+ const favPegU   = top5?.ocmTop5?.pegsUsedAsCustomer?.byCount?.[0]     ?? null;
+ const favPegR   = top5?.ocmTop5?.pegsReceivedAsMerchant?.byCount?.[0] ?? null;
+
+ setText('st_ocmFavItemSold',    favSold?.itemName   || 'No data');
+ setText('st_ocmFavItemBought',  favBought?.itemName || 'No data');
+ setText('st_ocmFavPegUsed',     favPegU?.itemName   || 'No data');
+ setText('st_ocmFavPegReceived', favPegR?.itemName   || 'No data');
 
  // Top5 panel
  renderTop5_();
@@ -285,7 +315,7 @@
  statisticsUpdatedAt: statsState.statisticsUpdatedAt,
  isComputing: statsState.isComputing
  };
- setText('preStatsRaw', JSON.stringify(dbg, null,2));
+ setText('preStatsRaw', JSON.stringify(dbg, null, 2));
  }
 
  function applyStatsResponse_(d) {
@@ -323,7 +353,6 @@
  applyStatsResponse_(d);
  } catch (e) {
  setText('statsStatus', 'Error loading statistics: ' + (e.message || e));
- // keep old state visible
  if (refreshBtn) refreshBtn.disabled = false;
  }
  }
@@ -335,7 +364,6 @@
 
  currentUser = user;
 
- // Use getBalance for the chip
  let bal = 0;
  try {
  const b = await window.apiGet('getBalance', { idToken: googleIdToken });
@@ -357,12 +385,9 @@
  setText('authStatus', 'Logged in as ' + (user.playerName || user.email || user.userId));
  applyUserToForm(user);
 
- // Evaluate setup form (non-blocking on AccountSettings)
  window.SharedLogin && window.SharedLogin.evaluateSetupForm(user);
- // Also update terms warning with profile completeness
  updateLoginTermsWarning_();
 
- // Now load statistics (cached)
  await loadStats_(false);
  }
 
@@ -393,18 +418,16 @@
  }
  }
 
- // ===== Private hash-to-token helper (BUG 2 fix) =====
  function checkHashForIdToken_() {
-   if (!location.hash) return;
-   const params = new URLSearchParams(location.hash.slice(1));
-   const idt = params.get('id_token');
-   if (idt) {
-     onLoginFromToken_(idt, false);
+ if (!location.hash) return;
+ const params = new URLSearchParams(location.hash.slice(1));
+ const idt = params.get('id_token');
+ if (idt) {
+ onLoginFromToken_(idt, false);
  history.replaceState({}, document.title, location.pathname + location.search);
-   }
+ }
  }
 
- // ===== Google Identity =====
  window.initGoogleIdentity = function initGoogleIdentity() {
  if (!window.google || !google.accounts || !google.accounts.id) return;
  google.accounts.id.initialize({
@@ -421,30 +444,27 @@
  };
 
  window.onGoogleSignIn = function onGoogleSignIn(resp) {
-   // Allow manual login at any time (user may want to re-login or switch accounts)
-   const token = resp && resp.credential;
-   if (!token) {
+ const token = resp && resp.credential;
+ if (!token) {
  setText('loginStatus', 'Login error: no credential');
-     return;
-   }
-   onLoginFromToken_(token, false);
+ return;
+ }
+ onLoginFromToken_(token, false);
  };
 
  async function tryRestoreAuth_() {
  if (!window.initAuthFromStorage) return;
  const r = await window.initAuthFromStorage();
  if (r && r.ok && r.idToken) {
-   // BUG 3a fix: set _autoLoginDone only AFTER successful login, not before
-   try {
-     await onLoginFromToken_(r.idToken, true);
-     window._autoLoginDone = true;
-   } catch (e) {
- // onLoginFromToken_ failed — leave _autoLoginDone false so GSI can retry
-   }
+ try {
+ await onLoginFromToken_(r.idToken, true);
+ window._autoLoginDone = true;
+ } catch (e) {
+ // leave _autoLoginDone false so GSI can retry
+ }
  }
  }
 
- // ===== Save handlers =====
  async function saveProfile_(patch) {
  if (!googleIdToken) throw new Error('Not logged in');
  setBusy(true);
@@ -459,7 +479,6 @@
  setText('saveMsg', 'Saved.');
  } catch (e) {
  const msg = (e.message || e);
- // If user is editing leaderboard preference, show error near it too.
  if (patch && Object.prototype.hasOwnProperty.call(patch, 'leaderboardConsent')) {
  setText('leaderboardMsg', 'Error: ' + msg);
  }
@@ -479,7 +498,6 @@
  confirm: true
  });
 
- // clear local auth
  window.clearSavedIdToken && window.clearSavedIdToken();
  googleIdToken = null;
  updateLoginTermsWarning_();
@@ -490,7 +508,6 @@
  }
 
  setText('deleteMsg', 'Account deleted.');
- // Redirect home
  location.href = 'index.html';
  } catch (e) {
  setText('deleteMsg', 'Error: ' + (e.message || e));
@@ -573,7 +590,6 @@
  }
  });
 
- // Delete dialog
  const dlg = byId('dlgDelete');
  byId('btnDeleteAccount').addEventListener('click', () => {
  if (!dlg) return;
@@ -606,25 +622,22 @@
  window.SharedLogin && window.SharedLogin.init({});
  document.body.classList.add('withTopBar');
 
- // initial warning state
  updateLoginTermsWarning_();
 
  wireUi_();
  checkHashForIdToken_();
 
- // init GSI
  const gsiWait = setInterval(() => {
-   if (!document.getElementById('googleBtn')) return; // BUG 4: wait until SharedLogin has injected the button
-   if (window.google && google.accounts && google.accounts.id) {
+ if (!document.getElementById('googleBtn')) return;
+ if (window.google && google.accounts && google.accounts.id) {
  window.initGoogleIdentity && window.initGoogleIdentity();
-     clearInterval(gsiWait);
-   }
+ clearInterval(gsiWait);
+ }
  }, 200);
  setTimeout(() => clearInterval(gsiWait), 4000);
 
  await tryRestoreAuth_();
 
- // If not logged in, still show stats placeholder
  if (!googleIdToken) {
  setText('statsStatus', 'Login to see statistics.');
  renderStats_();

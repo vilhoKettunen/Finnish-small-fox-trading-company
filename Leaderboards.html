@@ -26,121 +26,162 @@
  <div id="loginPanelMount"></div>
 
  <section class="section" aria-label="Leaderboard meta">
- <div class="row">
- <button id="btnRefreshLeaderboards" type="button">Refresh</button>
- <label class="small" style="margin-left:10px;">View:
- <select id="lbMode">
- <option value="current" selected>Current periods</option>
- <option value="record">Record periods</option>
- </select>
- </label>
- <span id="lbStatus" class="small muted" style="margin-left:10px;"></span>
- </div>
- <div class="small" style="margin-top:8px;">Last updated: <span id="lbUpdatedAt" class="mono">&mdash;</span></div>
- <div class="small muted" style="margin-top:6px;">Only players who opted in appear here. Half opt-in shows a stable anonymous alias.</div>
+  <div class="row">
+   <button id="btnRefreshLeaderboards" type="button">Refresh</button>
+   <span id="lbStatus" class="small muted" style="margin-left:10px;"></span>
+  </div>
+  <div class="small" style="margin-top:8px;">Last updated: <span id="lbUpdatedAt" class="mono">&mdash;</span></div>
+  <div class="small muted" style="margin-top:6px;">Only players who opted in appear here. Half opt-in shows a stable anonymous alias.</div>
  </section>
 
  <div class="grid2">
- <div>
- <section class="section" aria-label="Store leaderboards">
- <h2>Store</h2>
+  <div>
+   <section class="section" aria-label="Store leaderboards">
+    <h2>Store</h2>
 
- <h3>Biggest buy transaction (EW)</h3>
- <table>
- <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
- <tbody id="tb_storeMaxBuyValueEW"></tbody>
+    <h3>Biggest buy transaction (EW)</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
+     <tbody id="tb_storeMaxBuyValueEW"></tbody>
+    </table>
+
+    <h3 style="margin-top:14px;">Biggest sale transaction (EW)</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
+     <tbody id="tb_storeMaxSellValueEW"></tbody>
+    </table>
+
+    <h3 style="margin-top:14px;">Trades with store</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Trades</th></tr></thead>
+     <tbody id="tb_storeTradesWithStoreCount"></tbody>
+    </table>
+   </section>
+
+   <section class="section" aria-label="Store participation" style="margin-top:14px;">
+    <h2>Store participation</h2>
+    <div class="small muted" style="margin-top:4px;">Values are totals in EW. Period start/end follow Script timezone and start at 00:05.</div>
+
+ <!-- Current period sub-section -->
+    <h3 style="margin-top:16px;">Current period</h3>
+    <div class="small muted" style="margin-bottom:8px;">Ongoing periods show "Ongoing" for end date.</div>
+
+    <h3 style="margin-top:10px;">Week bought (EW)</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
+     <tbody id="tb_weekBoughtEW"></tbody>
+    </table>
+
+    <h3 style="margin-top:14px;">Week sold (EW)</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
+     <tbody id="tb_weekSoldEW"></tbody>
+    </table>
+
+    <h3 style="margin-top:14px;">Month bought (EW)</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
+     <tbody id="tb_monthBoughtEW"></tbody>
+  </table>
+
+    <h3 style="margin-top:14px;">Month sold (EW)</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
+     <tbody id="tb_monthSoldEW"></tbody>
+    </table>
+
+    <h3 style="margin-top:14px;">Year bought (EW)</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
+     <tbody id="tb_yearBoughtEW"></tbody>
  </table>
 
- <h3 style="margin-top:14px;">Biggest sale transaction (EW)</h3>
- <table>
- <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
- <tbody id="tb_storeMaxSellValueEW"></tbody>
- </table>
+    <h3 style="margin-top:14px;">Year sold (EW)</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
+     <tbody id="tb_yearSoldEW"></tbody>
+    </table>
 
- <h3 style="margin-top:14px;">Trades with store</h3>
- <table>
- <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Trades</th></tr></thead>
- <tbody id="tb_storeTradesWithStoreCount"></tbody>
- </table>
- </section>
+    <!-- Record period sub-section -->
+    <h3 style="margin-top:28px;">Record period</h3>
+    <div class="small muted" style="margin-bottom:8px;">
+     All-time best period for each window. Records are finalized at period rollover.
+"Ongoing..." means the record was set in an incomplete period that is still accumulating.
+    </div>
 
- <section class="section" aria-label="Store participation" style="margin-top:14px;">
- <h2>Store participation</h2>
- <div class="small muted" style="margin-top:4px;">Values are totals in EW. Period start/end follow Script timezone and start at 00:05.</div>
+ <h3 style="margin-top:10px;">Week bought — record (EW)</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
+     <tbody id="tb_record_weekBoughtEW"></tbody>
+    </table>
 
- <h3 style="margin-top:14px;">Week bought (EW)</h3>
- <table>
- <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
- <tbody id="tb_weekBoughtEW"></tbody>
- </table>
+    <h3 style="margin-top:14px;">Week sold — record (EW)</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
+<tbody id="tb_record_weekSoldEW"></tbody>
+    </table>
 
- <h3 style="margin-top:14px;">Week sold (EW)</h3>
- <table>
- <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
- <tbody id="tb_weekSoldEW"></tbody>
- </table>
+    <h3 style="margin-top:14px;">Month bought — record (EW)</h3>
+    <table>
+  <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
+     <tbody id="tb_record_monthBoughtEW"></tbody>
+    </table>
 
- <h3 style="margin-top:14px;">Month bought (EW)</h3>
- <table>
- <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
- <tbody id="tb_monthBoughtEW"></tbody>
- </table>
+    <h3 style="margin-top:14px;">Month sold — record (EW)</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
+     <tbody id="tb_record_monthSoldEW"></tbody>
+    </table>
 
- <h3 style="margin-top:14px;">Month sold (EW)</h3>
- <table>
- <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
- <tbody id="tb_monthSoldEW"></tbody>
- </table>
+    <h3 style="margin-top:14px;">Year bought — record (EW)</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
+  <tbody id="tb_record_yearBoughtEW"></tbody>
+    </table>
 
- <h3 style="margin-top:14px;">Year bought (EW)</h3>
- <table>
- <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
- <tbody id="tb_yearBoughtEW"></tbody>
- </table>
+    <h3 style="margin-top:14px;">Year sold — record (EW)</h3>
+  <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
+   <tbody id="tb_record_yearSoldEW"></tbody>
+    </table>
+   </section>
+  </div>
 
- <h3 style="margin-top:14px;">Year sold (EW)</h3>
- <table>
- <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
- <tbody id="tb_yearSoldEW"></tbody>
- </table>
- </section>
- </div>
+  <div>
+   <section class="section" aria-label="OCM leaderboards">
+    <h2>OCM</h2>
 
- <div>
- <section class="section" aria-label="OCM leaderboards">
- <h2>OCM</h2>
+    <h3>Trades as customer</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Trades</th></tr></thead>
+     <tbody id="tb_ocmAsCustomerCount"></tbody>
+    </table>
 
- <h3>Trades as customer</h3>
- <table>
- <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Trades</th></tr></thead>
- <tbody id="tb_ocmAsCustomerCount"></tbody>
- </table>
+    <h3 style="margin-top:14px;">Trades as merchant</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Trades</th></tr></thead>
+     <tbody id="tb_ocmAsMerchantCount"></tbody>
+    </table>
 
- <h3 style="margin-top:14px;">Trades as merchant</h3>
- <table>
- <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Trades</th></tr></thead>
- <tbody id="tb_ocmAsMerchantCount"></tbody>
- </table>
+    <h3 style="margin-top:14px;">Fees paid (merchant-side) (EW)</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Fees</th></tr></thead>
+     <tbody id="tb_ocmFeesPaidEW"></tbody>
+    </table>
 
- <h3 style="margin-top:14px;">Fees paid (merchant-side) (EW)</h3>
- <table>
- <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Fees</th></tr></thead>
- <tbody id="tb_ocmFeesPaidEW"></tbody>
- </table>
+    <h3 style="margin-top:14px;">Largest trade value (EW)</h3>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
+     <tbody id="tb_ocmMaxTradeValueEW"></tbody>
+    </table>
 
- <h3 style="margin-top:14px;">Largest trade value (EW)</h3>
- <table>
- <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
- <tbody id="tb_ocmMaxTradeValueEW"></tbody>
- </table>
-
- <h3 style="margin-top:14px;">Total trade value (EW)</h3>
- <table>
- <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
- <tbody id="tb_ocmTotalValueEW"></tbody>
- </table>
- </section>
- </div>
+  <h3 style="margin-top:14px;">Total trade value (EW)</h3>
+    <table>
+<thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
+     <tbody id="tb_ocmTotalValueEW"></tbody>
+    </table>
+   </section>
+  </div>
  </div>
 </body>
 </html>
