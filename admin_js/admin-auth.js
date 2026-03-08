@@ -10,8 +10,9 @@ window.initLogin = function initLogin() {
   google.accounts.id.initialize({
  client_id: Admin.OAUTH_CLIENT_ID,
       callback: cred => window.onLogin(cred.credential),
-  ux_mode: 'popup'
-  });
+  ux_mode: 'popup',
+  auto_select: true
+});
   const area = byId('loginBtnArea');
         if (area) google.accounts.id.renderButton(area, { theme: 'outline', size: 'medium' });
     };

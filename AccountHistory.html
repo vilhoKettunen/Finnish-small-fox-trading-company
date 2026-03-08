@@ -1,701 +1,520 @@
 <!DOCTYPE html>
 <html>
 <head>
- <meta charset="UTF-8">
- <title>Account History</title>
- <meta name="viewport" content="width=device-width,initial-scale=1">
- <link rel="stylesheet" href="css/pages/AccountHistory.css">
- <link rel="stylesheet" href="css/site-layout.css">
- <link rel="stylesheet" href="css/panels-paper.css">
- <script src="shared/site-decor.js"></script>
- <script src="shared/site-footer.js"></script>
- <script src="app-config.js"></script>
- <script src="https://accounts.google.com/gsi/client" async defer></script>
- <script src="topbar.js"></script>
- <script src="shared/login-panel.js"></script>
- <script src="api-client.js"></script>
+    <meta charset="UTF-8">
+    <title>Account History</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="css/pages/AccountHistory.css">
+    <link rel="stylesheet" href="css/site-layout.css">
+    <link rel="stylesheet" href="css/panels-paper.css">
+    <script src="shared/site-decor.js"></script>
+    <script src="shared/site-footer.js"></script>
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="topbar.js"></script>
+    <script src="shared/login-panel.js"></script>
+    <script src="api-client.js"></script>
 </head>
 <body>
- <!-- Shared top bar injected by topbar.js -->
-
- <div id="loginPanelMount"></div>
-
- <h1>History</h1>
- <div id="authStatus" class="small">Checking auth...</div>
-
- <div class="row">
- <label>
- Mode:
- <select id="historyMode">
- <option value="ACCOUNT" selected>Account history</option>
- <option value="OCM">OCM trades history</option>
- </select>
- </label>
-
- <label>From: <input id="dtFrom" type="date"></label>
- <label>To: <input id="dtTo" type="date"></label>
-
- <label>
- Page size:
- <select id="pgSize">
- <option>20</option>
- <option selected>50</option>
- <option>100</option>
- <option>200</option>
- <option>500</option>
- </select>
- </label>
-
- <button id="btnLoad" class="green">Load</button>
- <span id="msg" class="small"></span>
- </div>
-
- <table>
- <thead id="thead"></thead>
- <tbody id="tb"></tbody>
- </table>
-
- <div class="row">
- <button id="prev">Prev</button>
- <span id="pgInfo" class="small"></span>
- <button id="next">Next</button>
- </div>
-
- <script>
- let googleIdToken = null;
- let page =1;
- const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '857098772457-kuvq861sa844esf2jc4b7av1pnlmnn1c.apps.googleusercontent.com';
-
- // OCM catalog cache for stk/ind display
- let ocmCatalog = null;
-
- function byId(x) { return document.getElementById(x); }
- function fmt(n) { const v = Number(n) ||0; return v.toFixed(2).replace(/\.?0+$/, ''); }
-
- function setTermsWarningVisible_(visible) {
-     if (typeof window.setLoginTermsWarningVisible_ === 'function') {
-         window.setLoginTermsWarningVisible_(visible);
-     } else {
-     const el = document.getElementById('loginTermsWarning');
-         if (el) el.style.display = visible ? 'block' : 'none';
-     }
- }
-
- function updateTermsWarning_() {
-     setTermsWarningVisible_(!googleIdToken);
- }
-
- function normalizeResult(j) {
- // standardize to "data" first, then fall back
- if (j && j.data != null) return j.data;
- if (j && j.result != null) return j.result;
- return j;
- }
-
- function formatDatePretty(iso) {
- if (!iso) return '';
- const d = new Date(iso);
- if (isNaN(d.getTime())) return iso;
- const dd = String(d.getDate()).padStart(2, '0');
- const mm = String(d.getMonth() +1).padStart(2, '0');
- const yyyy = d.getFullYear();
- const hh = String(d.getHours()).padStart(2, '0');
- const mi = String(d.getMinutes()).padStart(2, '0');
- return `${dd}-${mm}-${yyyy}, ${hh}:${mi}`;
- }
-
- function tryParseDetails(detailsJson) {
- if (!detailsJson) return null;
- try { return JSON.parse(detailsJson); } catch { return null; }
- }
-
- function formatQtyStkInd_(qty, stackSize) {
- const qRaw = Number(qty ||0);
- const q = isFinite(qRaw) ? Math.max(0, Math.round(qRaw)) :0;
- const ssRaw = Number(stackSize ||1);
- const ss = (isFinite(ssRaw) && ssRaw >1) ? Math.round(ssRaw) :1;
-
- if (ss <=1) return `${q} ind`;
-
- const stk = Math.floor(q / ss);
- const ind = q % ss;
- if (stk >0 && ind >0) return `${stk} stk + ${ind} ind`;
- if (stk >0 && ind ===0) return `${stk} stk`;
- return `${ind} ind`;
- }
-
- async function ensureOcmCatalogLoadedForHistory_() {
- if (Array.isArray(ocmCatalog) && ocmCatalog.length) return;
- try {
- const r = await apiGet('ocmGetCatalogSnapshot', {});
- const d = normalizeResult(r);
- const items = d?.items || [];
- ocmCatalog = items.map(x => ({
- name: String(x?.name || '').trim(),
- bundleSize: Number(x?.bundleSize ||1) ||1
- }));
- } catch {
- ocmCatalog = [];
- }
- }
-
- function getBundleSizeFromCatalog_(name) {
- const q = String(name || '').trim().toLowerCase();
- if (!q || !Array.isArray(ocmCatalog)) return null;
- const it = ocmCatalog.find(i => String(i.name || '').trim().toLowerCase() === q);
- const bs = Number(it?.bundleSize ||0) ||0;
- return bs >1 ? bs : null;
- }
-
- function buildItemsListHtml(items) {
- if (!Array.isArray(items) || !items.length) {
- return '<div class="history-empty-msg">Nothing</div>';
- }
- return items.map(it => {
- const name = it.itemName || it.name || 'Unknown item';
- const qty = Number(it.qty || it.quantity ||0);
- const bundle = it.bundleSize && Number(it.bundleSize) >1 ? `x${Number(it.bundleSize)}` : 'x';
- const price = it.priceBT || it.price;
- const qtyStr = `${qty}${bundle}`;
- const priceStr = price != null ? ` (${price} 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- )` : '';
- return `<div class="history-item-line"><span class="qty">${qtyStr}</span>${name}<span class="small">${priceStr}</span></div>`;
- }).join('');
- }
-
- function setHeaders() {
- const mode = byId('historyMode').value;
- const thead = byId('thead');
-
- if (mode === 'OCM') {
- thead.innerHTML = `
- <tr>
- <th>Date</th>
- <th>TradeId</th>
- <th>Trader</th>
- <th>Completed By</th>
- <th>Total Value (EW)</th>
- <th>Details</th>
- </tr>`;
- } else {
- thead.innerHTML = `
- <tr>
- <th>Date</th>
- <th>TxId</th>
- <th>Type</th>
- <th>Delta EW</th>
- <th>Balance After</th>
- <th>Details</th>
- </tr>`;
- }
- }
-
- function renderDetailsRow(mainRow, html) {
- const existing = mainRow.nextElementSibling;
- if (existing && existing.classList.contains('history-details-row')) {
- existing.remove();
- const btn = mainRow.querySelector('button[data-details-toggle]');
- if (btn) btn.textContent = 'See details';
- return;
- }
-
- const detailsTr = document.createElement('tr');
- detailsTr.className = 'history-details-row';
- const td = document.createElement('td');
- td.colSpan =6;
- td.innerHTML = html;
- detailsTr.appendChild(td);
- mainRow.parentNode.insertBefore(detailsTr, mainRow.nextSibling);
-
- const btn = mainRow.querySelector('button[data-details-toggle]');
- if (btn) btn.textContent = 'Hide details';
- }
-
- function renderAccountDetailsHtml(h) {
- const d = tryParseDetails(h.detailsJson);
- const hasStructured = d && (d.carts || d.totals || d.manualBalanceDeltaBT != null || d.kind);
- if (!hasStructured) return '<div class="history-details-box"><div class="history-empty-msg">No detailed breakdown is available for this transaction.</div></div>';
-
- // Insurance transactions: render dedicated panel
- if (d.kind === 'INSURANCE') {
-   return renderInsuranceDetailsHtml(h, d);
- }
-
- const carts = d.carts || {};
- const buy = carts.buy || [];
- const sell = carts.sell || [];
- const totals = d.totals || {};
- const net = Number(totals.netEW || 0);
- const manual = d.manualBalanceDeltaBT != null ? Number(d.manualBalanceDeltaBT) : null;
-
- const deltaStr = fmt(h.deltaBT || 0);
- const prettyAt = formatDatePretty(h.at || '');
-
- // afterEW: use expected value from detailsJson if present, else fall back to recorded balanceAfterBT
- const hasAfterEW = d.afterEW != null && isFinite(Number(d.afterEW));
- const balanceAfterLabel = hasAfterEW ? 'Balance After (expected)' : 'Balance After (recorded)';
- const balanceAfterValue = hasAfterEW ? fmt(d.afterEW) : fmt(h.balanceAfterBT || 0);
-
- // creator field
- const creatorRaw = String(d.creator || '');
- const creatorLabel = creatorRaw === 'Admin' ? 'Admin (on behalf of)' : (creatorRaw === 'User' ? 'User' : null);
-
- return `<div class="history-details-box">
- <div class="small" style="margin-bottom:6px;">Date: <strong>${prettyAt || (h.at || '')}</strong></div>
- <div class="small" style="margin-bottom:6px;">Delta: <strong>${deltaStr} EW</strong> &nbsp;|&nbsp; ${balanceAfterLabel}: <strong>${balanceAfterValue} EW</strong></div>
- ${creatorLabel ? `<div class="small" style="margin-bottom:6px;">Submitted by: <strong>${creatorLabel}</strong></div>` : ''}
- <div class="history-details-grid">
- <div class="history-details-col">
- <h4>Items bought</h4>
- ${buildItemsListHtml(buy)}
- </div>
- <div class="history-details-col">
- <h4>Items sold</h4>
- ${buildItemsListHtml(sell)}
- </div>
- </div>
- <div class="small" style="margin-top:6px;">
- Net from items: <strong>${fmt(net)} EW</strong>${manual != null ? ` &nbsp;|&nbsp; Manual adj: <strong>${fmt(manual)} EW</strong>` : ''}${creatorLabel ? ` &nbsp;|&nbsp; Creator: <strong>${creatorLabel}</strong>` : ''}
- </div>
- </div>`;
- }
-
- function renderInsuranceDetailsHtml(h, d) {
- const prettyAt = formatDatePretty(h.at || '');
- const deltaStr = fmt(h.deltaBT || 0);
- const balanceAfterValue = fmt(h.balanceAfterBT || 0);
-
- const creatorRaw = String(d.creator || '');
- const creatorLabel = creatorRaw === 'Admin' ? 'Admin (on behalf of)' : (creatorRaw === 'User' ? 'User' : (creatorRaw || null));
-
- // Determine type label from txType or h.type
- const txType = String(h.type || '').toUpperCase();
- let typeLabel = txType;
- if (txType === 'INSURANCE_DEPOSIT') typeLabel = 'Insurance Deposit';
- else if (txType === 'INSURANCE_WITHDRAW_PARTIAL') typeLabel = 'Insurance Withdrawal (Partial)';
- else if (txType === 'INSURANCE_WITHDRAW_ALL') typeLabel = 'Insurance Withdrawal (Full)';
- else if (txType === 'INSURANCE_WITHDRAW_METALS') typeLabel = 'Insurance Metals Withdrawal';
-
- const policyId = d.insuranceId || '';
- const units = d.units != null ? d.units : (d.withdrawUnits != null ? d.withdrawUnits : null);
- const cost = d.cost != null ? fmt(d.cost) : null;
- const credit = d.credit != null ? fmt(d.credit) : null;
-
- return `<div class="history-details-box">
- <div class="small" style="margin-bottom:6px;">Date: <strong>${prettyAt || (h.at || '')}</strong></div>
- <div class="small" style="margin-bottom:6px;">Type: <strong>${typeLabel}</strong></div>
- <div class="small" style="margin-bottom:6px;">Delta: <strong>${deltaStr} EW</strong> &nbsp;|&nbsp; Balance After: <strong>${balanceAfterValue} EW</strong></div>
- ${creatorLabel ? `<div class="small" style="margin-bottom:6px;">Submitted by: <strong>${creatorLabel}</strong></div>` : ''}
- ${policyId ? `<div class="small" style="margin-bottom:6px;">Policy ID: <strong>${policyId}</strong></div>` : ''}
- ${units != null ? `<div class="small" style="margin-bottom:6px;">Units: <strong>${units}</strong></div>` : ''}
- ${cost != null ? `<div class="small" style="margin-bottom:6px;">Cost: <strong>${cost} EW</strong></div>` : ''}
- ${credit != null ? `<div class="small" style="margin-bottom:6px;">Credit: <strong>${credit} EW</strong></div>` : ''}
- </div>`;
- }
-
- function tryParseDetails(detailsJson) {
- if (!detailsJson) return null;
- try { return JSON.parse(detailsJson); } catch { return null; }
- }
-
- function formatQtyStkInd_(qty, stackSize) {
- const qRaw = Number(qty ||0);
- const q = isFinite(qRaw) ? Math.max(0, Math.round(qRaw)) :0;
- const ssRaw = Number(stackSize ||1);
- const ss = (isFinite(ssRaw) && ssRaw >1) ? Math.round(ssRaw) :1;
-
- if (ss <=1) return `${q} ind`;
-
- const stk = Math.floor(q / ss);
- const ind = q % ss;
- if (stk >0 && ind >0) return `${stk} stk + ${ind} ind`;
- if (stk >0 && ind ===0) return `${stk} stk`;
- return `${ind} ind`;
- }
-
- async function ensureOcmCatalogLoadedForHistory_() {
- if (Array.isArray(ocmCatalog) && ocmCatalog.length) return;
- try {
- const r = await apiGet('ocmGetCatalogSnapshot', {});
- const d = normalizeResult(r);
- const items = d?.items || [];
- ocmCatalog = items.map(x => ({
- name: String(x?.name || '').trim(),
- bundleSize: Number(x?.bundleSize ||1) ||1
- }));
- } catch {
- ocmCatalog = [];
- }
- }
-
- function getBundleSizeFromCatalog_(name) {
- const q = String(name || '').trim().toLowerCase();
- if (!q || !Array.isArray(ocmCatalog)) return null;
- const it = ocmCatalog.find(i => String(i.name || '').trim().toLowerCase() === q);
- const bs = Number(it?.bundleSize ||0) ||0;
- return bs >1 ? bs : null;
- }
-
- function buildItemsListHtml(items) {
- if (!Array.isArray(items) || !items.length) {
- return '<div class="history-empty-msg">Nothing</div>';
- }
- return items.map(it => {
- const name = it.itemName || it.name || 'Unknown item';
- const qty = Number(it.qty || it.quantity ||0);
- const bundle = it.bundleSize && Number(it.bundleSize) >1 ? `x${Number(it.bundleSize)}` : 'x';
- const price = it.priceBT || it.price;
- const qtyStr = `${qty}${bundle}`;
- const priceStr = price != null ? ` (${price} 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- )` : '';
- return `<div class="history-item-line"><span class="qty">${qtyStr}</span>${name}<span class="small">${priceStr}</span></div>`;
- }).join('');
- }
-
- function setHeaders() {
- const mode = byId('historyMode').value;
- const thead = byId('thead');
-
- if (mode === 'OCM') {
- thead.innerHTML = `
- <tr>
- <th>Date</th>
- <th>TradeId</th>
- <th>Trader</th>
- <th>Completed By</th>
- <th>Total Value (EW)</th>
- <th>Details</th>
- </tr>`;
- } else {
- thead.innerHTML = `
- <tr>
- <th>Date</th>
- <th>TxId</th>
- <th>Type</th>
- <th>Delta EW</th>
- <th>Balance After</th>
- <th>Details</th>
- </tr>`;
- }
- }
-
- function renderDetailsRow(mainRow, html) {
- const existing = mainRow.nextElementSibling;
- if (existing && existing.classList.contains('history-details-row')) {
- existing.remove();
- const btn = mainRow.querySelector('button[data-details-toggle]');
- if (btn) btn.textContent = 'See details';
- return;
- }
-
- const detailsTr = document.createElement('tr');
- detailsTr.className = 'history-details-row';
- const td = document.createElement('td');
- td.colSpan =6;
- td.innerHTML = html;
- detailsTr.appendChild(td);
- mainRow.parentNode.insertBefore(detailsTr, mainRow.nextSibling);
-
- const btn = mainRow.querySelector('button[data-details-toggle]');
- if (btn) btn.textContent = 'Hide details';
- }
-
- function renderAccountDetailsHtml(h) {
- const d = tryParseDetails(h.detailsJson);
- const hasStructured = d && (d.carts || d.totals || d.manualBalanceDeltaBT != null || d.kind);
- if (!hasStructured) return '<div class="history-details-box"><div class="history-empty-msg">No detailed breakdown is available for this transaction.</div></div>';
-
- // Insurance transactions: render dedicated panel
- if (d.kind === 'INSURANCE') {
-   return renderInsuranceDetailsHtml(h, d);
- }
-
- const carts = d.carts || {};
- const buy = carts.buy || [];
- const sell = carts.sell || [];
- const totals = d.totals || {};
- const net = Number(totals.netEW || 0);
- const manual = d.manualBalanceDeltaBT != null ? Number(d.manualBalanceDeltaBT) : null;
-
- const deltaStr = fmt(h.deltaBT || 0);
- const prettyAt = formatDatePretty(h.at || '');
-
- // afterEW: use expected value from detailsJson if present, else fall back to recorded balanceAfterBT
- const hasAfterEW = d.afterEW != null && isFinite(Number(d.afterEW));
- const balanceAfterLabel = hasAfterEW ? 'Balance After (expected)' : 'Balance After (recorded)';
- const balanceAfterValue = hasAfterEW ? fmt(d.afterEW) : fmt(h.balanceAfterBT || 0);
-
- // creator field
- const creatorRaw = String(d.creator || '');
- const creatorLabel = creatorRaw === 'Admin' ? 'Admin (on behalf of)' : (creatorRaw === 'User' ? 'User' : null);
-
- return `<div class="history-details-box">
- <div class="small" style="margin-bottom:6px;">Date: <strong>${prettyAt || (h.at || '')}</strong></div>
- <div class="small" style="margin-bottom:6px;">Delta: <strong>${deltaStr} EW</strong> &nbsp;|&nbsp; ${balanceAfterLabel}: <strong>${balanceAfterValue} EW</strong></div>
- ${creatorLabel ? `<div class="small" style="margin-bottom:6px;">Submitted by: <strong>${creatorLabel}</strong></div>` : ''}
- <div class="history-details-grid">
- <div class="history-details-col">
- <h4>Items bought</h4>
- ${buildItemsListHtml(buy)}
- </div>
- <div class="history-details-col">
- <h4>Items sold</h4>
- ${buildItemsListHtml(sell)}
- </div>
- </div>
- <div class="small" style="margin-top:6px;">
- Net from items: <strong>${fmt(net)} EW</strong>${manual != null ? ` &nbsp;|&nbsp; Manual adj: <strong>${fmt(manual)} EW</strong>` : ''}${creatorLabel ? ` &nbsp;|&nbsp; Creator: <strong>${creatorLabel}</strong>` : ''}
- </div>
- </div>`;
- }
-
- function renderInsuranceDetailsHtml(h, d) {
- const prettyAt = formatDatePretty(h.at || '');
- const deltaStr = fmt(h.deltaBT || 0);
- const balanceAfterValue = fmt(h.balanceAfterBT || 0);
-
- const creatorRaw = String(d.creator || '');
- const creatorLabel = creatorRaw === 'Admin' ? 'Admin (on behalf of)' : (creatorRaw === 'User' ? 'User' : (creatorRaw || null));
-
- // Determine type label from txType or h.type
- const txType = String(h.type || '').toUpperCase();
- let typeLabel = txType;
- if (txType === 'INSURANCE_DEPOSIT') typeLabel = 'Insurance Deposit';
- else if (txType === 'INSURANCE_WITHDRAW_PARTIAL') typeLabel = 'Insurance Withdrawal (Partial)';
- else if (txType === 'INSURANCE_WITHDRAW_ALL') typeLabel = 'Insurance Withdrawal (Full)';
- else if (txType === 'INSURANCE_WITHDRAW_METALS') typeLabel = 'Insurance Metals Withdrawal';
-
- const policyId = d.insuranceId || '';
- const units = d.units != null ? d.units : (d.withdrawUnits != null ? d.withdrawUnits : null);
- const cost = d.cost != null ? fmt(d.cost) : null;
- const credit = d.credit != null ? fmt(d.credit) : null;
-
- return `<div class="history-details-box">
- <div class="small" style="margin-bottom:6px;">Date: <strong>${prettyAt || (h.at || '')}</strong></div>
- <div class="small" style="margin-bottom:6px;">Type: <strong>${typeLabel}</strong></div>
- <div class="small" style="margin-bottom:6px;">Delta: <strong>${deltaStr} EW</strong> &nbsp;|&nbsp; Balance After: <strong>${balanceAfterValue} EW</strong></div>
- ${creatorLabel ? `<div class="small" style="margin-bottom:6px;">Submitted by: <strong>${creatorLabel}</strong></div>` : ''}
- ${policyId ? `<div class="small" style="margin-bottom:6px;">Policy ID: <strong>${policyId}</strong></div>` : ''}
- ${units != null ? `<div class="small" style="margin-bottom:6px;">Units: <strong>${units}</strong></div>` : ''}
- ${cost != null ? `<div class="small" style="margin-bottom:6px;">Cost: <strong>${cost} EW</strong></div>` : ''}
- ${credit != null ? `<div class="small" style="margin-bottom:6px;">Credit: <strong>${credit} EW</strong></div>` : ''}
- </div>`;
- }
-
- async function ensureAuth() {
- const st = byId('authStatus');
- const saved = window.getSavedIdToken && window.getSavedIdToken();
- if (!saved) {
- googleIdToken = null;
- updateTermsWarning_();
- st.textContent = 'Not logged in. Open index.html and login.';
- throw new Error('no token');
- }
- googleIdToken = saved;
- updateTermsWarning_();
- const me = await apiGet('me', { idToken: googleIdToken });
- const d = normalizeResult(me);
- const user = d?.user || {};
- st.textContent = 'Logged as ' + (user.playerName || user.email || '');
-
- // Evaluate setup form (non-blocking on AccountHistory)
- window.SharedLogin && window.SharedLogin.evaluateSetupForm(user);
-
- // Preload catalog for OCM history details (best-effort)
- await ensureOcmCatalogLoadedForHistory_();
- }
-
- async function loadHistory() {
- setHeaders();
-
- const msg = byId('msg'); msg.textContent = 'Loading...';
- const size = Number(byId('pgSize').value ||50);
- const since = byId('dtFrom').value || '';
- const until = byId('dtTo').value || '';
- const mode = byId('historyMode').value;
-
- // Ensure catalog present if user is in OCM mode
- if (mode === 'OCM') await ensureOcmCatalogLoadedForHistory_();
-
- const action = (mode === 'OCM') ? 'ocmGetHistory' : 'getHistory';
-
- try {
- const j = await apiGet(action, { idToken: googleIdToken, page, pageSize: size, since, until });
- const d = normalizeResult(j);
-
- const arr = d?.items || [];
- const total = Number(d?.total ||0);
-
- const tb = byId('tb'); tb.innerHTML = '';
-
- arr.forEach(h => {
- const tr = document.createElement('tr');
- const prettyAt = formatDatePretty(h.at || '');
-
- if (mode === 'OCM') {
- const detailsRaw = h.detailsJson || '';
- const hasDetails = !!tryParseDetails(detailsRaw);
-
- tr.innerHTML = `
- <td>${prettyAt || (h.at || '')}</td>
- <td>${h.tradeId || ''}</td>
- <td>${h.traderName || ''}</td>
- <td>${h.completedBy || ''}</td>
- <td>${fmt(h.totalValueEW ||0)}</td>
- <td>${hasDetails ? `<button type="button" data-details-toggle="1">See details</button>` : `<span class="small">No details</span>`}</td>
- `;
-
- if (hasDetails) {
- tr.querySelector('button[data-details-toggle]').addEventListener('click', () => {
- renderDetailsRow(tr, renderOcmDetailsHtml(h));
- });
- }
- } else {
- const detailsRaw = h.detailsJson || '';
- const hasDetails = !!tryParseDetails(detailsRaw);
-
- // Balance After: prefer afterEW from detailsJson, fall back to recorded balanceAfterBT
- const d = tryParseDetails(detailsRaw);
- const balAfterDisplay = (d && d.afterEW != null && isFinite(Number(d.afterEW)))
-     ? fmt(d.afterEW)
-: fmt(h.balanceAfterBT || 0);
-
- tr.innerHTML = `
- <td>${prettyAt || (h.at || '')}</td>
- <td>${h.txId || ''}</td>
- <td>${h.type || ''}</td>
- <td>${fmt(h.deltaBT ||0)}</td>
- <td>${balAfterDisplay}</td>
- <td>${hasDetails ? `<button type="button" data-details-toggle="1">See details</button>` : `<span class="small">No details</span>`}</td>
- `;
-
- if (hasDetails) {
- tr.querySelector('button[data-details-toggle]').addEventListener('click', () => {
- renderDetailsRow(tr, renderAccountDetailsHtml(h));
- });
- }
- }
-
- tb.appendChild(tr);
- });
-
- const pages = total && size ? Math.ceil(total / size) : (arr.length < size ? page : page +1);
- byId('pgInfo').textContent = `Page ${page} / ${pages || '?'}`;
- msg.textContent = `Loaded ${arr.length}.`;
- } catch (e) {
- msg.textContent = 'Error: ' + (e.message || e);
- }
- }
-
- byId('historyMode').onchange = () => { page =1; loadHistory(); };
- byId('btnLoad').onclick = () => { page =1; loadHistory(); };
- byId('prev').onclick = () => { if (page >1) { page--; loadHistory(); } };
- byId('next').onclick = () => { page++; loadHistory(); };
-
- (async () => { try { await ensureAuth(); loadHistory(); } catch { } })();
-
- function initGoogleIdentity() {
- if (!window.google || !google.accounts || !google.accounts.id) return;
- google.accounts.id.initialize({
- client_id: OAUTH_CLIENT_ID,
- callback: handleCredentialResponse,
- ux_mode: 'popup',
- auto_select: false,
- use_fedcm_for_prompt: true
- });
- google.accounts.id.renderButton(
- document.getElementById('googleBtn'),
- { theme: 'outline', size: 'large', type: 'standard', shape: 'rectangular', logo_alignment: 'left' }
- );
- }
-
- function handleCredentialResponse(resp) { onGoogleSignIn(resp); }
-
- async function onGoogleSignIn(resp) {
- const statusEl = byId('loginStatus');
- googleIdToken = resp && resp.credential;
- updateTermsWarning_();
- if (!googleIdToken) { statusEl.textContent = 'Login error: no credential'; return; }
- statusEl.textContent = 'Verifying token...';
- try {
- const tResp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`);
- if (!tResp.ok) throw new Error('tokeninfo failed ' + tResp.status);
- const info = await tResp.json();
- if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
- window.saveIdToken && window.saveIdToken(googleIdToken);
- statusEl.textContent = 'Loading profile...';
- const meResp = await fetch(`${WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
- const meJson = await meResp.json();
- if (!meJson.ok) throw new Error(meJson.error || 'Backend error');
- const user = meJson.data.user || {};
- if (window.topbarSetAuthState) {
- window.topbarSetAuthState({
- idToken: googleIdToken,
- user,
- isAdmin: !!meJson.data.isAdmin,
- balanceBT: user.balanceBT || 0
- });
- }
- byId('authStatus').textContent = 'Logged as ' + (user.playerName || user.email || '');
-
- // Evaluate setup form (non-blocking on AccountHistory)
- window.SharedLogin && window.SharedLogin.evaluateSetupForm(user);
-
- // Preload catalog for OCM history details (best-effort)
- await ensureOcmCatalogLoadedForHistory_();
-
- page = 1;
- loadHistory();
- statusEl.textContent = 'Logged in.';
- updateTermsWarning_();
- } catch (e) {
- statusEl.textContent = 'Login error: ' + e.message;
- }
- }
-
- window.onTopbarAuthChanged = function (info) {
- googleIdToken = info.idToken;
- updateTermsWarning_();
- if (!info.idToken) {
- byId('authStatus').textContent = 'Not logged in.';
- byId('tb').innerHTML = '';
- } else {
- byId('authStatus').textContent = 'Logged as ' + ((info.user && (info.user.playerName || info.user.email)) || '');
- page =1;
- loadHistory();
- }
- };
-
- window.onload = () => {
- window.initSharedTopBar && window.initSharedTopBar();
- window.SharedLogin && window.SharedLogin.init({});
- updateTermsWarning_();
- const gsiWait = setInterval(() => {
- if (window.google && google.accounts && google.accounts.id) {
- initGoogleIdentity();
- clearInterval(gsiWait);
- }
- }, 200);
- setTimeout(() => clearInterval(gsiWait), 4000);
- };
- </script>
+    <!-- Shared top bar injected by topbar.js -->
+
+    <div id="loginPanelMount"></div>
+
+    <h1>History</h1>
+    <div id="authStatus" class="small">Checking auth...</div>
+
+    <div class="row">
+        <label>
+            Mode:
+            <select id="historyMode">
+                <option value="ACCOUNT" selected>Account history</option>
+                <option value="OCM">OCM trades history</option>
+            </select>
+        </label>
+
+        <label>From: <input id="dtFrom" type="date"></label>
+        <label>To: <input id="dtTo" type="date"></label>
+
+        <label>
+            Page size:
+            <select id="pgSize">
+                <option>20</option>
+                <option selected>50</option>
+                <option>100</option>
+                <option>200</option>
+                <option>500</option>
+            </select>
+        </label>
+
+        <button id="btnLoad" class="green">Load</button>
+        <span id="msg" class="small"></span>
+    </div>
+
+    <table>
+        <thead id="thead"></thead>
+        <tbody id="tb"></tbody>
+    </table>
+
+    <div class="row">
+        <button id="prev">Prev</button>
+        <span id="pgInfo" class="small"></span>
+        <button id="next">Next</button>
+    </div>
+
+    <script>
+        let googleIdToken = null;
+        let page = 1;
+        const OAUTH_CLIENT_ID = window.OAUTH_CLIENT_ID || '857098772457-kuvq861sa844esf2jc4b7av1pnlmnn1c.apps.googleusercontent.com';
+
+        // OCM catalog cache for stk/ind display
+        let ocmCatalog = null;
+
+        function byId(x) { return document.getElementById(x); }
+        function fmt(n) { const v = Number(n) || 0; return v.toFixed(2).replace(/\.?0+$/, ''); }
+
+        function setTermsWarningVisible_(visible) {
+            if (typeof window.setLoginTermsWarningVisible_ === 'function') {
+                window.setLoginTermsWarningVisible_(visible);
+            } else {
+                const el = document.getElementById('loginTermsWarning');
+                if (el) el.style.display = visible ? 'block' : 'none';
+            }
+        }
+
+        function updateTermsWarning_() {
+            setTermsWarningVisible_(!googleIdToken);
+        }
+
+        function normalizeResult(j) {
+            if (j && j.data != null) return j.data;
+            if (j && j.result != null) return j.result;
+            return j;
+        }
+
+        function formatDatePretty(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            if (isNaN(d.getTime())) return iso;
+            const dd = String(d.getDate()).padStart(2, '0');
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const yyyy = d.getFullYear();
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mi = String(d.getMinutes()).padStart(2, '0');
+            return `${dd}-${mm}-${yyyy}, ${hh}:${mi}`;
+        }
+
+        function tryParseDetails(detailsJson) {
+            if (!detailsJson) return null;
+            try { return JSON.parse(detailsJson); } catch { return null; }
+        }
+
+        function formatQtyStkInd_(qty, stackSize) {
+            const qRaw = Number(qty || 0);
+            const q = isFinite(qRaw) ? Math.max(0, Math.round(qRaw)) : 0;
+            const ssRaw = Number(stackSize || 1);
+            const ss = (isFinite(ssRaw) && ssRaw > 1) ? Math.round(ssRaw) : 1;
+            if (ss <= 1) return `${q} ind`;
+            const stk = Math.floor(q / ss);
+            const ind = q % ss;
+            if (stk > 0 && ind > 0) return `${stk} stk + ${ind} ind`;
+            if (stk > 0 && ind === 0) return `${stk} stk`;
+            return `${ind} ind`;
+        }
+
+        async function ensureOcmCatalogLoadedForHistory_() {
+            if (Array.isArray(ocmCatalog) && ocmCatalog.length) return;
+            try {
+                const r = await apiGet('ocmGetCatalogSnapshot', {});
+                const d = normalizeResult(r);
+                const items = d?.items || [];
+                ocmCatalog = items.map(x => ({
+                    name: String(x?.name || '').trim(),
+                    bundleSize: Number(x?.bundleSize || 1) || 1
+                }));
+            } catch {
+                ocmCatalog = [];
+            }
+        }
+
+        function getBundleSizeFromCatalog_(name) {
+            const q = String(name || '').trim().toLowerCase();
+            if (!q || !Array.isArray(ocmCatalog)) return null;
+            const it = ocmCatalog.find(i => String(i.name || '').trim().toLowerCase() === q);
+            const bs = Number(it?.bundleSize || 0) || 0;
+            return bs > 1 ? bs : null;
+        }
+
+        function buildItemsListHtml(items) {
+            if (!Array.isArray(items) || !items.length) {
+                return '<div class="history-empty-msg">Nothing</div>';
+            }
+            return items.map(it => {
+                const name = it.itemName || it.name || 'Unknown item';
+                const qty = Number(it.qty || it.quantity || 0);
+                const bundle = it.bundleSize && Number(it.bundleSize) > 1 ? `x${Number(it.bundleSize)}` : 'x';
+                const price = it.priceBT || it.price;
+                const qtyStr = `${qty}${bundle}`;
+                const priceStr = price != null ? ` (${price} EW)` : '';
+                return `<div class="history-item-line"><span class="qty">${qtyStr}</span>${name}<span class="small">${priceStr}</span></div>`;
+            }).join('');
+        }
+
+        function setHeaders() {
+            const mode = byId('historyMode').value;
+            const thead = byId('thead');
+            if (mode === 'OCM') {
+                thead.innerHTML = `<tr>
+              <th>Date</th><th>TradeId</th><th>Trader</th>
+              <th>Completed By</th><th>Total Value (EW)</th><th>Details</th>
+            </tr>`;
+            } else {
+                thead.innerHTML = `<tr>
+              <th>Date</th><th>TxId</th><th>Type</th>
+              <th>Delta EW</th><th>Balance After</th><th>Details</th>
+            </tr>`;
+            }
+        }
+
+        function renderDetailsRow(mainRow, html) {
+            const existing = mainRow.nextElementSibling;
+            if (existing && existing.classList.contains('history-details-row')) {
+                existing.remove();
+                const btn = mainRow.querySelector('button[data-details-toggle]');
+                if (btn) btn.textContent = 'See details';
+                return;
+            }
+            const detailsTr = document.createElement('tr');
+            detailsTr.className = 'history-details-row';
+            const td = document.createElement('td');
+            td.colSpan = 6;
+            td.innerHTML = html;
+            detailsTr.appendChild(td);
+            mainRow.parentNode.insertBefore(detailsTr, mainRow.nextSibling);
+            const btn = mainRow.querySelector('button[data-details-toggle]');
+            if (btn) btn.textContent = 'Hide details';
+        }
+
+        // ── OCM trade details (ported from admin-history.js renderOcmDetailsHtml) ──
+        function renderOcmDetailsHtml(h) {
+            const d = tryParseDetails(h.detailsJson);
+            if (!d) return '<div class="history-details-box"><div class="history-empty-msg">No details available.</div></div>';
+
+            const side = d.side || '';
+            const listing = d.listing || {};
+            const payment = d.payment || {};
+            const req = d.request || {};
+            const pricing = d.pricing || {};
+            const prettyAt = formatDatePretty(h.at || '');
+
+            const tradedItemName = String(listing.itemName || '').trim();
+            const tradedQty = Number(req.requestedUnits || 0) || 0;
+
+            // Use catalog bundleSize when available; fall back to listing.stackSize
+            const tradedCatalogBs = getBundleSizeFromCatalog_(tradedItemName);
+            const tradedFallbackSs = Number(listing.stackSize || 1) || 1;
+            const tradedStackSize = (tradedCatalogBs && tradedCatalogBs > 1) ? tradedCatalogBs : (tradedFallbackSs > 1 ? tradedFallbackSs : 1);
+            const tradedQtyLabel = formatQtyStkInd_(tradedQty, tradedStackSize);
+
+            // Payment item section (only for ITEM payment method)
+            let payItemPart = '';
+            if (String(payment.method || '').toUpperCase() === 'ITEM') {
+                const payName = String(payment.payItemName || payment.payItem || '').trim();
+                const payQty = Number(payment.payItemQty || 0) || 0;
+                const payBs = getBundleSizeFromCatalog_(payName) || 1;
+                const payQtyLabel = formatQtyStkInd_(payQty, payBs);
+                payItemPart = ` &nbsp;|&nbsp; Pay item: <strong>${payQtyLabel} ${payName}</strong>`;
+            }
+
+            const canonicalEW = (Number(payment.canonicalEW ?? payment.payTotalEW ?? h.totalValueEW ?? 0)).toFixed(2);
+            const customer = d.Customer || {};
+            const merchant = d.Merchant || {};
+
+            return `<div class="history-details-box">
+            <div class="small" style="margin-bottom:6px;">Date: <strong>${prettyAt || (h.at || '')}</strong>${side ? ` &nbsp;<span class="pill-lite">${side}</span>` : ''}</div>
+            <div class="small" style="margin-bottom:6px;">Item: <strong>${tradedItemName}</strong> &nbsp;|&nbsp; Qty: <strong>${tradedQtyLabel}</strong> &nbsp;|&nbsp; Type: <strong>${listing.type || ''}</strong></div>
+            <div class="small" style="margin-bottom:6px;">Payment: <strong>${payment.method || 'EW'}</strong>${payItemPart} &nbsp;|&nbsp; Total: <strong>${canonicalEW} EW</strong></div>
+            ${pricing.pricingBasis ? `<div class="small" style="margin-bottom:6px;">Pricing basis: <strong>${pricing.pricingBasis}</strong></div>` : ''}
+            ${customer.playerName ? `<div class="small" style="margin-bottom:6px;">Customer: <strong>${customer.playerName}</strong></div>` : ''}
+            ${merchant.playerName ? `<div class="small" style="margin-bottom:6px;">Merchant: <strong>${merchant.playerName}</strong></div>` : ''}
+          </div>`;
+        }
+
+        // ── Account / store transaction details ──────────────────────────────────
+        function renderAccountDetailsHtml(h) {
+            const d = tryParseDetails(h.detailsJson);
+            const hasStructured = d && (d.carts || d.totals || d.manualBalanceDeltaBT != null || d.kind);
+            if (!hasStructured) return '<div class="history-details-box"><div class="history-empty-msg">No detailed breakdown is available for this transaction.</div></div>';
+
+            if (d.kind === 'INSURANCE') {
+                return renderInsuranceDetailsHtml(h, d);
+            }
+
+            const carts = d.carts || {};
+            const buy = carts.buy || [];
+            const sell = carts.sell || [];
+            const totals = d.totals || {};
+            const net = Number(totals.netEW || 0);
+            const manual = d.manualBalanceDeltaBT != null ? Number(d.manualBalanceDeltaBT) : null;
+            const deltaStr = fmt(h.deltaBT || 0);
+            const prettyAt = formatDatePretty(h.at || '');
+            const hasAfterEW = d.afterEW != null && isFinite(Number(d.afterEW));
+            const balanceAfterLabel = hasAfterEW ? 'Balance After (expected)' : 'Balance After (recorded)';
+            const balanceAfterValue = hasAfterEW ? fmt(d.afterEW) : fmt(h.balanceAfterBT || 0);
+            const creatorRaw = String(d.creator || '');
+            const creatorLabel = creatorRaw === 'Admin' ? 'Admin (on behalf of)' : (creatorRaw === 'User' ? 'User' : null);
+
+            return `<div class="history-details-box">
+            <div class="small" style="margin-bottom:6px;">Date: <strong>${prettyAt || (h.at || '')}</strong></div>
+            <div class="small" style="margin-bottom:6px;">Delta: <strong>${deltaStr} EW</strong> &nbsp;|&nbsp; ${balanceAfterLabel}: <strong>${balanceAfterValue} EW</strong></div>
+            ${creatorLabel ? `<div class="small" style="margin-bottom:6px;">Submitted by: <strong>${creatorLabel}</strong></div>` : ''}
+            <div class="history-details-grid">
+              <div class="history-details-col"><h4>Items bought</h4>${buildItemsListHtml(buy)}</div>
+              <div class="history-details-col"><h4>Items sold</h4>${buildItemsListHtml(sell)}</div>
+            </div>
+            <div class="small" style="margin-top:6px;">
+              Net from items: <strong>${fmt(net)} EW</strong>${manual != null ? ` &nbsp;|&nbsp; Manual adj: <strong>${fmt(manual)} EW</strong>` : ''}${creatorLabel ? ` &nbsp;|&nbsp; Creator: <strong>${creatorLabel}</strong>` : ''}
+            </div>
+          </div>`;
+        }
+
+        // ── Insurance transaction details ────────────────────────────────────────
+        function renderInsuranceDetailsHtml(h, d) {
+            const prettyAt = formatDatePretty(h.at || '');
+            const deltaStr = fmt(h.deltaBT || 0);
+            const balanceAfterValue = fmt(h.balanceAfterBT || 0);
+            const creatorRaw = String(d.creator || '');
+            const creatorLabel = creatorRaw === 'Admin' ? 'Admin (on behalf of)' : (creatorRaw === 'User' ? 'User' : (creatorRaw || null));
+            const txType = String(h.type || '').toUpperCase();
+            let typeLabel = txType;
+            if (txType === 'INSURANCE_DEPOSIT') typeLabel = 'Insurance Deposit';
+            else if (txType === 'INSURANCE_WITHDRAW_PARTIAL') typeLabel = 'Insurance Withdrawal (Partial)';
+            else if (txType === 'INSURANCE_WITHDRAW_ALL') typeLabel = 'Insurance Withdrawal (Full)';
+            else if (txType === 'INSURANCE_WITHDRAW_METALS') typeLabel = 'Insurance Metals Withdrawal';
+            const policyId = d.insuranceId || '';
+            const units = d.units != null ? d.units : (d.withdrawUnits != null ? d.withdrawUnits : null);
+            const cost = d.cost != null ? fmt(d.cost) : null;
+            const credit = d.credit != null ? fmt(d.credit) : null;
+
+            return `<div class="history-details-box">
+            <div class="small" style="margin-bottom:6px;">Date: <strong>${prettyAt || (h.at || '')}</strong></div>
+            <div class="small" style="margin-bottom:6px;">Type: <strong>${typeLabel}</strong></div>
+            <div class="small" style="margin-bottom:6px;">Delta: <strong>${deltaStr} EW</strong> &nbsp;|&nbsp; Balance After: <strong>${balanceAfterValue} EW</strong></div>
+            ${creatorLabel ? `<div class="small" style="margin-bottom:6px;">Submitted by: <strong>${creatorLabel}</strong></div>` : ''}
+            ${policyId ? `<div class="small" style="margin-bottom:6px;">Policy ID: <strong>${policyId}</strong></div>` : ''}
+            ${units != null ? `<div class="small" style="margin-bottom:6px;">Units: <strong>${units}</strong></div>` : ''}
+            ${cost != null ? `<div class="small" style="margin-bottom:6px;">Cost: <strong>${cost} EW</strong></div>` : ''}
+            ${credit != null ? `<div class="small" style="margin-bottom:6px;">Credit: <strong>${credit} EW</strong></div>` : ''}
+          </div>`;
+        }
+
+        // ── Auth restore ─────────────────────────────────────────────────────────
+        // Reads stored token, calls action=me, updates topbar, then loads history.
+        // Sets _autoLoginDone = true ONLY on success so the GSI callback is not suppressed on failure.
+        async function tryRestoreAuth_() {
+            const st = byId('authStatus');
+            if (!window.initAuthFromStorage) return;
+            try {
+                const res = await window.initAuthFromStorage();
+                if (!res || !res.ok || !res.idToken) {
+                    st.textContent = 'Not logged in.';
+                    updateTermsWarning_();
+                    return; // leave _autoLoginDone false — GSI / manual login must still work
+                }
+                googleIdToken = res.idToken;
+                updateTermsWarning_();
+
+                const me = await apiGet('me', { idToken: googleIdToken });
+                const d = normalizeResult(me);
+                const user = d?.user || {};
+
+                st.textContent = 'Logged as ' + (user.playerName || user.email || '');
+
+                if (window.topbarSetAuthState) {
+                    window.topbarSetAuthState({ idToken: googleIdToken, user, isAdmin: !!d.isAdmin, balanceBT: Number(user.balanceBT || 0) });
+                }
+                // Refresh cookie sliding window
+                window.saveIdToken && window.saveIdToken(googleIdToken);
+                // Mark done ONLY on success — suppresses redundant GSI auto_select callback
+                window._autoLoginDone = true;
+
+                window.SharedLogin && window.SharedLogin.evaluateSetupForm(user);
+                await ensureOcmCatalogLoadedForHistory_();
+                await loadHistory();
+            } catch (e) {
+                // Backend rejected token — clear cookie, leave _autoLoginDone false
+                window.clearSavedIdToken && window.clearSavedIdToken();
+                googleIdToken = null;
+                byId('authStatus').textContent = 'Not logged in.';
+                updateTermsWarning_();
+                // _autoLoginDone stays false — user can still log in via Google button
+            }
+        }
+
+        async function loadHistory() {
+            if (!googleIdToken) { byId('msg').textContent = 'Not logged in.'; return; }
+            setHeaders();
+
+            const msg = byId('msg'); msg.textContent = 'Loading...';
+            const size = Number(byId('pgSize').value || 50);
+            const since = byId('dtFrom').value || '';
+            const until = byId('dtTo').value || '';
+            const mode = byId('historyMode').value;
+
+            if (mode === 'OCM') await ensureOcmCatalogLoadedForHistory_();
+
+            const action = (mode === 'OCM') ? 'ocmGetHistory' : 'getHistory';
+
+            try {
+                const j = await apiGet(action, { idToken: googleIdToken, page, pageSize: size, since, until });
+                const d = normalizeResult(j);
+
+                const arr = d?.items || [];
+                const total = Number(d?.total || 0);
+
+                const tb = byId('tb'); tb.innerHTML = '';
+
+                arr.forEach(h => {
+                    const tr = document.createElement('tr');
+                    const prettyAt = formatDatePretty(h.at || '');
+
+                    if (mode === 'OCM') {
+                        const detailsRaw = h.detailsJson || '';
+                        const hasDetails = !!tryParseDetails(detailsRaw);
+                        tr.innerHTML = `
+                  <td>${prettyAt || (h.at || '')}</td>
+                  <td>${h.tradeId || ''}</td>
+                  <td>${h.traderName || ''}</td>
+                  <td>${h.completedBy || ''}</td>
+                  <td>${fmt(h.totalValueEW || 0)}</td>
+                  <td>${hasDetails ? `<button type="button" data-details-toggle="1">See details</button>` : `<span class="small">No details</span>`}</td>`;
+                        if (hasDetails) {
+                            tr.querySelector('button[data-details-toggle]').addEventListener('click', () => {
+                                renderDetailsRow(tr, renderOcmDetailsHtml(h));
+                            });
+                        }
+                    } else {
+                        const detailsRaw = h.detailsJson || '';
+                        const hasDetails = !!tryParseDetails(detailsRaw);
+                        const dParsed = tryParseDetails(detailsRaw);
+                        const balAfterDisplay = (dParsed && dParsed.afterEW != null && isFinite(Number(dParsed.afterEW)))
+                            ? fmt(dParsed.afterEW)
+                            : fmt(h.balanceAfterBT || 0);
+                        tr.innerHTML = `
+                  <td>${prettyAt || (h.at || '')}</td>
+                  <td>${h.txId || ''}</td>
+                  <td>${h.type || ''}</td>
+                  <td>${fmt(h.deltaBT || 0)}</td>
+                  <td>${balAfterDisplay}</td>
+                  <td>${hasDetails ? `<button type="button" data-details-toggle="1">See details</button>` : `<span class="small">No details</span>`}</td>`;
+                        if (hasDetails) {
+                            tr.querySelector('button[data-details-toggle]').addEventListener('click', () => {
+                                renderDetailsRow(tr, renderAccountDetailsHtml(h));
+                            });
+                        }
+                    }
+                    tb.appendChild(tr);
+                });
+
+                const pages = total && size ? Math.ceil(total / size) : (arr.length < size ? page : page + 1);
+                byId('pgInfo').textContent = `Page ${page} / ${pages || '?'}`;
+                msg.textContent = `Loaded ${arr.length}.`;
+            } catch (e) {
+                byId('msg').textContent = 'Error: ' + (e.message || e);
+            }
+        }
+
+        byId('historyMode').onchange = () => { page = 1; loadHistory(); };
+        byId('btnLoad').onclick = () => { page = 1; loadHistory(); };
+        byId('prev').onclick = () => { if (page > 1) { page--; loadHistory(); } };
+        byId('next').onclick = () => { page++; loadHistory(); };
+
+        // ── GSI (manual / auto_select fallback) ──────────────────────────────────
+        function initGoogleIdentity() {
+            if (!window.google || !google.accounts || !google.accounts.id) return;
+            google.accounts.id.initialize({
+                client_id: OAUTH_CLIENT_ID,
+                callback: handleCredentialResponse,
+                ux_mode: 'popup',
+                auto_select: true,
+                use_fedcm_for_prompt: true
+            });
+            google.accounts.id.renderButton(
+                document.getElementById('googleBtn'),
+                { theme: 'outline', size: 'large', type: 'standard', shape: 'rectangular', logo_alignment: 'left' }
+            );
+        }
+
+        function handleCredentialResponse(resp) {
+            // Guard: cookie restore already succeeded — skip redundant full login flow
+            if (window._autoLoginDone) return;
+            onGoogleSignIn(resp);
+        }
+
+        async function onGoogleSignIn(resp) {
+            const statusEl = byId('loginStatus');
+            googleIdToken = resp && resp.credential;
+            updateTermsWarning_();
+            if (!googleIdToken) { if (statusEl) statusEl.textContent = 'Login error: no credential'; return; }
+            if (statusEl) statusEl.textContent = 'Verifying token...';
+            try {
+                const tResp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(googleIdToken)}`);
+                if (!tResp.ok) throw new Error('tokeninfo failed ' + tResp.status);
+                const info = await tResp.json();
+                if (info.aud !== OAUTH_CLIENT_ID) throw new Error('Invalid audience');
+                window.saveIdToken && window.saveIdToken(googleIdToken);
+                if (statusEl) statusEl.textContent = 'Loading profile...';
+                const meResp = await fetch(`${window.WEB_APP_URL}?action=me&idToken=${encodeURIComponent(googleIdToken)}`);
+                const meJson = await meResp.json();
+                if (!meJson.ok) throw new Error(meJson.error || 'Backend error');
+                const user = meJson.data.user || {};
+                if (window.topbarSetAuthState) {
+                    window.topbarSetAuthState({ idToken: googleIdToken, user, isAdmin: !!meJson.data.isAdmin, balanceBT: user.balanceBT || 0 });
+                }
+                byId('authStatus').textContent = 'Logged as ' + (user.playerName || user.email || '');
+                window._autoLoginDone = true;
+                window.SharedLogin && window.SharedLogin.evaluateSetupForm(user);
+                await ensureOcmCatalogLoadedForHistory_();
+                page = 1;
+                await loadHistory();
+                if (statusEl) statusEl.textContent = 'Logged in.';
+                updateTermsWarning_();
+            } catch (e) {
+                if (statusEl) statusEl.textContent = 'Login error: ' + e.message;
+            }
+        }
+
+        window.onTopbarAuthChanged = function (info) {
+            googleIdToken = info.idToken;
+            updateTermsWarning_();
+            if (!info.idToken) {
+                byId('authStatus').textContent = 'Not logged in.';
+                byId('tb').innerHTML = '';
+            } else {
+                byId('authStatus').textContent = 'Logged as ' + ((info.user && (info.user.playerName || info.user.email)) || '');
+                page = 1;
+                loadHistory();
+            }
+        };
+
+        // ── Boot ─────────────────────────────────────────────────────────────────
+        window.onload = async () => {
+            window.initSharedTopBar && window.initSharedTopBar();
+            window.SharedLogin && window.SharedLogin.init({});
+            updateTermsWarning_();
+
+            // Silent restore — loads history on success; leaves _autoLoginDone false on failure
+            await tryRestoreAuth_();
+
+            // Init GSI (renders Google button, enables auto_select as fallback when no cookie)
+            const gsiWait = setInterval(() => {
+                if (window.google && google.accounts && google.accounts.id) {
+                    initGoogleIdentity();
+                    clearInterval(gsiWait);
+                }
+            }, 200);
+            setTimeout(() => clearInterval(gsiWait), 4000);
+        };
+    </script>
 </body>
 </html>

@@ -393,6 +393,17 @@
  }
  }
 
+ // ===== Private hash-to-token helper (BUG 2 fix) =====
+ function checkHashForIdToken_() {
+   if (!location.hash) return;
+   const params = new URLSearchParams(location.hash.slice(1));
+   const idt = params.get('id_token');
+   if (idt) {
+     onLoginFromToken_(idt, false);
+ history.replaceState({}, document.title, location.pathname + location.search);
+   }
+ }
+
  // ===== Google Identity =====
  window.initGoogleIdentity = function initGoogleIdentity() {
  if (!window.google || !google.accounts || !google.accounts.id) return;
@@ -400,7 +411,7 @@
  client_id: OAUTH_CLIENT_ID,
  callback: (resp) => window.onGoogleSignIn(resp),
  ux_mode: 'popup',
- auto_select: false,
+ auto_select: true,
  use_fedcm_for_prompt: true
  });
  google.accounts.id.renderButton(
@@ -410,29 +421,26 @@
  };
 
  window.onGoogleSignIn = function onGoogleSignIn(resp) {
- const token = resp && resp.credential;
- if (!token) {
+   // Allow manual login at any time (user may want to re-login or switch accounts)
+   const token = resp && resp.credential;
+   if (!token) {
  setText('loginStatus', 'Login error: no credential');
- return;
- }
- onLoginFromToken_(token, false);
+     return;
+   }
+   onLoginFromToken_(token, false);
  };
-
- function checkHashForIdToken_() {
- if (!location.hash) return;
- const params = new URLSearchParams(location.hash.slice(1));
- const idt = params.get('id_token');
- if (idt) {
- window.onGoogleSignIn({ credential: idt });
- history.replaceState({}, document.title, location.pathname + location.search);
- }
- }
 
  async function tryRestoreAuth_() {
  if (!window.initAuthFromStorage) return;
  const r = await window.initAuthFromStorage();
  if (r && r.ok && r.idToken) {
- await onLoginFromToken_(r.idToken, true);
+   // BUG 3a fix: set _autoLoginDone only AFTER successful login, not before
+   try {
+     await onLoginFromToken_(r.idToken, true);
+     window._autoLoginDone = true;
+   } catch (e) {
+ // onLoginFromToken_ failed — leave _autoLoginDone false so GSI can retry
+   }
  }
  }
 
@@ -606,12 +614,13 @@
 
  // init GSI
  const gsiWait = setInterval(() => {
- if (window.google && google.accounts && google.accounts.id) {
+   if (!document.getElementById('googleBtn')) return; // BUG 4: wait until SharedLogin has injected the button
+   if (window.google && google.accounts && google.accounts.id) {
  window.initGoogleIdentity && window.initGoogleIdentity();
- clearInterval(gsiWait);
- }
- },200);
- setTimeout(() => clearInterval(gsiWait),4000);
+     clearInterval(gsiWait);
+   }
+ }, 200);
+ setTimeout(() => clearInterval(gsiWait), 4000);
 
  await tryRestoreAuth_();
 

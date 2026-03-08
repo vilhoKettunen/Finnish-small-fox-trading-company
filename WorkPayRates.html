@@ -147,7 +147,7 @@
  client_id: OAUTH_CLIENT_ID,
  callback: handleCredentialResponse,
  ux_mode: 'popup',
- auto_select: false,
+ auto_select: true,
  use_fedcm_for_prompt: true
  });
  google.accounts.id.renderButton(
@@ -156,7 +156,11 @@
  );
  }
 
- function handleCredentialResponse(resp) { onGoogleSignIn(resp); }
+ function handleCredentialResponse(resp) {
+ // BUG 6d fix: allow manual login even if topbar already restored (account switch support).
+ // If same account re-logs in, it's idempotent. If a different account, page reloads with new data.
+ onGoogleSignIn(resp);
+ }
 
  async function onGoogleSignIn(resp) {
  const statusEl = byId('loginStatus');
@@ -199,6 +203,7 @@
  window.initSharedTopBar && window.initSharedTopBar();
  window.SharedLogin && window.SharedLogin.init({});
  const gsiWait = setInterval(() => {
+ if (!document.getElementById('googleBtn')) return; // BUG 4: wait until login panel injects the button
  if (window.google && google.accounts && google.accounts.id) {
  initGoogleIdentity();
  clearInterval(gsiWait);

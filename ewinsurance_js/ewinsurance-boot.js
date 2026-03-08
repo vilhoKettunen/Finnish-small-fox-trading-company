@@ -26,7 +26,8 @@ window.onload = function () {
     // Try restoring auth from local storage (only if no hash token consumed above)
     if (!location.hash) {
         const savedToken = window.getSavedIdToken ? window.getSavedIdToken() : null;
-if (savedToken) {
+        if (savedToken) {
+            window._autoLoginDone = true;
        window.applyAuthFromToken(savedToken);
         }
     }
@@ -40,11 +41,13 @@ if (savedToken) {
          window.GOOGLE_CLIENT_ID ||
        (window.APP_CONFIG && window.APP_CONFIG.GOOGLE_CLIENT_ID) || '',
        callback: function (resp) {
-        if (resp && resp.credential) {
+        // Q7 guard: if cookie restore already succeeded, skip redundant login
+        if (window._autoLoginDone) return;
+  if (resp && resp.credential) {
   window.applyAuthFromToken(resp.credential);
         }
         },
-     auto_select: false,
+     auto_select: true,
     ux_mode: 'popup',
   use_fedcm_for_prompt: true
             });

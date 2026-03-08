@@ -185,13 +185,17 @@
  client_id: window.OAUTH_CLIENT_ID,
  callback: window.handleCredentialResponse,
  ux_mode: 'popup',
- auto_select: false,
+ auto_select: true,
  use_fedcm_for_prompt: true
  });
  google.accounts.id.renderButton(document.getElementById('googleBtn'), { theme: 'outline', size: 'large', type: 'standard', shape: 'rectangular', logo_alignment: 'left' });
  };
 
- window.handleCredentialResponse = window.handleCredentialResponse || function handleCredentialResponse(resp) { window.onGoogleSignIn(resp); };
+ window.handleCredentialResponse = window.handleCredentialResponse || function handleCredentialResponse(resp) {
+ // Q7 guard: if cookie restore already succeeded, skip redundant full login flow
+ if (window._autoLoginDone) return;
+ window.onGoogleSignIn(resp);
+ };
 
  window.startLogin = window.startLogin || function startLogin() {
   if (window.google && google.accounts && google.accounts.id) {
@@ -220,29 +224,46 @@
  const info = await tResp.json();
  if (info.aud !== window.OAUTH_CLIENT_ID) throw new Error('Invalid audience');
  window.saveIdToken && window.saveIdToken(window.googleIdToken);
-
  statusEl.textContent = 'Loading profile...';
- const meResp = await fetch(`${window.WEB_APP_URL}?action=me&idToken=${encodeURIComponent(window.googleIdToken)}`);
+ await onLoginMeApply_(window.googleIdToken);
+ statusEl.textContent = 'Logged in.';
+ } catch (e) {
+ statusEl.textContent = 'Login error: ' + e.message;
+ }
+ };
+
+ // Fast-path login apply (shared by silent restore and full login flow post-verification)
+ async function onLoginMeApply_(idToken) {
+ const meResp = await fetch(`${window.WEB_APP_URL}?action=me&idToken=${encodeURIComponent(idToken)}`);
  const meJson = await meResp.json();
  if (!meJson.ok) throw new Error(meJson.error || 'Backend error');
  window.currentUser = window.normalizeUser(meJson.data.user || {}) || {};
  window.currentUser.isAdmin = !!meJson.data.isAdmin;
 
- // Notify section panel of admin status (safe no-op if module not loaded)
+ // Notify section panel of admin status
  window.IndexSectionPanel && window.IndexSectionPanel.onAdminChange(!!window.currentUser.isAdmin);
 
  updateLoginTermsWarning_();
-
- // ? NEW: evaluate setup form visibility via shared panel
  window.SharedLogin && window.SharedLogin.evaluateSetupForm(window.currentUser);
 
- window.updateTopBarAuth();
+ // BUG 5: Show topbar early with "(temp)" balance indicator while balance is loading
+ const tempUser = Object.assign({}, window.currentUser);
+ if (window.topbarSetAuthState) {
+   window.topbarSetAuthState({
+     idToken: window.googleIdToken,
+     user: tempUser,
+     isAdmin: !!window.currentUser.isAdmin,
+     balanceBT: window.currentBalanceBT,
+     balanceLabel: '(temp)'
+   });
+ }
+
  const adminBtn = document.getElementById('adminPanelBtn');
  if (adminBtn) adminBtn.style.display = window.currentUser.isAdmin ? 'inline' : 'none';
  const ob = document.getElementById('onBehalfSection');
  if (ob) ob.style.display = window.currentUser.isAdmin ? 'block' : 'none';
  const infraSec = document.getElementById('infraInvestSection');
-if (infraSec) infraSec.style.display = window.currentUser.isAdmin ? 'block' : 'none';
+ if (infraSec) infraSec.style.display = window.currentUser.isAdmin ? 'block' : 'none';
 
  if (window.currentUser.isAdmin) { try { await window.adminLoadPlayers(); } catch { } }
 
@@ -251,56 +272,44 @@ if (infraSec) infraSec.style.display = window.currentUser.isAdmin ? 'block' : 'n
 
  if (hasSetup && passedCaptcha) {
  localStorage.setItem('vak_captcha_ok', '1');
- window.hideRecaptchaWidget();
- window.hideSetupShowApp();
+ window.hideRecaptchaWidget && window.hideRecaptchaWidget();
+ window.hideSetupShowApp && window.hideSetupShowApp();
  } else {
  localStorage.removeItem('vak_captcha_ok');
- window.showSetupOnly();
- window.showRecaptchaWidget();
+ window.showSetupOnly && window.showSetupOnly();
+ window.showRecaptchaWidget && window.showRecaptchaWidget();
  }
 
- // highlight + deletion note only when profile incomplete
  setSetupHighlightAndNote_(window.currentUser);
 
+ // BUG 5: Fetch balance THEN update topbar with the real value (removes "(temp)")
  await window.refreshPinnedBalanceForActiveTarget();
- await window.refreshTopBarBalances();
+ // Push final correct balance to topbar after balance is populated
+ window.updateTopBarAuth && window.updateTopBarAuth();
 
- statusEl.textContent = 'Logged in.';
- window.refreshOpenOrders();
- } catch (e) {
- statusEl.textContent = 'Login error: ' + e.message;
+ window.refreshOpenOrders && window.refreshOpenOrders();
  }
- };
 
- window.refreshTopBarBalances = window.refreshTopBarBalances || async function refreshTopBarBalances(opts) {
+ // Silent restore — skips external tokeninfo re-verification (Q8 fast-path)
+ window.tryRestoreAuthIndex_ = window.tryRestoreAuthIndex_ || async function tryRestoreAuthIndex_() {
+ if (!window.initAuthFromStorage) return;
  try {
- const selfBal = (typeof window.fetchBalanceForUser === 'function' && window.currentUser)
-  ? await window.fetchBalanceForUser(window.currentUser)
-  : (window.currentBalanceBT || 0);
-
- window.topBalanceSelfBT = selfBal;
-
- if (!window.submitForUser) {
-  window.setCurrentBalance && window.setCurrentBalance(selfBal);
- }
-
- const tBal = (opts && opts.targetBalanceBT != null) ? opts.targetBalanceBT : null;
-
- if (window.topbarSetAuthState) {
-  window.topbarSetAuthState({
-   idToken: window.googleIdToken || null,
-   user: window.currentUser || null,
-   isAdmin: !!window.currentUser?.isAdmin,
-   balanceBT: selfBal,
-   targetUser: window.submitForUser || null,
-   targetBalanceBT: tBal
-  });
- }
- return { selfBal };
+ const r = await window.initAuthFromStorage();
+ if (!r || !r.ok || !r.idToken) return;
+ // Mark as done so GSI auto_select callback won't double-fire
+ window._autoLoginDone = true;
+ window.googleIdToken = r.idToken;
+ window.saveIdToken && window.saveIdToken(r.idToken);
+ await onLoginMeApply_(r.idToken);
  } catch (e) {
- return null;
+ // Backend rejected ? clear cookie, allow GSI auto_select to try
+ window.clearSavedIdToken && window.clearSavedIdToken();
+ window._autoLoginDone = false; // allow GSI to re-trigger
  }
  };
+
+ // Alias used by index.html onload
+ window.tryRestoreAuthOnLoad = window.tryRestoreAuthOnLoad || window.tryRestoreAuthIndex_;
 
  // Initial state on load
  try { updateLoginTermsWarning_(); } catch { }

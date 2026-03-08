@@ -534,6 +534,7 @@ Short Description (max 100 chars, shown in list):
             window.initRecaptcha && window.initRecaptcha();
 
    const gsiWait = setInterval(() => {
+    if (!document.getElementById('googleBtn')) return; // BUG 4: wait until login panel has injected the button
     if (window.google && google.accounts && google.accounts.id) {
    window.initGoogleIdentity && window.initGoogleIdentity();
          clearInterval(gsiWait);

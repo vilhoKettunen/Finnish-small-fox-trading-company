@@ -87,13 +87,14 @@ if (!document.getElementById('topbar-shared-style')) {
     }
 
     const state = {
-        idToken: null,
+      idToken: null,
         user: null,
-   isAdmin: false,
+        isAdmin: false,
         balanceBT: null,
-      targetUser: null,
+     balanceLabel: null,
+        targetUser: null,
         targetBalanceBT: null,
-        targetLoading: false
+    targetLoading: false
     };
 
     function displayName(u) {
@@ -116,13 +117,14 @@ if (!document.getElementById('topbar-shared-style')) {
       const adminBtn = document.getElementById('adminPanelBtn');
 
         if (logged) {
-            const b = Number(state.balanceBT); const safe = isFinite(b) ? b : 0;
-            if (balEl) {
-      balEl.style.display = 'inline-block';
-       balEl.textContent = `Balance: ${safe.toFixed(0)} EW`;
- balEl.classList.remove('positive', 'negative');
-      balEl.classList.add(safe >= 0 ? 'positive' : 'negative');
-  }
+ const b = Number(state.balanceBT); const safe = isFinite(b) ? b : 0;
+   if (balEl) {
+       balEl.style.display = 'inline-block';
+       const labelSuffix = state.balanceLabel ? ` ${state.balanceLabel}` : '';
+ balEl.textContent = `Balance: ${safe.toFixed(0)} EW${labelSuffix}`;
+     balEl.classList.remove('positive', 'negative');
+         balEl.classList.add(safe >= 0 ? 'positive' : 'negative');
+            }
    if (topUser) topUser.textContent = displayName(state.user);
       if (btnSettings) btnSettings.style.display = 'inline-block';
       if (btnLogin) btnLogin.style.display = 'none';
@@ -217,7 +219,8 @@ if (btn.dataset && btn.dataset.nav) {
         state.user = info && info.user || null;
         state.isAdmin = !!(info && info.isAdmin);
    state.balanceBT = (info && info.balanceBT != null) ? info.balanceBT : null;
-// Target chip fields (optional — other pages don't pass these and chip stays hidden)
+        state.balanceLabel = (info && info.balanceLabel) ? String(info.balanceLabel) : null;
+        // Target chip fields (optional — other pages don't pass these and chip stays hidden)
         state.targetUser = (info && info.targetUser) || null;
         state.targetBalanceBT = (info && info.targetBalanceBT != null) ? info.targetBalanceBT : null;
         state.targetLoading = !!(info && info.targetLoading);
@@ -228,5 +231,8 @@ if (btn.dataset && btn.dataset.nav) {
         ensureTopBar();
         wireTopbarEvents();
         updateTopBarAuth();
+if (!window._autoLoginDone && typeof window.tryRestoreAuthGlobal === 'function') {
+ window.tryRestoreAuthGlobal().catch(function () {});
+        }
     };
 })();

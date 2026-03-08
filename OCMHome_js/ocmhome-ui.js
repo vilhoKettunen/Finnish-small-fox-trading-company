@@ -578,6 +578,8 @@
  if (!res || !res.ok || !res.idToken) return;
  try {
  await applyAuthFromToken(res.idToken);
+ // Mark done so GSI auto_select callback won't double-fire
+ window._autoLoginDone = true;
  } catch {
  // ignore restore failures
  }

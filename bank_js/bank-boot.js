@@ -3,17 +3,8 @@ window.BankBoot = {
   init: function () {
     window.initSharedTopBar && window.initSharedTopBar();
     document.body.classList.add('withTopBar');
-
-    // Auth restore (for balance display in topbar only — page is fully public)
-    try {
-      const saved = window.getSavedIdToken && window.getSavedIdToken();
- if (saved) {
-        window.topbarSetAuthState && window.topbarSetAuthState({ idToken: saved, user: null, isAdmin: false, balanceBT: null });
-    }
-    } catch (e) {
-  console.warn('BankBoot: auth restore failed:', e);
-    }
-
+    // Auth restore is now handled by topbar.js via tryRestoreAuthGlobal().
+    // The old partial restore (which only set idToken without user/balance) has been removed.
     BankUI.init();
   }
 };

@@ -76,10 +76,18 @@ window.toggleInfo = window.toggleInfo || function toggleInfo(id) {
 window.updateTopBarAuth = window.updateTopBarAuth || function updateTopBarAuth() {
     if (typeof window.topbarSetAuthState === 'function') {
         window.topbarSetAuthState({
-            idToken: window.googleIdToken,
-            user: window.currentUser,
-            isAdmin: !!window.currentUser?.isAdmin,
+         idToken: window.googleIdToken,
+  user: window.currentUser,
+       isAdmin: !!window.currentUser?.isAdmin,
             balanceBT: window.currentBalanceBT
+            // balanceLabel intentionally omitted ? clears "(temp)" on final call
         });
     }
+};
+
+// Safety stub: refreshTopBarBalances was referenced but never defined.
+// A second updateTopBarAuth call at the end of onLoginMeApply_ now handles
+// pushing the final balance to the topbar (BUG 1 / BUG 5 fix).
+window.refreshTopBarBalances = window.refreshTopBarBalances || function refreshTopBarBalances() {
+  // no-op stub — balance is pushed via updateTopBarAuth() after this point
 };

@@ -23,7 +23,7 @@
  client_id: OAUTH_CLIENT_ID,
  callback: resp => onGoogleSignIn(resp),
  ux_mode: 'popup',
- auto_select: false,
+ auto_select: true,
  use_fedcm_for_prompt: true
  });
  google.accounts.id.renderButton(
@@ -33,6 +33,9 @@
  }
 
  async function onGoogleSignIn(resp) {
+ // Q7 guard: if cookie restore already succeeded, skip redundant full login flow
+ if (window._autoLoginDone) return;
+
  const statusEl = byId('loginStatus');
  S.googleIdToken = resp && resp.credential;
  updateTermsWarning_();
