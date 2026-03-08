@@ -1,4 +1,4 @@
-// Account Settings page logic
+﻿// Account Settings page logic
 (function () {
  'use strict';
 
@@ -65,7 +65,7 @@
  function validatePlayerName(v) {
  let s = String(v || '').trim().replace(/\s+/g, ' ');
  if (!/^[A-Za-z0-9 _-]+$/.test(s)) throw new Error('Invalid username. Allowed: letters, numbers, spaces, "_" and "-".');
- if (s.length <2 || s.length >32) throw new Error('Invalid username length (2�32).');
+ if (s.length <2 || s.length >32) throw new Error('Invalid username length (2–32).');
  return s;
  }
 
@@ -136,19 +136,19 @@
 
  function fmtNumber_(n, digs =0) {
  const v = Number(n);
- if (!isFinite(v)) return '�';
+ if (!isFinite(v)) return '—';
  return v.toFixed(digs);
  }
 
  function fmtIso_(iso) {
  const s = String(iso || '').trim();
- if (!s) return '�';
+ if (!s) return '—';
  const d = new Date(s);
  if (isNaN(d.getTime())) return s;
  return d.toISOString().replace('T', ' ').replace('Z', '');
  }
 
- // ?? Store favorites: rank source label ??????????????????????????????????
+ // ── Store favorites: rank source label ──────────────────────────────────
  function modeLabel_(mode) {
  if (mode === 'byQty') return '#1 by quantity';
  if (mode === 'byValue') return '#1 by EW value';
@@ -181,7 +181,7 @@
  setText('st_storeFavSellRows',  favSell ? fmtNumber_(favSell.rows,         0) : '0');
  }
 
- // A6 fix: empty array returns "No data" instead of "�"
+ // A6 fix: empty array returns "No data" instead of "—"
  function fmtList_(arr, lineFn) {
  const a = Array.isArray(arr) ? arr : [];
  if (!a.length) return 'No data';
@@ -198,7 +198,8 @@
  setText('top5_store_sell_byQty',  'No data');
  setText('top5_store_sell_byValue', 'No data');
  setText('top5_store_sell_byRows', 'No data');
- setText('top5_ocm_counterparties',       'No data');
+ setText('top5_ocm_favMerchants',         'No data');
+ setText('top5_ocm_favCustomers',         'No data');
  setText('top5_ocm_itemsSold_byCount',    'No data');
  setText('top5_ocm_itemsSold_byValue',    'No data');
  setText('top5_ocm_itemsBought_byCount',  'No data');
@@ -206,36 +207,43 @@
  setText('top5_ocm_pegsUsed_byCount',     'No data');
  setText('top5_ocm_pegsUsed_byValue',     'No data');
  setText('top5_ocm_pegsRecv_byCount',     'No data');
- setText('top5_ocm_pegsRecv_byValue',     'No data');
+ setText('top5_ocm_pegsRecv_byValue','No data');
  return;
  }
 
  const storeBuy  = t?.storeTop5?.buy;
  const storeSell = t?.storeTop5?.sell;
 
- const fmtStoreItem_ = (x, i) => `${i + 1}. ${x?.itemName || '�'} | qty=${fmtNumber_(x?.totalQty, 0)} | value=${fmtNumber_(x?.totalValueEW, 2)} | requests=${fmtNumber_(x?.rows, 0)}`;
+ const fmtStoreItem_ = (x, i) => `${i + 1}. ${x?.itemName || '—'} | qty=${fmtNumber_(x?.totalQty, 0)} | value=${fmtNumber_(x?.totalValueEW, 2)} | requests=${fmtNumber_(x?.rows, 0)}`;
 
  setText('top5_store_buy_byQty',   fmtList_(storeBuy?.byQty,   fmtStoreItem_));
  setText('top5_store_buy_byValue', fmtList_(storeBuy?.byValue, fmtStoreItem_));
  setText('top5_store_buy_byRows',  fmtList_(storeBuy?.byRows,  fmtStoreItem_));
 
- setText('top5_store_sell_byQty',   fmtList_(storeSell?.byQty,   fmtStoreItem_));
+ setText('top5_store_sell_byQty', fmtList_(storeSell?.byQty,   fmtStoreItem_));
  setText('top5_store_sell_byValue', fmtList_(storeSell?.byValue, fmtStoreItem_));
  setText('top5_store_sell_byRows',  fmtList_(storeSell?.byRows,  fmtStoreItem_));
 
- const fmtCp_ = (x, i) => `${i + 1}. ${x?.playerName || x?.userId || '�'} | trades=${fmtNumber_(x?.tradesCount ?? x?.count ?? 0, 0)} | value=${fmtNumber_(x?.totalValueEW, 2)}`;
- setText('top5_ocm_counterparties', fmtList_(t?.ocmTop5?.counterparties, fmtCp_));
+ // Counterparties: split schema — favoriteMerchants (you as buyer) and favoriteCustomers (you as seller)
+ // Use Number() coercion to guarantee a real integer, avoiding NaN → '—' (U+2014) rendering as replacement char
+ const fmtCp_ = (x, i) => `${i + 1}. ${x?.playerName || x?.userId || '—'} | trades=${Number(x?.count ?? 0)} | value=${fmtNumber_(x?.totalValueEW, 2)} EW`;
+ const cpTop5 = t?.ocmTop5?.counterparties;
+ const merchantsList = Array.isArray(cpTop5?.favoriteMerchants) ? cpTop5.favoriteMerchants : [];
+ const customersList = Array.isArray(cpTop5?.favoriteCustomers)  ? cpTop5.favoriteCustomers  : [];
 
- const fmtOcmItem_ = (x, i) => `${i + 1}. ${x?.itemName || '�'} | trades=${fmtNumber_(x?.tradesCount, 0)} | value=${fmtNumber_(x?.totalValueEW, 2)}`;
+ setText('top5_ocm_favMerchants', fmtList_(merchantsList, fmtCp_));
+ setText('top5_ocm_favCustomers', fmtList_(customersList, fmtCp_));
 
- // A3 fix: itemsSoldAsMerchant, itemsBoughtAsCustomer, pegsUsedAsCustomer, byValueEW
+ // Use Number() coercion on count to guarantee a real integer, avoiding NaN → '—' rendering as replacement char
+ const fmtOcmItem_ = (x, i) => `${i + 1}. ${x?.itemName || '—'} | trades=${Number(x?.count ?? 0)} | qty=${fmtNumber_(x?.totalQty, 0)} | value=${fmtNumber_(x?.totalValueEW, 2)} EW`;
+
  setText('top5_ocm_itemsSold_byCount', fmtList_(t?.ocmTop5?.itemsSoldAsMerchant?.byCount,     fmtOcmItem_));
  setText('top5_ocm_itemsSold_byValue', fmtList_(t?.ocmTop5?.itemsSoldAsMerchant?.byValueEW,   fmtOcmItem_));
 
  setText('top5_ocm_itemsBought_byCount', fmtList_(t?.ocmTop5?.itemsBoughtAsCustomer?.byCount,   fmtOcmItem_));
  setText('top5_ocm_itemsBought_byValue', fmtList_(t?.ocmTop5?.itemsBoughtAsCustomer?.byValueEW, fmtOcmItem_));
 
- const fmtPeg_ = (x, i) => `${i + 1}. ${x?.itemName || '�'} | trades=${fmtNumber_(x?.tradesCount, 0)} | value=${fmtNumber_(x?.totalValueEW, 2)}`;
+ const fmtPeg_ = (x, i) => `${i + 1}. ${x?.itemName || '—'} | trades=${Number(x?.count ?? 0)} | qty=${fmtNumber_(x?.totalQty, 0)} | value=${fmtNumber_(x?.totalValueEW, 2)} EW`;
  setText('top5_ocm_pegsUsed_byCount', fmtList_(t?.ocmTop5?.pegsUsedAsCustomer?.byCount,       fmtPeg_));
  setText('top5_ocm_pegsUsed_byValue', fmtList_(t?.ocmTop5?.pegsUsedAsCustomer?.byValueEW,     fmtPeg_));
 
@@ -247,7 +255,7 @@
  const st = statsState.stats;
  if (!st) {
  setText('statsStatus', googleIdToken ? 'No statistics yet.' : 'Login to see statistics.');
- setText('preStatsRaw', '�');
+ setText('preStatsRaw', '—');
  renderTop5_();
  return;
  }
@@ -265,34 +273,30 @@
  renderStoreFavorites_();
 
  // OCM
- setText('st_ocmTrades',             fmtNumber_(st?.ocm?.totalTradesCount, 0));
+ setText('st_ocmTrades',  fmtNumber_(st?.ocm?.totalTradesCount, 0));
  setText('st_ocmCompletedMerchant',  fmtNumber_(st?.ocm?.completedByMerchantCount, 0));
  setText('st_ocmCompletedAdmin',     fmtNumber_(st?.ocm?.completedByAdminCount, 0));
  setText('st_ocmAsBuyer',    fmtNumber_(st?.ocm?.asCustomerCount, 0));
  setText('st_ocmAsMerchant',         fmtNumber_(st?.ocm?.asMerchantCount, 0));
  setText('st_ocmTotalValue',         fmtNumber_(st?.ocm?.totalValueEW, 2));
- setText('st_ocmFees',           fmtNumber_(st?.ocm?.feesPaidEW, 2));
+ setText('st_ocmFees',        fmtNumber_(st?.ocm?.feesPaidEW, 2));
  setText('st_ocmMax',     fmtNumber_(st?.ocm?.maxTradeValueEW, 2));
  setText('st_ocmLast',  fmtIso_(st?.ocm?.lastTradeAt));
- setText('st_ocmActiveListings',     fmtNumber_(st?.ocm?.activeListingsCount, 0));
+ setText('st_ocmActiveListings',   fmtNumber_(st?.ocm?.activeListingsCount, 0));
 
- // A4 fix: pull counterparty top5[0] from sidecar � split into merchant (you=customer) and customer (you=merchant)
+ // Counterparties: read from new split schema
  const top5 = statsState.top5;
- // "Favorite merchant" = the merchant you bought from most = entries where you were the customer
- // "Favorite customer" = the customer who bought from you most = entries where you were the merchant
- // The sidecar counterparties array is a unified list; split by role field if available,
- // otherwise show the same top entry for both (best available approximation).
- const allCp = Array.isArray(top5?.ocmTop5?.counterparties) ? top5.ocmTop5.counterparties : [];
- const cpAsMerchant  = allCp.find(x => x?.role === 'merchant' || x?.asMerchant) ?? allCp[0] ?? null;
- const cpAsCustomer  = allCp.find(x => x?.role === 'customer' || x?.asCustomer) ?? (allCp.length > 1 ? allCp[1] : null) ?? null;
+ const cpTop5 = top5?.ocmTop5?.counterparties;
+ const favMerchant = (cpTop5?.favoriteMerchants ?? [])[0] ?? null;
+ const favCustomer = (cpTop5?.favoriteCustomers ?? [])[0] ?? null;
 
- setText('st_ocmFavMerchant',       cpAsMerchant?.playerName || cpAsMerchant?.userId || 'No data');
- setText('st_ocmFavMerchantCount',  cpAsMerchant ? fmtNumber_(cpAsMerchant.tradesCount ?? cpAsMerchant.count ?? 0, 0) : '0');
- setText('st_ocmFavMerchantValue',  cpAsMerchant ? fmtNumber_(cpAsMerchant.totalValueEW ?? 0, 2) : '0');
+ setText('st_ocmFavMerchant',      favMerchant?.playerName || favMerchant?.userId || 'No data');
+ setText('st_ocmFavMerchantCount', favMerchant ? String(Number(favMerchant.count ?? 0)) : '0');
+ setText('st_ocmFavMerchantValue', favMerchant ? fmtNumber_(favMerchant.totalValueEW, 2) : '0');
 
- setText('st_ocmFavCustomer',       cpAsCustomer?.playerName || cpAsCustomer?.userId || 'No data');
- setText('st_ocmFavCustomerCount',  cpAsCustomer ? fmtNumber_(cpAsCustomer.tradesCount ?? cpAsCustomer.count ?? 0, 0) : '0');
- setText('st_ocmFavCustomerValue',  cpAsCustomer ? fmtNumber_(cpAsCustomer.totalValueEW ?? 0, 2) : '0');
+ setText('st_ocmFavCustomer',      favCustomer?.playerName || favCustomer?.userId || 'No data');
+ setText('st_ocmFavCustomerCount', favCustomer ? String(Number(favCustomer.count ?? 0)) : '0');
+ setText('st_ocmFavCustomerValue', favCustomer ? fmtNumber_(favCustomer.totalValueEW, 2) : '0');
 
  // A4 fix: pull item/peg favorites from sidecar top5[0]
  const favSold   = top5?.ocmTop5?.itemsSoldAsMerchant?.byCount?.[0]    ?? null;
@@ -325,7 +329,7 @@
  statsState.statisticsUpdatedAt = d?.statisticsUpdatedAt || null;
 
  if (statsState.isComputing) {
- setText('statsStatus', 'Updating statistics� please wait.');
+ setText('statsStatus', 'Updating statistics… please wait.');
  } else {
  setText('statsStatus', 'Loaded.');
  }
@@ -345,7 +349,7 @@
  const refreshBtn = byId('btnRefreshStats');
  if (refreshBtn) refreshBtn.disabled = true;
 
- setText('statsStatus', force ? 'Refreshing�' : 'Loading�');
+ setText('statsStatus', force ? 'Refreshing…' : 'Loading…');
 
  try {
  const r = await window.apiGet('getMyStatistics', { idToken: googleIdToken, force: force ? 'true' : '' });
@@ -397,7 +401,7 @@
  if (!googleIdToken) return;
 
  try {
- setText('loginStatus', silent ? 'Restoring session�' : 'Verifying token�');
+ setText('loginStatus', silent ? 'Restoring session…' : 'Verifying token…');
  if (typeof window.verifyIdTokenInfo === 'function') {
  await window.verifyIdTokenInfo(googleIdToken);
  } else {
@@ -409,7 +413,7 @@
 
  window.saveIdToken && window.saveIdToken(googleIdToken);
 
- setText('loginStatus', 'Loading profile�');
+ setText('loginStatus', 'Loading profile…');
  await loadMeAndApply_();
  setText('loginStatus', 'Logged in.');
  updateLoginTermsWarning_();
@@ -468,7 +472,7 @@
  async function saveProfile_(patch) {
  if (!googleIdToken) throw new Error('Not logged in');
  setBusy(true);
- setText('saveMsg', 'Saving�');
+ setText('saveMsg', 'Saving…');
  setText('leaderboardMsg', '');
  try {
  await window.apiPost('updateMyProfile', {
@@ -491,7 +495,7 @@
  async function deleteAccount_() {
  if (!googleIdToken) throw new Error('Not logged in');
  setBusy(true);
- setText('deleteMsg', 'Deleting�');
+ setText('deleteMsg', 'Deleting…');
  try {
  await window.apiPost('deleteMyAccount', {
  idToken: googleIdToken,
@@ -552,95 +556,95 @@
  playerName: currentUser?.playerName || '',
  mailbox: currentUser?.mailbox || '',
  mallMailbox,
- leaderboardConsent: getConsentFromUi_()
+     leaderboardConsent: getConsentFromUi_()
  });
- } catch (e) {
- setText('saveMsg', 'Error: ' + (e.message || e));
- }
- });
-
- byId('btnClearMallMailbox').addEventListener('click', () => {
- byId('inpMallMailbox').value = '';
- saveProfile_({
- playerName: currentUser?.playerName || '',
- mailbox: currentUser?.mailbox || '',
- mallMailbox: '',
- leaderboardConsent: getConsentFromUi_()
- });
+     } catch (e) {
+         setText('saveMsg', 'Error: ' + (e.message || e));
+     }
  });
 
- byId('selLeaderboardConsent')?.addEventListener('change', () => {
- updateLeaderboardUi_({ leaderboardConsent: getConsentFromUi_() });
- setText('leaderboardMsg', '');
- });
+        byId('btnClearMallMailbox').addEventListener('click', () => {
+            byId('inpMallMailbox').value = '';
+            saveProfile_({
+                playerName: currentUser?.playerName || '',
+                mailbox: currentUser?.mailbox || '',
+                mallMailbox: '',
+                leaderboardConsent: getConsentFromUi_()
+            });
+        });
 
- byId('btnSaveLeaderboardConsent')?.addEventListener('click', async () => {
- try {
- const consent = getConsentFromUi_();
- setText('leaderboardMsg', 'Saving�');
- await saveProfile_({
- playerName: currentUser?.playerName || '',
- mailbox: currentUser?.mailbox || '',
- mallMailbox: currentUser?.mallMailbox || '',
- leaderboardConsent: consent
- });
- setText('leaderboardMsg', 'Saved.');
- } catch (e) {
- setText('leaderboardMsg', 'Error: ' + (e.message || e));
- }
- });
+        byId('selLeaderboardConsent')?.addEventListener('change', () => {
+            updateLeaderboardUi_({ leaderboardConsent: getConsentFromUi_() });
+            setText('leaderboardMsg', '');
+        });
 
- const dlg = byId('dlgDelete');
- byId('btnDeleteAccount').addEventListener('click', () => {
- if (!dlg) return;
- dlg.showModal();
- });
- byId('btnCancelDelete').addEventListener('click', () => {
- if (!dlg) return;
- dlg.close();
- });
- byId('btnConfirmDelete').addEventListener('click', async () => {
- if (dlg) dlg.close();
- await deleteAccount_();
- });
+        byId('btnSaveLeaderboardConsent')?.addEventListener('click', async () => {
+            try {
+                const consent = getConsentFromUi_();
+                setText('leaderboardMsg', 'Saving…');
+                await saveProfile_({
+                    playerName: currentUser?.playerName || '',
+                    mailbox: currentUser?.mailbox || '',
+                    mallMailbox: currentUser?.mallMailbox || '',
+                    leaderboardConsent: consent
+                });
+                setText('leaderboardMsg', 'Saved.');
+            } catch (e) {
+                setText('leaderboardMsg', 'Error: ' + (e.message || e));
+            }
+        });
 
- // Stats
- byId('btnRefreshStats')?.addEventListener('click', async () => {
- await loadStats_(true);
- });
- byId('selStoreBuyMode')?.addEventListener('change', () => {
- renderStoreFavorites_();
- });
- byId('selStoreSellMode')?.addEventListener('change', () => {
- renderStoreFavorites_();
- });
- }
+        const dlg = byId('dlgDelete');
+        byId('btnDeleteAccount').addEventListener('click', () => {
+            if (!dlg) return;
+            dlg.showModal();
+        });
+        byId('btnCancelDelete').addEventListener('click', () => {
+            if (!dlg) return;
+            dlg.close();
+        });
+        byId('btnConfirmDelete').addEventListener('click', async () => {
+            if (dlg) dlg.close();
+            await deleteAccount_();
+        });
 
- // ===== Boot =====
- window.addEventListener('load', async () => {
- window.initSharedTopBar && window.initSharedTopBar();
- window.SharedLogin && window.SharedLogin.init({});
- document.body.classList.add('withTopBar');
+        // Stats
+        byId('btnRefreshStats')?.addEventListener('click', async () => {
+            await loadStats_(true);
+        });
+        byId('selStoreBuyMode')?.addEventListener('change', () => {
+            renderStoreFavorites_();
+        });
+        byId('selStoreSellMode')?.addEventListener('change', () => {
+            renderStoreFavorites_();
+        });
+    }
 
- updateLoginTermsWarning_();
+    // ===== Boot =====
+    window.addEventListener('load', async () => {
+        window.initSharedTopBar && window.initSharedTopBar();
+        window.SharedLogin && window.SharedLogin.init({});
+        document.body.classList.add('withTopBar');
 
- wireUi_();
- checkHashForIdToken_();
+        updateLoginTermsWarning_();
 
- const gsiWait = setInterval(() => {
- if (!document.getElementById('googleBtn')) return;
- if (window.google && google.accounts && google.accounts.id) {
- window.initGoogleIdentity && window.initGoogleIdentity();
- clearInterval(gsiWait);
- }
- }, 200);
- setTimeout(() => clearInterval(gsiWait), 4000);
+        wireUi_();
+        checkHashForIdToken_();
 
- await tryRestoreAuth_();
+        const gsiWait = setInterval(() => {
+            if (!document.getElementById('googleBtn')) return;
+            if (window.google && google.accounts && google.accounts.id) {
+                window.initGoogleIdentity && window.initGoogleIdentity();
+                clearInterval(gsiWait);
+            }
+        }, 200);
+        setTimeout(() => clearInterval(gsiWait), 4000);
 
- if (!googleIdToken) {
- setText('statsStatus', 'Login to see statistics.');
- renderStats_();
- }
- });
+        await tryRestoreAuth_();
+
+        if (!googleIdToken) {
+            setText('statsStatus', 'Login to see statistics.');
+            renderStats_();
+        }
+    });
 })();
