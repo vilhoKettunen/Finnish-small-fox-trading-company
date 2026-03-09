@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="css/pages/AccountSettings.css">
  <link rel="stylesheet" href="css/site-layout.css">
     <link rel="stylesheet" href="css/panels-paper.css">
+    <link rel="stylesheet" href="css/shared/instr-help-link.css">
     <script src="shared/site-decor.js"></script>
     <script src="shared/site-footer.js"></script>
 </head>
@@ -23,10 +24,14 @@
     <div id="loginPanelMount"></div>
     <div id="authStatus" class="small muted" style="margin-top:10px;">Not logged in.</div>
 
-    <h1>Account Settings</h1>
+    <h1>Account Settings
+        <a class="instr-help-link" href="Instructions.html#account-settings" target="_blank" rel="noopener" title="How do I use Account Settings?">📖 How do I use this?</a>
+    </h1>
 
     <section class="section" aria-label="Settings">
-        <h2>Settings</h2>
+        <h2>Settings
+            <a class="instr-help-link" href="Instructions.html#account-settings--username-mailbox" target="_blank" rel="noopener" title="How do I set my username and mailbox?">📖 How do I use this?</a>
+        </h2>
         <div class="small muted">Edits are validated for safety. Mailbox formats are strict.</div>
 
         <label>
@@ -65,7 +70,9 @@ Mailbox
     </section>
 
     <section class="section" aria-label="Leaderboards (opt-in)">
-  <h2>Leaderboards (opt-in)</h2>
+  <h2>Leaderboards (opt-in)
+        <a class="instr-help-link" href="Instructions.html#account-settings--leaderboard-consent" target="_blank" rel="noopener" title="How does leaderboard opt-in work?">📖 How do I use this?</a>
+        </h2>
         <div class="small muted" style="margin-bottom:8px;">
             You can choose whether you appear in public leaderboards. This is optional and default is opted out.
       </div>
@@ -109,7 +116,9 @@ Mailbox
     </section>
 
     <section class="section" aria-label="Account deletion">
- <h2>Delete account</h2>
+ <h2>Delete account
+            <a class="instr-help-link" href="Instructions.html#account-settings--delete-account" target="_blank" rel="noopener" title="What does deleting my account do?">📖 How do I use this?</a>
+      </h2>
         <div class="small">
   Deleting your account will remove your email address from the system. Your trade data and history remain for transparency/research.
  Your OCM listings will be paused so they are no longer publicly visible.
@@ -139,7 +148,9 @@ Mailbox
  </section>
 
     <section class="section" aria-label="Statistics">
-        <h2>Statistics</h2>
+        <h2>Statistics
+      <a class="instr-help-link" href="Instructions.html#account-settings--statistics" target="_blank" rel="noopener" title="How do I read my statistics?">📖 How do I use this?</a>
+    </h2>
         <div class="small muted">
       Statistics are cached and updated automatically when you trade. You can also force refresh.
      </div>
@@ -292,8 +303,7 @@ Mailbox
        <pre id="top5_ocm_favCustomers" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
           </details>
 
-      <details style="margin-top:8px;">
- <summary class="small muted">Items sold as merchant (Top5 by trade count)</summary>
+      <details style="margin-top:8px;"><summary class="small muted">Items sold as merchant (Top5 by trade count)</summary>
               <pre id="top5_ocm_itemsSold_byCount" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
           </details>
 
@@ -302,8 +312,7 @@ Mailbox
      <pre id="top5_ocm_itemsSold_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
     </details>
 
-      <details style="margin-top:8px;">
-    <summary class="small muted">Items bought as customer (Top5 by trade count)</summary>
+      <details style="margin-top:8px;"><summary class="small muted">Items bought as customer (Top5 by trade count)</summary>
   <pre id="top5_ocm_itemsBought_byCount" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
      </details>
 
@@ -312,8 +321,7 @@ Mailbox
 <pre id="top5_ocm_itemsBought_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
       </details>
 
-                <details style="margin-top:8px;">
-      <summary class="small muted">Pegs used as customer (Top5 by trade count)</summary>
+                <details style="margin-top:8px;"><summary class="small muted">Pegs used as customer (Top5 by trade count)</summary>
            <pre id="top5_ocm_pegsUsed_byCount" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
        </details>
 
@@ -322,8 +330,7 @@ Mailbox
       <pre id="top5_ocm_pegsUsed_byValue" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
         </details>
 
-   <details style="margin-top:8px;">
-     <summary class="small muted">Pegs received as merchant (Top5 by trade count)</summary>
+   <details style="margin-top:8px;"><summary class="small muted">Pegs received as merchant (Top5 by trade count)</summary>
           <pre id="top5_ocm_pegsRecv_byCount" class="small mono" style="white-space:pre-wrap;word-break:break-word;">—</pre>
       </details>
 

@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="css/panels-paper.css">
     <link rel="stylesheet" href="css/pages/bank.css">
     <link rel="stylesheet" href="css/shared/universal-dropdown.css">
+    <link rel="stylesheet" href="css/shared/instr-help-link.css">
 
     <script src="shared/site-decor.js"></script>
     <script src="shared/site-footer.js"></script>
@@ -41,7 +42,9 @@
 
     <!-- ─── Intro (not toggleable) ────────────────────────────────────────── -->
     <div id="bankIntro" class="section">
-        <h1 style="margin-top:0;">EW Bank Dashboard</h1>
+        <h1 style="margin-top:0;">EW Bank Dashboard
+     <a class="instr-help-link" href="Instructions.html#bank" target="_blank" rel="noopener" title="How do I use the Bank page?">📖 How do I use this?</a>
+        </h1>
         <p>
             This dashboard provides a transparent view of the EW currency ecosystem &mdash;
             how much EW is in circulation, how it is issued and destroyed,
@@ -92,11 +95,11 @@
 
     <!-- ─── Chart 1: EW in Circulation ────────────────────────────────────── -->
     <div id="ewCircSection" class="section">
-        <div class="bank-section-header">
-            <h2>EW in Circulation</h2>
-            <button class="infoBtn" type="button" data-bank-info="circulation" title="About this chart">More info
-            </button>
-        </div>
+     <div class="bank-section-header">
+        <h2>EW in Circulation</h2>
+   <button class="infoBtn" type="button" data-bank-info="circulation" title="About this chart">More info</button>
+         <a class="instr-help-link" href="Instructions.html#bank--ew-circulation" target="_blank" rel="noopener" title="Instructions for this chart">📖 How do I use this?</a>
+      </div>
         <p class="small">Total EW held by all active players combined.</p>
         <div class="bank-chart-container">
             <canvas id="bankCircChart"></canvas>
@@ -107,8 +110,8 @@
     <div id="issuanceSection" class="section">
         <div class="bank-section-header">
             <h2>Currency Issuance &amp; Destruction</h2>
-            <button class="infoBtn" type="button" data-bank-info="issuance" title="About this chart">More info
-            </button>
+            <button class="infoBtn" type="button" data-bank-info="issuance" title="About this chart">More info</button>
+            <a class="instr-help-link" href="Instructions.html#bank--issuance-destruction" target="_blank" rel="noopener" title="Instructions for this chart">📖 How do I use this?</a>
         </div>
         <p class="small">Daily EW issued (store sells) vs EW destroyed (store buys + OCM fees).</p>
         <div class="bank-chart-controls">
@@ -125,12 +128,12 @@
 
     <!-- ─── Chart 3: Metal Backing ─────────────────────────────────────────── -->
     <div id="backingSection" class="section">
-        <div class="bank-section-header">
-            <h2>Metal Backing vs EW in Circulation</h2>
-            <button class="infoBtn" type="button" data-bank-info="backing" title="About this chart">More info
-            </button>
+    <div class="bank-section-header">
+  <h2>Metal Backing vs EW in Circulation</h2>
+            <button class="infoBtn" type="button" data-bank-info="backing" title="About this chart">More info</button>
+     <a class="instr-help-link" href="Instructions.html#bank--metal-backing" target="_blank" rel="noopener" title="Instructions for this chart">📖 How do I use this?</a>
         </div>
-        <p class="small">How well the EW supply is backed by metal reserves. 100% = fully backed; &gt;100% = over-backed.
+     <p class="small">How well the EW supply is backed by metal reserves. 100% = fully backed; &gt;100% = over-backed.
         </p>
         <div class="bank-chart-controls">
             <label for="backingModeSelect" style="font-weight:600;">Mode:</label>
@@ -150,10 +153,10 @@
 
     <!-- ─── Chart 4: Store Net Worth ───────────────────────────────────────── -->
     <div id="storeNetWorthSection" class="section">
-        <div class="bank-section-header">
+  <div class="bank-section-header">
             <h2>Store Net Worth</h2>
-            <button class="infoBtn" type="button" data-bank-info="storeNetWorth" title="About this chart">More info
-            </button>
+            <button class="infoBtn" type="button" data-bank-info="storeNetWorth" title="About this chart">More info</button>
+            <a class="instr-help-link" href="Instructions.html#bank" target="_blank" rel="noopener" title="Instructions for Bank page">📖 How do I use this?</a>
         </div>
         <p class="small">Total asset valuation of the store inventory in EW (measured daily).</p>
         <div class="bank-chart-container">
@@ -164,9 +167,9 @@
     <!-- ─── Chart 5: Metal Allocation ─────────────────────────────────────── -->
     <div id="metalAllocSection" class="section">
         <div class="bank-section-header">
-            <h2>Metal Allocation %</h2>
-            <button class="infoBtn" type="button" data-bank-info="metalAlloc" title="About this chart">More info
-            </button>
+<h2>Metal Allocation %</h2>
+        <button class="infoBtn" type="button" data-bank-info="metalAlloc" title="About this chart">More info</button>
+            <a class="instr-help-link" href="Instructions.html#bank" target="_blank" rel="noopener" title="Instructions for Bank page">📖 How do I use this?</a>
         </div>
         <p class="small">Each metal&rsquo;s share of total metal backing held by the store.</p>
         <div class="bank-chart-controls">
@@ -185,8 +188,8 @@
     <div id="wealthDistSection" class="section">
         <div class="bank-section-header">
             <h2>Wealth Distribution Over Time</h2>
-            <button class="infoBtn" type="button" data-bank-info="wealthDist" title="About this chart">More info
-            </button>
+    <button class="infoBtn" type="button" data-bank-info="wealthDist" title="About this chart">More info</button>
+  <a class="instr-help-link" href="Instructions.html#bank--wealth-distribution" target="_blank" rel="noopener" title="Instructions for this chart">📖 How do I use this?</a>
         </div>
         <p class="small">
             How EW is distributed across the player base over time.
@@ -229,9 +232,9 @@
     <!-- ─── Infrastructure Investments ────────────────────────────────────── -->
     <div id="infraSection" class="section">
         <div class="bank-section-header">
-            <h2>Infrastructure Investments</h2>
-            <button class="infoBtn" type="button" data-bank-info="infra" title="About this section">More info
-            </button>
+      <h2>Infrastructure Investments</h2>
+            <button class="infoBtn" type="button" data-bank-info="infra" title="About this section">More info</button>
+            <a class="instr-help-link" href="Instructions.html#bank--infra-investments" target="_blank" rel="noopener" title="Instructions for this section">📖 How do I use this?</a>
         </div>
         <p class="small">Items removed from store inventory for infrastructure purposes.</p>
 
@@ -272,8 +275,9 @@
     <!-- ─── Velocity & Inflation (always visible, no collapse) ────────────── -->
     <div id="velInflSection" class="section">
         <div class="bank-section-header">
-            <h2>Velocity &amp; Inflation</h2>
-            <button class="infoBtn" type="button" data-bank-info="velocity" title="About velocity">More info</button>
+        <h2>Velocity &amp; Inflation</h2>
+     <button class="infoBtn" type="button" data-bank-info="velocity" title="About velocity">More info</button>
+            <a class="instr-help-link" href="Instructions.html#bank--velocity-inflation" target="_blank" rel="noopener" title="Instructions for Velocity &amp; Inflation">📖 How do I use this?</a>
         </div>
 
         <!-- Metric selector (shared between both velocity charts) -->

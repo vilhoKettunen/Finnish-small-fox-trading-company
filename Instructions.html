@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructions — Vak Store</title>
+    <link rel="icon" href="favicon.ico">
+
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
+    <script src="api-client.js"></script>
+    <script src="topbar.js"></script>
+
+    <link rel="stylesheet" href="css/site-layout.css">
+    <link rel="stylesheet" href="css/panels-paper.css">
+  <link rel="stylesheet" href="css/pages/instructions.css">
+    <link rel="stylesheet" href="css/shared/instr-help-link.css">
+
+    <script src="shared/site-decor.js"></script>
+  <script src="shared/site-footer.js"></script>
+</head>
+<body class="no-side-decor">
+
+<!-- ??? Right sidebar (slide TOC) ???????????????????????????????????????? -->
+<div id="instrRightPanel" class="instr-right-panel">
+    <button id="instrRightToggle" class="instr-right-toggle" title="Hide panel">&#8249;</button>
+    <div id="instrRightPanelInner" class="instr-right-panel-inner">
+        <div class="instr-right-panel-title">Pages</div>
+        <!-- Buttons injected by instructions-boot.js -->
+    </div>
+</div>
+<button id="instrRightOpenBtn" class="instr-right-open-btn" title="Show pages">&#9776; Pages</button>
+
+<!-- ??? Left sidebar (section TOC) ?????????????????????????????????????? -->
+<div id="instrLeftPanel" class="instr-left-panel">
+    <button id="instrLeftToggle" class="instr-left-toggle" title="Hide panel">&#8250;</button>
+    <div id="instrLeftPanelInner" class="instr-left-panel-inner">
+     <div class="instr-left-panel-title">Sections</div>
+        <!-- Buttons injected by instructions-boot.js -->
+    </div>
+</div>
+<button id="instrLeftOpenBtn" class="instr-left-open-btn" title="Show sections">&#9776; Sections</button>
+
+<!-- ??? Main content ?????????????????????????????????????????????????????? -->
+<div id="instrMain">
+
+<!-- ????????????????????????????????????????????????????????????????????????
+     SLIDE 0 — INTRODUCTION
+???????????????????????????????????????????????????????????????????????????? -->
+<article class="instr-slide" id="intro" data-slide-title="Introduction">
+    <div class="instr-slide-header">
+    <h2>?? Instructions &amp; Guide</h2>
+        <span class="instr-slide-num">Introduction</span>
+    </div>
+
+    <section class="instr-section" id="intro--what-is-vak-store" data-section-title="What is Vak Store?">
+        <h3>What is Vak Store?</h3>
+        <p>
+            <strong>Vak Store</strong> (Finnish Small Fox Trading Company — FSFTC) is a player-run
+            trading hub for the Vintage Story game server <em>TOPS (The Official Public Server)</em>.
+     It provides three main services:
+        </p>
+ <ul>
+    <li><strong>Main Store</strong> — buy and sell common in-game items at fixed prices using EW currency.</li>
+      <li><strong>OCM (Open Commodities Market)</strong> — a player-to-player marketplace where anyone can list items at their own prices.</li>
+            <li><strong>Price Tracking &amp; Statistics</strong> — daily charts showing price history, trade velocity, and currency health.</li>
+        </ul>
+        <p>
+       No real-world money is involved. All prices refer to in-game items only.
+            The store is physically located near coordinates 300, 100 on the TOPS server.
+        </p>
+    </section>
+
+    <section class="instr-section" id="intro--what-is-ew" data-section-title="What is EW?">
+        <h3>What is EW (Exchange Weight)?</h3>
+        <p>
+         <strong>EW (Exchange Weight)</strong> is the store's internal trade currency.
+   It is <em>not</em> a physical item in the game — it is a number stored in your account
+        that represents trading value you have accumulated.
+        </p>
+        <ul>
+            <li>You <strong>earn EW</strong> by selling items to the store (store BUY orders).</li>
+        <li>You <strong>spend EW</strong> by buying items from the store (store SELL orders) or trading on the OCM.</li>
+            <li>You can also <strong>send EW</strong> directly to another player as a payment.</li>
+     </ul>
+        <p>
+  EW is designed to be fully liquid — you can trade almost any item for EW and
+     use that EW to buy almost any other item the store carries. It avoids the inflation
+            problems of the in-game currency (RG) because no automatic "money printer" exists for it.
+        </p>
+        <div class="instr-tip-box">
+?? <strong>Tip:</strong> EW is meant to be used, not hoarded. The store recommends
+            bringing goods worth roughly what you plan to buy, rather than building up a large
+        EW balance. That said, many players do keep a balance for convenience.
+        </div>
+        <p>
+       When the store has sufficient metal reserves, EW is backed by real in-game metals.
+         You can convert your EW balance into physical metals via the <strong>EW Insurance</strong> system.
+        </p>
+    </section>
+
+    <section class="instr-section" id="intro--how-accounts-work" data-section-title="How accounts work">
+        <h3>How the Account System Works</h3>
+     <p>
+            Your account is tied to your <strong>Google account</strong>. Login is done via Google Sign-In
+            — no password is needed. Once logged in your EW balance and trade history are linked
+            to your account automatically.
+  </p>
+        <p>
+       Each account has:
+ </p>
+    <ul>
+            <li><strong>Player Name</strong> — your display name on the site and leaderboards.</li>
+            <li><strong>Mailbox address</strong> — your in-game deposit box location (e.g. <code>4A / 1A / F1</code>).
+The admin uses this to deliver items or collect payments in-game.</li>
+       <li><strong>EW Balance</strong> — your current trading credit, shown in the top bar after login.</li>
+        </ul>
+   <div class="instr-admin-callout">
+            ?? <strong>Admin step:</strong> All store transactions (buying/selling items) go through
+            the admin. You build a cart on the website and submit a request — the admin then
+      processes it in-game and your balance updates. This is intentional: it allows the store
+            to handle any item type even without a direct in-game market system.
+      </div>
+ </section>
+
+    <section class="instr-section" id="intro--getting-started" data-section-title="Getting started">
+        <h3>Getting Started — First Time Setup</h3>
+        <ol class="instr-steps">
+       <li>Click <strong>Login</strong> in the top bar (or the Google Sign-In button on any page). Sign in with your Google account.</li>
+      <li>After login, click <strong>Settings</strong> in the top bar. Set your <strong>Player Name</strong> (your in-game username) and your <strong>Mailbox</strong> address.</li>
+      <li>Once your mailbox is set, you are ready to trade. Go to the <strong>Main Store</strong> page to browse prices and build your first cart.</li>
+  <li>When your cart is ready, click <strong>Submit Purchase Request</strong>. The admin will process your request and items/EW will be exchanged via your deposit box.</li>
+   </ol>
+<div class="instr-img-wrap">
+   <div class="instr-img-placeholder" data-label="?? images/instructions/login-panel.png — Login panel with Google Sign-In button">
+            <img src="images/instructions/login-panel.png" alt="Login panel showing Google Sign-In button" class="instr-screenshot"
+     onerror="this.parentElement.classList.add('instr-img-missing')">
+       <div class="instr-img-caption">The login panel — click the Google button to sign in with your Google account.</div>
+     </div>
+        </div>
+      <div class="instr-img-wrap">
+   <div class="instr-img-placeholder" data-label="?? images/instructions/topbar-balance.png — Top bar after login showing username and EW balance">
+    <img src="images/instructions/topbar-balance.png" alt="Top bar showing username and EW balance after login" class="instr-screenshot"
+ onerror="this.parentElement.classList.add('instr-img-missing')">
+       <div class="instr-img-caption">After login your player name and EW balance appear in the top bar.</div>
+     </div>
+        </div>
+        <p>Use the navigation buttons in the top bar to move between pages at any time. This instructions page is always accessible via the <strong>Instructions</strong> button in the top bar.</p>
+    </section>
+</article>
+
+
+<!-- ????????????????????????????????????????????????????????????????????????
+   SLIDE 1 — MAIN STORE
+???????????????????????????????????????????????????????????????????????????? -->
+<article class="instr-slide" id="main-store" data-slide-title="Main Store">
+    <div class="instr-slide-header">
+        <h2>?? Main Store</h2>
+      <span class="instr-slide-num">Slide 1</span>
+        <a class="instr-page-link" href="index.html" target="_blank" rel="noopener">Open Store ?</a>
+    </div>
+
+    <section class="instr-section" id="main-store--overview" data-section-title="Overview">
+        <h3>Overview</h3>
+      <p>
+    The Main Store page is your primary tool for trading with the store.
+   You build a shopping cart of items to buy and/or sell, then submit a request.
+   The admin processes it and your EW balance is updated.
+     </p>
+        <p>
+ The page also contains useful calculators (Quick Calculator, Pay With, Item Converter)
+            that help you plan trades before committing.
+   </p>
+  </section>
+
+    <section class="instr-section" id="main-store--section-panel" data-section-title="Section Navigation Panel">
+      <h3>Section Navigation Panel</h3>
+        <p>
+         On the left side of the Main Store page is a collapsible <strong>Sections panel</strong>.
+ It lists every tool section on the page. Click any button to jump directly to that section.
+          On mobile it collapses to a floating <strong>? Sections</strong> button at the bottom of the screen.
+     </p>
+   <div class="instr-img-wrap">
+  <div class="instr-img-placeholder" data-label="?? images/instructions/main-section-panel.png — Section navigation panel on index.html">
+      <img src="images/instructions/main-section-panel.png" alt="Section navigation panel showing list of store sections" class="instr-screenshot"
+        onerror="this.parentElement.classList.add('instr-img-missing')">
+   <div class="instr-img-caption">The Sections panel on the left — click any button to jump to that part of the page.</div>
+          </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="main-store--display-currency" data-section-title="Display Currency">
+        <h3>Display Currency</h3>
+     <p>
+            At the top of the page is a <strong>Display Currency</strong> dropdown. By default all
+          prices are shown in <strong>EW</strong>. You can type any item name (e.g. "Copper Ingot")
+            to see all prices converted to that item's equivalent value instead.
+        </p>
+        <p>This is useful if you want to know "how many copper ingots is this item worth?" without manually calculating.</p>
+        <div class="instr-img-wrap">
+ <div class="instr-img-placeholder" data-label="?? images/instructions/display-currency.png — Display currency selector with Send EW button">
+    <img src="images/instructions/display-currency.png" alt="Display currency dropdown and Send EW button" class="instr-screenshot"
+        onerror="this.parentElement.classList.add('instr-img-missing')">
+    <div class="instr-img-caption">The Display Currency selector. Change it to any item to see all prices in that item's value.</div>
+    </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="main-store--send-ew" data-section-title="Send EW">
+        <h3>Send EW — Direct Player Transfer</h3>
+        <p>
+            Next to the Display Currency selector is the <strong>Send EW</strong> button.
+     Use this to transfer EW directly from your balance to another player's account.
+        </p>
+    <p>How to send EW:</p>
+        <ol class="instr-steps">
+            <li>Click <strong>Send EW</strong>.</li>
+         <li>Type the target player's <em>exact</em> player name. Suggestions will appear as you type.</li>
+            <li>Enter the amount (minimum 0.01 EW).</li>
+    <li>Optionally add a note/memo for your own records.</li>
+            <li>Click <strong>Send</strong>.</li>
+        </ol>
+        <p><strong>No fees apply</strong> to direct player transfers. The full amount is credited to the recipient immediately.</p>
+        <div class="instr-img-wrap">
+    <div class="instr-img-placeholder" data-label="?? images/instructions/send-ew-modal.png — Send EW modal with player name and amount entered">
+      <img src="images/instructions/send-ew-modal.png" alt="Send EW modal showing player name and amount fields" class="instr-screenshot"
+onerror="this.parentElement.classList.add('instr-img-missing')">
+            <div class="instr-img-caption">The Send EW modal. Enter the recipient's exact player name and the amount to send.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="main-store--quick-calculator" data-section-title="Quick Calculator">
+   <h3>Quick Calculator</h3>
+        <p>
+   The <strong>Quick Individual Item Calculator</strong> is a fast way to look up the buy and sell price
+            for a single item without adding it to your cart.
+        </p>
+    <ul>
+    <li><strong>Full Stack Item</strong> — select an item that is sold in stacks. Enter how many stacks. Click Calculate Stack. The result shows the total buy price (what you pay) and sell price (what you earn).</li>
+        <li><strong>Individual Item</strong> — same but counts individual pieces instead of full stacks.</li>
+      </ul>
+        <p>This does not add anything to your cart — it is a reference calculator only.</p>
+        <div class="instr-img-wrap">
+            <div class="instr-img-placeholder" data-label="?? images/instructions/quick-calc-stack.png — Quick calculator with item selected and result shown">
+     <img src="images/instructions/quick-calc-stack.png" alt="Quick calculator showing buy and sell prices for a selected item" class="instr-screenshot"
+            onerror="this.parentElement.classList.add('instr-img-missing')">
+           <div class="instr-img-caption">Quick Calculator result — shows buy price (what you pay) and sell price (what you earn) for the selected item and quantity.</div>
+            </div>
+     </div>
+    </section>
+
+    <section class="instr-section" id="main-store--buy-items" data-section-title="Buy Items">
+        <h3>Buy Items — Building Your Buy Cart</h3>
+        <p>
+            The <strong>Buy Multiple Items</strong> section is where you add items you want to
+            <em>purchase from the store</em>. Each item you add will be removed from the store's stock when your request is approved.
+    </p>
+    <p><strong>Full Stacks:</strong> Select an item from the dropdown, set the quantity (in stacks), and click <strong>Add Stack</strong>.</p>
+        <p><strong>Individual Items:</strong> Same but quantity is in individual pieces instead of stacks.</p>
+   <p><strong>OCM Listings (Buy):</strong> Expand this section to search OCM marketplace listings and add them to your buy calculation. This is for reference/calculation — OCM trades are handled separately on the OCM pages.</p>
+        <p><strong>Account Balance:</strong> Enter your current EW balance and click ? Add Balance. This includes your balance in the Combined Totals calculation.</p>
+   <p><strong>Custom Inputs (advanced):</strong> For items not in the main dropdown — you can enter a custom item name and price manually. Useful for special or unlisted items.</p>
+     <p>Each added item appears in the list below with its name, quantity, and EW price. Click <strong>×</strong> on any row to remove it.</p>
+        <div class="instr-img-wrap">
+   <div class="instr-img-placeholder" data-label="?? images/instructions/buy-add-stack.png — Buy section with one item added to the list">
+        <img src="images/instructions/buy-add-stack.png" alt="Buy section showing an item added to the buy cart list" class="instr-screenshot"
+          onerror="this.parentElement.classList.add('instr-img-missing')">
+    <div class="instr-img-caption">Adding an item to the buy cart. The item appears in the list below with its quantity and price.</div>
+          </div>
+        </div>
+  </section>
+
+    <section class="instr-section" id="main-store--sell-items" data-section-title="Sell Items">
+        <h3>Sell Items — Building Your Sell Cart</h3>
+        <p>
+            The <strong>Sell Multiple Items</strong> section works identically to the Buy section,
+            but for items you want to <em>sell to the store</em>.
+            When your request is approved, the store receives your items and your balance increases.
+    </p>
+   <p>The layout is the same: Full Stacks, Individual Items, OCM Listings, Account Balance, and Custom Inputs.</p>
+      <div class="instr-img-wrap">
+    <div class="instr-img-placeholder" data-label="?? images/instructions/sell-add-individual.png — Sell section with one individual item added">
+        <img src="images/instructions/sell-add-individual.png" alt="Sell section showing an individual item added to the sell cart" class="instr-screenshot"
+      onerror="this.parentElement.classList.add('instr-img-missing')">
+       <div class="instr-img-caption">Adding an individual item to the sell cart. The sell total updates automatically.</div>
+    </div>
+   </div>
+    </section>
+
+    <section class="instr-section" id="main-store--combined-totals" data-section-title="Combined Totals">
+        <h3>Combined Totals</h3>
+        <p>The <strong>Combined Totals</strong> section shows the overall financial picture of your current cart:</p>
+        <ul>
+         <li><strong>Account Balance</strong> — your current EW balance (if you added it to the buy or sell section).</li>
+            <li><strong>Net Balance</strong> — the difference between your sell total and your buy total.
+     <ul>
+         <li>Positive (green) = you receive this much EW from the transaction.</li>
+           <li>Negative (red) = you owe this much EW to complete the transaction.</li>
+        </ul>
+ </li>
+     <li><strong>Account Balance After Transaction</strong> — a projection of what your balance will be after the request is approved (Account Balance + Net Balance).</li>
+        </ul>
+        <div class="instr-img-wrap">
+       <div class="instr-img-placeholder" data-label="?? images/instructions/combined-totals.png — Combined Totals section showing net balance">
+      <img src="images/instructions/combined-totals.png" alt="Combined Totals section showing net balance and projected balance after transaction" class="instr-screenshot"
+      onerror="this.parentElement.classList.add('instr-img-missing')">
+             <div class="instr-img-caption">Combined Totals: Net Balance shows how much EW you will gain or owe. Account Balance After shows your projected balance.</div>
+            </div>
+        </div>
+  </section>
+
+    <section class="instr-section" id="main-store--pay-with" data-section-title="Pay With">
+        <h3>Pay With — Cover a Deficit with Items</h3>
+        <p>
+When your <strong>Net Balance is negative</strong> (you owe EW), the <strong>Pay With</strong>
+            tool lets you cover that deficit by including extra items in your sell cart as payment —
+instead of needing a pre-existing EW balance.
+        </p>
+        <div class="instr-example">
+            <div class="instr-example-title">?? Example Scenario</div>
+       <p>You want to buy 2 stacks of Steel Ingots (costs 400 EW) but your balance is only 200 EW.
+ You have plenty of Copper Ingots to spare. Add Copper Ingots to Pay With,
+            set it to 100%, click Calculate — the tool tells you exactly how many Copper Ingots
+ to include in your sell cart to cover the 200 EW deficit.</p>
+        </div>
+        <p><strong>How to use Pay With:</strong></p>
+        <ol class="instr-steps">
+    <li>Build your buy and sell carts normally. Observe the negative Net Balance.</li>
+            <li>In the <strong>Pay With</strong> section, click <strong>? Add Item</strong> and select the item you want to pay with.</li>
+        <li>Set a percentage for how much of the deficit that item covers (e.g. 100% = covers everything).</li>
+            <li>Use the <strong>% Preset</strong> dropdown for quick setups:<br>
+  <strong>Default 100%</strong> = the first item covers 100% of the deficit.<br>
+           <strong>Equalizer</strong> = splits the deficit equally across all added items.</li>
+      <li>Click <strong>Calculate Payment</strong>. The result shows exactly how many of each item to add to your sell cart.</li>
+        </ol>
+        <div class="instr-img-wrap">
+            <div class="instr-img-placeholder" data-label="?? images/instructions/pay-with-example.png — Pay With section with item added and result calculated">
+           <img src="images/instructions/pay-with-example.png" alt="Pay With section showing an item added with percentage and the resulting quantity calculated" class="instr-screenshot"
+     onerror="this.parentElement.classList.add('instr-img-missing')">
+    <div class="instr-img-caption">Pay With in action — the result tells you exactly how many items to add to your sell cart to cover the deficit.</div>
+        </div>
+        </div>
+        <div class="instr-tip-box">
+            ?? <strong>Result type:</strong> The dropdown at the top of Pay With lets you choose whether to base the calculation on
+      your <em>Net Balance</em> or your full <em>Account Balance</em>. Net Balance is the default and most common choice.
+ </div>
+  </section>
+
+    <section class="instr-section" id="main-store--item-converter" data-section-title="Item Converter">
+      <h3>Item Converter — Spend Your Positive Balance on Items</h3>
+        <p>
+            When your <strong>Net Balance is positive</strong> (you have EW coming in),
+          the <strong>Item Converter</strong> helps you decide which items to take instead of
+        keeping the EW in your account.
+        </p>
+      <div class="instr-example">
+         <div class="instr-example-title">?? Example Scenario</div>
+        <p>You're selling a large batch of items and will receive 500 EW. You don't need EW —
+            you'd rather take Copper Ingots (50%) and Iron Ingots (50%) as payment instead.
+            Add both items to the Converter, set 50%/50%, click Convert Balance —
+     the tool tells you how many of each item to add to your buy cart to spend your incoming EW.</p>
+        </div>
+        <p><strong>How to use Item Converter:</strong></p>
+        <ol class="instr-steps">
+  <li>Build your sell cart so you have a positive Net Balance.</li>
+  <li>In the <strong>Item Converter</strong> section, click <strong>? Add Item</strong> and select items you want to receive.</li>
+      <li>Set the percentage allocation for each item (they don't need to total 100% — any unallocated % stays as EW).</li>
+            <li>Use the <strong>% Preset</strong> for quick setups (same as Pay With).</li>
+            <li>Click <strong>Convert Balance</strong>. The result shows how many of each item to add to your buy cart.</li>
+        </ol>
+        <div class="instr-img-wrap">
+            <div class="instr-img-placeholder" data-label="?? images/instructions/converter-example.png — Item Converter with two items and split percentages">
+    <img src="images/instructions/converter-example.png" alt="Item Converter showing two items with 50/50 split and the resulting quantities" class="instr-screenshot"
+             onerror="this.parentElement.classList.add('instr-img-missing')">
+    <div class="instr-img-caption">Item Converter splitting 500 EW 50/50 between two items — the result shows how many of each to add to your buy cart.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="main-store--transaction-request" data-section-title="Transaction Request">
+        <h3>Transaction Request — Submitting Your Trade</h3>
+<p>
+            Once your buy and/or sell carts are ready, use the <strong>Transaction Request</strong>
+            section to submit your trade to the admin.
+        </p>
+   <p><strong>The full process:</strong></p>
+        <ol class="instr-steps">
+  <li>Build your carts in the Buy and Sell sections above.</li>
+       <li>Check the <strong>Combined Totals</strong> to confirm the net balance looks correct.</li>
+            <li>Click <strong>Submit Purchase Request</strong>.</li>
+            <li>Your request is sent to the admin queue.</li>
+ <li>The admin processes your request: they collect items from / deliver items to your in-game deposit box.</li>
+   <li>Your EW balance is updated automatically on approval. You can see it in <strong>Account History</strong>.</li>
+        </ol>
+      <div class="instr-admin-callout">
+            ?? <strong>Admin step:</strong> After submitting, your request enters a queue. The admin
+        will review and approve or deny it. Processing time varies. Once approved your balance
+            updates and the transaction appears in your Account History.
+        </div>
+        <p><strong>Other buttons in this section:</strong></p>
+        <ul>
+            <li><strong>Copy Transaction Data</strong> — copies your current cart as text. Use this to share your cart or save a backup.</li>
+            <li><strong>Import Transaction Data</strong> — paste or upload a previously copied cart to restore it.</li>
+  <li><strong>Clear Carts</strong> — removes all items from both buy and sell lists. Use with caution.</li>
+   </ul>
+     <div class="instr-img-wrap">
+            <div class="instr-img-placeholder" data-label="?? images/instructions/submit-request-btn.png — Submit Purchase Request button highlighted">
+        <img src="images/instructions/submit-request-btn.png" alt="The Submit Purchase Request button in the Transaction Request section" class="instr-screenshot"
+          onerror="this.parentElement.classList.add('instr-img-missing')">
+                <div class="instr-img-caption">Click Submit Purchase Request to send your cart to the admin for processing.</div>
+      </div>
+      </div>
+    </section>
+</article>
+
+
+<!-- ????????????????????????????????????????????????????????????????????????
+     SLIDE 2 — OCM MARKETPLACE
+???????????????????????????????????????????????????????????????????????????? -->
+<article class="instr-slide" id="ocm-marketplace" data-slide-title="OCM Marketplace">
+    <div class="instr-slide-header">
+        <h2>?? OCM Marketplace</h2>
+  <span class="instr-slide-num">Slide 2</span>
+      <a class="instr-page-link" href="OCMHome.html" target="_blank" rel="noopener">Open OCM ?</a>
+    </div>
+
+    <section class="instr-section" id="ocm-marketplace--what-is-ocm" data-section-title="What is OCM?">
+<h3>What is OCM?</h3>
+        <p>
+   <strong>OCM (Open Commodities Market)</strong> is the player-to-player trading marketplace.
+          Unlike the Main Store (where you trade with the store itself), OCM lets players list
+            items at their own prices and trade directly with each other.
+        </p>
+     <ul>
+            <li>Merchants list items as <strong>SELL</strong> (they are selling) or <strong>BUY</strong> (they want to buy).</li>
+      <li>Customers browse listings and submit trade requests.</li>
+   <li>The merchant keeps <strong>90%</strong> of the trade value — a 10% fee goes to the store admin.</li>
+     <li>Payment can be in EW or in another in-game item (a "peg item") if the merchant allows it.</li>
+        </ul>
+   <p>Login is required to view listings and place trades.</p>
+    </section>
+
+    <section class="instr-section" id="ocm-marketplace--filters" data-section-title="Filters">
+ <h3>Filters — Finding What You Need</h3>
+        <p>The filter panel at the top of the page helps you narrow down the listings:</p>
+        <ul>
+            <li><strong>Listing type</strong> — SELL = merchants offering items for sale. BUY = merchants looking to buy items.</li>
+         <li><strong>Item name</strong> — type part of an item name to filter by it (click Search to apply).</li>
+            <li><strong>Name</strong> — filter by merchant name (click Search to apply).</li>
+    <li><strong>Only item-payment listings</strong> — show only listings that let you pay with an item instead of EW.</li>
+        <li><strong>Stock min / max</strong> — filter by how many individual units are available (applies immediately).</li>
+            <li><strong>Sort</strong> — sort by EW price ascending or descending (applies immediately).</li>
+        <li><strong>Accepted payment pegs</strong> — filter to only show listings that accept specific peg items as payment (click Search to apply).</li>
+      <li><strong>Page size</strong> — how many listings to show per page.</li>
+      </ul>
+   <p>Click <strong>Search</strong> to apply name/type/peg filters. Sort and stock filters apply instantly. Click <strong>Reset</strong> to clear all filters.</p>
+        <div class="instr-img-wrap">
+      <div class="instr-img-placeholder" data-label="?? images/instructions/ocm-filter-panel.png — OCM filter panel with filters filled in">
+        <img src="images/instructions/ocm-filter-panel.png" alt="OCM filter panel showing type, item name, and sort options" class="instr-screenshot"
+      onerror="this.parentElement.classList.add('instr-img-missing')">
+          <div class="instr-img-caption">The filter panel — use these controls to narrow down the listings to what you're looking for.</div>
+</div>
+  </div>
+    </section>
+
+  <section class="instr-section" id="ocm-marketplace--listings-table" data-section-title="Reading the Listings Table">
+        <h3>Reading the Listings Table</h3>
+        <p>Each row in the listings table represents one active listing. The columns are:</p>
+   <ul>
+     <li><strong>Name</strong> — the item being traded.</li>
+      <li><strong>Item price</strong> — the price expressed in the peg item (e.g. "5 Iron Ingots per stack"). Only shown if the listing accepts item payment.</li>
+            <li><strong>EW price</strong> — the equivalent EW value of the trade (the canonical price).</li>
+            <li><strong>Individual stock</strong> — how many individual units the merchant currently has available.</li>
+       <li><strong>Stack size</strong> — how items are grouped in one "stack" for this listing.</li>
+            <li><strong>Merchant</strong> — who is selling or buying.</li>
+    <li><strong>Trade</strong> — click this button to begin a trade request for this listing.</li>
+        </ul>
+        <div class="instr-img-wrap">
+        <div class="instr-img-placeholder" data-label="?? images/instructions/ocm-listings-table.png — OCM listings table with several rows">
+        <img src="images/instructions/ocm-listings-table.png" alt="OCM listings table showing item name, prices, stock, and trade button" class="instr-screenshot"
+       onerror="this.parentElement.classList.add('instr-img-missing')">
+    <div class="instr-img-caption">The listings table — each row is one active OCM listing. Click Trade to submit a trade request.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="ocm-marketplace--making-a-trade" data-section-title="Making a Trade Request">
+        <h3>Making a Trade Request</h3>
+        <ol class="instr-steps">
+   <li>Find a listing you want to trade on and click <strong>Trade</strong>.</li>
+            <li>Choose your <strong>quantity</strong> — either in individual units or in stacks.</li>
+<li>Choose your <strong>payment method</strong> — EW (deducted from your balance) or Item (you deliver a peg item to the merchant's mailbox).</li>
+  <li>If paying with an item, select which peg item to use from the dropdown.</li>
+       <li>Review the <strong>estimate</strong> shown (total EW equivalent).</li>
+            <li>Click <strong>Confirm</strong> to submit the trade request.</li>
+  </ol>
+   <div class="instr-admin-callout">
+            ?? <strong>Admin step:</strong> After you submit a trade request, it goes to the merchant
+            as a pending request. The merchant (or admin) must accept it for the trade to complete.
+         You can see your pending trades in the "My pending trades" section below the listings.
+        </div>
+        <div class="instr-img-wrap">
+  <div class="instr-img-placeholder" data-label="?? images/instructions/ocm-trade-button.png — Trade button on an OCM listing row">
+ <img src="images/instructions/ocm-trade-button.png" alt="Close-up of the Trade button on an OCM listing row" class="instr-screenshot"
+             onerror="this.parentElement.classList.add('instr-img-missing')">
+        <div class="instr-img-caption">Click the Trade button on any listing to begin a trade request.</div>
+        </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="ocm-marketplace--pending-trades" data-section-title="My Pending Trades">
+        <h3>My Pending Trades</h3>
+        <p>
+          Below the listings table is the <strong>My pending trades</strong> section.
+         This shows all trade requests you have submitted that are still waiting for the merchant to accept.
+        </p>
+        <p>Columns: <strong>TradeId</strong>, <strong>Item</strong>, <strong>Merchant</strong>, <strong>Qty</strong>, <strong>Payment</strong>, <strong>Total (EW eq.)</strong>, <strong>Status</strong>, <strong>Actions</strong>, <strong>Edit</strong>.</p>
+        <ul>
+            <li><strong>Cancel</strong> button — cancels the pending trade request. Use this if you change your mind.</li>
+ <li><strong>Edit</strong> button — opens the edit dialog to change the quantity or payment method.</li>
+      </ul>
+        <div class="instr-img-wrap">
+         <div class="instr-img-placeholder" data-label="?? images/instructions/ocm-pending-trades.png — My pending trades table with one trade row">
+    <img src="images/instructions/ocm-pending-trades.png" alt="My pending trades table showing a pending trade with Cancel and Edit buttons" class="instr-screenshot"
+         onerror="this.parentElement.classList.add('instr-img-missing')">
+        <div class="instr-img-caption">Your pending trades — trades you've submitted that are waiting for the merchant to accept.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="ocm-marketplace--editing-a-trade" data-section-title="Editing a Pending Trade">
+        <h3>Editing a Pending Trade</h3>
+        <p>
+       You can edit a pending trade before the merchant accepts it. Click <strong>Edit</strong>
+            on a pending trade to open the edit dialog.
+        </p>
+        <p>In the edit dialog you can change:</p>
+        <ul>
+     <li>The <strong>quantity</strong> (individual or stack mode, and the number).</li>
+         <li>The <strong>payment method</strong> (EW or item peg).</li>
+       <li>Which <strong>peg item</strong> to use for payment.</li>
+        </ul>
+        <p>The updated estimate is shown live. Click <strong>Save edit</strong> to submit the change.</p>
+  <div class="instr-tip-box">
+      ?? <strong>Note:</strong> Saving an edit cancels the original trade and creates a new one with a new TradeId. The merchant will see the updated request.
+      </div>
+        <div class="instr-img-wrap">
+            <div class="instr-img-placeholder" data-label="?? images/instructions/ocm-edit-dialog.png — Edit trade dialog showing qty and payment options">
+       <img src="images/instructions/ocm-edit-dialog.png" alt="Edit trade dialog showing quantity and payment method options" class="instr-screenshot"
+       onerror="this.parentElement.classList.add('instr-img-missing')">
+<div class="instr-img-caption">The edit trade dialog — change quantity or payment method before the merchant accepts.</div>
+      </div>
+        </div>
+    </section>
+</article>
+
+
+<!-- ????????????????????????????????????????????????????????????????????????
+     SLIDE 3 — OCM MERCHANT
+???????????????????????????????????????????????????????????????????????????? -->
+<article class="instr-slide" id="ocm-merchant" data-slide-title="OCM Merchant">
+    <div class="instr-slide-header">
+        <h2>??? OCM Merchant</h2>
+        <span class="instr-slide-num">Slide 3</span>
+        <a class="instr-page-link" href="OCMUser.html" target="_blank" rel="noopener">Open OCM Merchant ?</a>
+    </div>
+
+    <section class="instr-section" id="ocm-merchant--overview" data-section-title="Overview">
+        <h3>Overview</h3>
+        <p>
+ The <strong>OCM Merchant page</strong> is for players who want to list items for
+    sale or purchase on the OCM marketplace. Here you create and manage your own listings
+    and respond to incoming trade requests from customers.
+        </p>
+   <p>You are the <strong>Merchant</strong> on this page. You set the prices and quantities. Login is required.</p>
+    </section>
+
+ <section class="instr-section" id="ocm-merchant--creating-listing-store" data-section-title="Creating a Listing — Store Search">
+        <h3>Creating a Listing — Store Search (Recommended)</h3>
+        <p>The <strong>Store search</strong> tab is the recommended way to create a listing for any item that the main store carries.</p>
+        <ol class="instr-steps">
+       <li>Select the listing <strong>Type</strong>: SELL (you are selling) or BUY (you want to buy from customers).</li>
+          <li>Search for and select the <strong>store catalog item</strong> you want to list. The stack size is set automatically to match the store's catalog.</li>
+<li>Set the <strong>quantity available</strong> (in individual units or stacks).</li>
+     <li>Configure your <strong>pricing peg</strong> (see Pegs section below).</li>
+      <li>Click <strong>Create store listing</strong>.</li>
+        </ol>
+        <div class="instr-admin-callout">
+    ?? <strong>Admin step:</strong> Your new listing is placed in <strong>PENDING_REVIEW</strong> status.
+     An admin must approve it before it becomes publicly visible on the marketplace.
+      </div>
+        <div class="instr-img-wrap">
+      <div class="instr-img-placeholder" data-label="?? images/instructions/ocmuser-create-store.png — Store search listing creation form filled out">
+            <img src="images/instructions/ocmuser-create-store.png" alt="OCM Merchant listing creation form showing store search tab with item and peg configured" class="instr-screenshot"
+          onerror="this.parentElement.classList.add('instr-img-missing')">
+             <div class="instr-img-caption">The Store Search tab — select a catalog item, set quantity, configure the peg, and create.</div>
+  </div>
+     </div>
+    </section>
+
+    <section class="instr-section" id="ocm-merchant--creating-listing-half" data-section-title="Creating a Listing — Half Custom">
+        <h3>Creating a Listing — Half Custom</h3>
+        <p>Use the <strong>Half custom</strong> tab for items that are <em>not</em> in the store catalog, but where you still want to price the listing using a catalog item as the peg.</p>
+        <ul>
+            <li>Enter a custom item name (letters and spaces only).</li>
+  <li>Set the stack size manually.</li>
+<li>Set quantity and peg as normal.</li>
+        </ul>
+        <p>Customers can pay with EW or with the peg item, same as a Store listing.</p>
+    </section>
+
+    <section class="instr-section" id="ocm-merchant--creating-listing-full" data-section-title="Creating a Listing — Full Custom">
+        <h3>Creating a Listing — Full Custom</h3>
+        <p>Use the <strong>Full custom</strong> tab for items with no catalog reference and where you want to set a fixed EW price directly.</p>
+      <ul>
+            <li>Enter a custom item name.</li>
+            <li>Set stack size and quantity.</li>
+            <li>Set a <strong>fixed EW price per individual unit</strong>.</li>
+  </ul>
+        <p>Full custom listings only accept EW payment — no item peg option is available.</p>
+    </section>
+
+    <section class="instr-section" id="ocm-merchant--understanding-pegs" data-section-title="Understanding Pegs">
+        <h3>Understanding Pegs — How Pricing Works</h3>
+        <p>
+            A <strong>peg</strong> links your listing's price to a store catalog item's price.
+            Instead of setting a fixed EW number, you say "this item is worth X times the store
+            price of [another item]."
+        </p>
+   <div class="instr-example">
+            <div class="instr-example-title">?? Example</div>
+         <p>You are listing Iron Ingots. You set the primary peg to "Copper Ingot" with a multiplier of 2×.
+        This means: 1 Iron Ingot costs as much as 2 Copper Ingots (at the store's current sell price).
+  If the store price of Copper Ingots changes, your listing's EW equivalent updates automatically.</p>
+      </div>
+        <p>You can add:</p>
+        <ul>
+            <li>One <strong>primary peg</strong> — the default pricing reference.</li>
+            <li>Up to <strong>10 alternative pegs</strong> — customers can choose to pay using any of these alternatives instead.</li>
+  </ul>
+        <div class="instr-img-wrap">
+            <div class="instr-img-placeholder" data-label="?? images/instructions/ocmuser-peg-box.png — Peg configuration box with a peg item selected">
+        <img src="images/instructions/ocmuser-peg-box.png" alt="Peg configuration box showing primary peg item and multiplier settings" class="instr-screenshot"
+     onerror="this.parentElement.classList.add('instr-img-missing')">
+          <div class="instr-img-caption">The peg configuration — select a catalog item and set the quantity ratio to define your listing's price.</div>
+    </div>
+ </div>
+    </section>
+
+    <section class="instr-section" id="ocm-merchant--managing-listings" data-section-title="Managing Your Listings">
+        <h3>Managing Your Listings</h3>
+        <p>
+            The <strong>My listings</strong> section shows all your current listings split into
+        SELL listings, BUY listings, and Pending review.
+      </p>
+        <p>Listing statuses:</p>
+        <ul>
+        <li><span class="instr-status instr-status-active">ACTIVE</span> — publicly visible, customers can trade.</li>
+       <li><span class="instr-status instr-status-paused">PAUSED</span> — hidden from the public marketplace. Trade requests stop.</li>
+            <li><span class="instr-status instr-status-review">PENDING_REVIEW</span> — waiting for admin approval (new or edited listing).</li>
+      <li><span class="instr-status instr-status-rejected">REJECTED</span> — admin declined the listing. Edit and resubmit or delete.</li>
+ <li><span class="instr-status instr-status-empty">COMPLETED</span> — all stock was traded. The listing is finished.</li>
+        </ul>
+        <p>Actions available on each listing:</p>
+        <ul>
+         <li><strong>Edit</strong> — change item details, pricing, or quantity. Puts listing back in PENDING_REVIEW.</li>
+    <li><strong>Restock</strong> — update the available quantity without changing other details.</li>
+            <li><strong>Pause / Resume</strong> — hide or show your listing without deleting it.</li>
+        <li><strong>Delete</strong> — permanently remove the listing.</li>
+    </ul>
+   <div class="instr-img-wrap">
+        <div class="instr-img-placeholder" data-label="?? images/instructions/ocmuser-listings-table.png — My listings table showing SELL listings with actions">
+         <img src="images/instructions/ocmuser-listings-table.png" alt="My listings table showing active SELL listings with Edit, Restock, and Pause buttons" class="instr-screenshot"
+                 onerror="this.parentElement.classList.add('instr-img-missing')">
+         <div class="instr-img-caption">Your SELL listings — manage each listing with Edit, Restock, Pause, or Delete.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="ocm-merchant--incoming-trades" data-section-title="Handling Incoming Trade Requests">
+      <h3>Handling Incoming Trade Requests</h3>
+  <p>
+       When a customer submits a trade against your listing, it appears in
+   <strong>Incoming pending requests (I am Merchant)</strong>.
+      </p>
+        <ul>
+            <li>Click <strong>Accept</strong> to complete the trade. The customer's balance (or item payment) is processed, and you receive the trade value minus the 10% admin fee.</li>
+            <li>Click <strong>Deny</strong> to reject the trade request.</li>
+        </ul>
+ <div class="instr-admin-callout">
+   ?? <strong>Admin step:</strong> The admin can also accept trades on your behalf if needed (e.g. if you are unavailable). The "Completed By" field in your trade history will show whether you or the admin accepted it.
+        </div>
+        <div class="instr-img-wrap">
+            <div class="instr-img-placeholder" data-label="?? images/instructions/ocmuser-incoming-trade.png — Incoming trade requests table with Accept and Deny buttons">
+                <img src="images/instructions/ocmuser-incoming-trade.png" alt="Incoming pending requests table showing a trade with Accept and Deny buttons" class="instr-screenshot"
+     onerror="this.parentElement.classList.add('instr-img-missing')">
+          <div class="instr-img-caption">Incoming trade requests — review each request and click Accept or Deny.</div>
+            </div>
+        </div>
+    </section>
+</article>
+
+
+<!-- ????????????????????????????????????????????????????????????????????????
+     SLIDE 4 — ACCOUNT HISTORY
+???????????????????????????????????????????????????????????????????????????? -->
+<article class="instr-slide" id="account-history" data-slide-title="Account History">
+    <div class="instr-slide-header">
+     <h2>?? Account History</h2>
+        <span class="instr-slide-num">Slide 4</span>
+        <a class="instr-page-link" href="AccountHistory.html" target="_blank" rel="noopener">Open History ?</a>
+    </div>
+
+    <section class="instr-section" id="account-history--overview" data-section-title="Overview">
+        <h3>Overview</h3>
+        <p>
+            The Account History page shows a complete log of every balance change on your account —
+            every store transaction, EW transfer, and OCM trade. Login is required.
+    </p>
+        <p>Two modes are available: <strong>Account history</strong> (store transactions) and <strong>OCM trades history</strong>.</p>
+    </section>
+
+    <section class="instr-section" id="account-history--filters" data-section-title="Filters">
+        <h3>Date &amp; Page Filters</h3>
+        <ul>
+       <li><strong>From / To</strong> date pickers — narrow the history to a specific date range.</li>
+  <li><strong>Page size</strong> — how many rows to show per page (20 / 50 / 100 / 200 / 500).</li>
+   <li><strong>Load</strong> button — apply the filters and reload the table.</li>
+ <li><strong>Prev / Next</strong> buttons — page through the results.</li>
+        </ul>
+    </section>
+
+    <section class="instr-section" id="account-history--columns" data-section-title="Account History Columns">
+        <h3>Account History Columns</h3>
+        <ul>
+       <li><strong>Date</strong> — when the transaction was processed.</li>
+     <li><strong>TxId</strong> — unique transaction ID (for reference if you need to discuss a transaction with the admin).</li>
+            <li><strong>Type</strong> — what kind of transaction this was (see below).</li>
+            <li><strong>Delta EW</strong> — how much your balance changed. Positive = received EW. Negative = spent EW.</li>
+   <li><strong>Balance After</strong> — your balance immediately after this transaction completed.</li>
+            <li><strong>Details</strong> — click <strong>See details</strong> for a full breakdown.</li>
+        </ul>
+        <div class="instr-img-wrap">
+    <div class="instr-img-placeholder" data-label="?? images/instructions/history-account-table.png — Account history table with several rows">
+    <img src="images/instructions/history-account-table.png" alt="Account history table showing date, type, delta, and balance after columns" class="instr-screenshot"
+        onerror="this.parentElement.classList.add('instr-img-missing')">
+     <div class="instr-img-caption">The account history table — each row is one balance change event.</div>
+      </div>
+    </div>
+    </section>
+
+    <section class="instr-section" id="account-history--transaction-types" data-section-title="Transaction Types">
+        <h3>Transaction Types Explained</h3>
+        <table class="instr-type-table">
+            <thead><tr><th>Type</th><th>What it means</th></tr></thead>
+     <tbody>
+  <tr><td><span class="tx-pill">REQUEST_APPROVED</span></td><td>A store buy/sell request was processed and approved by admin.</td></tr>
+<tr><td><span class="tx-pill">TRANSFER_SENT</span></td><td>You sent EW to another player directly.</td></tr>
+    <tr><td><span class="tx-pill">TRANSFER_RECEIVED</span></td><td>You received EW from another player.</td></tr>
+    <tr><td><span class="tx-pill">ADMIN_ADJUST</span></td><td>An admin manually adjusted your balance (with a reason).</td></tr>
+    <tr><td><span class="tx-pill">INSURANCE_DEPOSIT</span></td><td>EW was locked into an EW Insurance policy.</td></tr>
+           <tr><td><span class="tx-pill">INSURANCE_WITHDRAW_PARTIAL</span></td><td>Some units were withdrawn from an insurance policy (EW credited back).</td></tr>
+  <tr><td><span class="tx-pill">INSURANCE_WITHDRAW_ALL</span></td><td>All units withdrawn from a policy (EW credited back).</td></tr>
+         </tbody>
+      </table>
+ </section>
+
+    <section class="instr-section" id="account-history--submitted-by" data-section-title="'Submitted by' Field">
+        <h3>"Submitted by" Field</h3>
+        <p>
+            Inside the <strong>See details</strong> panel for a <code>REQUEST_APPROVED</code> transaction,
+  you may see a <strong>Submitted by</strong> line:
+  </p>
+      <ul>
+     <li><strong>Submitted by: User</strong> — you submitted this request yourself via the website.</li>
+         <li><strong>Submitted by: Admin (on behalf of)</strong> — the admin entered this request for you (for example if you traded in person at the store and the admin processed it manually).</li>
+     </ul>
+        <div class="instr-img-wrap">
+        <div class="instr-img-placeholder" data-label="?? images/instructions/history-submitted-by.png — Details panel showing 'Submitted by: User' line">
+      <img src="images/instructions/history-submitted-by.png" alt="History details panel showing the Submitted by field" class="instr-screenshot"
+     onerror="this.parentElement.classList.add('instr-img-missing')">
+            <div class="instr-img-caption">The "Submitted by" field tells you whether you or the admin submitted the request.</div>
+</div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="account-history--see-details" data-section-title="See Details">
+        <h3>See Details — Full Transaction Breakdown</h3>
+    <p>
+            Click <strong>See details</strong> on any row to expand a panel with the full breakdown:
+        </p>
+        <ul>
+       <li>Exact date and time of the transaction.</li>
+    <li>Delta EW and your balance after.</li>
+         <li><strong>Items bought</strong> — list of items you purchased (with quantities and prices).</li>
+            <li><strong>Items sold</strong> — list of items you sold.</li>
+            <li>Net from items and any manual adjustment applied by the admin.</li>
+         <li>Who submitted the request.</li>
+        </ul>
+     <div class="instr-img-wrap">
+         <div class="instr-img-placeholder" data-label="?? images/instructions/history-details-expanded.png — History row with details panel expanded">
+                <img src="images/instructions/history-details-expanded.png" alt="History row with the See Details panel expanded showing items bought and sold" class="instr-screenshot"
+  onerror="this.parentElement.classList.add('instr-img-missing')">
+       <div class="instr-img-caption">The details panel — shows every item in the transaction, the net EW, and who submitted it.</div>
+ </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="account-history--ocm-mode" data-section-title="OCM History Mode">
+        <h3>OCM History Mode</h3>
+        <p>Switch the <strong>Mode</strong> dropdown to <strong>OCM trades history</strong> to see your OCM trade log.</p>
+        <p>Columns: <strong>Date</strong>, <strong>TradeId</strong>, <strong>Trader</strong> (the other party), <strong>Completed By</strong> (merchant or admin), <strong>Total Value (EW)</strong>, <strong>Details</strong>.</p>
+        <p>The details panel shows item name, quantity, payment method, canonical EW value, and both parties involved.</p>
+        <div class="instr-img-wrap">
+            <div class="instr-img-placeholder" data-label="?? images/instructions/history-ocm-mode.png — History page in OCM mode showing different columns">
+       <img src="images/instructions/history-ocm-mode.png" alt="History page in OCM mode showing TradeId, Trader, Completed By, and Total Value columns" class="instr-screenshot"
+         onerror="this.parentElement.classList.add('instr-img-missing')">
+    <div class="instr-img-caption">OCM history mode — shows your player-to-player trades with details about each transaction.</div>
+ </div>
+     </div>
+    </section>
+</article>
+
+
+<!-- ????????????????????????????????????????????????????????????????????????
+     SLIDE 5 — ACCOUNT SETTINGS
+???????????????????????????????????????????????????????????????????????????? -->
+<article class="instr-slide" id="account-settings" data-slide-title="Account Settings">
+    <div class="instr-slide-header">
+    <h2>?? Account Settings</h2>
+      <span class="instr-slide-num">Slide 5</span>
+        <a class="instr-page-link" href="AccountSettings.html" target="_blank" rel="noopener">Open Settings ?</a>
+    </div>
+
+    <section class="instr-section" id="account-settings--username-mailbox" data-section-title="Username &amp; Mailbox">
+        <h3>Username &amp; Mailbox</h3>
+        <p><strong>Username (Player Name)</strong> — your display name on the website and leaderboards.</p>
+        <ul>
+            <li>Allowed characters: letters, numbers, spaces, underscore <code>_</code>, and dash <code>-</code>.</li>
+            <li>Length: 2 to 32 characters.</li>
+</ul>
+        <p><strong>Mailbox</strong> — the in-game address of your deposit box where the admin delivers items and collects payments.</p>
+  <ul>
+            <li>Format: <code>4A / 1A / F1</code> (box number / row / floor number).</li>
+            <li>This is required for trading. The admin uses it to find your box in-game.</li>
+    </ul>
+        <p><strong>Mall Mailbox (optional)</strong> — if you have a second deposit box inside the mall.</p>
+        <ul>
+            <li>Format: <code>M1A / M1A / F1</code>.</li>
+    <li>Leave empty if you don't have one.</li>
+</ul>
+    <p>Each field saves independently — click the <strong>Save</strong> button for each field you change.</p>
+        <div class="instr-img-wrap">
+<div class="instr-img-placeholder" data-label="?? images/instructions/settings-mailbox.png — Mailbox field with correct format example">
+         <img src="images/instructions/settings-mailbox.png" alt="Account Settings page showing the Mailbox input with correct format example" class="instr-screenshot"
+     onerror="this.parentElement.classList.add('instr-img-missing')">
+   <div class="instr-img-caption">The Mailbox field — enter your in-game deposit box address in the exact format shown.</div>
+   </div>
+    </div>
+    </section>
+
+    <section class="instr-section" id="account-settings--leaderboard-consent" data-section-title="Leaderboard Consent">
+        <h3>Leaderboard Consent</h3>
+        <p>Choose whether and how you appear on the public leaderboards:</p>
+        <ul>
+            <li><strong>Opted out</strong> (default) — you do not appear on any leaderboard.</li>
+            <li><strong>Half opt-in (anonymous)</strong> — you appear with a stable anonymous alias (e.g. "Anonymous #7"). Your real name is never shown.</li>
+     <li><strong>Full opt-in</strong> — your player name is shown publicly on leaderboards.</li>
+        </ul>
+   <p>The leaderboard displays only these 8 statistics. Your email, mailbox, and mall mailbox are never visible on leaderboards.</p>
+        <div class="instr-img-wrap">
+         <div class="instr-img-placeholder" data-label="?? images/instructions/settings-leaderboard.png — Leaderboard consent dropdown showing options">
+      <img src="images/instructions/settings-leaderboard.png" alt="Leaderboard consent dropdown showing Opted out, Half opt-in, and Full opt-in options" class="instr-screenshot"
+        onerror="this.parentElement.classList.add('instr-img-missing')">
+           <div class="instr-img-caption">Choose your leaderboard visibility — anonymous, real name, or opt out entirely.</div>
+    </div>
+     </div>
+    </section>
+
+    <section class="instr-section" id="account-settings--statistics" data-section-title="Statistics">
+ <h3>Statistics</h3>
+ <p>
+            The <strong>Statistics</strong> section shows your personal trading history aggregated into key metrics.
+     Stats are computed automatically overnight and are read-only on this page.
+        </p>
+      <p><strong>Store stats include:</strong> total trades with store, net EW, largest single buy/sell value, last interaction date, favorite items bought/sold.</p>
+        <p><strong>OCM stats include:</strong> total OCM trades, trades as customer vs merchant, total value traded, fees paid, largest trade, active listings, favorite counterparties and items.</p>
+  <p><strong>Top5</strong> shows your top 5 items by quantity, EW value, and trade count — both for the store and OCM.</p>
+     <p>Click <strong>Refresh statistics</strong> to check for updated data. The <em>Last updated</em> time shows when stats were last computed.</p>
+        <div class="instr-img-wrap">
+            <div class="instr-img-placeholder" data-label="?? images/instructions/settings-statistics.png — Statistics section showing Store and OCM stats">
+                <img src="images/instructions/settings-statistics.png" alt="Statistics section showing store and OCM trading metrics" class="instr-screenshot"
+      onerror="this.parentElement.classList.add('instr-img-missing')">
+ <div class="instr-img-caption">Your personal trading statistics — updated automatically overnight.</div>
+        </div>
+        </div>
+    </section>
+
+ <section class="instr-section" id="account-settings--delete-account" data-section-title="Delete Account">
+        <h3>Delete Account</h3>
+        <p>The <strong>Delete account</strong> section lets you remove your account from the system.</p>
+        <p>Deleting your account will:</p>
+      <ul>
+      <li>Remove your <strong>email address</strong> from the system.</li>
+      <li><strong>Keep</strong> all your trade data and history (for transparency and record-keeping purposes).</li>
+            <li><strong>Pause</strong> all your active OCM listings so they are no longer visible to others.</li>
+        </ul>
+        <p>Your EW balance record remains in the system for historical accuracy. You will need to confirm deletion in a dialog before it takes effect.</p>
+    </section>
+</article>
+
+
+<!-- ????????????????????????????????????????????????????????????????????????
+     SLIDE 6 — EW INSURANCE
+???????????????????????????????????????????????????????????????????????????? -->
+<article class="instr-slide" id="ew-insurance" data-slide-title="EW Insurance">
+    <div class="instr-slide-header">
+     <h2>?? EW Insurance Policies</h2>
+  <span class="instr-slide-num">Slide 6</span>
+      <a class="instr-page-link" href="EWInsurance.html" target="_blank" rel="noopener">Open Insurance ?</a>
+    </div>
+
+    <section class="instr-section" id="ew-insurance--what-is-it" data-section-title="What is EW Insurance?">
+ <h3>What is EW Insurance?</h3>
+        <p>
+<strong>EW Insurance</strong> lets you lock in the current sell-price value of your EW
+            as physical in-game metals. Instead of holding EW (which exists only as a number),
+            you convert it into a guaranteed reserve of real metals (ingots and nuggets)
+            held physically by the store admin.
+        </p>
+  <ul>
+          <li>1 insurance unit = <strong>500 EW</strong>. You deposit in whole units only.</li>
+    <li>Maximum <strong>5 policies</strong> per account.</li>
+          <li>All metal prices use the current <strong>SELL price</strong> at the time the admin approves your deposit.</li>
+  <li>When you want your metals, the admin delivers them to your deposit box — or you can withdraw back to EW.</li>
+        </ul>
+   <div class="instr-admin-callout">
+            ?? <strong>Admin step:</strong> Every change to an insurance policy (deposit, withdrawal, reallocation) requires admin approval. You submit a request and the admin processes it.
+        </div>
+    </section>
+
+ <section class="instr-section" id="ew-insurance--lifecycle" data-section-title="Policy Lifecycle">
+        <h3>Policy Lifecycle</h3>
+        <div class="instr-flow">
+   <span class="instr-flow-step">Create Policy</span>
+  <span class="instr-flow-arrow">?</span>
+    <span class="instr-flow-step">Set Allocation</span>
+      <span class="instr-flow-arrow">?</span>
+     <span class="instr-flow-step">Request Deposit</span>
+            <span class="instr-flow-arrow">?</span>
+ <span class="instr-flow-step instr-flow-admin">?? Admin Approves</span>
+        <span class="instr-flow-arrow">?</span>
+    <span class="instr-flow-step">Active</span>
+    </div>
+        <div class="instr-flow" style="margin-top:8px;">
+      <span class="instr-flow-step">Active</span>
+      <span class="instr-flow-arrow">?</span>
+    <span class="instr-flow-step">Request Withdrawal</span>
+            <span class="instr-flow-arrow">?</span>
+          <span class="instr-flow-step instr-flow-admin">?? Admin Approves</span>
+            <span class="instr-flow-arrow">?</span>
+            <span class="instr-flow-step">EW credited / Metals delivered</span>
+        </div>
+    </section>
+
+    <section class="instr-section" id="ew-insurance--creating" data-section-title="Creating a Policy">
+    <h3>Creating a Policy</h3>
+    <ol class="instr-steps">
+   <li>Click <strong>+ Create New Policy</strong>.</li>
+            <li>Give it a name (letters, numbers, and spaces; max 40 characters).</li>
+      <li>Your new policy appears with status <span class="instr-status instr-status-empty">Empty</span>.</li>
+        </ol>
+   <div class="instr-img-wrap">
+     <div class="instr-img-placeholder" data-label="?? images/instructions/insurance-policy-empty.png — New policy in Empty state">
+       <img src="images/instructions/insurance-policy-empty.png" alt="Newly created insurance policy showing Empty status" class="instr-screenshot"
+     onerror="this.parentElement.classList.add('instr-img-missing')">
+        <div class="instr-img-caption">A newly created policy in Empty state — ready for allocation and deposit.</div>
+        </div>
+  </div>
+    </section>
+
+    <section class="instr-section" id="ew-insurance--allocation" data-section-title="Setting Metal Allocation">
+     <h3>Setting Metal Allocation</h3>
+        <p>Before depositing, set which metals you want your EW to be backed by and in what proportions.</p>
+   <p>Click <strong>Update Allocation</strong> on your policy. You can allocate to these metals:</p>
+        <p><em>Silver, Gold, Steel, Copper, Iron, Tin, Zinc, Bismuth, Nickel, Lead, Meteoric Iron</em></p>
+      <ul>
+     <li>Assign a percentage (0–100%) to each metal you want.</li>
+ <li>Total percentages must be <strong>100% or less</strong>. Any unallocated percentage remains as "uninsured EW".</li>
+            <li>Steel is ingot-only — any EW remainder after whole steel ingots is listed as uninsured.</li>
+        </ul>
+    <div class="instr-img-wrap">
+   <div class="instr-img-placeholder" data-label="?? images/instructions/insurance-allocation.png — Allocation editor with metals and percentages filled in">
+      <img src="images/instructions/insurance-allocation.png" alt="Insurance allocation editor showing metal names and percentage inputs" class="instr-screenshot"
+           onerror="this.parentElement.classList.add('instr-img-missing')">
+ <div class="instr-img-caption">Set your metal allocation — choose which metals back your EW and in what percentage.</div>
+   </div>
+  </div>
+    </section>
+
+    <section class="instr-section" id="ew-insurance--depositing" data-section-title="Depositing EW">
+<h3>Depositing EW into a Policy</h3>
+        <ol class="instr-steps">
+            <li>Click <strong>Request Deposit</strong> on your policy.</li>
+         <li>Enter the number of units to deposit (1 unit = 500 EW). Your current balance must cover the full cost.</li>
+        <li>The policy status changes to <span class="instr-status instr-status-pending">Pending</span>.</li>
+        <li>The admin reviews and approves the request. Your EW balance is deducted and the metals are reserved at today's sell prices.</li>
+            <li>Status changes to <span class="instr-status instr-status-active">Active</span>.</li>
+        </ol>
+     <div class="instr-img-wrap">
+         <div class="instr-img-placeholder" data-label="?? images/instructions/insurance-pending.png — Policy in Pending state after deposit request">
+      <img src="images/instructions/insurance-pending.png" alt="Insurance policy showing Pending status after a deposit request was submitted" class="instr-screenshot"
+         onerror="this.parentElement.classList.add('instr-img-missing')">
+           <div class="instr-img-caption">After requesting a deposit the policy shows Pending — awaiting admin approval.</div>
+         </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="ew-insurance--withdrawing" data-section-title="Withdrawing">
+      <h3>Withdrawing from a Policy</h3>
+        <p>You have two withdrawal options:</p>
+<ul>
+        <li><strong>Withdraw to EW</strong> — your deposited EW is credited back to your account balance (at the original EW value, not recalculated at current prices).</li>
+   <li><strong>Withdraw metals (physical)</strong> — the reserved ingots and nuggets are delivered to your in-game deposit box by the admin. Your EW balance is NOT credited — you receive the metals instead.</li>
+        </ul>
+        <p>Both withdrawal types require admin approval. Submit the request and wait for the admin to process it.</p>
+        <div class="instr-img-wrap">
+            <div class="instr-img-placeholder" data-label="?? images/instructions/insurance-active.png — Active policy showing units, metals, and withdrawal options">
+          <img src="images/instructions/insurance-active.png" alt="Active insurance policy showing reserved units, metal breakdown, and withdrawal buttons" class="instr-screenshot"
+          onerror="this.parentElement.classList.add('instr-img-missing')">
+       <div class="instr-img-caption">An active policy — shows reserved units, projected metal quantities, and options to withdraw.</div>
+       </div>
+        </div>
+    </section>
+</article>
+
+
+<!-- ????????????????????????????????????????????????????????????????????????
+     SLIDE 7 — BANK DASHBOARD
+???????????????????????????????????????????????????????????????????????????? -->
+<article class="instr-slide" id="bank" data-slide-title="Bank Dashboard">
+    <div class="instr-slide-header">
+        <h2>?? Bank Dashboard</h2>
+        <span class="instr-slide-num">Slide 7</span>
+        <a class="instr-page-link" href="Bank.html" target="_blank" rel="noopener">Open Bank ?</a>
+    </div>
+
+    <section class="instr-section" id="bank--overview" data-section-title="Overview">
+ <h3>Overview</h3>
+        <p>
+            The Bank Dashboard is a public, read-only page showing the health and statistics
+  of the EW currency ecosystem. <strong>No login is required.</strong>
+     All data is updated once per day at midnight.
+        </p>
+ <p>Use the <strong>Sections panel</strong> on the right side to jump to any chart.
+        Use the global <strong>Time Range</strong> dropdown at the top to change how much history all charts display.</p>
+    </section>
+
+    <section class="instr-section" id="bank--ew-circulation" data-section-title="EW in Circulation">
+        <h3>EW in Circulation</h3>
+        <p>Shows the total EW held by all active players combined, measured daily.</p>
+        <ul>
+     <li><strong>Rising trend</strong> = more EW is being issued than destroyed (more buying activity).</li>
+<li><strong>Falling trend</strong> = more EW is being spent/burned than issued (more selling activity or OCM fees).</li>
+</ul>
+        <div class="instr-img-wrap">
+            <div class="instr-img-placeholder" data-label="?? images/instructions/bank-circulation-chart.png — EW in Circulation chart">
+     <img src="images/instructions/bank-circulation-chart.png" alt="EW in Circulation chart showing total EW over time" class="instr-screenshot"
+      onerror="this.parentElement.classList.add('instr-img-missing')">
+   <div class="instr-img-caption">EW in Circulation — the total EW held by all players, tracked daily.</div>
+   </div>
+  </div>
+    </section>
+
+    <section class="instr-section" id="bank--issuance-destruction" data-section-title="Issuance &amp; Destruction">
+        <h3>Currency Issuance &amp; Destruction</h3>
+  <p><strong>Issuance</strong> = EW paid out by the store when it buys items from players.</p>
+<p><strong>Destruction</strong> = EW removed from the economy when players buy from the store, plus 10% OCM fees collected.</p>
+        <p>Toggle buttons let you switch between viewing: total destroyed, store buys only, OCM fees only, or the net EW change per day.</p>
+  <div class="instr-img-wrap">
+<div class="instr-img-placeholder" data-label="?? images/instructions/bank-issuance-chart.png — Currency Issuance and Destruction chart">
+      <img src="images/instructions/bank-issuance-chart.png" alt="Currency Issuance and Destruction chart with toggle buttons" class="instr-screenshot"
+          onerror="this.parentElement.classList.add('instr-img-missing')">
+         <div class="instr-img-caption">Daily EW issued vs destroyed — use the toggle buttons to isolate specific components.</div>
+    </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="bank--metal-backing" data-section-title="Metal Backing">
+        <h3>Metal Backing vs EW in Circulation</h3>
+        <p>Shows how well the EW supply is backed by the store's metal reserves.</p>
+        <ul>
+  <li><strong>100%</strong> = every EW in circulation is fully backed by metal reserves.</li>
+         <li><strong>Over 100%</strong> = the store holds more metal value than EW in circulation (over-backed = very healthy).</li>
+   <li><strong>Below 100%</strong> = more EW exists than metal reserves backing it.</li>
+        </ul>
+        <p>Use the <strong>Mode</strong> dropdown to switch between raw EW value of backing vs backing percentage.</p>
+    <div class="instr-img-wrap">
+        <div class="instr-img-placeholder" data-label="?? images/instructions/bank-backing-chart.png — Metal Backing chart in ratio mode">
+       <img src="images/instructions/bank-backing-chart.png" alt="Metal Backing chart showing backing percentage over time" class="instr-screenshot"
+     onerror="this.parentElement.classList.add('instr-img-missing')">
+         <div class="instr-img-caption">Metal Backing — how much of the EW in circulation is covered by real metal reserves.</div>
+     </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="bank--wealth-distribution" data-section-title="Wealth Distribution">
+  <h3>Wealth Distribution</h3>
+        <p>Shows how EW is distributed across the player base over time, split into four groups:</p>
+        <ul>
+         <li><span style="color:#16A34A;font-weight:700;">?</span> <strong>Top 1%</strong> — the wealthiest ~1% of players.</li>
+            <li><span style="color:#2563EB;font-weight:700;">?</span> <strong>Next 9%</strong> — the next tier.</li>
+            <li><span style="color:#CA8A04;font-weight:700;">?</span> <strong>Next 20%</strong></li>
+          <li><span style="color:#DC2626;font-weight:700;">?</span> <strong>Bottom 70%</strong> — the majority of players.</li>
+        </ul>
+        <p>Toggle between <strong>percentage view</strong> (what % of total EW each group holds) and <strong>raw EW view</strong>.</p>
+  <p>The <strong>donut chart</strong> below shows a snapshot for a specific date — use the date picker to choose which day.</p>
+        <div class="instr-img-wrap">
+ <div class="instr-img-placeholder" data-label="?? images/instructions/bank-wealth-chart.png — Wealth distribution chart with four groups">
+  <img src="images/instructions/bank-wealth-chart.png" alt="Wealth distribution chart showing EW split across four player tiers" class="instr-screenshot"
+ onerror="this.parentElement.classList.add('instr-img-missing')">
+          <div class="instr-img-caption">Wealth Distribution — how EW is spread across the player base over time.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="bank--infra-investments" data-section-title="Infrastructure Investments">
+        <h3>Infrastructure Investments</h3>
+        <p>A public log of items the admin has used for infrastructure purposes (buildings, systems, server infrastructure). These items were removed from store stock and invested into the server's physical setup.</p>
+        <p>Click <strong>More Info</strong> on any row to see the full description of what was built.</p>
+   <div class="instr-img-wrap">
+ <div class="instr-img-placeholder" data-label="?? images/instructions/bank-infra-table.png — Infrastructure investments table">
+  <img src="images/instructions/bank-infra-table.png" alt="Infrastructure investments table showing date, items used, and total EW value" class="instr-screenshot"
+          onerror="this.parentElement.classList.add('instr-img-missing')">
+          <div class="instr-img-caption">Infrastructure Investments — a transparent record of how store resources were used for infrastructure.</div>
+    </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="bank--velocity-inflation" data-section-title="Velocity &amp; Inflation">
+   <h3>Velocity &amp; Inflation</h3>
+      <p>This section tracks two related things: how active trading is (<strong>velocity</strong>) and how prices are changing over time (<strong>inflation</strong>).</p>
+        <p><strong>Inflation Index:</strong> Tracks price changes relative to a starting base of 100. If the index is at 120, average prices are 20% higher than the baseline period.
+        Use the <strong>Category</strong> dropdown to choose: Median (all items), Metals only, Common items, or Selected items (you pick them).</p>
+        <p><strong>Velocity per item:</strong> Daily trading activity for individual items. Use the <strong>Velocity metric</strong> dropdown to choose what to measure:</p>
+        <ul>
+      <li>EW Velocity — total EW value traded per day.</li>
+            <li>Store Volume — items bought/sold through the store.</li>
+         <li>OCM Volume — items traded on the OCM.</li>
+       <li>Unique Traders — how many distinct players traded that item.</li>
+ <li>Trade Count — number of individual trades.</li>
+        </ul>
+     <p><strong>Velocity combined:</strong> Same metrics but summed across all items.</p>
+   <div class="instr-img-wrap">
+         <div class="instr-img-placeholder" data-label="?? images/instructions/bank-velocity-section.png — Velocity and Inflation section with metric dropdown">
+            <img src="images/instructions/bank-velocity-section.png" alt="Velocity and Inflation section showing inflation index chart and metric selector" class="instr-screenshot"
+   onerror="this.parentElement.classList.add('instr-img-missing')">
+          <div class="instr-img-caption">Velocity &amp; Inflation — track trading activity and price trends over time.</div>
+            </div>
+        </div>
+ </section>
+</article>
+
+
+<!-- ????????????????????????????????????????????????????????????????????????
+     SLIDE 8 — PRICE HISTORY
+???????????????????????????????????????????????????????????????????????????? -->
+<article class="instr-slide" id="price-history" data-slide-title="Price History">
+    <div class="instr-slide-header">
+        <h2>?? Price History</h2>
+        <span class="instr-slide-num">Slide 8</span>
+      <a class="instr-page-link" href="PriceHistory.html" target="_blank" rel="noopener">Open Price History ?</a>
+    </div>
+
+ <section class="instr-section" id="price-history--overview" data-section-title="Overview">
+        <h3>Overview</h3>
+        <p>The Price History page shows historical price and volume data for all tracked store items. <strong>No login is required.</strong> Data updates daily.</p>
+     <p>Select items to compare, choose a time range, and explore multiple charts showing price trends, stock levels, inflation, and trade velocity.</p>
+    </section>
+
+    <section class="instr-section" id="price-history--selecting-items" data-section-title="Selecting Items">
+ <h3>Selecting Items</h3>
+     <ol class="instr-steps">
+            <li>Type an item name in the <strong>Items</strong> search box.</li>
+  <li>Select the item from the suggestions.</li>
+         <li>Click <strong>Add</strong> — a colored chip appears for the item.</li>
+         <li>Add more items if you want to compare them.</li>
+         <li>Click <strong>Apply</strong> to update all charts.</li>
+        </ol>
+        <p>Remove an item by clicking the <strong>×</strong> on its chip, then click Apply again.</p>
+        <div class="instr-img-wrap">
+       <div class="instr-img-placeholder" data-label="?? images/instructions/pricehistory-item-search.png — Item search with chips added">
+   <img src="images/instructions/pricehistory-item-search.png" alt="Price history item search with two item chips added" class="instr-screenshot"
+                 onerror="this.parentElement.classList.add('instr-img-missing')">
+             <div class="instr-img-caption">Add items using the search box — each item gets a colored chip and a matching line on all charts.</div>
+        </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="price-history--sheet-selector" data-section-title="Buy vs Sell Sheet">
+      <h3>Buy vs Sell Sheet Selector</h3>
+        <p>The <strong>Sheet (Buy/Sell)</strong> dropdown controls which price direction is shown on the charts.</p>
+        <div class="instr-tip-box">
+    ?? <strong>Note on the labeling:</strong> The names may seem backwards at first. Here's what they mean:<br><br>
+   <strong>Buy Prices (SellHistory)</strong> = prices the store charges <em>you</em> when you buy from it.<br>
+ <strong>Sell Prices (BuyHistory)</strong> = prices the store pays <em>you</em> when you sell to it.
+    </div>
+        <p>The naming comes from the store's perspective: "SellHistory" is what the store sold (to customers); "BuyHistory" is what the store bought (from players).</p>
+    </section>
+
+    <section class="instr-section" id="price-history--price-trend" data-section-title="Price Trend Chart">
+        <h3>Price Trend Chart</h3>
+        <p>Shows the historical price of your selected items over time. Each item is a separate colored line.</p>
+        <ul>
+ <li><strong>Show combined</strong> — adds an average line across all selected items.</li>
+<li><strong>Normalize combined to 100</strong> — rescales the combined line to start at 100.</li>
+            <li><strong>Normalize all to 100</strong> — rescales every item to start at 100 so you can compare percentage changes regardless of their absolute price.</li>
+        </ul>
+        <div class="instr-img-wrap">
+   <div class="instr-img-placeholder" data-label="?? images/instructions/pricehistory-price-chart.png — Price Trend chart with two items">
+       <img src="images/instructions/pricehistory-price-chart.png" alt="Price Trend chart showing two items with price lines over time" class="instr-screenshot"
+      onerror="this.parentElement.classList.add('instr-img-missing')">
+    <div class="instr-img-caption">Price Trend — compare historical prices for multiple items on the same chart.</div>
+         </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="price-history--middle-chart" data-section-title="Middle Chart &amp; Metrics">
+<h3>Middle Chart &amp; Metrics</h3>
+    <p>The middle chart can display several different metrics. Use the <strong>Middle Chart Metric</strong> dropdown:</p>
+        <ul>
+  <li><strong>Stock Amount</strong> — how many of the item the store currently has in stock.</li>
+            <li><strong>Daily Price Change (+/-)</strong> — raw EW change per day.</li>
+     <li><strong>Daily Price Change (%)</strong> — percentage price change per day.</li>
+            <li><strong>Total Valuation</strong> — total EW value of all stock of that item (quantity × price).</li>
+        <li><strong>Goal Stock %</strong> — how close the store is to its target stock level for that item.</li>
+         <li><strong>Target Stock Stack</strong> — the store's desired stock level in stacks.</li>
+    </ul>
+    </section>
+
+    <section class="instr-section" id="price-history--inflation-chart" data-section-title="Inflation Index Chart">
+        <h3>Inflation Index Chart</h3>
+        <p>Shows overall price inflation indexed to a base of 100. When the index is at 120, average prices in that category are 20% higher than the base period.</p>
+    <p>Use the <strong>Inflation Index Category</strong> dropdown:</p>
+     <ul>
+            <li><strong>Median</strong> — weighted average across all tracked items.</li>
+            <li><strong>Metal Index</strong> — metals only.</li>
+   <li><strong>Common Items</strong> — frequently traded non-metal items.</li>
+         <li><strong>Selected items</strong> — only the items you have added via the search.</li>
+        </ul>
+  <div class="instr-img-wrap">
+         <div class="instr-img-placeholder" data-label="?? images/instructions/pricehistory-inflation-chart.png — Inflation Index chart">
+     <img src="images/instructions/pricehistory-inflation-chart.png" alt="Inflation Index chart showing price trend indexed to 100" class="instr-screenshot"
+     onerror="this.parentElement.classList.add('instr-img-missing')">
+    <div class="instr-img-caption">Inflation Index — tracks how prices change over time relative to a base of 100.</div>
+   </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="price-history--velocity-charts" data-section-title="Velocity Charts">
+        <h3>Velocity Charts</h3>
+        <p>Two velocity charts are available — per item and combined (all items summed).</p>
+        <p>Use the <strong>Velocity Metric</strong> dropdown to choose what to display (EW Velocity, Store Volume, OCM Volume, Unique Traders, Trade Count).</p>
+    <ul>
+<li><strong>Show breakdown</strong> — splits the metric into sub-components (e.g. Buy vs Sell separately).</li>
+            <li><strong>Show A / Show B</strong> — toggle each sub-component independently.</li>
+       <li><strong>Normalize to 100</strong> — rescales all items to the same baseline for comparison.</li>
+        </ul>
+<div class="instr-img-wrap">
+      <div class="instr-img-placeholder" data-label="?? images/instructions/pricehistory-velocity-chart.png — Velocity per-item chart">
+     <img src="images/instructions/pricehistory-velocity-chart.png" alt="Velocity per-item chart showing daily trading activity" class="instr-screenshot"
+         onerror="this.parentElement.classList.add('instr-img-missing')">
+         <div class="instr-img-caption">Velocity charts — how actively each item is being traded each day.</div>
+        </div>
+        </div>
+    </section>
+</article>
+
+
+<!-- ????????????????????????????????????????????????????????????????????????
+     SLIDE 9 — LEADERBOARDS
+???????????????????????????????????????????????????????????????????????????? -->
+<article class="instr-slide" id="leaderboards" data-slide-title="Leaderboards">
+    <div class="instr-slide-header">
+        <h2>?? Leaderboards</h2>
+        <span class="instr-slide-num">Slide 9</span>
+        <a class="instr-page-link" href="Leaderboards.html" target="_blank" rel="noopener">Open Leaderboards ?</a>
+    </div>
+
+  <section class="instr-section" id="leaderboards--overview" data-section-title="Overview &amp; Opt-in">
+        <h3>Overview &amp; Login / Opt-in Required</h3>
+        <p>
+  Leaderboards rank players by trading activity. Participation is
+ <strong>completely optional and opt-in only</strong>.
+        </p>
+    <ul>
+       <li>You must be <strong>logged in</strong> to view leaderboards.</li>
+            <li>You must <strong>opt in</strong> via <a href="AccountSettings.html" target="_blank" rel="noopener">Account Settings ? Leaderboard Consent</a> to appear on them.</li>
+       <li>Players who have not opted in are never shown.</li>
+    </ul>
+        <p>Click <strong>Refresh</strong> to load the latest data. The page shows when data was last updated.</p>
+  </section>
+
+    <section class="instr-section" id="leaderboards--store" data-section-title="Store Leaderboards">
+    <h3>Store Leaderboards</h3>
+        <ul>
+            <li><strong>Biggest buy transaction (EW)</strong> — the single largest purchase from the store by EW value.</li>
+        <li><strong>Biggest sale transaction (EW)</strong> — the single largest sale to the store.</li>
+          <li><strong>Trades with store</strong> — total number of store requests approved.</li>
+        </ul>
+        <div class="instr-img-wrap">
+     <div class="instr-img-placeholder" data-label="?? images/instructions/leaderboards-store.png — Store leaderboards section">
+  <img src="images/instructions/leaderboards-store.png" alt="Store leaderboards showing biggest buy, biggest sale, and total trades rankings" class="instr-screenshot"
+     onerror="this.parentElement.classList.add('instr-img-missing')">
+      <div class="instr-img-caption">Store leaderboards — rankings for biggest transactions and most active traders.</div>
+ </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="leaderboards--participation" data-section-title="Store Participation (Current &amp; Record)">
+        <h3>Store Participation — Current &amp; Record Periods</h3>
+        <p><strong>Current period</strong> shows ongoing totals for this week, month, and year:</p>
+        <ul>
+            <li>Week/Month/Year <strong>bought</strong> (EW) — how much EW you spent buying from the store.</li>
+     <li>Week/Month/Year <strong>sold</strong> (EW) — how much EW you earned selling to the store.</li>
+        <li>"Ongoing" in the End column means the period is still accumulating.</li>
+        </ul>
+        <p><strong>Record period</strong> shows each player's all-time best for each window. Records are finalized when the period ends. "Ongoing..." means the record was set in a period still running.</p>
+    </section>
+
+    <section class="instr-section" id="leaderboards--ocm" data-section-title="OCM Leaderboards">
+        <h3>OCM Leaderboards</h3>
+        <ul>
+          <li><strong>Trades as customer</strong> — total OCM trades where you were the buyer.</li>
+ <li><strong>Trades as merchant</strong> — total OCM trades where you were the seller.</li>
+            <li><strong>Fees paid (merchant-side)</strong> — total 10% fees paid as a merchant (higher = more selling activity).</li>
+            <li><strong>Largest trade value</strong> — the single most valuable OCM trade you were part of.</li>
+            <li><strong>Total trade value</strong> — cumulative EW value of all your OCM trades.</li>
+        </ul>
+        <div class="instr-img-wrap">
+            <div class="instr-img-placeholder" data-label="?? images/instructions/leaderboards-ocm.png — OCM leaderboards section">
+           <img src="images/instructions/leaderboards-ocm.png" alt="OCM leaderboards showing trades as customer, merchant, fees paid, and trade value rankings" class="instr-screenshot"
+        onerror="this.parentElement.classList.add('instr-img-missing')">
+                <div class="instr-img-caption">OCM leaderboards — rankings for player-to-player trading activity.</div>
+   </div>
+      </div>
+    </section>
+</article>
+
+
+<!-- ????????????????????????????????????????????????????????????????????????
+ SLIDE 10 — WORK PAY RATES
+???????????????????????????????????????????????????????????????????????????? -->
+<article class="instr-slide" id="work-pay" data-slide-title="Work Pay Rates">
+    <div class="instr-slide-header">
+        <h2>?? Work Pay Rates</h2>
+    <span class="instr-slide-num">Slide 10</span>
+        <a class="instr-page-link" href="WorkPayRates.html" target="_blank" rel="noopener">Open Work Pay Rates ?</a>
+    </div>
+
+    <section class="instr-section" id="work-pay--overview" data-section-title="What are Work Pay Rates?">
+ <h3>What are Work Pay Rates?</h3>
+        <p>
+   Work Pay Rates is a public reference showing how much EW you can earn by doing
+  specific jobs — such as harvesting, crafting, or delivering specific items.
+        </p>
+        <p>
+            These are <strong>estimates</strong>, not fixed wages. Actual pay depends on your
+    speed, experience, and the quality of your work. No login is required to view rates.
+        </p>
+    </section>
+
+    <section class="instr-section" id="work-pay--reading-the-table" data-section-title="Reading the Table">
+        <h3>Reading the Table</h3>
+        <p>Each row shows one type of work:</p>
+        <ul>
+          <li><strong>Item</strong> — what you are producing, harvesting, or delivering.</li>
+     <li><strong>Min Rate</strong> — the minimum expected pay per unit of time.</li>
+            <li><strong>Max Rate</strong> — the maximum expected pay (for experienced/fast workers).</li>
+<li><strong>Unit</strong> — whether the rate is per stack/hour or per individual item/hour.</li>
+     <li><strong>Description</strong> — notes on the work, requirements, or special conditions.</li>
+        </ul>
+  <p>Use the <strong>Search</strong> box to filter by item name. Sort by <strong>Highest paying</strong> or <strong>Lowest paying</strong>.</p>
+        <div class="instr-img-wrap">
+    <div class="instr-img-placeholder" data-label="?? images/instructions/workpay-table.png — Work Pay Rates table with search active">
+         <img src="images/instructions/workpay-table.png" alt="Work Pay Rates table showing item name, min/max rate, unit, and description columns" class="instr-screenshot"
+        onerror="this.parentElement.classList.add('instr-img-missing')">
+     <div class="instr-img-caption">The Work Pay Rates table — find the EW rate for any job and filter by item name.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="instr-section" id="work-pay--rate-units" data-section-title="Rate Units Explained">
+  <h3>Rate Units Explained</h3>
+  <ul>
+   <li><strong>Stacks/hour</strong> — how many full stacks of the item you are expected to produce per hour. Example: "Min 2 / Max 5 Stacks/hour" means a newer worker produces ~2 stacks/hour, an experienced one ~5.</li>
+         <li><strong>Items/hour</strong> — how many individual items per hour (used for items not sold in standard stacks).</li>
+        </ul>
+ <p>The EW value you earn is the rate multiplied by the store's current buy price for that item. Actual earnings are paid when you sell the items to the store via a normal Transaction Request.</p>
+    </section>
+</article>
+
+
+<!-- ????????????????????????????????????????????????????????????????????????
+     SLIDE 11 — VINTAGE STORY ECONOMICS
+???????????????????????????????????????????????????????????????????????????? -->
+<article class="instr-slide" id="economics" data-slide-title="VS Economics Essay">
+    <div class="instr-slide-header">
+        <h2>?? Vintage Story Economics</h2>
+        <span class="instr-slide-num">Slide 11</span>
+        <a class="instr-page-link" href="VintageStoryEconomics.html" target="_blank" rel="noopener">Read Essay ?</a>
+    </div>
+
+    <section class="instr-section" id="economics--about" data-section-title="About this Page">
+     <h3>About this Page</h3>
+        <p>
+         This is an investigative essay written by the store owner about the in-game economy
+            of <strong>Vintage Story</strong> on the TOPS server. It is a personal and academic piece.
+            No account, login, or interaction is required — it is a read-only page.
+   </p>
+    </section>
+
+    <section class="instr-section" id="economics--what-it-covers" data-section-title="What the Essay Covers">
+        <h3>What the Essay Covers</h3>
+        <ul>
+       <li>The history of player trading in Vintage Story and how it evolved over time.</li>
+    <li>How the FSFTC store was created and why EW was invented as an alternative to RG.</li>
+            <li>Comparison of Vintage Story's economy to other games (Minecraft, traditional MMOs).</li>
+            <li>Why Vintage Story's economy remains stable and resistant to inflation.</li>
+  <li>Lessons learned from running an in-game trading company.</li>
+    </ul>
+    </section>
+
+    <section class="instr-section" id="economics--key-topics" data-section-title="Key Topics Summary">
+        <h3>Key Topics Summary</h3>
+        <ul>
+<li><strong>RG inflation:</strong> The in-game currency (Rusty Gear) suffers from inflation because mob farms can print it infinitely. EW avoids this problem by having no automatic issuance mechanism.</li>
+            <li><strong>Item value:</strong> Almost every item in Vintage Story has economic value because producing things is intentionally difficult and time-consuming.</li>
+    <li><strong>OCM vs AH:</strong> The OCM charges only a 10% fee — far less than the in-game Auction House plus other fees. This makes large trades significantly cheaper.</li>
+            <li><strong>Access to currency:</strong> EW accepts almost any basic item as trade value, making it much easier for new players to participate in the economy compared to RG-only markets.</li>
+        </ul>
+    </section>
+</article>
+
+</div><!-- /#instrMain -->
+
+<script src="instructions_js/instructions-boot.js"></script>
+</body>
+</html>

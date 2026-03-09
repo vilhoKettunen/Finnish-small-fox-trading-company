@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="css/site-layout.css">
     <link rel="stylesheet" href="css/panels-paper.css">
     <link rel="stylesheet" href="css/shared/universal-dropdown.css">
+    <link rel="stylesheet" href="css/shared/instr-help-link.css">
     <script src="shared/site-decor.js"></script>
     <script src="shared/site-footer.js"></script>
 
@@ -114,11 +115,13 @@
 
     <!-- Display Currency — locked visible, no toggle -->
     <div class="section" id="idxDisplayCurrency">
-        <label for="currencyInput"><b>Display Currency:</b></label>
-     <input id="currencyInput" list="currencyDatalist" placeholder="Search currency / item">
- <input id="currencySelect" type="hidden" value="EW">
-        <datalist id="currencyDatalist"></datalist>
+   <label for="currencyInput"><b>Display Currency:</b></label>
+    <input id="currencyInput" list="currencyDatalist" placeholder="Search currency / item">
+    <input id="currencySelect" type="hidden" value="EW">
+   <datalist id="currencyDatalist"></datalist>
         <button id="btnSendBT" type="button" onclick="openTransferModal()">Send EW</button>
+     <a class="instr-help-link" href="Instructions.html#main-store--display-currency" target="_blank" rel="noopener" title="How do I use Display Currency?">📖 How do I use this?</a>
+        <a class="instr-help-link" href="Instructions.html#main-store--send-ew" target="_blank" rel="noopener" title="How do I use Send EW?">📖 Send EW help</a>
     </div>
 
     <div id="transferModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:3000;">
@@ -151,8 +154,9 @@ Note (optional):
 
     <!-- Quick Calculator -->
     <div class="section" id="idxQuickCalc">
-        <h2>🔹 Quick Individual Item Calculator</h2>
-        <button class="more-info-btn" onclick="toggleInfo('quickInfo')">More Info</button>
+      <h2>🔹 Quick Individual Item Calculator</h2>
+ <button class="more-info-btn" onclick="toggleInfo('quickInfo')">More Info</button>
+        <a class="instr-help-link" href="Instructions.html#main-store--quick-calculator" target="_blank" rel="noopener" title="How do I use the Quick Calculator?">📖 How do I use this?</a>
         <div id="quickInfo" class="info-box">
         <p>Quick calc for a stack or individual item. Pick item and qty to see buy & sell totals.</p>
     <button onclick="toggleInfo('quickInfo')">❌ Close</button>
@@ -183,7 +187,8 @@ Note (optional):
     <div class="section" id="buySection">
         <h2>🔹 Buy Multiple Items</h2>
         <button class="more-info-btn" onclick="toggleInfo('buyInfo')">More Info</button>
-      <div id="buyInfo" class="info-box">
+        <a class="instr-help-link" href="Instructions.html#main-store--buy-items" target="_blank" rel="noopener" title="How do I add items to buy?">📖 How do I use this?</a>
+        <div id="buyInfo" class="info-box">
      <p>Add stacks/individuals you want to buy. Includes OCM listings if desired.</p>
     <button onclick="toggleInfo('buyInfo')">❌ Close</button>
         </div>
@@ -266,6 +271,7 @@ Note (optional):
     <div class="section" id="sellSection">
         <h2>🔹 Sell Multiple Items</h2>
         <button class="more-info-btn" onclick="toggleInfo('sellInfo')">More Info</button>
+        <a class="instr-help-link" href="Instructions.html#main-store--sell-items" target="_blank" rel="noopener" title="How do I add items to sell?">📖 How do I use this?</a>
         <div id="sellInfo" class="info-box">
             <p>Add items you sell. Includes OCM interaction and Pay With.</p>
             <button onclick="toggleInfo('sellInfo')">❌ Close</button>
@@ -349,6 +355,7 @@ Note (optional):
     <div class="section" id="idxCombinedTotals">
         <h2>🔹 Combined Totals</h2>
       <button class="more-info-btn" onclick="toggleInfo('combinedInfo')">More Info</button>
+        <a class="instr-help-link" href="Instructions.html#main-store--combined-totals" target="_blank" rel="noopener" title="How do Combined Totals work?">📖 How do I use this?</a>
       <div id="combinedInfo" class="info-box">
      <p>
            - Account Balance shows your current store balance.<br>
@@ -368,6 +375,7 @@ Note (optional):
     <div class="section" id="idxPayWith">
      <h2>🔹 Pay With</h2>
    <button class="more-info-btn" onclick="toggleInfo('payInfo')">More Info</button>
+        <a class="instr-help-link" href="Instructions.html#main-store--pay-with" target="_blank" rel="noopener" title="How do I use Pay With?">📖 How do I use this?</a>
         <div id="payInfo" class="info-box">
    <p>Cover a negative net with item payments.</p>
             <button onclick="toggleInfo('payInfo')">❌ Close</button>
@@ -404,7 +412,8 @@ Note (optional):
     <!-- Item Converter -->
     <div class="section" id="idxItemConverter">
  <h2>🔹 Item Converter</h2>
-        <button class="more-info-btn" onclick="toggleInfo('converterInfo')">More Info</button>
+ <button class="more-info-btn" onclick="toggleInfo('converterInfo')">More Info</button>
+        <a class="instr-help-link" href="Instructions.html#main-store--item-converter" target="_blank" rel="noopener" title="How do I use the Item Converter?">📖 How do I use this?</a>
    <div id="converterInfo" class="info-box">
      <p>Allocate % of positive Net Balance into items.</p>
        <button onclick="toggleInfo('converterInfo')">❌ Close</button>
@@ -441,6 +450,7 @@ Note (optional):
     <!-- Transaction Request — locked visible, no toggle -->
     <div id="requestControls" class="section">
    <h2>🔹 Transaction Request</h2>
+        <a class="instr-help-link" href="Instructions.html#main-store--transaction-request" target="_blank" rel="noopener" title="How do I submit a transaction request?">📖 How do I use this?</a>
         <div id="requestGuard" class="guard-msg" style="display:none;">You need to login for this tool.</div>
         <button id="btnSubmitRequest" onclick="guardedSubmitPurchaseRequest()">Submit Purchase Request</button>
         <button class="copy-btn" onclick="guardedCopyTransactionData()">Copy Transaction Data</button>
@@ -499,19 +509,20 @@ Short Description (max 100 chars, shown in list):
 
     <!-- Useful Links -->
     <div class="section links-section" id="usefulLinks">
-        <h2>🔗 Useful Links</h2>
+     <h2>🔗 Useful Links
+        <a class="instr-help-link" href="Instructions.html#main-store" target="_blank" rel="noopener" title="Instructions for the Main Store">📖 How do I use this?</a>
+        </h2>
       <nav class="links-grid" aria-label="Useful links">
        <a class="link-btn" href="https://translocator.moe/" target="_blank" rel="noopener">TL route calculator</a>
-            <a class="link-btn" href="https://map.tops.vintagestory.at/?x=-419&y=416&zoom=6" target="_blank" rel="noopener">TOPS map</a>
+<a class="link-btn" href="https://map.tops.vintagestory.at/?x=-419&y=416&zoom=6" target="_blank" rel="noopener">TOPS map</a>
     <a class="link-btn" href="https://wiki.vintagestory.at/Main_Page" target="_blank" rel="noopener">Wiki</a>
             <a class="link-btn" href="https://docs.google.com/spreadsheets/d/1W9ByTiwX3lPakqoYXTHgnOiMNNzwSVnkgmTPqvMrSUc/edit?gid=0#gid=0" target="_blank" rel="noopener">Mailbox names</a>
  <a class="link-btn" href="https://docs.google.com/spreadsheets/d/1_meliJtuKSDwEWRDh1gldcsD-pSjDgIND3dcE1mCjCo/edit?gid=0#gid=0" target="_blank" rel="noopener">PRICE SHEET</a>
-            <a class="link-btn" href="https://www.vintagestory.at/" target="_blank" rel="noopener">Vintage Story</a>
+        <a class="link-btn" href="https://www.vintagestory.at/" target="_blank" rel="noopener">Vintage Story</a>
          <a class="link-btn" href="https://mods.vintagestory.at/" target="_blank" rel="noopener">Official mods</a>
-   <a class="link-btn internal" href="BTIncurance.html">EW Insurance Calculator</a>
             <a class="link-btn internal" href="EWInsurance.html">EW Insurance Policies</a>
-            <a class="link-btn internal" href="PriceHistory.html">Price History</a>
-            <a class="link-btn internal" href="VintageStoryEconomics.html">Vintage Story Economics</a>
+     <a class="link-btn internal" href="PriceHistory.html">Price History</a>
+   <a class="link-btn internal" href="VintageStoryEconomics.html">Vintage Story Economics</a>
       </nav>
     </div>
 

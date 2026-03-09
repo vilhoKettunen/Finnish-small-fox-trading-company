@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="css/site-layout.css">
     <link rel="stylesheet" href="css/panels-paper.css">
     <link rel="stylesheet" href="css/shared/universal-dropdown.css">
+    <link rel="stylesheet" href="css/shared/instr-help-link.css">
     <script src="shared/site-decor.js"></script>
     <script src="shared/site-footer.js"></script>
     <script src="shared/universal-dropdown.js"></script>
@@ -34,14 +35,18 @@
     <div id="loginPanelMount"></div>
     <div id="authStatus" class="small muted">Not logged in.</div>
 
-    <h1>OCM Marketplace</h1>
+    <h1>OCM Marketplace
+        <a class="instr-help-link" href="Instructions.html#ocm-marketplace" target="_blank" rel="noopener" title="How do I use the OCM Marketplace?">📖 How do I use this?</a>
+    </h1>
 
     <div class="small" id="msgTop"></div>
 
     <section class="panel" aria-label="Marketplace filters">
         <div class="grid">
             <div class="col-3">
-                <div class="small muted">Listing type (applies on Search)</div>
+                <div class="small muted">Listing type (applies on Search)
+                    <a class="instr-help-link" href="Instructions.html#ocm-marketplace--filters" target="_blank" rel="noopener" title="How do filters work?">📖 How do I use this?</a>
+                </div>
                 <select id="fltType" style="width:100%">
                     <option value="SELL">Supply (SELL)</option>
                     <option value="BUY">Demand (BUY)</option>
@@ -134,16 +139,19 @@
     <section aria-label="Unified listings">
         <table>
             <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Item price</th>
-                    <th>EW price</th>
-                    <th id="thQty">Individual stock</th>
-                    <th>Stack size</th>
-                    <th>Merchant</th>
-                    <th>Trade</th>
-                </tr>
-            </thead>
+            <tr>
+    <th>Name</th>
+      <th>Item price</th>
+     <th>EW price</th>
+    <th id="thQty">Individual stock</th>
+ <th>Stack size</th>
+ <th>Merchant</th>
+           <th>Trade
+         <a class="instr-help-link" href="Instructions.html#ocm-marketplace--listings-table" target="_blank" rel="noopener" title="How do I read and use listings?">📖 How do I use this?</a>
+      </th>
+         </tr>
+          </thead>
+
             <tbody id="tbListings"></tbody>
         </table>
 
@@ -160,7 +168,9 @@
         </div>
     </section>
 
-    <h2>My pending trades</h2>
+    <h2>My pending trades
+    <a class="instr-help-link" href="Instructions.html#ocm-marketplace--pending-trades" target="_blank" rel="noopener" title="How do pending trades work?">📖 How do I use this?</a>
+    </h2>
     <div class="toolbar">
         <button id="btnRefreshPending" type="button">Refresh</button>
         <span id="msgPending" class="small"></span>

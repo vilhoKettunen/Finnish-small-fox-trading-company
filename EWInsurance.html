@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="css/site-layout.css">
     <link rel="stylesheet" href="css/panels-paper.css">
     <link rel="stylesheet" href="css/pages/EWInsurance.css">
+    <link rel="stylesheet" href="css/shared/instr-help-link.css">
 
     <script src="shared/site-decor.js"></script>
     <script src="shared/site-footer.js"></script>
@@ -27,7 +28,9 @@
 
     <div id="loginPanelMount"></div>
 
-    <h1>EW Insurance - Policy Manager</h1>
+    <h1>EW Insurance - Policy Manager
+      <a class="instr-help-link" href="Instructions.html#ew-insurance" target="_blank" rel="noopener" title="How do I use EW Insurance?">?? How do I use this?</a>
+    </h1>
 
     <!-- Explainer -->
     <div class="section" style="max-width:700px;">
@@ -49,6 +52,9 @@
     <button id="btnCreatePolicy" type="button">+ Create New Policy</button>
 
     <!-- Policy list (rendered by ewinsurance-ui.js as a table) -->
+    <p class="small" style="margin-top:8px;">
+        <a class="instr-help-link" href="Instructions.html#ew-insurance--lifecycle" target="_blank" rel="noopener" title="How do insurance policies work?">?? How do I use this?</a>
+ </p>
     <div id="policyList"></div>
 
     <!-- JS modules -->

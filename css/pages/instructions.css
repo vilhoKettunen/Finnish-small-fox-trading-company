@@ -1,0 +1,621 @@
+/* css/pages/instructions.css
+   Styles for Instructions.html — user documentation page. */
+
+/* ??? Base & body ????????????????????????????????????????????????????????? */
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #f5f5f0;
+    color: #1a1a1a;
+    margin: 0;
+    padding: 12px;
+    font-size: 15px;
+    line-height: 1.65;
+}
+
+body.withTopBar {
+    padding-top: 72px;
+}
+
+/* Reserve space for left sidebar on desktop */
+@media (min-width: 1001px) {
+    body {
+      padding-left: 224px;
+   padding-right: 216px;
+    }
+}
+
+/* ??? Main content area ??????????????????????????????????????????????????? */
+#instrMain {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* ??? SLIDE cards ????????????????????????????????????????????????????????? */
+.instr-slide {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.09);
+    margin-bottom: 3rem;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    scroll-margin-top: 76px;
+}
+
+.instr-slide-header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    color: #fff;
+    padding: 20px 26px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.instr-slide-header h2 {
+    margin: 0;
+  font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+.instr-slide-num {
+    font-size: 0.78rem;
+    font-weight: 700;
+    background: rgba(255,255,255,0.18);
+    border-radius: 20px;
+    padding: 2px 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+.instr-page-link {
+    color: rgba(255,255,255,0.88);
+    font-size: 0.82rem;
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 6px;
+    padding: 3px 10px;
+    white-space: nowrap;
+    margin-left: auto;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+
+.instr-page-link:hover {
+    background: rgba(255,255,255,0.18);
+}
+
+/* ??? SECTION blocks inside a slide ?????????????????????????????????????? */
+.instr-section {
+    padding: 22px 26px;
+    border-bottom: 1px solid #f0f0ec;
+    scroll-margin-top: 76px;
+}
+
+.instr-section:last-child {
+    border-bottom: none;
+}
+
+.instr-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 1.05rem;
+  font-weight: 700;
+    color: #1e3a5f;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.instr-section p {
+    margin: 0 0 10px 0;
+}
+
+.instr-section ul,
+.instr-section ol {
+    margin: 6px 0 10px 0;
+    padding-left: 22px;
+}
+
+.instr-section li {
+    margin-bottom: 5px;
+}
+
+.instr-section strong {
+    color: #111827;
+}
+
+/* ??? Admin callout box ??????????????????????????????????????????????????? */
+.instr-admin-callout {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    margin: 14px 0;
+    font-size: 0.92em;
+    color: #78350f;
+    line-height: 1.55;
+}
+
+.instr-admin-callout strong {
+    color: #92400e;
+}
+
+/* ??? Info / tip box ?????????????????????????????????????????????????????? */
+.instr-tip-box {
+    background: #f0f9ff;
+border-left: 4px solid #38bdf8;
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    margin: 14px 0;
+    font-size: 0.91em;
+    color: #0c4a6e;
+    line-height: 1.55;
+}
+
+/* ??? Step list (numbered steps) ????????????????????????????????????????? */
+.instr-steps {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+    counter-reset: instr-step;
+}
+
+.instr-steps li {
+    counter-increment: instr-step;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 10px;
+    line-height: 1.55;
+}
+
+.instr-steps li::before {
+    content: counter(instr-step);
+    background: #2563eb;
+    color: #fff;
+ border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 0.78rem;
+    font-weight: 800;
+display: flex;
+    align-items: center;
+    justify-content: center;
+flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* ??? Screenshot placeholder ?????????????????????????????????????????????? */
+.instr-img-wrap {
+    margin: 16px 0;
+}
+
+.instr-screenshot {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    display: block;
+}
+
+.instr-img-placeholder {
+    display: block;
+}
+
+/* Show placeholder box when image file is missing */
+.instr-img-placeholder.instr-img-missing .instr-screenshot {
+    display: none;
+}
+
+.instr-img-placeholder.instr-img-missing::before {
+    content: attr(data-label);
+    display: block;
+    background: #f3f4f6;
+    border: 2px dashed #9ca3af;
+    border-radius: 8px;
+    color: #6b7280;
+    font-size: 0.85rem;
+    font-family: monospace;
+    padding: 28px 18px;
+ text-align: center;
+    min-height: 80px;
+    line-height: 1.4;
+}
+
+.instr-img-caption {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 5px;
+    font-style: italic;
+    padding-left: 2px;
+}
+
+/* ??? Transaction type pill table ????????????????????????????????????????? */
+.instr-type-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88em;
+    margin: 10px 0;
+}
+
+.instr-type-table th {
+    background: #f3f4f6;
+    text-align: left;
+    padding: 7px 10px;
+    font-weight: 700;
+    border-bottom: 2px solid #d1d5db;
+    color: #374151;
+}
+
+.instr-type-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: top;
+}
+
+.instr-type-table tr:last-child td {
+    border-bottom: none;
+}
+
+.tx-pill {
+    display: inline-block;
+    background: #eff6ff;
+    color: #1d4ed8;
+    border-radius: 4px;
+    padding: 1px 7px;
+    font-size: 0.82em;
+ font-family: monospace;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+/* ??? Scenario / example box ?????????????????????????????????????????????? */
+.instr-example {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 0.91em;
+}
+
+.instr-example-title {
+  font-weight: 700;
+  color: #111827;
+    margin-bottom: 6px;
+  font-size: 0.95em;
+}
+
+/* ??? Status badges ??????????????????????????????????????????????????????? */
+.instr-status {
+ display: inline-block;
+    border-radius: 4px;
+    padding: 1px 8px;
+    font-size: 0.8em;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.instr-status-empty    { background: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
+.instr-status-active   { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+.instr-status-pending  { background: #fef9c3; color: #713f12; border: 1px solid #fde047; }
+.instr-status-review   { background: #ffe4e6; color: #9f1239; border: 1px solid #fca5a5; }
+.instr-status-paused   { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+.instr-status-rejected { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+/* ??? Lifecycle flow diagram ?????????????????????????????????????????????? */
+.instr-flow {
+    display: flex;
+flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 12px 0;
+    font-size: 0.88em;
+}
+
+.instr-flow-step {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    padding: 4px 10px;
+    color: #1e3a5f;
+    font-weight: 600;
+}
+
+.instr-flow-arrow {
+    color: #9ca3af;
+  font-size: 1.1em;
+}
+
+.instr-flow-admin {
+    background: #fffbeb;
+    border-color: #fcd34d;
+    color: #78350f;
+}
+
+/* ??? RIGHT SIDEBAR (slide TOC) ??????????????????????????????????????????? */
+.instr-right-panel {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 200;
+    background: #fff;
+    border-radius: 12px 0 0 12px;
+    box-shadow: -2px 0 14px rgba(0,0,0,0.11);
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    max-height: calc(100vh - 80px);
+    overflow: visible;
+    transition: transform 0.25s ease;
+}
+
+.instr-right-panel.collapsed {
+    transform: translateY(-50%) translateX(calc(100% - 28px));
+}
+
+.instr-right-panel-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 12px 10px;
+    overflow-y: auto;
+    max-height: calc(100vh - 100px);
+    min-width: 164px;
+}
+
+.instr-right-panel-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 5px;
+    white-space: nowrap;
+}
+
+.instr-slide-btn {
+    width: 100%;
+    text-align: left;
+    font-size: 0.78rem;
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: none;
+    background: none;
+    color: #374151;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.12s, color 0.12s;
+    line-height: 1.35;
+}
+
+.instr-slide-btn:hover {
+  background: #f3f4f6;
+}
+
+.instr-slide-btn.active {
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 700;
+}
+
+.instr-right-toggle {
+    flex-shrink: 0;
+    width: 22px;
+    background: #f3f4f6;
+    border: none;
+    border-right: 1px solid #e5e7eb;
+    border-radius: 12px 0 0 12px;
+    cursor: pointer;
+    font-size: 15px;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    padding: 0;
+}
+
+.instr-right-toggle:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+/* ??? LEFT SIDEBAR (section TOC) ?????????????????????????????????????????? */
+.instr-left-panel {
+    position: fixed;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 200;
+    background: #fff;
+    border-radius: 0 12px 12px 0;
+    box-shadow: 2px 0 14px rgba(0,0,0,0.10);
+    display: flex;
+  flex-direction: row-reverse;
+    align-items: stretch;
+    max-height: calc(100vh - 80px);
+    overflow: visible;
+    transition: transform 0.25s ease;
+}
+
+.instr-left-panel.collapsed {
+  transform: translateY(-50%) translateX(calc(-100% + 28px));
+}
+
+.instr-left-panel-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px 10px;
+    overflow-y: auto;
+    max-height: calc(100vh - 100px);
+    min-width: 172px;
+}
+
+.instr-left-panel-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #9ca3af;
+  text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 5px;
+    white-space: nowrap;
+}
+
+.instr-section-btn {
+    width: 100%;
+    text-align: left;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 5px;
+    border: none;
+    background: none;
+color: #6b7280;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.12s, color 0.12s;
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 172px;
+}
+
+.instr-section-btn:hover {
+    background: #f9fafb;
+    color: #374151;
+}
+
+.instr-section-btn.active {
+    background: #f0fdf4;
+    color: #166534;
+    font-weight: 700;
+}
+
+.instr-left-toggle {
+    flex-shrink: 0;
+    width: 22px;
+    background: #f3f4f6;
+    border: none;
+    border-left: 1px solid #e5e7eb;
+    border-radius: 0 12px 12px 0;
+    cursor: pointer;
+    font-size: 15px;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  padding: 0;
+}
+
+.instr-left-toggle:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+/* ??? Mobile floating buttons ????????????????????????????????????????????? */
+.instr-right-open-btn,
+.instr-left-open-btn {
+    display: none;
+}
+
+/* ??? MOBILE overrides ???????????????????????????????????????????????????? */
+@media (max-width: 1000px) {
+    body {
+        padding-left: 12px;
+      padding-right: 12px;
+    }
+
+    .instr-left-panel {
+        transform: translateY(-50%) translateX(-100%);
+    }
+    .instr-left-panel.mobile-open {
+      transform: translateY(-50%) translateX(0);
+    }
+    .instr-left-panel.collapsed {
+  transform: translateY(-50%) translateX(calc(-100% + 28px));
+    }
+
+    .instr-right-panel {
+transform: translateY(-50%) translateX(100%);
+    }
+    .instr-right-panel.mobile-open {
+        transform: translateY(-50%) translateX(0);
+    }
+    .instr-right-panel.collapsed {
+        transform: translateY(-50%) translateX(calc(100% - 28px));
+    }
+
+    .instr-right-open-btn {
+        display: block;
+ position: fixed;
+        bottom: 20px;
+  right: 16px;
+        z-index: 199;
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        border-radius: 24px;
+        padding: 8px 16px;
+   font-size: 13px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(37,99,235,0.4);
+        cursor: pointer;
+    }
+    .instr-right-open-btn:hover { background: #1d4ed8; }
+
+    .instr-left-open-btn {
+   display: block;
+ position: fixed;
+        bottom: 20px;
+        left: 16px;
+        z-index: 199;
+        background: #059669;
+      color: #fff;
+        border: none;
+     border-radius: 24px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 600;
+      box-shadow: 0 4px 12px rgba(5,150,105,0.4);
+  cursor: pointer;
+    }
+    .instr-left-open-btn:hover { background: #047857; }
+}
+
+/* ??? Intro slide special styling ????????????????????????????????????????? */
+#intro .instr-slide-header {
+    background: linear-gradient(135deg, #111827 0%, #1e3a5f 100%);
+}
+
+/* ??? Utility ????????????????????????????????????????????????????????????? */
+.instr-small {
+    font-size: 0.85em;
+ color: #6b7280;
+}
+
+.instr-mono {
+    font-family: monospace;
+    font-size: 0.9em;
+    background: #f3f4f6;
+    border-radius: 3px;
+    padding: 1px 5px;
+}
+
+.instr-divider {
+    border: none;
+    border-top: 1px solid #e5e7eb;
+    margin: 16px 0;
+}
+
+/* ??? small utility ??????????????????????????????????????????????????????? */
+.small {
+    font-size: 0.88em;
+  color: #6b7280;
+}

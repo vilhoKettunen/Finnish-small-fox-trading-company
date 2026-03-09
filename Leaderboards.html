@@ -15,6 +15,7 @@
  <link rel="stylesheet" href="css/pages/Leaderboards.css">
  <link rel="stylesheet" href="css/site-layout.css">
  <link rel="stylesheet" href="css/panels-paper.css">
+ <link rel="stylesheet" href="css/shared/instr-help-link.css">
  <script src="shared/site-decor.js"></script>
  <script src="shared/site-footer.js"></script>
 
@@ -28,6 +29,7 @@
  <section class="section" aria-label="Leaderboard meta">
   <div class="row">
    <button id="btnRefreshLeaderboards" type="button">Refresh</button>
+   <a class="instr-help-link" href="Instructions.html#leaderboards" target="_blank" rel="noopener" title="How do I use Leaderboards?">📖 How do I use this?</a>
    <span id="lbStatus" class="small muted" style="margin-left:10px;"></span>
   </div>
   <div class="small" style="margin-top:8px;">Last updated: <span id="lbUpdatedAt" class="mono">&mdash;</span></div>
@@ -82,7 +84,7 @@
     <table>
      <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">EW</th><th>Start</th><th>End</th></tr></thead>
      <tbody id="tb_monthBoughtEW"></tbody>
-  </table>
+    </table>
 
     <h3 style="margin-top:14px;">Month sold (EW)</h3>
     <table>

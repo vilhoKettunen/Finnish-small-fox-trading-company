@@ -54,6 +54,7 @@ gap: 12px;
     <button type="button" data-nav="leaderboards">Leaderboards</button>
     <button type="button" data-nav="workpay">Work Pay Rates</button>
   <button type="button" data-nav="bank">Bank</button>
+  <button type="button" data-nav="instructions">Instructions</button>
     <button id="adminPanelBtn" style="display:none" type="button" data-nav="admin">Admin Panel</button>
     <div class="right">
       <span id="topBalanceTarget" class="balance-chip balance-target" style="display:none;"></span>
@@ -204,6 +205,7 @@ if (btn.dataset && btn.dataset.nav) {
         else if (nav === 'leaderboards') window.location.href = 'Leaderboards.html';
     else if (nav === 'workpay') window.location.href = 'WorkPayRates.html';
      else if (nav === 'bank') window.location.href = 'Bank.html';
+     else if (nav === 'instructions') window.location.href = 'Instructions.html';
       else if (nav === 'admin') {
           if (!state.idToken || !state.isAdmin) { alert('Admin only'); return; }
       window.location.href = 'Admin.html';
