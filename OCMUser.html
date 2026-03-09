@@ -212,7 +212,7 @@
 
         <h3 style="margin-top:12px;">Pending review</h3>
         <table>
-            <thead><tr><th>ListingId</th><th>Item</th><th>Type</th><th>Status</th><th>Updated</th><th>ApprovedBy</th><th>Edit kind</th></tr></thead>
+            <thead><tr><th>ListingId</th><th>Item</th><th>Type</th><th>Status</th><th>Updated</th><th>ApprovedBy</th><th>Edit kind</th><th>Actions</th></tr></thead>
             <tbody id="tbPendingListings"></tbody>
         </table>
     </section>
@@ -316,6 +316,7 @@
 
     <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
     <button type="button" id="btnSaveListing">Save</button>
+    <button type="button" id="btnDeleteListing" class="small danger">Delete listing</button>
     <button type="button" id="btnCloseListing">Close</button>
     <span id="editListingMsg" class="small"></span>
     </div>
@@ -341,7 +342,7 @@
     <div class="small">Stored as IND using listing stack size.</div>
     </div>
     </div>
-    <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
     <button type="button" id="btnSendRestock">Restock</button>
     <button type="button" id="btnCloseRestock">Close</button>
     <span id="restockMsg" class="small"></span>

@@ -99,6 +99,9 @@
         });
 
         on(byId('btnSaveListing'), 'click', O.saveListingEdit);
+        on(byId('btnDeleteListing'), 'click', () => {
+    if (O.state.editingListing) O.deleteListing_(O.state.editingListing.listingId);
+   });
         on(byId('btnCloseListing'), 'click', () => byId('dlgEditListing')?.close());
 
         on(byId('btnSendRestock'), 'click', O.sendRestock);

@@ -16,6 +16,42 @@
  // =========================
  const OCMUSER_DEBUG_MY_LISTINGS = false;
 
+ // =========================
+ // FEATURE A — In-flight guards (prevent double-submit)
+ // =========================
+ let isCreatingStore_ = false;
+ let isCreatingHalf_ = false;
+ let isCreatingFull_ = false;
+
+ // =========================
+ // FEATURE A — Duplicate listing fingerprint helpers
+ // =========================
+ function buildListingFingerprint_(mode, type, itemName, stackSize, pricingMode, primaryPegName, fixedEW) {
+  return [
+   String(mode || '').toUpperCase(),
+   String(type || '').toUpperCase(),
+   String(itemName || '').toLowerCase().trim(),
+   String(stackSize || 1),
+   String(pricingMode || '').toUpperCase(),
+   pricingMode === 'FIXED_EW' ? String(fixedEW || 0) : String(primaryPegName || '').toLowerCase().trim()
+  ].join('|');
+ }
+
+ function hasDuplicateListing_(fp) {
+return (S.myListings || []).some(l => {
+   const status = String(l.statusRaw || l.status || '').toUpperCase();
+   if (status === 'DELETED') return false; // Q3: exclude deleted listings
+   const extra = O.safeJsonParse(l.extraJson || '{}', {}) || {};
+   const mode = String(l.pricing?.listingMode || extra.listingMode || '').toUpperCase()
+    || (String(l.sourceItemId || '').startsWith('sheet:') ? 'STORE' : 'HALF');
+   const pm = String(l.pricing?.mode || extra.pricingMode || 'PEG').toUpperCase();
+   const pegName = l.pricing?.primaryPeg?.itemName || extra.primaryPeg?.itemName || extra.pegItemName || '';
+   const fixedEW = l.pricing?.fixedEWPerUnit || extra.fixedEWPerUnit || 0;
+   const existing = buildListingFingerprint_(mode, l.type, l.itemName, l.stackSize, pm, pegName, fixedEW);
+   return existing === fp;
+  });
+ }
+
  function setCreationTab(which) {
  const map = {
  store: { tab: 'tabCreateStore', panel: 'panelCreateStore' },
@@ -29,136 +65,178 @@
  }
 
  async function createListingStore() {
- if (!S.googleIdToken) return;
- const msg = byId('createMsgStore');
- msg.textContent = 'Creating...';
+  if (!S.googleIdToken) return;
+  // In-flight guard
+  if (isCreatingStore_) { byId('createMsgStore').textContent = 'Already creating, please wait...'; return; }
+  isCreatingStore_ = true;
+  const msg = byId('createMsgStore');
+  msg.textContent = 'Creating...';
 
- try {
- const type = byId('createTypeStore').value;
- const listingMode = 'STORE';
+  try {
+   const type = byId('createTypeStore').value;
+   const listingMode = 'STORE';
 
- const itemName = byId('createItemStore').value.trim();
- const item = O.findCatalogItem(itemName);
- if (!item) throw new Error('Store item not found in catalog');
+   const itemName = byId('createItemStore').value.trim();
+   const item = O.findCatalogItem(itemName);
+   if (!item) throw new Error('Store item not found in catalog');
 
- const stackSize = Number(item.bundleSize ||1) ||1;
+   const stackSize = Number(item.bundleSize ||1) ||1;
 
- const qtyIn = Number(byId('createQtyUnitsStore').value ||0);
- const qtyMode = byId('createQtyModeStore').value;
- const quantityUnits = O.computeQtyUnitsFromInput(qtyIn, qtyMode, stackSize);
+   const qtyIn = Number(byId('createQtyUnitsStore').value ||0);
+const qtyMode = byId('createQtyModeStore').value;
+   const quantityUnits = O.computeQtyUnitsFromInput(qtyIn, qtyMode, stackSize);
  if (!isFinite(quantityUnits) || quantityUnits <=0) throw new Error('Invalid quantity');
 
- if (!O.validatePegSet_(S.createState.store.primary, S.createState.store.alts, byId('createStorePegWarn'))) throw new Error('Fix peg inputs');
- const pegPayload = O.buildPegPayload_(S.createState.store.primary, S.createState.store.alts);
+   if (!O.validatePegSet_(S.createState.store.primary, S.createState.store.alts, byId('createStorePegWarn'))) throw new Error('Fix peg inputs');
+   const pegPayload = O.buildPegPayload_(S.createState.store.primary, S.createState.store.alts);
 
- const r = await apiPost('ocmCreateListingV2', {
- idToken: S.googleIdToken,
- listingMode,
- type,
- itemName,
- sourceItemId: 'sheet:' + item.name,
- stackSize,
- quantityUnits,
- pricingMode: 'PEG',
- primaryPeg: pegPayload.primaryPeg,
- altPegs: pegPayload.altPegs
- });
+   // Duplicate guard
+   const fp = buildListingFingerprint_(listingMode, type, itemName, stackSize, 'PEG', pegPayload.primaryPeg?.itemName, 0);
+   if (hasDuplicateListing_(fp)) {
+    if (!confirm('An identical listing already exists. Create a duplicate anyway?')) {
+     msg.textContent = '';
+     return;
+    }
+   }
 
- const d = r.data || r.result || r;
- msg.textContent = 'Created. ListingId: ' + (d.listingId || '');
- await O.loadMyListings();
- } catch (e) {
- msg.textContent = 'Error: ' + (e.message || e);
- }
+   const r = await apiPost('ocmCreateListingV2', {
+    idToken: S.googleIdToken,
+    listingMode,
+    type,
+    itemName,
+    sourceItemId: 'sheet:' + item.name,
+    stackSize,
+    quantityUnits,
+    pricingMode: 'PEG',
+    primaryPeg: pegPayload.primaryPeg,
+    altPegs: pegPayload.altPegs
+   });
+
+   const d = r.data || r.result || r;
+   msg.textContent = 'Created. ListingId: ' + (d.listingId || '');
+   await O.loadMyListings();
+  } catch (e) {
+   msg.textContent = 'Error: ' + (e.message || e);
+  } finally {
+   isCreatingStore_ = false;
+  }
  }
 
  async function createListingHalf() {
- if (!S.googleIdToken) return;
- const msg = byId('createMsgHalf');
- msg.textContent = 'Creating...';
+  if (!S.googleIdToken) return;
+  // In-flight guard
+  if (isCreatingHalf_) { byId('createMsgHalf').textContent = 'Already creating, please wait...'; return; }
+  isCreatingHalf_ = true;
+  const msg = byId('createMsgHalf');
+  msg.textContent = 'Creating...';
 
- try {
- const type = byId('createTypeHalf').value;
- const listingMode = 'HALF';
+  try {
+   const type = byId('createTypeHalf').value;
+   const listingMode = 'HALF';
 
- const itemNameRaw = O.sanitizeLettersOnly_(byId('createItemHalf').value, { trim:true });
- if (!itemNameRaw) throw new Error('Custom item name required');
- if (!O.isLettersOnly_(itemNameRaw)) throw new Error('Custom item name must contain only letters and spaces (A-Z).');
- const itemName = itemNameRaw;
+   const itemNameRaw = O.sanitizeLettersOnly_(byId('createItemHalf').value, { trim:true });
+   if (!itemNameRaw) throw new Error('Custom item name required');
+   if (!O.isLettersOnly_(itemNameRaw)) throw new Error('Custom item name must contain only letters and spaces (A-Z).');
+   const itemName = itemNameRaw;
 
- const stackSize = Math.max(1, Math.round(Number(byId('createStackHalf').value ||1) ||1));
- if (!isFinite(stackSize) || stackSize <=0) throw new Error('Invalid stack size');
+   const stackSize = Math.max(1, Math.round(Number(byId('createStackHalf').value ||1) ||1));
+   if (!isFinite(stackSize) || stackSize <=0) throw new Error('Invalid stack size');
 
- const qtyIn = Number(byId('createQtyUnitsHalf').value ||0);
- const qtyMode = byId('createQtyModeHalf').value;
- const quantityUnits = O.computeQtyUnitsFromInput(qtyIn, qtyMode, stackSize);
- if (!isFinite(quantityUnits) || quantityUnits <=0) throw new Error('Invalid quantity');
+   const qtyIn = Number(byId('createQtyUnitsHalf').value ||0);
+   const qtyMode = byId('createQtyModeHalf').value;
+   const quantityUnits = O.computeQtyUnitsFromInput(qtyIn, qtyMode, stackSize);
+   if (!isFinite(quantityUnits) || quantityUnits <=0) throw new Error('Invalid quantity');
 
- if (!O.validatePegSet_(S.createState.half.primary, S.createState.half.alts, byId('createHalfPegWarn'))) throw new Error('Fix peg inputs');
- const pegPayload = O.buildPegPayload_(S.createState.half.primary, S.createState.half.alts);
+   if (!O.validatePegSet_(S.createState.half.primary, S.createState.half.alts, byId('createHalfPegWarn'))) throw new Error('Fix peg inputs');
+   const pegPayload = O.buildPegPayload_(S.createState.half.primary, S.createState.half.alts);
 
- const r = await apiPost('ocmCreateListingV2', {
- idToken: S.googleIdToken,
- listingMode,
- type,
- itemName,
- sourceItemId: '',
- stackSize,
- quantityUnits,
- pricingMode: 'PEG',
- primaryPeg: pegPayload.primaryPeg,
- altPegs: pegPayload.altPegs
- });
+   // Duplicate guard
+   const fp = buildListingFingerprint_(listingMode, type, itemName, stackSize, 'PEG', pegPayload.primaryPeg?.itemName, 0);
+   if (hasDuplicateListing_(fp)) {
+    if (!confirm('An identical listing already exists. Create a duplicate anyway?')) {
+     msg.textContent = '';
+     return;
+    }
+   }
 
- const d = r.data || r.result || r;
- msg.textContent = 'Created. ListingId: ' + (d.listingId || '');
- await O.loadMyListings();
- } catch (e) {
- msg.textContent = 'Error: ' + (e.message || e);
- }
+   const r = await apiPost('ocmCreateListingV2', {
+    idToken: S.googleIdToken,
+    listingMode,
+    type,
+    itemName,
+    sourceItemId: '',
+    stackSize,
+    quantityUnits,
+    pricingMode: 'PEG',
+  primaryPeg: pegPayload.primaryPeg,
+    altPegs: pegPayload.altPegs
+   });
+
+   const d = r.data || r.result || r;
+   msg.textContent = 'Created. ListingId: ' + (d.listingId || '');
+   await O.loadMyListings();
+  } catch (e) {
+   msg.textContent = 'Error: ' + (e.message || e);
+  } finally {
+   isCreatingHalf_ = false;
+  }
  }
 
  async function createListingFull() {
- if (!S.googleIdToken) return;
- const msg = byId('createMsgFull');
- msg.textContent = 'Creating...';
+  if (!S.googleIdToken) return;
+  // In-flight guard
+  if (isCreatingFull_) { byId('createMsgFull').textContent = 'Already creating, please wait...'; return; }
+  isCreatingFull_ = true;
+const msg = byId('createMsgFull');
+  msg.textContent = 'Creating...';
 
- try {
- const type = byId('createTypeFull').value;
- const listingMode = 'FULL';
+  try {
+   const type = byId('createTypeFull').value;
+   const listingMode = 'FULL';
 
- const itemNameRaw = byId('createItemFull').value.trim();
- if (!itemNameRaw) throw new Error('Custom item name required');
- if (!O.isLettersOnly_(itemNameRaw)) throw new Error('Custom item name must contain letters only (A-Z).');
- const itemName = itemNameRaw;
+   const itemNameRaw = byId('createItemFull').value.trim();
+   if (!itemNameRaw) throw new Error('Custom item name required');
+   if (!O.isLettersOnly_(itemNameRaw)) throw new Error('Custom item name must contain letters only (A-Z).');
+   const itemName = itemNameRaw;
 
- const stackSize = Math.max(1, Math.round(Number(byId('createStackFull').value ||1) ||1));
+   const stackSize = Math.max(1, Math.round(Number(byId('createStackFull').value ||1) ||1));
  if (!isFinite(stackSize) || stackSize <=0) throw new Error('Invalid stack size');
 
- const quantityUnits = Math.max(1, Math.round(Number(byId('createQtyUnitsFull').value ||0) ||0));
- if (!isFinite(quantityUnits) || quantityUnits <=0) throw new Error('Invalid quantity');
+   const quantityUnits = Math.max(1, Math.round(Number(byId('createQtyUnitsFull').value ||0) ||0));
+   if (!isFinite(quantityUnits) || quantityUnits <=0) throw new Error('Invalid quantity');
 
- const fixedEWPerUnit = Number(byId('createFixedBT').value ||0);
- if (!isFinite(fixedEWPerUnit) || fixedEWPerUnit <=0) throw new Error('Fixed EW per unit must be >0');
+   const fixedEWPerUnit = Number(byId('createFixedBT').value ||0);
+   if (!isFinite(fixedEWPerUnit) || fixedEWPerUnit <=0) throw new Error('Fixed EW per unit must be >0');
 
- const r = await apiPost('ocmCreateListingV2', {
- idToken: S.googleIdToken,
- listingMode,
- type,
- itemName,
- sourceItemId: '',
- stackSize,
- quantityUnits,
- pricingMode: 'FIXED_EW',
- fixedEWPerUnit
- });
+   // Duplicate guard
+   const fp = buildListingFingerprint_(listingMode, type, itemName, stackSize, 'FIXED_EW', '', fixedEWPerUnit);
+   if (hasDuplicateListing_(fp)) {
+    if (!confirm('An identical listing already exists. Create a duplicate anyway?')) {
+     msg.textContent = '';
+     return;
+    }
+   }
 
- const d = r.data || r.result || r;
+   const r = await apiPost('ocmCreateListingV2', {
+    idToken: S.googleIdToken,
+    listingMode,
+    type,
+    itemName,
+    sourceItemId: '',
+    stackSize,
+    quantityUnits,
+    pricingMode: 'FIXED_EW',
+    fixedEWPerUnit
+   });
+
+   const d = r.data || r.result || r;
  msg.textContent = 'Created. ListingId: ' + (d.listingId || '');
- await O.loadMyListings();
- } catch (e) {
- msg.textContent = 'Error: ' + (e.message || e);
- }
+   await O.loadMyListings();
+  } catch (e) {
+   msg.textContent = 'Error: ' + (e.message || e);
+  } finally {
+   isCreatingFull_ = false;
+  }
  }
 
  async function loadMyListings() {
@@ -231,25 +309,68 @@
  pendingTb.innerHTML = '';
 
  (S.myListings || []).forEach(l => {
- const status = String(l.statusRaw || '').toUpperCase();
- if (status === 'PENDING_REVIEW') {
- const tr = document.createElement('tr');
- tr.innerHTML = `
- <td class="mono">${esc(l.listingId)}</td>
- <td>${esc(l.itemName)}</td>
- <td>${esc(l.type || '')}</td>
- <td>${statusPill(status)}</td>
- <td class="mono">${esc(l.updatedAt || '')}</td>
- <td class="mono">${esc(l.approvedBy || '')}</td>
- <td>${editKindLabel(l)}</td>
- `;
- pendingTb.appendChild(tr);
- return;
+  const status = String(l.statusRaw || '').toUpperCase();
+  if (status === 'PENDING_REVIEW') {
+   const extra = O.safeJsonParse(l.extraJson || '{}', {}) || {};
+   const isBrandNew = !extra.merchantEditKind;
+
+   // Q4 Option B: only show Cancel+Delete for edits; only Delete for brand-new
+   const actionsHtml = isBrandNew
+    ? `<button type="button" data-delete-pending="1">Delete</button>`
+    : `<button type="button" data-cancel-pending="1">Cancel</button>
+       <button type="button" data-delete-pending="1">Delete</button>`;
+
+   const tr = document.createElement('tr');
+   tr.innerHTML = `
+    <td class="mono">${esc(l.listingId)}</td>
+    <td>${esc(l.itemName)}</td>
+<td>${esc(l.type || '')}</td>
+    <td>${statusPill(status)}</td>
+    <td class="mono">${esc(l.updatedAt || '')}</td>
+    <td class="mono">${esc(l.approvedBy || '')}</td>
+<td>${editKindLabel(l)}</td>
+    <td>${actionsHtml}</td>
+   `;
+
+   tr.querySelector('button[data-cancel-pending]')?.addEventListener('click', async () => {
+    const confirmMsg = 'Cancel review and restore listing to its previous state?';
+    if (!confirm(confirmMsg)) return;
+    try {
+  await apiPost('ocmCancelPendingListingV2', { idToken: S.googleIdToken, listingId: l.listingId });
+     await O.loadMyListings();
+    } catch (e) { alert('Error: ' + (e.message || e)); }
+   });
+
+   tr.querySelector('button[data-delete-pending]')?.addEventListener('click', async () => {
+    if (!confirm('Permanently delete this listing?')) return;
+    try {
+     await apiPost('deleteListing', { idToken: S.googleIdToken, listingId: l.listingId });
+   await O.loadMyListings();
+    } catch (e) { alert('Error: ' + (e.message || e)); }
+   });
+
+   pendingTb.appendChild(tr);
+   return;
+  }
+
+  if (l.type === 'SELL') renderListingRow(sellTb, l);
+  else renderListingRow(buyTb, l);
+ });
  }
 
- if (l.type === 'SELL') renderListingRow(sellTb, l);
- else renderListingRow(buyTb, l);
- });
+ // ===== FEATURE B — Delete listing from Edit dialog =====
+ async function deleteListing_(listingId) {
+  if (!confirm('Permanently delete listing ' + listingId + '?')) return;
+  const msg = byId('editListingMsg');
+  msg.textContent = 'Deleting...';
+  try {
+   await apiPost('deleteListing', { idToken: S.googleIdToken, listingId });
+ msg.textContent = 'Deleted.';
+   await O.loadMyListings();
+   setTimeout(() => byId('dlgEditListing').close(), 350);
+  } catch (e) {
+   msg.textContent = 'Error: ' + (e.message || e);
+  }
  }
 
  // ===== Edit listing dialog (FULL_EDIT) =====
@@ -514,6 +635,7 @@
 
  O.openEditListing = openEditListing;
  O.saveListingEdit = saveListingEdit;
+ O.deleteListing_ = deleteListing_;
  O.openRestock = openRestock;
  O.sendRestock = sendRestock;
  O.syncEditModeUI_ = syncEditModeUI_;

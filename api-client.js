@@ -53,8 +53,8 @@
         // OCM v2 (new)
         'ocmCreateListingV2', 'ocmUpdateListingV2',
         'ocmCreateTradeRequestV2', 'ocmUpdateTradeRequestV2', 'ocmCancelTradeRequestV2',
-        'ocmApproveListingV2', 'ocmRejectListingV2',
-        'ocmAcceptTradeAsSellerV2', 'ocmAcceptTradeAsAdminV2', 'ocmDenyTradeV2', 'ocmAdminCreateListingV2',
+        'ocmApproveListingV2', 'ocmRejectListingV2', 'ocmCancelPendingListingV2',
+      'ocmAcceptTradeAsSellerV2', 'ocmAcceptTradeAsAdminV2', 'ocmDenyTradeV2', 'ocmAdminCreateListingV2',
 
         // Admin OCM v2
         'ocmAdminUpdateListingV2',
