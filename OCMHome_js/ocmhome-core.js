@@ -8,6 +8,7 @@
  googleIdToken: null,
  currentUser: null,
  catalog: [],
+ myPendingTrades: [], // <-- Added pending trades array
 
  // Raw cache from backend (fetched once-after-login; refreshed on demand)
  listingsCache: {

@@ -459,91 +459,123 @@
         td.querySelectorAll(`input[name="pay_${listing.listingId}"]`).forEach(r => r.addEventListener('change', showEstimate));
         payPegSel?.addEventListener('change', showEstimate);
 
+        let isSending = false;
+
         sendBtn.addEventListener('click', async () => {
             msgEl.textContent = '';
-            if (!S.googleIdToken) { msgEl.textContent = 'Login required.'; return; }
-            const u = computeUnits_(td, listing);
-            if (!u) { msgEl.textContent = 'Invalid quantity.'; return; }
 
-            if (stackOnly && getQtyMode() !== 'STACK') {
-                msgEl.textContent = 'This listing is stack-priced. Choose stack quantity.';
-                return;
-            }
+            // In-flight guard
+ if (isSending) {
+    msgEl.textContent = 'Sending... (please wait)';
+    return;
+   }
 
-            msgEl.textContent = 'Sending...';
-            try {
-                const paymentChoice = getPaymentChoice();
-                const payPegName = (paymentChoice === 'ITEM') ? getPayPegName() : null;
+   if (!S.googleIdToken) { msgEl.textContent = 'Login required.'; return; }
+   const u = computeUnits_(td, listing);
+   if (!u) { msgEl.textContent = 'Invalid quantity.'; return; }
 
-                const payload = {
-                    idToken: S.googleIdToken,
-                    listingId: listing.listingId,
-                    qtyMode: (u.qtyMode === 'STACK') ? 'STACK' : 'IND',
-                    qty: u.qtyVal,
-                    paymentChoice
-                };
-                if (paymentChoice === 'ITEM' && payPegName) payload.paymentPegName = payPegName;
+   if (stackOnly && getQtyMode() !== 'STACK') {
+ msgEl.textContent = 'This listing is stack-priced. Choose stack quantity.';
+    return;
+   }
 
-                const r = await apiPost('ocmCreateTradeRequestV2', payload);
-                const d = r.data || r.result || r;
-                msgEl.textContent = 'Sent. TradeId: ' + (d.tradeId || '');
-                await loadMyPending();
-            } catch (e) {
-                msgEl.textContent = 'Error: ' + (e.message || e);
-            }
-        });
+   const paymentChoice = getPaymentChoice();
+   const payPegName = (paymentChoice === 'ITEM') ? getPayPegName() : null;
 
-        // initial
-        showEstimate();
+   // Duplicate pending trade check
+   const fp = buildTradeFingerprint_(
+    listing.listingId, u.qtyMode, u.qtyVal, paymentChoice, payPegName
+   );
+   if (hasDuplicatePendingTrade_(fp)) {
+    const ok = confirm(
+     'You already have an identical pending trade on this listing.\n' +
+     'Are you sure you want to send another one?'
+    );
+    if (!ok) return;
+   }
+
+   isSending = true;
+   sendBtn.textContent = 'Sending...';
+
+   try {
+    const payload = {
+ idToken: S.googleIdToken,
+     listingId: listing.listingId,
+     qtyMode: (u.qtyMode === 'STACK') ? 'STACK' : 'IND',
+     qty: u.qtyVal,
+     paymentChoice
+ };
+    if (paymentChoice === 'ITEM' && payPegName) payload.paymentPegName = payPegName;
+
+    const r = await apiPost('ocmCreateTradeRequestV2', payload);
+    const d = r.data || r.result || r;
+    msgEl.textContent = 'Sent. TradeId: ' + (d.tradeId || '');
+    await loadMyPending();
+   } catch (e) {
+    if (String(e.message || '').includes('recently sent') ||
+        String(e.message || '').includes('RATE_LIMITED')) {
+   msgEl.textContent = 'Rate limited: please wait a moment before retrying.';
+    } else {
+     msgEl.textContent = 'Error: ' + (e.message || e);
     }
+   } finally {
+    isSending = false;
+    sendBtn.textContent = 'Send transaction';
+   }
+  });
 
-    async function loadMyPending() {
-        if (!S.googleIdToken) {
-            byId('tbMyPending').innerHTML = '';
-            byId('msgPending').textContent = 'Login required.';
-            return;
-        }
+  // initial
+  showEstimate();
+ }
 
-        byId('msgPending').textContent = 'Loading...';
-        try {
-            const r = await apiGet('ocmMyPendingTradesV2', { idToken: S.googleIdToken });
-            const d = r.data || r.result || r;
-            renderMyPending(d.trades || []);
-            byId('msgPending').textContent = `Loaded ${(d.trades || []).length}.`;
-        } catch (e) {
-            byId('msgPending').textContent = 'Error: ' + e.message;
-        }
-    }
+ async function loadMyPending() {
+  if (!S.googleIdToken) {
+   byId('tbMyPending').innerHTML = '';
+   byId('msgPending').textContent = 'Login required.';
+   return;
+  }
 
-    function extractTradeSummary(tr) {
-        const snap = O.safeJsonParse(tr.detailsJson || '{}') || {};
-        const item = snap.listing?.itemName || '';
-        const who = snap.Merchant?.playerName || '';
-        const payment = snap.payment?.method || '';
-        const units = Number(snap.request?.requestedUnits || tr.quantity || 0);
+  byId('msgPending').textContent = 'Loading...';
+  try {
+   const r = await apiGet('ocmMyPendingTradesV2', { idToken: S.googleIdToken });
+   const d = r.data || r.result || r;
+   S.myPendingTrades = d.trades || [];
+   renderMyPending(d.trades || []);
+   byId('msgPending').textContent = `Loaded ${(d.trades || []).length}.`;
+  } catch (e) {
+   byId('msgPending').textContent = 'Error: ' + e.message;
+  }
+ }
 
-        const totalBT = Number(
-            snap.payment?.canonicalEW
-            ?? snap.payment?.payTotalEW
-            ?? snap.pricing?.tradeValueBT
-            ?? 0
-        );
+ function extractTradeSummary(tr) {
+  const snap = O.safeJsonParse(tr.detailsJson || '{}') || {};
+  const item = snap.listing?.itemName || '';
+  const who = snap.Merchant?.playerName || '';
+  const payment = snap.payment?.method || '';
+  const units = Number(snap.request?.requestedUnits || tr.quantity || 0);
 
-        const payItem = snap.payment?.payItemName ? `${snap.payment.payItemQty} ${snap.payment.payItemName}` : '';
-        const payInfo = (payment === 'ITEM') ? `ITEM (${payItem})` : payment;
+  const totalBT = Number(
+   snap.payment?.canonicalEW
+   ?? snap.payment?.payTotalEW
+   ?? snap.pricing?.tradeValueBT
+   ?? 0
+  );
 
-        return { snap, item, who, payment: payInfo, units, totalBT };
-    }
+  const payItem = snap.payment?.payItemName ? `${snap.payment.payItemQty} ${snap.payment.payItemName}` : '';
+  const payInfo = (payment === 'ITEM') ? `ITEM (${payItem})` : payment;
 
-    function renderMyPending(arr) {
-        const tb = byId('tbMyPending');
-        tb.innerHTML = '';
+  return { snap, item, who, payment: payInfo, units, totalBT };
+ }
 
-        (arr || []).forEach(tr => {
-            const { item, who, payment, units, totalBT } = extractTradeSummary(tr);
+ function renderMyPending(arr) {
+  const tb = byId('tbMyPending');
+  tb.innerHTML = '';
 
-            const row = document.createElement('tr');
-            row.innerHTML = `
+  (arr || []).forEach(tr => {
+   const { item, who, payment, units, totalBT } = extractTradeSummary(tr);
+
+   const row = document.createElement('tr');
+   row.innerHTML = `
  <td class="mono">${tr.tradeId}</td>
  <td>${O.escapeHtml_(item)}</td>
  <td>${O.escapeHtml_(who)}</td>
@@ -551,23 +583,241 @@
  <td class="mono">${O.escapeHtml_(payment)}</td>
  <td class="mono">${fmt2(totalBT)} EW</td>
  <td class="mono">${O.escapeHtml_(tr.status || '')}</td>
- <td><button type="button" data-edit="1">Edit</button> <button type="button" data-cancel="1">Cancel</button></td>
+ <td><button type="button" data-cancel="1">Cancel</button></td>
+ <td><button type="button" data-edit="1">Edit</button></td>
  `;
 
-            row.querySelector('button[data-cancel]')?.addEventListener('click', async () => {
-                if (!confirm('Cancel trade ' + tr.tradeId + '?')) return;
-                try {
-                    await apiPost('ocmCancelTradeRequestV2', { idToken: S.googleIdToken, tradeId: tr.tradeId });
-                    await loadMyPending();
-                } catch (e) { alert(e.message); }
-            });
+   row.querySelector('button[data-cancel]')?.addEventListener('click', async () => {
+    if (!confirm('Cancel trade ' + tr.tradeId + '?')) return;
+  try {
+     await apiPost('ocmCancelTradeRequestV2', { idToken: S.googleIdToken, tradeId: tr.tradeId });
+     await loadMyPending();
+    } catch (e) { alert(e.message); }
+   });
 
-            tb.appendChild(row);
-        });
-    }
+   row.querySelector('button[data-edit]')?.addEventListener('click', () => {
+    openEditDialog_(tr);
+   });
 
-    O.fetchListingsOnceOrRefresh = fetchListingsOnceOrRefresh;
-    O.loadListings = function loadListingsCompat() { return fetchListingsOnceOrRefresh({ force:false }); };
-    O.toggleTradeDetails = toggleTradeDetails;
-    O.loadMyPending = loadMyPending;
+   tb.appendChild(row);
+  });
+ }
+
+ // ── Edit dialog ────────────────────────────────────────────────────────────
+ function openEditDialog_(tr) {
+  const snap = O.safeJsonParse(tr.detailsJson || '{}') || {};
+  const listingId = tr.listingId || (snap.listing && snap.listing.listingId) || '';
+  const itemName  = (snap.listing && snap.listing.itemName) || '';
+  const sellerName = (snap.Merchant && snap.Merchant.playerName) || '';
+
+  byId('editTradeId').textContent = tr.tradeId;
+  byId('editItemName').textContent = itemName;
+  byId('editSellerName').textContent = sellerName;
+  byId('editMsg').textContent = '';
+  byId('editEstimate').textContent = '—';
+
+  // Restore previous values from snapshot
+  const prevQtyMode = (snap.request && snap.request.qtyMode) || 'IND';
+  const prevQtyVal  = (snap.request && snap.request.qtyInput) || 1;
+  const prevMethod  = (snap.payment && snap.payment.method) || 'EW';
+  const prevPegName = (snap.payment && snap.payment.payItemName) || '';
+
+  byId('editQtyVal').value = prevQtyVal;
+  if (prevQtyMode === 'STACK') {
+   byId('editQtyStack').checked = true;
+  } else {
+   byId('editQtyInd').checked = true;
+  }
+  if (prevMethod === 'ITEM') {
+   byId('editPayItem').checked = true;
+  } else {
+   byId('editPayBT').checked = true;
+  }
+
+  // Populate peg select from the listing's pricing if available — fall back to snap
+  const editPayPeg = byId('editPayPeg');
+  editPayPeg.innerHTML = '';
+  const listing = (S.listingsCache.sell || []).concat(S.listingsCache.buy || [])
+   .find(l => l && String(l.listingId || '') === String(listingId));
+
+  const pricingPegs = [];
+  if (listing && listing.pricing) {
+   const pp = listing.pricing.primaryPeg;
+   if (pp && pp.itemName) pricingPegs.push({ name: pp.itemName, kind: 'PRIMARY' });
+   const alts = Array.isArray(listing.pricing.altPegs) ? listing.pricing.altPegs : [];
+   alts.forEach(a => { if (a && a.itemName) pricingPegs.push({ name: a.itemName, kind: 'ALT' }); });
+  } else {
+   // fallback: use snapshot peg name
+   if (prevPegName) pricingPegs.push({ name: prevPegName, kind: 'PRIMARY' });
+  }
+  const seen = new Set();
+  pricingPegs.forEach(p => {
+   const k = String(p.name).trim().toLowerCase();
+   if (!k || seen.has(k)) return;
+   seen.add(k);
+   const opt = document.createElement('option');
+   opt.value = p.name;
+   opt.textContent = (p.kind === 'PRIMARY' ? 'Primary: ' : 'Alt: ') + p.name;
+   if (String(p.name).toLowerCase() === String(prevPegName).toLowerCase()) opt.selected = true;
+   editPayPeg.appendChild(opt);
+  });
+
+  // Estimate update
+  function updateEditEstimate_() {
+   const qtyMode = document.querySelector('input[name="editQtyMode"]:checked')?.value || 'IND';
+   const qty = Number(byId('editQtyVal').value || 0);
+   const method = document.querySelector('input[name="editPay"]:checked')?.value || 'EW';
+   const pegName = editPayPeg.value || '';
+
+   if (!qty || qty <= 0 || !listing) {
+    byId('editEstimate').textContent = '—';
+    return;
+   }
+
+   const stackSize = Number(listing.stackSize || 1) || 1;
+   const units = (qtyMode === 'STACK') ? (qty * stackSize) : qty;
+   const u = { qtyMode, qtyVal: qty, units: Math.ceil(units - 1e-12) };
+
+   const primaryPeg = listing.pricing
+    ? (listing.pricing.primaryPeg && listing.pricing.primaryPeg.itemName
+       ? listing.pricing.primaryPeg
+       : (listing.pricing.pegItemName ? { itemName: listing.pricing.pegItemName, pegQtyPerInd: listing.pricing.pegQtyPerUnit } : null))
+    : null;
+   const altPegs = (listing.pricing && Array.isArray(listing.pricing.altPegs)) ? listing.pricing.altPegs : [];
+
+   try {
+    const est = computeEstimate_(listing, u, method, method === 'ITEM' ? pegName : null, primaryPeg, altPegs);
+    if (!est) { byId('editEstimate').textContent = '—'; return; }
+    const parts = [];
+    if (est.paymentChoice === 'ITEM') {
+     parts.push(`~${est.payItems} ${est.payPegName}`);
+     if (est.canonicalEW != null) parts.push(`Canonical: ${fmt2(est.canonicalEW)} EW`);
+    } else {
+     if (est.canonicalEW != null) parts.push(`${fmt2(est.canonicalEW)} EW`);
+ }
+    byId('editEstimate').textContent = parts.join(' | ') || '—';
+   } catch { byId('editEstimate').textContent = '—'; }
+  }
+
+  byId('editQtyVal').addEventListener('input', updateEditEstimate_);
+  document.querySelectorAll('input[name="editQtyMode"]').forEach(r => r.addEventListener('change', updateEditEstimate_));
+  document.querySelectorAll('input[name="editPay"]').forEach(r => r.addEventListener('change', updateEditEstimate_));
+  editPayPeg.addEventListener('change', updateEditEstimate_);
+  updateEditEstimate_();
+
+  // Save handler
+  const dlg = byId('editDlg');
+  const btnSave = byId('btnSaveEdit');
+const btnCancel = byId('btnCancelEdit');
+
+  // Remove previous listeners by cloning
+  const newSave = btnSave.cloneNode(true);
+  btnSave.parentNode.replaceChild(newSave, btnSave);
+  const newCancel = btnCancel.cloneNode(true);
+  btnCancel.parentNode.replaceChild(newCancel, btnCancel);
+
+  byId('btnCancelEdit').addEventListener('click', () => dlg.close());
+
+  let isEditSending = false;
+
+  byId('btnSaveEdit').addEventListener('click', async () => {
+   byId('editMsg').textContent = '';
+
+   // In-flight guard
+   if (isEditSending) {
+    byId('editMsg').textContent = 'Saving... (please wait)';
+    return;
+   }
+
+   if (!S.googleIdToken) { byId('editMsg').textContent = 'Login required.'; return; }
+
+   const qtyMode = document.querySelector('input[name="editQtyMode"]:checked')?.value || 'IND';
+   const qty = Number(byId('editQtyVal').value || 0);
+   if (!qty || qty <= 0) { byId('editMsg').textContent = 'Invalid quantity.'; return; }
+
+   const method = document.querySelector('input[name="editPay"]:checked')?.value || 'EW';
+   const pegName = byId('editPayPeg').value || '';
+
+   // Duplicate check (compares against current pending trades)
+   const editListingId = tr.listingId || (snap.listing && snap.listing.listingId) || '';
+   const fp = buildTradeFingerprint_(editListingId, qtyMode, qty, method, method === 'ITEM' ? pegName : null);
+   const otherTrades = (S.myPendingTrades || []).filter(t => t.tradeId !== tr.tradeId);
+   const hasDup = otherTrades.some(t => {
+    const s = O.safeJsonParse(t.detailsJson || '{}') || {};
+    const f = buildTradeFingerprint_(
+     s.listing && s.listing.listingId,
+     s.request && s.request.qtyMode,
+     s.request && s.request.qtyInput,
+     s.payment && s.payment.method,
+     s.payment && s.payment.payItemName
+    );
+    return f === fp;
+   });
+   if (hasDup) {
+    const ok = confirm(
+     'Another identical pending trade already exists.\n' +
+     'Are you sure you want to save this edit?'
+    );
+  if (!ok) return;
+   }
+
+   isEditSending = true;
+   byId('btnSaveEdit').textContent = 'Saving...';
+
+   try {
+    const payload = {
+     idToken: S.googleIdToken,
+     tradeId: tr.tradeId,
+qtyMode: qtyMode,
+     qty: qty,
+     paymentChoice: method
+    };
+    if (method === 'ITEM' && pegName) payload.paymentPegName = pegName;
+
+    const r = await apiPost('ocmUpdateTradeRequestV2', payload);
+    const d = r.data || r.result || r;
+    byId('editMsg').textContent = 'Saved. New TradeId: ' + (d.tradeId || '');
+    await loadMyPending();
+    setTimeout(() => dlg.close(), 1200);
+   } catch (e) {
+    byId('editMsg').textContent = 'Error: ' + (e.message || e);
+   } finally {
+    isEditSending = false;
+    byId('btnSaveEdit').textContent = 'Save edit (creates new tradeId)';
+   }
+  });
+
+  dlg.showModal();
+ }
+
+ // ── Fingerprint helpers for duplicate-trade detection ──────────────────────
+ function buildTradeFingerprint_(listingId, qtyMode, qty, paymentChoice, payPegName) {
+  return JSON.stringify({
+   listingId: String(listingId || ''),
+   qtyMode:   String(qtyMode || 'IND'),
+   qty:       String(qty || ''),
+   paymentChoice: String(paymentChoice || 'EW'),
+   payPegName: (String(paymentChoice || '') === 'ITEM')
+             ? String(payPegName || '') : ''
+  });
+ }
+
+ function hasDuplicatePendingTrade_(fingerprint) {
+  return (S.myPendingTrades || []).some(tr => {
+   const snap = O.safeJsonParse(tr.detailsJson || '{}') || {};
+   const fp = buildTradeFingerprint_(
+    snap.listing  && snap.listing.listingId,
+    snap.request  && snap.request.qtyMode,
+    snap.request  && snap.request.qtyInput,
+    snap.payment&& snap.payment.method,
+    snap.payment  && snap.payment.payItemName
+   );
+   return fp === fingerprint;
+  });
+ }
+
+ O.fetchListingsOnceOrRefresh = fetchListingsOnceOrRefresh;
+ O.loadListings = function loadListingsCompat() { return fetchListingsOnceOrRefresh({ force:false }); };
+ O.toggleTradeDetails = toggleTradeDetails;
+ O.loadMyPending = loadMyPending;
 })();
