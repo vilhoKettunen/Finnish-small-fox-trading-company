@@ -207,7 +207,7 @@
                 }
 
                 if (customerPctRaw != null && isFinite(customerPctRaw)) customerFavorHtml = favorLineHtml_('Customer', customerPctRaw);
-                if (merchantPctRaw != null && isFinite(merchantPctRaw)) merchantFavorHtml = favorLineHtml_('Customer', merchantPctRaw);
+                if (merchantPctRaw != null && isFinite(merchantPctRaw)) merchantFavorHtml = favorLineHtml_('Merchant', merchantPctRaw);
             }
 
             // Render statement: equation + BUY/SELL + favors (when computable)
