@@ -310,6 +310,11 @@ const msg = byId('createMsgFull');
 
  (S.myListings || []).forEach(l => {
   const status = String(l.statusRaw || '').toUpperCase();
+
+  // Never render deleted listings — belt-and-suspenders guard in case
+  // the backend ever returns them (e.g. stale cache, legacy path).
+  if (status === 'DELETED') return;
+
   if (status === 'PENDING_REVIEW') {
    const extra = O.safeJsonParse(l.extraJson || '{}', {}) || {};
    const isBrandNew = !extra.merchantEditKind;
