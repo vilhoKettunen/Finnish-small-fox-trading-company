@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Economy Specifications &mdash; Vak's Store | Vintage Story TOPS</title>
+    <meta name="description" content="Deep-dive companion to the Vak's Store Whitepaper. Full EW mechanics, formula derivations, OCM peg system, insurance state machine, and research framework." />
+ <link rel="icon" href="favicon.ico">
+
+    <!-- Auth + API + top bar (must come before GSI) -->
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
+    <script src="api-client.js"></script>
+    <script src="topbar.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+  <!-- Shared CSS -->
+    <link rel="stylesheet" href="css/site-layout.css">
+<link rel="stylesheet" href="css/site-theme.css">
+    <link rel="stylesheet" href="css/panels-paper.css">
+
+    <!-- Page CSS -->
+    <link rel="stylesheet" href="css/pages/economyspecs.css">
+
+    <!-- Shared decorative JS -->
+    <script src="shared/site-decor.js"></script>
+    <script src="shared/site-footer.js"></script>
+</head>
+<body class="withTopBar no-paper">
+    <!-- Top bar is injected by economyspecs-boot.js via initSharedTopBar() -->
+
+    <div class="book">
+
+        <!-- ?? COVER ???????????????????????????????????????????????????? -->
+        <header class="cover">
+      <h1 class="title">Economy Specifications</h1>
+   <p class="subtitle">EW design, formulas, mechanics, and research framework for<br>Vak's Store &mdash; Vintage Story TOPS server</p>
+      <p class="cover-date">Published: 2025</p>
+            <div style="margin-top:16px;">
+    <p style="font-size:14px;color:#5a4b3b;margin-bottom:8px;font-style:italic;">
+         This page is the detailed technical companion to the Whitepaper.<br>
+         It assumes you have read the Whitepaper's summary sections first.
+      </p>
+      <a class="es-companion-badge" href="Whitepaper.html">&#x1f4d6; Read the Whitepaper</a>
+       <p class="es-disclaimer">Prices shown in worked examples are illustrative. Check the live price sheet for current values.</p>
+            </div>
+        </header>
+
+     <!-- ?? TABLE OF CONTENTS ???????????????????????????????????????? -->
+        <section class="toc" id="toc">
+    <h2>Table of Contents</h2>
+            <pre class="toclist"><a href="#s1">1. What EW Is (and Is Not)</a>
+     <a href="#s1-1">1.1 Definition and scope</a>
+     <a href="#s1-2">1.2 What problems EW solves</a>
+     <a href="#s1-3">1.3 Intended use cases</a>
+   <a href="#s1-4">1.4 What EW is NOT</a>
+<a href="#s2">2. EW Issuance: How New EW Enters the Economy</a>
+     <a href="#s2-1">2.1 The only issuance mechanism</a>
+     <a href="#s2-2">2.2 Issuance formula</a>
+     <a href="#s2-3">2.3 Worked example &mdash; selling Steel Ingots</a>
+     <a href="#s2-4">2.4 What happens to stock</a>
+     <a href="#s2-5">2.5 Effect on EW supply</a>
+<a href="#s3">3. EW Destruction: How EW Leaves the Economy</a>
+     <a href="#s3-1">3.1 Sink 1 &mdash; Store purchases</a>
+     <a href="#s3-2">3.2 Sink 2 &mdash; OCM admin fee (10%)</a>
+     <a href="#s3-3">3.3 Sink 3 &mdash; Insurance metal withdrawal</a>
+     <a href="#s3-4">3.4 The dual-sink mechanism</a>
+     <a href="#s3-5">3.5 Worked example &mdash; net supply change over one day</a>
+<a href="#s4">4. Store Pricing Model</a>
+ <a href="#s4-1">4.1 Buy/sell spread</a>
+     <a href="#s4-2">4.2 Individual vs bundle pricing</a>
+     <a href="#s4-3">4.3 Algorithmic price adjustment</a>
+     <a href="#s4-4">4.4 Price locking at submission: the bulk trading incentive</a>
+<a href="#s5">5. EW Inflation and Deflation</a>
+ <a href="#s5-1">5.1 Why EW has both</a>
+     <a href="#s5-2">5.2 Price shock self-correction</a>
+     <a href="#s5-3">5.3 Why EW is more stable than RG</a>
+     <a href="#s5-4">5.4 Wealth concentration risk</a>
+   <a href="#s5-5">5.5 Comparison: EW vs RG vs informal commodity currencies</a>
+<a href="#s6">6. OCM Peg System</a>
+     <a href="#s6-1">6.1 What a peg is</a>
+     <a href="#s6-2">6.2 STORE mode</a>
+     <a href="#s6-3">6.3 HALF mode</a>
+     <a href="#s6-4">6.4 Multi-peg configuration</a>
+     <a href="#s6-5">6.5 selectedPegEW vs canonicalEW</a>
+     <a href="#s6-6">6.6 Item quantity rounding</a>
+     <a href="#s6-7">6.7 Fee calculation</a>
+     <a href="#s6-8">6.8 Worked example &mdash; STORE mode trade with Fat peg</a>
+<a href="#s7">7. Liquidity Guarantee and Metal Backing</a>
+     <a href="#s7-1">7.1 The liquidity guarantee</a>
+     <a href="#s7-2">7.2 Why the store's item value exceeds EW in circulation</a>
+     <a href="#s7-3">7.3 Metal backing and the insurance reserve</a>
+  <a href="#s7-4">7.4 Why low metal reserves do NOT mean EW has lost value</a>
+     <a href="#s7-5">7.5 Insurance: how EW converts to metals</a>
+     <a href="#s7-6">7.6 Insurance policy lifecycle (state machine)</a>
+<a href="#s8">8. Research Context: What This Economy Is Studying</a>
+     <a href="#s8-1">8.1 Research framing</a>
+     <a href="#s8-2">8.2 Research questions being studied</a>
+     <a href="#s8-3">8.3 Observable findings</a>
+     <a href="#s8-4">8.4 Limitations of the research</a>
+     <a href="#s8-5">8.5 Comparison to academic small-scale economy research</a>
+     <a href="#s8-6">8.6 What would falsify the EW model</a>
+<a href="#s9">9. Limitations</a>
+<a href="#s10">10. Full Transaction Type Reference</a>
+<a href="#s11">11. See Also</a></pre>
+      </section>
+
+        <!-- ?? 1. WHAT EW IS (AND IS NOT) ??????????????????????????????? -->
+    <article class="chapter" id="s1">
+     <h2>1. What EW Is (and Is Not)</h2>
+
+            <h3 id="s1-1">1.1 Definition and scope</h3>
+          <p>
+            EW (Exchange Weight) is a ledger-based, non-physical unit of trade value. It has no in-game
+   form in Vintage Story &mdash; it exists exclusively as a balance in the Vak's Store backend
+            ledger (a Google Sheets database). EW cannot be transferred out of the TOPS server ecosystem
+       and has no real-money value, ever.
+      </p>
+    <p>
+     The name "Exchange Weight" replaces the older name "BT" (Bartering Tokens) used in earlier
+        documentation. The rename better reflects what the unit measures: the weight of an exchange,
+      not a token of barter.
+            </p>
+
+        <h3 id="s1-2">1.2 What problems EW solves</h3>
+        <p><strong>Problem 1 &mdash; Barter friction.</strong> Each barter trade required simultaneous
+         agreement on quantity, price, meetup time, meetup location, and mutual trust. EW separates
+           the sell-event from the buy-event: a player can sell items today, hold EW, and buy different
+           items tomorrow &mdash; with no counterparty required at either moment.</p>
+   <p><strong>Problem 2 &mdash; Rusty Gear (RG) inflation.</strong> RG is produced by mob farms
+    with no economic cost, causing runaway devaluation over a wipe cycle. EW is only created
+    when real items are exchanged with the store, tying the money supply to actual economic
+          activity.</p>
+      <p><strong>Problem 3 &mdash; Price opacity.</strong> Before EW, no public price reference
+ existed. Experienced players exploited this to underpay newcomers. EW introduces a publicly
+        posted buy/sell price sheet, public Price History charts, and the Bank Dashboard &mdash;
+  giving every player the same information regardless of experience level.</p>
+
+<h3 id="s1-3">1.3 Intended use cases</h3>
+            <p>
+  <strong>Primary:</strong> medium of exchange &mdash; facilitate trades between players.<br>
+        <strong>Secondary:</strong> unit of account &mdash; compare item values across the economy.<br>
+    <strong>NOT intended as:</strong> long-term savings vehicle, investment instrument, speculation
+                target, or status symbol.
+     </p>
+        <p>
+          The recommendation is to spend roughly what you earn. Holding large idle balances concentrates
+         wealth in a way that reduces the currency's effectiveness as a medium of exchange for the
+           wider community. Holding a working balance for convenience, however, is accepted and common.
+            </p>
+
+     <h3 id="s1-4">1.4 What EW is NOT</h3>
+     <ul>
+     <li>Not a stablecoin: it has inflation and deflation (see Section 5).</li>
+                <li>Not backed by a single commodity: its backing is diversified (see Section 7).</li>
+      <li>Not a financial instrument: no real-money implications, ever.</li>
+       <li>Not automated: all approvals require a human admin (see Section 9).</li>
+ </ul>
+        </article>
+
+        <!-- ?? 2. EW ISSUANCE ??????????????????????????????????????????? -->
+      <article class="chapter" id="s2">
+            <h2>2. EW Issuance: How New EW Enters the Economy</h2>
+
+            <h3 id="s2-1">2.1 The only issuance mechanism</h3>
+ <p>
+           New EW is created exclusively when a player sells items to the store. There is no other
+  mechanism: no admin top-up, no faucet, no printing. Every unit of EW in circulation was
+            issued in exchange for real in-game items physically delivered to the store.
+    </p>
+
+            <h3 id="s2-2">2.2 Issuance formula</h3>
+        <div class="es-formula">
+            <strong>EW<sub>issued</sub> = &Sigma;<sub>i</sub> ( qty<sub>i</sub> &times; buyPricePerUnit<sub>i</sub> )</strong>
+                <p style="margin-top:10px;margin-bottom:4px;">Where:</p>
+     <p style="margin:2px 0;">qty<sub>i</sub> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+       = quantity of item <em>i</em> (individual units, after bundle expansion)</p>
+        <p style="margin:2px 0;">buyPricePerUnit<sub>i</sub> = store's buy price per individual unit for item <em>i</em><br>
+   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        (backend: buyPricePerUnit = stackBuyPrice / bundleSize)</p>
+ <p style="margin-top:10px;margin-bottom:4px;"><strong>Bundle expansion:</strong></p>
+ <p style="margin:2px 0;">individual_units &nbsp;= qty_stacks &times; bundleSize</p>
+             <p style="margin:2px 0;">pricePerUnit &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= stackBuyPrice / bundleSize</p>
+            </div>
+
+       <h3 id="s2-3">2.3 Worked example &mdash; selling Steel Ingots</h3>
+            <div class="es-example">
+       <strong>A player sells 4 stacks of Steel Ingots.</strong><br>
+            Current store buy price: 256 EW per stack. Stack size (bundleSize): 16.
+<br><br>
+       pricePerUnit &nbsp;&nbsp;&nbsp;&nbsp; = 256 / 16 = <strong>16 EW per ingot</strong><br>
+         individual_units = 4 &times; 16 &nbsp;= <strong>64 ingots</strong><br>
+                EW<sub>issued</sub> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = 64 &times; 16 = <strong>1,024 EW</strong> credited to the player's account
+          <br><br>
+       <span class="es-note">Prices are illustrative. Check the live price sheet for current values.</span>
+            </div>
+
+<h3 id="s2-4">2.4 What happens to stock</h3>
+            <p>
+   When a sell order is approved, the store's raw stock increases:
+      </p>
+  <div class="es-formula">
+ rawStock[item] += qty_stacks &times; bundleSize
+            </div>
+    <p>
+     The store receives items at the sell price (what it will charge buyers later), while it paid
+     the seller at the buy price. This spread is the foundation of the liquidity guarantee
+                (see Section 7.2).
+ </p>
+
+  <h3 id="s2-5">2.5 Effect on EW supply</h3>
+            <div class="es-formula">
+              EW<sub>supply_new</sub> = EW<sub>supply_old</sub> + EW<sub>issued</sub>
+      </div>
+       <p>This is an inflationary event &mdash; total EW in circulation increases.</p>
+        </article>
+
+      <!-- ?? 3. EW DESTRUCTION ???????????????????????????????????????? -->
+        <article class="chapter" id="s3">
+            <h2>3. EW Destruction: How EW Leaves the Economy</h2>
+
+       <h3 id="s3-1">3.1 Sink 1 &mdash; Store purchases (player buys from store)</h3>
+     <p>
+            When a player buys items from the store, EW is deducted and removed from circulation
+      permanently. It does not transfer to the store &mdash; it ceases to exist.
+            </p>
+            <div class="es-formula">
+   EW<sub>destroyed_store</sub> = &Sigma;<sub>i</sub> ( qty<sub>i</sub> &times; sellPricePerUnit<sub>i</sub> )<br>
+    EW<sub>supply_new</sub> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = EW<sub>supply_old</sub> &minus; EW<sub>destroyed_store</sub><br>
+      rawStock[item] &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-= qty_stacks &times; bundleSize
+       </div>
+
+<h3 id="s3-2">3.2 Sink 2 &mdash; OCM admin fee (10% on admin-handled trades)</h3>
+    <p>
+     When the admin completes an OCM trade on behalf of a merchant, a 10% fee is charged on the
+  canonical EW value of the trade:
+            </p>
+            <div class="es-formula">
+         feeEW = ceil( canonicalEW &times; 0.10 )
+        </div>
+      <p class="es-note" style="margin-top:4px;">
+Backend note: canonicalEW is first rounded to 2 decimal places via round2_() before the fee
+             is computed. Simplified here as ceil() for readability.
+            </p>
+     <p>
+      This feeEW is deducted from the merchant's balance and destroyed &mdash; it does not go to
+       the admin or any other player. When a merchant self-services their trade (accepts and delivers
+             personally), no fee is charged: feeEW = 0.
+            </p>
+   <p>Cumulative effect: OCM fees act as a slow deflationary drain on EW supply.</p>
+
+    <h3 id="s3-3">3.3 Sink 3 &mdash; Insurance metal withdrawal (EW nullification)</h3>
+   <p>
+        When a player withdraws physical metals from an insurance policy instead of redeeming units
+back to EW, the EW allocated to that policy is nullified &mdash; destroyed rather than
+                returned to circulation. This creates a natural price stabilizer for metals: when metal
+ prices rise, players are incentivized to physically withdraw their reserves and sell the
+           metals, increasing market supply and eventually bringing prices back down.
+  </p>
+         <p>Effect on EW supply: decrease (EW permanently removed).</p>
+
+            <h3 id="s3-4">3.4 The dual-sink mechanism</h3>
+            <p>Two independent sinks prevent unlimited supply growth:</p>
+  <ul>
+    <li><strong>Sink 1</strong> (store purchases) scales with demand for goods.</li>
+  <li><strong>Sink 2</strong> (OCM fees) scales with trading activity volume.</li>
+        </ul>
+            <p>
+                Together they maintain a long-run equilibrium between issuance and destruction that is tied
+to real economic behavior, not a policy target.
+       </p>
+
+            <h3 id="s3-5">3.5 Worked example &mdash; net supply change over one day</h3>
+            <div class="es-example">
+       Store sell orders approved: &nbsp;3 orders totalling <strong>+600 EW</strong> issued.<br>
+        Store buy orders approved: &nbsp;&nbsp;2 orders totalling <strong>&minus;400 EW</strong> destroyed.<br>
+    OCM admin fees collected: &nbsp;&nbsp;&nbsp;5 trades &times; avg. 20 EW fee = <strong>&minus;100 EW</strong> destroyed.<br>
+          <br>
+       Net change: +600 &minus; 400 &minus; 100 = <strong>+100 EW</strong><br>
+   EW<sub>supply_new</sub> = EW<sub>supply_old</sub> + 100 EW
+    <br><br>
+     This day was mildly inflationary: more players sold to the store than bought from it, and
+ OCM trading was active but not sufficient to offset issuance.
+            </div>
+        </article>
+
+ <!-- ?? 4. STORE PRICING MODEL ??????????????????????????????????? -->
+      <article class="chapter" id="s4">
+            <h2>4. Store Pricing Model</h2>
+
+  <h3 id="s4-1">4.1 Buy/sell spread</h3>
+      <p>The store maintains a spread between what it pays sellers (buy price) and what it charges buyers (sell price):</p>
+    <div class="es-formula">
+   spread = sellPrice &minus; buyPrice &nbsp;&nbsp;&nbsp;(always &gt; 0)
+            </div>
+            <p>This spread serves three purposes:</p>
+     <ol>
+       <li>It ensures the total item value in stock always exceeds total EW in circulation (liquidity guarantee &mdash; see Section 7.2).</li>
+  <li>It incentivizes players to trade with each other through the OCM, where they can negotiate better rates than the store spread.</li>
+    <li>It provides the store's long-term operational margin.</li>
+   </ol>
+
+       <h3 id="s4-2">4.2 Individual vs bundle pricing</h3>
+     <p>Items are priced per full stack (bundle). Per-unit pricing is derived:</p>
+         <div class="es-formula">
+        buyPricePerUnit &nbsp;= stackBuyPrice / bundleSize &nbsp;&nbsp;&nbsp;(backend: round2_())<br>
+       sellPricePerUnit = stackSellPrice / bundleSize<br>
+     <br>
+           Stack totals: totalEW = qty_stacks &times; stackBuyPrice &nbsp;&nbsp;(no per-unit rounding error)
+            </div>
+
+            <h3 id="s4-3">4.3 Algorithmic price adjustment</h3>
+            <p>
+      Each item has a configured spread (the range between minimum and maximum payout) and a target
+          stock level. The buy and sell prices adjust automatically based on the current stock level
+      relative to the target:
+       </p>
+ <div class="es-formula">
+       fill_ratio &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= currentStock / targetStock &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(clamped to [0, 1])<br>
+           buyPrice(item) &nbsp;= maxBuyPrice &minus; fill_ratio &times; (maxBuyPrice &minus; minBuyPrice)<br>
+            sellPrice(item) = buyPrice(item) + spread
+   </div>
+            <p>
+             At stock&nbsp;=&nbsp;0 (empty): buyPrice = maxBuyPrice (store pays the most).<br>
+       At stock&nbsp;=&nbsp;target (full): buyPrice = minBuyPrice (store pays the least).<br>
+    Between 0 and target: price is linearly interpolated based on the fill ratio.
+        </p>
+    <p>
+      The admin sets the spread (min/max) per item. The price engine applies the adjustment
+      automatically after each approved transaction. This means prices are always live and respond
+     to real trading activity without requiring manual intervention after each trade.
+            </p>
+
+            <div class="es-example">
+         <strong>Worked example &mdash; Resin price at different stock levels.</strong>
+            <br><br>
+      Current Resin values (illustrative): maxBuyPrice&nbsp;=&nbsp;128&nbsp;EW/stack, minBuyPrice&nbsp;=&nbsp;64&nbsp;EW/stack, spread&nbsp;=&nbsp;32&nbsp;EW.
+                <br><br>
+     <em>Scenario A: Stock is 5 of 20 (fill_ratio = 0.25)</em><br>
+                buyPrice &nbsp;= 128 &minus; 0.25 &times; (128 &minus; 64) = 128 &minus; 16 = <strong>112 EW/stack</strong><br>
+      sellPrice = 112 + 32 = <strong>144 EW/stack</strong>
+ <br><br>
+        <em>Scenario B: Stock is 15 of 20 (fill_ratio = 0.75)</em><br>
+    buyPrice &nbsp;= 128 &minus; 0.75 &times; (128 &minus; 64) = 128 &minus; 48 = <strong>80 EW/stack</strong><br>
+    sellPrice = 80 + 32 = <strong>112 EW/stack</strong>
+    <br><br>
+     As stock fills up, the store pays less for incoming Resin &mdash; and charges less to buyers,
+     since sell price tracks buy price plus the spread.
+     <br><br>
+     <span class="es-note">Numbers are illustrative. Current Resin prices will differ. Check the live price sheet.</span>
+ </div>
+
+            <h3 id="s4-4">4.4 Price locking at submission: the bulk trading incentive</h3>
+     <p>
+              When a player submits a trade request, the price is locked at the moment of submission &mdash;
+                not at the moment of approval. This has an important consequence: large trades lock in a
+           favorable price before the post-trade price adjustment takes effect.
+    </p>
+     <p>
+After a big sell order is approved, the buy price drops (because stock increased). The seller
+       already locked in the high price before that drop. The next seller gets less for the same
+                goods. Similarly, a large buy order locks in a low price &mdash; after approval, sell prices
+    rise (stock fell), but the buyer already secured the deal at the pre-adjustment rate.
+       </p>
+  <p>
+ This mechanism strongly incentivizes bulk trading: the first large trade in a cycle captures
+     the best available price, and subsequent smaller trades operate at the adjusted (less
+        favorable) rate. There is no explicit bulk discount &mdash; the incentive is structural,
+          created by the price adjustment mechanics rather than a separate pricing tier.
+ </p>
+        </article>
+
+        <!-- ?? 5. EW INFLATION AND DEFLATION ??????????????????????????? -->
+      <article class="chapter" id="s5">
+         <h2>5. EW Inflation and Deflation</h2>
+
+      <h3 id="s5-1">5.1 Why EW has both</h3>
+            <p>
+                EW is not a fixed-supply or pegged currency. Its purchasing power relative to any individual
+      item fluctuates with supply and demand for that item:
+            </p>
+       <ul>
+                <li><strong>High demand for item X</strong> &rarr; price of X rises
+   (buying X costs more EW; selling X earns more EW).</li>
+      <li><strong>High supply of item X</strong> &rarr; price of X falls
+                    (selling X earns less EW; buying X costs less EW).</li>
+</ul>
+    <p>
+          This is intentional: price signals direct player behavior, and player behavior is what
+         creates the dynamic, self-correcting economy.
+        </p>
+
+            <h3 id="s5-2">5.2 Price shock self-correction</h3>
+            <p>
+      If item X becomes expensive: players are incentivized to gather and produce more X &rarr;
+          supply of X increases &rarr; price of X falls back toward equilibrium.
+      </p>
+         <p>
+      If item X becomes cheap (over-supplied): less incentive to gather X &rarr; supply naturally
+                decreases &rarr; price rises back toward equilibrium.
+ </p>
+  <p>
+                The price adjustment system (Section 4.3) makes this self-correction automatic and
+      near-instantaneous rather than requiring manual price reviews.
+      </p>
+
+          <h3 id="s5-3">5.3 Why EW is more stable than RG</h3>
+   <p>
+       RG inflation is supply-driven: mob farms produce unlimited RG at zero economic cost, so the
+        RG supply grows faster than demand regardless of player behavior. EW inflation is
+          activity-driven: EW is only issued when a player sells real items. If no items are sold,
+          no EW is created.
+      </p>
+        <p>Key structural differences:</p>
+      <ul>
+        <li>EW supply is bounded by real economic activity.</li>
+      <li>No "mob farm equivalent" for EW exists.</li>
+   <li>Earning large amounts of EW requires bringing proportionally large amounts of goods to the market.</li>
+            </ul>
+  <div class="es-warning">
+                <strong>Important:</strong> EW is NOT perfectly stable. Its purchasing power relative to
+             any specific item changes with market conditions. But the mechanism preventing runaway
+            devaluation is structural &mdash; built into the issuance rules &mdash; not dependent on
+       policy decisions or admin intervention.
+       </div>
+
+       <h3 id="s5-4">5.4 Wealth concentration risk</h3>
+            <p>
+         The Bank Dashboard tracks wealth distribution daily across four bands: top 1%, next 9%,
+                next 20%, and bottom 70% of active players by EW balance. Concentrated wealth means a
+       small number of players control most of the trade capacity &mdash; a known risk in any
+           economy of any size. Publishing this data openly is an intentional design choice: it allows
+       the community to observe whether concentration is worsening over time and to respond.
+       </p>
+
+<h3 id="s5-5">5.5 Comparison: EW vs RG vs informal commodity currencies</h3>
+  <table class="es-table">
+       <thead>
+    <tr>
+             <th>Currency</th>
+       <th>Supply mechanism</th>
+            <th>Inflation risk</th>
+    <th>Price reference</th>
+ <th>Wealth transparency</th>
+      <th>Accessibility</th>
+     </tr>
+       </thead>
+    <tbody>
+        <tr>
+       <td>EW</td>
+           <td>Item exchange only</td>
+            <td>Low&ndash;Medium</td>
+ <td>Public (daily)</td>
+       <td>Public (daily)</td>
+ <td>Very high</td>
+      </tr>
+            <tr>
+          <td>RG</td>
+    <td>Mob farms / trading</td>
+             <td>High</td>
+              <td>None</td>
+        <td>None</td>
+        <td>High</td>
+            </tr>
+             <tr>
+         <td>Silver</td>
+  <td>Mining only</td>
+    <td>Low</td>
+  <td>None</td>
+          <td>None</td>
+         <td>Medium</td>
+           </tr>
+              <tr>
+          <td>Gold</td>
+  <td>Mining + rare</td>
+       <td>Very Low</td>
+      <td>None</td>
+      <td>None</td>
+         <td>Low</td>
+         </tr>
+       </tbody>
+    </table>
+     <span class="es-note">
+       Silver and Gold are not designed as currencies in Vintage Story. They are included here
+    because some players use them as informal mediums of exchange in the absence of EW. This
+              comparison highlights the structural advantages of EW relative to both the official game
+        currency (RG) and common commodity substitutes.
+       </span>
+        </article>
+
+        <!-- ?? 6. OCM PEG SYSTEM ???????????????????????????????????????? -->
+<article class="chapter" id="s6">
+          <h2>6. OCM Peg System</h2>
+
+        <h3 id="s6-1">6.1 What a peg is</h3>
+   <p>
+            An OCM listing's peg defines how a customer can pay for an item using goods instead of EW.
+         The peg specifies the <strong>peg item</strong> (what the customer pays with, e.g. Fat,
+          Resin, Copper Ingots) and the <strong>peg quantity</strong> (how many units of the peg item
+      are required per unit of the listed item).
+            </p>
+       <p>
+  The peg converts an item-for-item trade into the EW accounting system so that the canonical
+          EW value can be computed, the fee (if any) can be charged correctly, and both parties receive
+          accurate transaction history.
+            </p>
+
+    <h3 id="s6-2">6.2 STORE mode</h3>
+  <p>
+        The listing price is pegged to the store's published price for the peg item. The merchant
+     chooses which side of the store's price to use:
+    </p>
+            <div class="es-formula">
+            canonicalEW = requestedUnits &times; storePricePerUnit( side )<br>
+      <span style="font-size:12px;color:#6b5040;">(backend: storePricePerInd_( catalog, pegItemName, side ))</span>
+        </div>
+  <p>
+         Where <em>side</em> is either BUY or SELL, chosen by the merchant at listing creation.
+    Store mode listings automatically reprice if the store's price sheet is updated before the
+                trade is submitted. Once the trade request is submitted, the price is locked in the
+    immutable snapshot.
+            </p>
+
+        <h3 id="s6-3">6.3 HALF mode</h3>
+   <p>
+    The merchant sets a custom peg ratio (pegQtyPerInd) &mdash; how many units of the peg item
+      a customer pays per individual unit of the listed item.
+     </p>
+        <div class="es-formula">
+      canonicalEW = requestedUnits &times; pegQtyPerInd &times; storePricePerUnit( primarySide )<br>
+       <span style="font-size:12px;color:#6b5040;">(backend: primaryPeg.pegQtyPerInd &times; primaryPegPricePerInd)</span>
+            </div>
+   <p>
+        HALF mode listings do <em>not</em> automatically reprice. The merchant controls the exact
+          exchange ratio regardless of store price changes.
+   </p>
+
+     <h3 id="s6-4">6.4 Multi-peg configuration</h3>
+        <p>
+      A listing can have one primary peg and up to 10 alternate pegs, for a maximum of 11 accepted
+         payment items. <span class="es-note">(Backend: validatePegsAndNormalize_() throws if
+  altPegs.length &gt; 10.)</span>
+     </p>
+       <p>
+    Example: a merchant can accept Fat, <em>or</em> Resin, <em>or</em> Copper Ingots, <em>or</em>
+      direct EW payment &mdash; all on the same listing. The customer selects which peg to use
+            when submitting the trade request.
+     </p>
+
+  <h3 id="s6-5">6.5 selectedPegEW vs canonicalEW</h3>
+            <div class="es-formula">
+        canonicalEW &nbsp;&nbsp;&nbsp;= requestedUnits &times; primaryPeg.pegQtyPerInd &times; storePricePerInd( primaryPeg )<br>
+        selectedPegEW = requestedUnits &times; selectedPeg.pegQtyPerInd &times; storePricePerInd( selectedPeg )
+            </div>
+         <p>
+     <strong>canonicalEW</strong> is the EW-equivalent value at primary peg store prices.
+                It is used for: fee calculation, merchant balance credit, and transaction records.<br>
+                <strong>selectedPegEW</strong> is the EW-equivalent value of the customer's chosen peg.
+     It may differ from canonicalEW if the customer chose an alternate peg with a different
+ store price, or if prices have shifted since the listing was created.
+        </p>
+       <p>
+ The immutable trade snapshot locks both values at the moment the trade request is submitted,
+        protecting both parties from price changes during the approval window.
+      </p>
+            <div class="es-research">
+    <strong>Tip for merchants:</strong> set the primary peg to your best offer &mdash; the peg
+     that gives customers the most attractive deal. The fee is always computed from canonicalEW
+     (primary peg), so pricing the primary peg competitively minimizes the fee and makes the
+          listing more attractive simultaneously.
+    </div>
+
+            <h3 id="s6-6">6.6 Item quantity rounding</h3>
+  <p>
+       When the customer pays in items, the quantity is always rounded up to the nearest whole
+          integer &mdash; you cannot pay with a fractional item:
+      </p>
+          <div class="es-formula">
+ payItemQty = ceil( requestedUnits &times; pegQtyPerInd )<br>
+         <span style="font-size:12px;color:#6b5040;">(backend: ceilInt_( rawPayItems ))</span>
+            </div>
+            <p>This protects the merchant from receiving less than the agreed quantity.</p>
+
+  <h3 id="s6-7">6.7 Fee calculation</h3>
+            <div class="es-formula">
+    feeEW = ceil( canonicalEW &times; 0.10 ) &nbsp;&nbsp;&nbsp;[admin-service scenario only]<br>
+        feeEW = 0 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[merchant self-service scenario]
+            </div>
+            <p>
+        The fee is charged to the merchant and destroyed &mdash; it does not go to the admin. It is
+                always computed from canonicalEW (the primary peg value), regardless of which peg the
+      customer chose to pay with. Item-based payments are never subject to a deduction: if the
+        customer pays in items, the merchant receives 100% of the agreed item quantity. Only the
+     EW equivalent is used to compute and charge the fee.
+       </p>
+
+            <h3 id="s6-8">6.8 Worked example &mdash; STORE mode trade with Fat peg</h3>
+ <div class="es-example">
+       <strong>A merchant lists 20 Steel Ingots at STORE sell price, peg: 16 Fat per ingot.</strong><br>
+  A customer requests 10 ingots. Store sell price for Steel Ingots: ~30 EW per ingot (illustrative).
+                <br><br>
+      canonicalEW &nbsp;&nbsp;&nbsp;= 10 &times; 30 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <strong>300 EW</strong><br>
+  payItemQty &nbsp;&nbsp;&nbsp;&nbsp;= ceil( 10 &times; 16 ) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <strong>160 Fat</strong><br>
+     feeEW (admin) = ceil( 300 &times; 0.10 ) &nbsp;&nbsp;= <strong>30 EW</strong>
+        <br><br>
+                <strong>Admin-service scenario</strong> (merchant does not self-deliver):<br>
+   Customer pays: 160 Fat &rarr; delivered to merchant's deposit box<br>
+      Merchant receives: 160 Fat, then &minus;30 EW fee deducted from balance<br>
+     30 EW is destroyed and removed from circulation.
+ <br><br>
+    <strong>Self-service scenario</strong> (merchant accepts and delivers personally):<br>
+      Customer pays: 160 Fat &rarr; delivered to merchant's deposit box<br>
+         Merchant receives: 160 Fat, no EW fee charged.
+  <br><br>
+   In both scenarios, the store's own stock of Steel Ingots is unaffected &mdash; this is a
+            player-to-player OCM trade, not a store purchase.
+          <br><br>
+           <span class="es-note">Prices are illustrative. Check the live price sheet for current values.</span>
+            </div>
+        </article>
+
+        <!-- ?? 7. LIQUIDITY GUARANTEE AND METAL BACKING ???????????????? -->
+        <article class="chapter" id="s7">
+     <h2>7. Liquidity Guarantee and Metal Backing</h2>
+
+            <h3 id="s7-1">7.1 The liquidity guarantee</h3>
+            <p>
+   The store maintains both buy AND sell orders at all times: a player can always sell items
+          to the store (receive EW), and a player can always spend EW at the store (receive items).
+        No willing counterparty is required at the moment of exchange. This is the fundamental
+     property that makes EW a reliable medium of exchange.
+ </p>
+            <p>
+    Contrast with barter: both parties must want what the other has, at the same time, and must
+       agree on a price. Contrast with RG: RG-based stores do exist on TOPS, but they are
+vulnerable to exploitation because RG itself inflates &mdash; any player with a mob farm
+         can generate enough RG to strip a store of its inventory at the originally posted prices.
+            </p>
+
+            <h3 id="s7-2">7.2 Why the store's item value exceeds EW in circulation</h3>
+         <p>Every time a sell order is approved:</p>
+            <div class="es-formula">
+    value_received_by_store = qty &times; sellPrice &nbsp;&nbsp;&nbsp;(what the store will charge buyers)<br>
+     EW_issued_to_seller &nbsp;&nbsp;&nbsp;&nbsp;= qty &times; buyPrice &nbsp;&nbsp;&nbsp;&nbsp;(what the store paid)<br>
+    surplus_per_transaction = qty &times; (sellPrice &minus; buyPrice) &nbsp;&nbsp;&nbsp;(always &gt; 0)
+            </div>
+            <p>
+        Because the spread is always positive, the store accumulates more item value than EW it
+       issues. Over time:
+      </p>
+  <div class="es-formula">
+         total_item_value_in_stock &gt; total_EW_in_circulation
+  </div>
+      <p>
+      This means EW can always be exchanged for something of real in-game value as long as the
+            store has any stock at all.
+            </p>
+    <p>
+   Additional nuance: the spread varies by item, and the post-trade price adjustment changes
+     how much the store effectively earns per transaction. In the worst case &mdash; if a single
+       large transaction moves the stock from 0 to the full target &mdash; the store may end up
+      paying out close to what it will eventually sell the goods for, making little margin on that
+           particular trade. In better cases, many small transactions accumulate a larger effective
+                spread before prices converge.
+            </p>
+
+     <h3 id="s7-3">7.3 Metal backing and the insurance reserve</h3>
+            <p>
+                A portion of the store's reserves are held specifically as precious metals: Silver, Gold,
+           Steel, Copper, Iron, Tin, Zinc, Bismuth, Nickel, Lead, and Meteoric Iron. These metals
+  serve as the redemption asset for EW insurance policies.
+        </p>
+            <div class="es-formula">
+      <strong>Solvency goal:</strong> total_metal_reserve_value &ge; total_EW_in_circulation
+      </div>
+     <p>
+     When this goal is met, the system can in theory redeem all EW in circulation for metals
+                simultaneously &mdash; surviving a full "bank run" scenario. This goal was achieved during
+          the previous wipe cycle. The current wipe is rebuilding reserves as quickly as player
+participation allows.
+          </p>
+
+     <h3 id="s7-4">7.4 Why low metal reserves do NOT mean EW has lost value</h3>
+            <p>
+           EW is backed by the full diversified stock of all items the store trades, not just metals.
+   Low metal reserves mean metal prices are temporarily high (supply low relative to demand),
+          which incentivizes players to gather and sell metals. Once reserves refill, metal prices
+    stabilize.
+            </p>
+            <p>
+     EW can still be spent on all non-metal items even when metal reserves are low. Diversified
+    backing makes EW resilient to shortages in any single item category &mdash; a structural
+           advantage over single-commodity-backed systems.
+          </p>
+
+ <h3 id="s7-5">7.5 Insurance: how EW converts to metals</h3>
+            <p>
+     When a player deposits into an insurance policy, the backend computes exactly which metals
+        and quantities they receive.
+        <span class="es-note">(Backend function: ins_calcMetalsForEW_())</span>
+ </p>
+        <p><strong>Inputs:</strong></p>
+    <ul>
+            <li>ewAmount = total EW being insured (units &times; INS_EW_PER_UNIT, where INS_EW_PER_UNIT = 500)</li>
+       <li>allocObj = allocation percentages per metal (must sum to &le; 100%)</li>
+       <li>priceItems = live metal prices from the public price sheet</li>
+   </ul>
+    <div class="es-formula">
+         <strong>Per metal M with allocation alloc<sub>M</sub> %:</strong><br><br>
+                ewForMetal<sub>M</sub> &nbsp;&nbsp;&nbsp;= ewAmount &times; ( alloc<sub>M</sub> / 100 )<br>
+             ingots<sub>M</sub> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= floor( ewForMetal<sub>M</sub> / pricePerIngot<sub>M</sub> )<br>
+     leftover<sub>M</sub> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= ewForMetal<sub>M</sub> &minus; ( ingots<sub>M</sub> &times; pricePerIngot<sub>M</sub> )<br>
+     nuggets<sub>M</sub> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= floor( leftover<sub>M</sub> / pricePerNugget<sub>M</sub> )<br>
+   insured<sub>M</sub> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= ( ingots<sub>M</sub> &times; pricePerIngot<sub>M</sub> ) + ( nuggets<sub>M</sub> &times; pricePerNugget<sub>M</sub> )<br>
+      leftoverEW<sub>M</sub> &nbsp;&nbsp;= ewForMetal<sub>M</sub> &minus; insured<sub>M</sub>
+  </div>
+      <p>
+     <span class="es-note">Special case: Meteoric Iron uses a nugget ratio of 2 nuggets per ingot.
+  All other metals use the standard ratio of 20 nuggets per ingot.</span>
+            </p>
+            <div class="es-formula">
+       <strong>Totals:</strong><br><br>
+            totalInsuredEW &nbsp;= &Sigma;<sub>M</sub> insured<sub>M</sub><br>
+           totalLeftoverEW = ewAmount &minus; totalInsuredEW
+            </div>
+          <p>
+        The totalLeftoverEW is returned to the player's circulating EW balance &mdash; it is not
+     lost. It arises because item quantities must be whole numbers (you cannot receive 2.7 ingots).
+            </p>
+
+       <h3 id="s7-6">7.6 Insurance policy lifecycle (state machine)</h3>
+        <div class="es-statemachine"><pre>
+  ???????????
+?  Empty  ?
+  ???????????
+     ? set allocation (immediate — no admin approval)
+       ?
+  ????????????????????????
+  ?  Empty (ready)       ?
+  ????????????????????????
+         ? requestDeposit ? admin approves
+         ?
+  ????????????????????????
+  ?   Active (funded)    ???????????????????????????????
+  ????????????????????????          ?
+             ?           ?
+    ???????????????????????????????             ?
+    ?    ?        ?       ?
+    ?    ?         ? ?
+requestWi- updateAlloc-      requestWithdraw-         ?
+thdrawUnits ation          Metals          ?
+    ?        ? ? REALLOC         ?    ?
+    ?        ?   Pending ?          ?
+    ?        ?   ? admin   ?   ?
+  ?        ?   approves    ?             ?
+    ?        ?     ?             ?
+    ?  Active (realloc-  Empty (EW nullified —?
+    ?  ated)    metals delivered,          ?
+    ?     ?         not returned)      ?
+    ?        ??????????????????????????????????????????
+    ?
+    ? admin approves withdrawal
+  ?????????   ?????????????????????????????
+  ? Empty ?    or    ? Active (partial withdrawal ?
+  ?????????       ? remains) ?
+      ?????????????????????????????</pre>
+</div>
+            <p><strong>Key rules:</strong></p>
+   <ul>
+  <li>1 unit = 500 EW (INS_EW_PER_UNIT constant in backend)</li>
+   <li>Maximum 5 policies per player</li>
+    <li>Allocation percentages must sum to &le; 100%</li>
+          <li>Unallocated remainder (100% &minus; sum of allocations) is returned to the player's
+  circulating EW balance when any EW is redeemed</li>
+         <li>Admin actions bypass the Pending step (direct deposit/withdraw/realloc)</li>
+       <li>Up to 5 independent policies with different allocations can be held simultaneously</li>
+        </ul>
+</article>
+
+        <!-- ?? 8. RESEARCH CONTEXT ????????????????????????????????????? -->
+        <article class="chapter" id="s8">
+         <h2>8. Research Context: What This Economy Is Studying</h2>
+
+            <div class="es-research">
+          This section describes Vak's Store as an ongoing experiment in small-scale player-driven
+              economics. The sections below cover the research framing, questions, findings, and
+              limitations in a personal as well as analytical tone, reflecting how this project has
+       actually been experienced and observed.
+  </div>
+
+      <h3 id="s8-1">8.1 Research framing</h3>
+            <p>
+    Vak's Store is not just a trading tool &mdash; it is an ongoing study of small-scale
+ player-driven economics. The system was built with observability as a first principle:
+      every transaction is logged, every balance change is recorded, and aggregate economy-wide
+metrics are published daily. This section documents what the study is measuring and what
+          has been observed so far.
+         </p>
+
+            <h3 id="s8-2">8.2 Research questions being studied</h3>
+            <p>The system continuously collects data relevant to the following questions:</p>
+       <ul>
+     <li>Can a non-inflationary currency operate sustainably in a multiplayer game environment
+     where the official currency is inflationary?</li>
+             <li>Do players naturally gravitate toward a stable medium of exchange when one is available,
+     or do they default to barter?</li>
+   <li>How does public price transparency affect trading behavior? Do players trade more fairly
+         when prices are observable by everyone?</li>
+      <li>Does wealth concentration emerge over time even in a small economy?
+          (Gini-coefficient equivalent for a 30&ndash;100 player economy.)</li>
+            <li>Can a one-person, admin-operated store function as a central bank analog: issuing
+      currency, setting prices, and maintaining reserves?</li>
+          <li>How do players respond to price signals? When a price rises, do they gather more of
+that item, as the self-correction mechanism predicts?</li>
+     </ul>
+
+    <h3 id="s8-3">8.3 Observable findings (current and previous wipe cycles)</h3>
+          <p>
+      The store has attracted consistent participation from both new and veteran players. Veterans
+    with mob farms do participate and can trade at large volumes, but they don't dominate EW
+  acquisition &mdash; the store accepts a wide range of items, and many players earn EW through
+  crafting, gathering, or farming items that have nothing to do with mob drops. That's been
+      one of the more pleasant surprises: the breadth of participation has stayed healthy even
+        as a few high-volume traders have emerged.
+            </p>
+        <p>
+          Price history charts confirm supply-and-demand behavior: over-supplied items drop in price;
+       under-supplied items rise. The insurance system saw meaningful uptake during the previous
+             wipe, with total metal reserves exceeding total EW in circulation &mdash; the solvency goal
+           was achieved. Wealth distribution data shows moderate concentration consistent with typical
+       small-economy distributions, without extreme outliers dominating.
+          </p>
+
+            <h3 id="s8-4">8.4 Limitations of the research</h3>
+         <p>
+              The sample size is small &mdash; 30&ndash;100 active players per wipe &mdash; nowhere near
+      statistically significant by any academic standard. There's an observer effect: players know
+    they're participating in a designed system, which probably affects how they behave. There's a
+          single point of trust (one admin handles all approvals), which introduces both a bottleneck
+   and a potential source of bias. There's no control group, no EW-free version of the same
+     server to compare against. And each server wipe resets the economy, which disrupts any
+       attempt at long-run continuity.
+            </p>
+            <p>
+    The research is informal. No institutional review, no academic publication. This is a
+              community project that happens to collect economically interesting data. (For now.)
+       </p>
+
+     <h3 id="s8-5">8.5 Comparison to academic small-scale economy research</h3>
+    <p>
+             Several academic studies have investigated player-driven economies in games including
+  Eve Online, Runescape, and Ultima Online. Key comparisons:
+        </p>
+   <p>
+       <strong>Similarities:</strong> spontaneous price discovery, occupational specialization,
+        and wealth concentration emerge in all of these systems.
+        </p>
+            <p>
+  <strong>Differences:</strong> EW is not tradeable outside the system (no real-money
+     speculation or external arbitrage), the market size is much smaller, and the "central bank"
+     (Vak) has a direct personal relationship with all market participants &mdash; a condition
+                not present in larger game economies.
+ </p>
+      <div class="es-callout wp-seealso">
+  <p>For broader economic context:</p>
+         <ul>
+  <li><a href="VintageStoryEconomics.html">Vintage Story Economics</a> &mdash; broader essay on Vintage Story economics</li>
+  </ul>
+     </div>
+
+            <h3 id="s8-6">8.6 What would falsify the EW model</h3>
+       <p>The EW model would fail &mdash; in an economically interesting way &mdash; if:</p>
+            <ul>
+  <li>Players collectively stopped trusting EW as a medium of exchange, reverting to barter
+    despite EW being available.</li>
+                <li>Admin availability dropped to the point where trade throughput collapsed and EW became
+       effectively unspendable.</li>
+       <li>A mechanism was discovered to generate EW without delivering real items &mdash; the
+      equivalent of a mob farm applied to the currency system.</li>
+            </ul>
+     <p>None of these failure modes have occurred. The system has functioned as designed across
+        multiple wipe cycles.</p>
+        </article>
+
+        <!-- ?? 9. LIMITATIONS ?????????????????????????????????????????? -->
+        <article class="chapter" id="s9">
+            <h2>9. Limitations</h2>
+
+      <div class="es-warning">
+    <strong>9.1 Centralized approval bottleneck.</strong> All store requests and
+          admin-handled OCM trades require Vak's manual approval. There is no smart contract or
+       automated settlement. Trade throughput is bounded by admin availability. During periods
+ of high activity or admin absence, pending requests can queue for hours or days.
+            </div>
+
+            <p>
+                <strong>9.2 No in-game enforcement.</strong> The system records that item delivery must
+            occur and tracks confirmation. It cannot force delivery in-game. If a player picks up
+        items without fulfilling their end of a trade, resolution depends on admin action (balance
+       clawback) and community trust.
+            </p>
+
+     <p>
+ <strong>9.3 Google Sheets concurrency.</strong> Write operations on Google Sheets are not
+   fully atomic. Simultaneous writes to the same row can theoretically conflict. The backend
+ mitigates this with LockService but does not completely eliminate the risk under extreme
+     concurrency.
+      </p>
+
+   <p>
+   <strong>9.4 Price adjustment lag on manual items.</strong> While the price adjustment
+     formula is algorithmic (Section 4.3), the spread itself (min/max) is set manually per item
+          by Vak. Setting the spread for a new item or revising it for an existing item requires
+      manual intervention. Items with an outdated spread may not respond correctly to real market
+     conditions.
+     </p>
+
+ <p>
+     <strong>9.5 Insurance reserves are rebuilding.</strong> The solvency goal (metal reserves
+      &ge; EW in circulation) was met in the previous wipe cycle. The current wipe started from
+    zero and is rebuilding. Until the goal is met, not all EW can be simultaneously redeemed
+                for metals.
+            </p>
+
+      <p>
+     <strong>9.6 Wipe dependency.</strong> The EW economy exists only while the TOPS server is
+    active and players are participating. Each server wipe resets all in-game items. EW balances
+     are handled per-wipe at Vak's discretion, with fairness and continuity considered. There
+       is no guaranteed balance rollover between wipes.
+    </p>
+
+     <p>
+         <strong>9.7 Experimental scope.</strong> Vak's Store is a community project run by one
+  person. It is not a regulated financial system and has no real-money implications. It should
+       be understood as a social experiment in in-game economics, not as a product or service.
+   </p>
+  </article>
+
+ <!-- ?? 10. FULL TRANSACTION TYPE REFERENCE ????????????????????? -->
+     <article class="chapter" id="s10">
+       <h2>10. Full Transaction Type Reference</h2>
+            <p>Quick-reference table for all transaction types, their EW supply effect, and the backend
+         event that triggers each one.</p>
+  <table class="es-table">
+        <thead>
+     <tr>
+  <th>Transaction</th>
+         <th>Trigger</th>
+              <th>EW created</th>
+          <th>EW destroyed</th>
+               <th>Net</th>
+         </tr>
+            </thead>
+                <tbody>
+            <tr>
+         <td>Store Sell Order</td>
+          <td>Player sells items to store</td>
+           <td>Yes</td>
+       <td>No</td>
+   <td>+</td>
+     </tr>
+          <tr>
+  <td>Store Buy Order</td>
+                  <td>Player buys items from store</td>
+            <td>No</td>
+            <td>Yes</td>
+              <td>&minus;</td>
+       </tr>
+          <tr>
+             <td>P2P Transfer</td>
+            <td>Player sends EW to player</td>
+         <td>No</td>
+  <td>No</td>
+                <td>0</td>
+         </tr>
+          <tr>
+             <td>OCM (self-service)</td>
+     <td>Merchant self-delivers</td>
+    <td>No</td>
+        <td>No</td>
+     <td>0</td>
+               </tr>
+             <tr>
+      <td>OCM (admin-service)</td>
+      <td>Admin delivers for merchant</td>
+         <td>No</td>
+  <td>Yes (10%)</td>
+      <td>&minus;</td>
+          </tr>
+     <tr>
+              <td>Insurance Deposit</td>
+               <td>EW &rarr; reserve (locked)</td>
+   <td>No</td>
+  <td>Yes (locked)</td>
+ <td>&minus;</td>
+         </tr>
+           <tr>
+        <td>Insurance Withdraw</td>
+            <td>Reserve &rarr; EW (returned)</td>
+        <td>Yes</td>
+          <td>No</td>
+             <td>+</td>
+         </tr>
+               <tr>
+          <td>Metal Withdrawal</td>
+          <td>Reserve &rarr; physical metals</td>
+            <td>No</td>
+      <td>Yes (nullif.)</td>
+     <td>&minus;</td>
+       </tr>
+           <tr>
+          <td>Admin Balance Adjust</td>
+        <td>Admin manual correction <span class="es-note">(Admin only)</span></td>
+           <td>Either</td>
+               <td>Either</td>
+      <td>&plusmn;</td>
+             </tr>
+            </tbody>
+            </table>
+      </article>
+
+    <!-- ?? 11. SEE ALSO ???????????????????????????????????????????? -->
+        <footer class="colophon" id="s11">
+            <h2>11. See Also</h2>
+
+         <div class="es-callout wp-seealso">
+  <p>Companion documents and related pages:</p>
+    <ul>
+   <li><a href="Whitepaper.html">Whitepaper</a> &mdash; overview document and project context</li>
+   <li><a href="SystemArchitecture.html">System Architecture</a> &mdash; frontend/backend technical deep-dive</li>
+     <li><a href="Bank.html">Bank Dashboard</a> &mdash; live economy metrics and daily snapshots</li>
+            <li><a href="PriceHistory.html">Price History</a> &mdash; price and velocity charts over time</li>
+             <li><a href="VintageStoryEconomics.html">Vintage Story Economics</a> &mdash; broader essay on Vintage Story economics</li>
+            </ul>
+     </div>
+   </footer>
+
+    </div><!-- /.book -->
+
+    <!-- Boot script: initSharedTopBar + silent auth restore -->
+    <script src="economyspecs_js/economyspecs-boot.js"></script>
+</body>
+</html>
