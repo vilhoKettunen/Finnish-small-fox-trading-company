@@ -1,0 +1,222 @@
+/* css/pages/whitepaper.css
+   Page-specific styles for Whitepaper.html.
+   Extends VintageStoryEconomics.css patterns.
+   NOTE: Do NOT redefine #topBar styles here — topbar.js already injects its own. */
+
+body {
+    background: #efe6d6;
+    font-family: "EB Garamond", Georgia, serif;
+    color: #2b2318;
+    margin: 0;
+    padding: 2rem;
+}
+
+.book {
+    width: 780px;
+    margin: 0 auto;
+    background: linear-gradient(180deg, #fbf6ef 0%, #f7efe0 100%);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    padding: 48px 60px;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+
+.cover {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px dashed rgba(0,0,0,0.12);
+}
+
+.title {
+    font-family: "Playfair Display", serif;
+    font-size: 40px;
+    margin: 8px 0;
+    color: #1e160e;
+}
+
+.subtitle {
+    font-size: 15px;
+    color: #5a4b3b;
+    margin-bottom: 8px;
+}
+
+.cover-date {
+    font-size: 13px;
+    color: #7a6850;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* GitHub badge */
+.wp-gh-badge {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 12px;
+ border: 1px solid #9c8060;
+    border-radius: 4px;
+    font-size: 13px;
+  color: #5a4030;
+    background: rgba(255,255,255,0.4);
+    text-decoration: none;
+}
+.wp-gh-badge:hover {
+    background: rgba(255,255,255,0.65);
+    text-decoration: underline;
+}
+
+/* Headings */
+h2 {
+    font-family: "Playfair Display", serif;
+    font-size: 22px;
+    margin-top: 32px;
+    color: #3b2f24;
+    border-bottom: 1px dashed rgba(0,0,0,0.08);
+    padding-bottom: 8px;
+}
+
+h3 {
+    font-family: "Playfair Display", serif;
+    font-size: 16px;
+    margin-top: 16px;
+    color: #483428;
+}
+
+p {
+    line-height: 1.7;
+    font-size: 16px;
+    margin: 0 0 1em 0;
+    text-align: justify;
+}
+
+/* Table of contents */
+.toc {
+    margin-bottom: 32px;
+}
+
+.toclist {
+    background: transparent;
+    border: none;
+    font-family: "EB Garamond", Georgia, serif;
+ font-size: 15px;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    padding: 0;
+    margin: 0;
+}
+
+.toclist a {
+    color: #7a5c2e;
+    text-decoration: none;
+}
+
+.toclist a:hover {
+  text-decoration: underline;
+}
+
+/* Chapters */
+.chapter {
+    margin-bottom: 24px;
+}
+
+/* Inline note style — e.g. "EW = BT" clarification */
+.wp-note {
+    font-size: 13px;
+    color: #6b5040;
+    font-style: italic;
+}
+
+/* "See also" callout panel */
+.wp-seealso {
+    border: 1px dashed #9c8060;
+    background: rgba(255, 240, 200, 0.35);
+    padding: 12px 18px;
+    border-radius: 6px;
+  margin: 20px 0;
+}
+
+.wp-seealso p {
+    margin: 0 0 6px 0;
+    font-size: 14px;
+    color: #4a3520;
+    font-style: italic;
+}
+
+.wp-seealso ul {
+    margin: 4px 0 0 0;
+    padding-left: 1.2em;
+list-style: "? ";
+}
+
+.wp-seealso li {
+    margin-bottom: 4px;
+    font-size: 15px;
+}
+
+.wp-seealso a {
+    color: #7a5c2e;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.wp-seealso a:hover {
+    text-decoration: underline;
+}
+
+/* Colophon / footer */
+.colophon {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px dashed rgba(0,0,0,0.12);
+    font-size: 14px;
+    color: #5a4b3b;
+}
+
+.colophon h2 {
+    font-size: 18px;
+    margin-top: 0;
+}
+
+.colophon ul {
+    padding-left: 1.2em;
+    line-height: 1.7;
+}
+
+/* Anchor targets: offset for fixed top bar */
+[id] {
+    scroll-margin-top: 68px;
+}
+
+/* ?? Responsive ???????????????????????????????????????????????????????? */
+@media (max-width: 840px) {
+    .book {
+        width: auto;
+     padding: 24px 20px;
+    }
+    body {
+        padding: 1rem;
+    }
+    .title {
+   font-size: 28px;
+    }
+}
+
+@media print {
+    body {
+        background: white;
+  padding: 0;
+    }
+    .book {
+        box-shadow: none;
+      border: none;
+        width: auto;
+   padding: 24mm;
+        margin: 0;
+    }
+    .chapter, .toc {
+        page-break-before: always;
+}
+    @page {
+        size: A4;
+        margin: 18mm;
+    }
+}

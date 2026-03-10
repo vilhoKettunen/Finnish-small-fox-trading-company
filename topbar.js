@@ -202,6 +202,7 @@
       <button type="button" data-nav="workpay">Work Pay Rates</button>
       <button type="button" data-nav="bank">Bank</button>
       <button type="button" data-nav="instructions">Instructions</button>
+      <button type="button" data-nav="whitepaper">Whitepaper</button>
       <button id="adminPanelBtn" style="display:none" type="button" data-nav="admin">Admin Panel</button>
     </div>
 
@@ -429,20 +430,21 @@ if (!document.getElementById('topbar-shared-style')) {
 
             // ── Nav routing ──
             if (btn.dataset && btn.dataset.nav) {
-                const nav = btn.dataset.nav;
-                if (nav === 'store') window.location.href = 'index.html';
-                else if (nav === 'history') window.location.href = 'AccountHistory.html';
-                else if (nav === 'ocm') window.location.href = 'OCMHome.html';
-                else if (nav === 'Merchant') window.location.href = 'OCMUser.html';
-                else if (nav === 'leaderboards') window.location.href = 'Leaderboards.html';
+    const nav = btn.dataset.nav;
+       if (nav === 'store') window.location.href = 'index.html';
+           else if (nav === 'history') window.location.href = 'AccountHistory.html';
+        else if (nav === 'ocm') window.location.href = 'OCMHome.html';
+      else if (nav === 'Merchant') window.location.href = 'OCMUser.html';
+   else if (nav === 'leaderboards') window.location.href = 'Leaderboards.html';
                 else if (nav === 'workpay') window.location.href = 'WorkPayRates.html';
-                else if (nav === 'bank') window.location.href = 'Bank.html';
-                else if (nav === 'instructions') window.location.href = 'Instructions.html';
-                else if (nav === 'admin') {
-                    if (!state.idToken || !state.isAdmin) { alert('Admin only'); return; }
-                    window.location.href = 'Admin.html';
-                }
-            }
+          else if (nav === 'bank') window.location.href = 'Bank.html';
+        else if (nav === 'instructions') window.location.href = 'Instructions.html';
+     else if (nav === 'whitepaper') window.location.href = 'Whitepaper.html';
+      else if (nav === 'admin') {
+      if (!state.idToken || !state.isAdmin) { alert('Admin only'); return; }
+         window.location.href = 'Admin.html';
+     }
+       }
         });
 
         // Outside-click: close both drawers when user clicks anywhere outside the top bar
@@ -454,15 +456,15 @@ if (!document.getElementById('topbar-shared-style')) {
     // Page calls this whenever auth or balance changes.
     // Accepts optional targetUser / targetBalanceBT / targetLoading for admin on-behalf chip.
     window.topbarSetAuthState = function (info) {
-  state.idToken = info && info.idToken || null;
-        state.user = info && info.user || null;
+        state.idToken = info && info.idToken || null;
+      state.user = info && info.user || null;
         state.isAdmin = !!(info && info.isAdmin);
-   state.balanceBT = (info && info.balanceBT != null) ? info.balanceBT : null;
-        state.balanceLabel = (info && info.balanceLabel) ? String(info.balanceLabel) : null;
+        state.balanceBT = (info && info.balanceBT != null) ? info.balanceBT : null;
+ state.balanceLabel = (info && info.balanceLabel) ? String(info.balanceLabel) : null;
         // Target chip fields (optional — other pages don't pass these and chip stays hidden)
         state.targetUser = (info && info.targetUser) || null;
         state.targetBalanceBT = (info && info.targetBalanceBT != null) ? info.targetBalanceBT : null;
-        state.targetLoading = !!(info && info.targetLoading);
+      state.targetLoading = !!(info && info.targetLoading);
         updateTopBarAuth();
     };
 
@@ -470,8 +472,8 @@ if (!document.getElementById('topbar-shared-style')) {
         ensureTopBar();
         wireTopbarEvents();
         updateTopBarAuth();
-if (!window._autoLoginDone && typeof window.tryRestoreAuthGlobal === 'function') {
- window.tryRestoreAuthGlobal().catch(function () {});
+        if (!window._autoLoginDone && typeof window.tryRestoreAuthGlobal === 'function') {
+    window.tryRestoreAuthGlobal().catch(function () {});
         }
     };
 })();

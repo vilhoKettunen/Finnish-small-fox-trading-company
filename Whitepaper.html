@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vak's Store &mdash; Whitepaper | Vintage Story Trading Platform</title>
+    <meta name="description" content="The official whitepaper for Vak's Store &mdash; a community trading platform and experimental in-game economy for the Vintage Story TOPS server." />
+    <link rel="icon" href="favicon.ico">
+
+    <!-- Auth + API + top bar (must come before GSI) -->
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
+    <script src="api-client.js"></script>
+    <script src="topbar.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+    <!-- Shared CSS -->
+    <link rel="stylesheet" href="css/site-layout.css">
+    <link rel="stylesheet" href="css/site-theme.css">
+    <link rel="stylesheet" href="css/panels-paper.css">
+
+    <!-- Page CSS -->
+    <link rel="stylesheet" href="css/pages/whitepaper.css">
+
+    <!-- Shared decorative JS -->
+    <script src="shared/site-decor.js"></script>
+    <script src="shared/site-footer.js"></script>
+</head>
+<body class="withTopBar no-paper">
+    <!-- Top bar is injected by whitepaper-boot.js via initSharedTopBar() -->
+
+    <div class="book">
+
+        <!-- ?? COVER ?????????????????????????????????????????????????????? -->
+        <header class="cover">
+            <h1 class="title">Vak's Store &mdash; Whitepaper</h1>
+            <p class="subtitle">A community trading platform and experimental economy for the Vintage Story TOPS server</p>
+      <p class="cover-date">Published: 2025</p>
+            <div style="margin-top:12px;">
+                <p style="font-size:14px;color:#5a4b3b;margin-bottom:6px;">
+   This project is publicly accessible. Frontend source code is available on GitHub:
+        </p>
+  <a class="wp-gh-badge" href="https://github.com/vilhoKettunen/Finnish-small-fox-trading-company" target="_blank" rel="noopener">
+   &#x1f4ce; github.com/vilhoKettunen/Finnish-small-fox-trading-company
+       </a>
+     <p style="font-size:13px;color:#7a6850;margin-top:6px;">
+  The backend is kept private for security. Its behavior is fully documented in this whitepaper.
+                </p>
+ </div>
+        </header>
+
+        <!-- ?? TABLE OF CONTENTS ?????????????????????????????????????????? -->
+        <section class="toc" id="toc">
+     <h2>Table of Contents</h2>
+     <pre class="toclist"><a href="#s1">1. Abstract</a>
+<a href="#s2">2. Project Background</a>
+    <a href="#s2-1">2.1 The Problem with Rusty Gears</a>
+    <a href="#s2-2">2.2 Barter Friction Before Vak&rsquo;s Store</a>
+    <a href="#s2-3">2.3 Origins of Vak&rsquo;s Store and FSFTC</a>
+<a href="#s3">3. System Overview</a>
+    <a href="#s3-1">3.1 The Store (Central Liquidity Provider)</a>
+    <a href="#s3-2">3.2 OCM &mdash; Open Community Market</a>
+    <a href="#s3-3">3.3 EW Accounts and Transaction History</a>
+    <a href="#s3-4">3.4 Bank Dashboard</a>
+    <a href="#s3-5">3.5 EW Insurance</a>
+    <a href="#s3-6">3.6 Tools and Supporting Pages</a>
+<a href="#s4">4. EW Currency Design (Summary)</a>
+    <a href="#s4-1">4.1 Definition</a>
+    <a href="#s4-2">4.2 Issuance (EW Creation)</a>
+    <a href="#s4-3">4.3 Destruction (EW Removal)</a>
+    <a href="#s4-4">4.4 Liquidity Guarantee</a>
+  <a href="#s4-5">4.5 Metal Backing / Insurance Reserve</a>
+    <a href="#s4-6">4.6 Velocity and Daily Stats</a>
+<a href="#s5">5. Economic Principles</a>
+    <a href="#s5-1">5.1 Medium of Exchange</a>
+    <a href="#s5-2">5.2 Price Discovery</a>
+    <a href="#s5-3">5.3 Accessibility</a>
+    <a href="#s5-4">5.4 Wealth Transparency</a>
+    <a href="#s5-5">5.5 Why EW Resists Inflation</a>
+<a href="#s6">6. Transaction System</a>
+    <a href="#s6-1">6.1 Store Buy</a>
+    <a href="#s6-2">6.2 Store Sell</a>
+    <a href="#s6-3">6.3 P2P Transfer</a>
+    <a href="#s6-4">6.4 OCM Trade</a>
+    <a href="#s6-5">6.5 Insurance Deposit</a>
+ <a href="#s6-6">6.6 Insurance Withdrawal</a>
+<a href="#s7">7. Data Model (Conceptual)</a>
+<a href="#s8">8. Software Architecture (Summary)</a>
+    <a href="#s8-1">8.1 Frontend</a>
+    <a href="#s8-2">8.2 Authentication</a>
+    <a href="#s8-3">8.3 Edge Layer</a>
+    <a href="#s8-4">8.4 Backend</a>
+    <a href="#s8-5">8.5 Data Storage</a>
+<a href="#s9">9. Transparency and Data Integrity</a>
+<a href="#s10">10. Security Considerations</a>
+<a href="#s11">11. Limitations</a>
+<a href="#s12">12. Future Development Ideas</a>
+<a href="#s13">13. Legal / Community Notes</a></pre>
+</section>
+
+        <!-- ?? 1. ABSTRACT ???????????????????????????????????????????????? -->
+        <article class="chapter" id="s1">
+    <h2>1. Abstract</h2>
+            <p>
+   Vak's Store is a community-run trading platform and experimental in-game economy operating on the
+    Vintage Story TOPS server (The Official Public Server). It was built to address three persistent
+    problems in the server's economic environment: barter friction, Rusty Gear (RG) inflation, and
+       price opacity.
+         </p>
+   <p>
+        At its core, Vak's Store introduces EW (Exchange Weight) &mdash; an internal ledger currency that
+                serves as a medium of exchange entirely outside the game's built-in systems.
+    <span class="wp-note">EW (Exchange Weight) is the current name for what older documentation called
+       BT (Bartering Tokens). EW is used throughout this document.</span>
+   </p>
+ <p>
+   The system operates across three layers: a static frontend served via Cloudflare CDN, a Cloudflare
+     Worker acting as an edge proxy, and a Google Apps Script backend with Google Sheets as the data
+            store. The frontend source code is open on GitHub. The backend is kept private for security, but
+ its behavior is fully described in this document.
+            </p>
+            <p>
+                EW solves the inflation problem by tying every unit of currency to a real item exchange. New EW
+            is only created when a player sells items to the store; EW is destroyed when players buy items
+       or complete trades on the Open Community Market. The Bank Dashboard, which is publicly accessible
+       without login, allows any visitor to observe the economy's health in real time: total EW in
+    circulation, daily issuance and destruction, metal backing ratio, and wealth distribution.
+            </p>
+        </article>
+
+    <!-- ?? 2. PROJECT BACKGROUND ?????????????????????????????????????? -->
+        <article class="chapter" id="s2">
+            <h2>2. Project Background</h2>
+
+       <h3 id="s2-1">2.1 The Problem with Rusty Gears (RG)</h3>
+            <p>
+        Rusty Gears are the official in-game currency of Vintage Story. Their fundamental weakness is
+  that they can be produced without limit using mob farms &mdash; automated constructions that
+  kill enemies en masse and collect the RG they drop. A well-built mob farm can produce hundreds
+       of RG per hour, with essentially zero player effort.
+       </p>
+    <p>
+        The effect on the economy is predictable: over a typical server wipe cycle, RG inflates
+         significantly. A steel ingot that cost around 5&ndash;6 RG early in a wipe can cost 12&ndash;13
+       RG twelve months later &mdash; not because steel became harder to obtain, but because RG became
+     worth less. Players who understand this stop holding RG and stop accepting it as payment. New
+          players, who lack mob farms, find themselves unable to compete with veterans who can generate
+ thousands of RG effortlessly.
+         </p>
+            <p>
+   RG is, in effect, a depreciating asset. Rational economic actors eventually refuse it, which
+makes it useless as a medium of exchange despite being the game's intended currency.
+            </p>
+
+   <h3 id="s2-2">2.2 Barter Friction Before Vak's Store</h3>
+ <p>
+     Before Vak's Store existed, player-to-player trade required both parties to separately agree on
+   the quantity of items to exchange, a mutually acceptable price, a time and place to meet, and
+     &mdash; critically &mdash; that they trusted each other not to scam the deal. Each of these
+     steps represented an opportunity for the trade to fall through.
+    </p>
+     <p>
+          Players live scattered across an enormous map. The common meeting point near coordinates 0,0
+          (the server spawn) is a long journey from most bases. Experienced players regularly exploited
+                the price ignorance of newcomers, offering to "buy" items at a fraction of their actual value
+          since no public price reference existed. This created an adversarial dynamic that discouraged
+      trading, particularly for new players who had the most to gain from a functioning market.
+     </p>
+
+     <h3 id="s2-3">2.3 Origins of Vak's Store and FSFTC</h3>
+       <p>
+      I started as a small seller near the center of the world. I noticed that I had more goods to
+             offer than I could carry around, and that other players often needed exactly what I had &mdash;
+              but finding each other and agreeing on a price was exhausting. The obvious solution was a
+            permanent, always-open store.
+            </p>
+            <p>
+       As demand grew, I needed a way to accept almost any item as payment without requiring each
+     trade to be individually negotiated. That need became EW: a ledger-based unit of value that
+     players could earn by selling to me and spend by buying from me or from other players.
+    </p>
+ <p>
+    The company behind the store was originally called the Finnish Small Fox Trading Company
+          (FSFTC). Over time, the community settled on a simpler name: Vak's Store. The store is located
+        at approximately coordinates 300, 100 &mdash; a short walk from spawn, visible from the main
+       transit paths. Every customer has their own deposit box (a personal mailbox in-game) where
+   items are deposited and picked up without requiring the parties to be online simultaneously.
+      </p>
+   </article>
+
+        <!-- ?? 3. SYSTEM OVERVIEW ?????????????????????????????????????????? -->
+      <article class="chapter" id="s3">
+            <h2>3. System Overview</h2>
+       <p>
+       Vak's Store consists of several interconnected components. Together they form a self-contained
+     economy that operates alongside, but independently of, Vintage Story's built-in game mechanics.
+     </p>
+
+            <h3 id="s3-1">3.1 The Store (Central Liquidity Provider)</h3>
+      <p>
+   The store maintains always-open buy and sell orders for hundreds of items. Prices are set by Vak
+  and published on a public Google Spreadsheet (the price sheet). When a player sells items to the
+  store, new EW is issued to their account. When a player buys items from the store, EW is
+      destroyed. This creates a currency that is directly tied to the flow of real in-game goods.
+        </p>
+    <p>
+   Physical item flow works through in-game deposit boxes (mailboxes). Players deposit items they
+         are selling and pick up items they have purchased, all at their personal deposit box. The store
+   processes these requests as they come in; no real-time presence from either party is required.
+          </p>
+
+ <h3 id="s3-2">3.2 OCM &mdash; Open Community Market</h3>
+            <p>
+       The Open Community Market (OCM) is a player-to-player trading layer built on top of the EW
+       system. Any player can list items for sale at a price they set themselves, using one of two
+   pricing modes: STORE mode (price pegged to the store's published prices) or HALF mode (a
+     custom peg ratio). When a trade is completed, the merchant receives 90% of the agreed EW price;
+              the remaining 10% is an admin fee that is destroyed, functioning as a deflationary sink.
+            </p>
+     <p>
+        Customers can also post buy requests, committing to purchase a set quantity of an item at a
+  price they specify. This is useful for sourcing items that the store does not currently stock.
+        </p>
+
+  <h3 id="s3-3">3.3 EW Accounts and Transaction History</h3>
+        <p>
+      Every player has an EW balance stored in a secure backend ledger. Every balance change &mdash;
+            whether from a store trade, an OCM transaction, a direct transfer, or an insurance operation
+                &mdash; creates a permanent, immutable transaction history record. Players can view their
+            complete history on the Account History page. Administrators can view any account for dispute
+    resolution purposes.
+       </p>
+
+      <h3 id="s3-4">3.4 Bank Dashboard</h3>
+          <p>
+        The Bank Dashboard is a fully public page that displays economy-wide metrics: total EW in
+    circulation, daily EW issuance and destruction, metal backing ratio, store net worth, and
+         wealth distribution across the player base (segmented as top 1%, next 9%, next 20%, and
+    bottom 70%). All data is refreshed automatically each day by scheduled backend jobs. No
+        login is required to view it.
+</p>
+
+          <h3 id="s3-5">3.5 EW Insurance</h3>
+            <p>
+      Players holding 500 or more EW can allocate units to a metals-backed reserve. One insurance
+          unit costs 500 EW, and each player may hold up to five policies. Upon admin approval, the EW
+      is converted to physical in-game metals (silver, gold, steel, and others) delivered to the
+         player's deposit box. The long-term goal is to maintain total metal reserve value greater than
+                total EW in circulation &mdash; a target that was achieved during the previous wipe cycle.
+  The current wipe is rebuilding reserves as quickly as participation allows.
+            </p>
+
+     <h3 id="s3-6">3.6 Tools and Supporting Pages</h3>
+ <p>
+       Several supporting tools accompany the core trading system. The Price History page charts
+     buy and sell prices and trade velocity over time. The Work Pay Rates page lists publicly
+    recommended wages for common in-game jobs. The Leaderboards page shows top traders by EW
+  bought and sold, with each player controlling their own privacy (full name, anonymous alias,
+           or opt-out). The Calculator on the main store page helps players compute individual vs.
+        bundle pricing. The Instructions page explains how to use every part of the system.
+            </p>
+
+      <div class="wp-seealso">
+         <p>Deeper documentation on these topics is available in the dedicated sub-pages:</p>
+   <ul>
+   <li><a href="EconomySpecifications.html">Economy Specifications</a> &mdash; EW design deep-dive, formulas, and mechanics</li>
+          <li><a href="SystemArchitecture.html">System Architecture</a> &mdash; frontend/backend technical deep-dive</li>
+        </ul>
+        </div>
+        </article>
+
+    <!-- ?? 4. EW CURRENCY DESIGN ??????????????????????????????????????? -->
+        <article class="chapter" id="s4">
+            <h2>4. EW Currency Design (Summary)</h2>
+            <p>
+           This section provides a conceptual overview of how EW works. Full formula derivations,
+       worked examples, and detailed mechanics are documented on the
+     <a href="EconomySpecifications.html" style="color:#7a5c2e;">Economy Specifications</a> page.
+          </p>
+
+       <h3 id="s4-1">4.1 Definition</h3>
+     <p>
+    EW is a ledger-based, non-physical unit of trade value. It does not exist as an item inside
+        Vintage Story &mdash; it exists only as a balance in the Vak's Store backend ledger. EW can
+  be transferred between players via direct P2P transfer and has no real-money value; it
+        exists exclusively within the TOPS server ecosystem.
+       </p>
+
+         <h3 id="s4-2">4.2 Issuance (EW Creation)</h3>
+ <p>
+         New EW enters the system when a player sells items to the store. For example, selling ten
+  steel ingots at the current store buy price credits the seller's account with the
+        corresponding amount of EW. Conceptually: the EW supply increases by the store's buy value
+         of each approved transaction. No other mechanism creates EW; there is no "printing" from
+ thin air.
+    </p>
+
+  <h3 id="s4-3">4.3 Destruction (EW Removal)</h3>
+    <p>
+ EW leaves the system through two sinks. The first is store purchases: when a player buys
+     items from the store, the corresponding EW is deducted and removed from circulation. The
+        second is the OCM admin fee: 10% of the EW value of every completed OCM trade is destroyed.
+                This dual-sink mechanism prevents the supply from growing without bound.
+            </p>
+
+            <h3 id="s4-4">4.4 Liquidity Guarantee</h3>
+<p>
+                Unlike barter or the game's built-in auction house, Vak's Store always maintains both buy
+         and sell orders. A player can always convert goods into EW or EW into goods without needing
+         a willing counterparty at that moment. This "always-open" property makes EW reliably
+    spendable, which is the foundation of its value as a medium of exchange.
+      </p>
+
+            <h3 id="s4-5">4.5 Metal Backing / Insurance Reserve</h3>
+  <p>
+                When reserves are funded, each 500 EW can be redeemed for its equivalent value in physical
+        in-game metals. The solvency goal is for the total metal value held in reserve to exceed the
+            total EW in circulation. The Bank Dashboard tracks the backing ratio daily so the community
+   can observe reserve health at any time. The reserves were fully funded during the previous
+     wipe cycle; the current wipe is rebuilding them as quickly as possible.
+            </p>
+
+     <h3 id="s4-6">4.6 Velocity and Daily Stats</h3>
+        <p>
+                The system tracks how much EW flows through the economy each day. Store velocity includes
+             units bought and sold, unique traders, and trade count per item. OCM velocity includes items
+         moved, fees collected, and unique participants. All data is archived daily by the price
+        history subsystem and is visible on both the Price History and Bank pages.
+      </p>
+
+       <div class="wp-seealso">
+      <p>Full EW mechanics, formula derivations, and worked examples:</p>
+          <ul>
+       <li><a href="EconomySpecifications.html">Economy Specifications</a></li>
+      </ul>
+  </div>
+        </article>
+
+        <!-- ?? 5. ECONOMIC PRINCIPLES ?????????????????????????????????????? -->
+        <article class="chapter" id="s5">
+ <h2>5. Economic Principles</h2>
+
+            <h3 id="s5-1">5.1 Medium of Exchange</h3>
+   <p>
+         EW is designed primarily as a medium of exchange, not as a savings instrument. The
+         recommendation is to spend approximately what you earn, since holding large idle balances
+     concentrates wealth in a way that runs counter to the system's intent. That said, many
+                players do hold EW balances for convenience &mdash; it is easier to spend funds you already
+have than to liquidate goods on demand &mdash; and this is a normal and acceptable use.
+          </p>
+
+     <h3 id="s5-2">5.2 Price Discovery</h3>
+          <p>
+                Store prices are set by Vak and published on the public price sheet, which anyone can
+       view without logging in. OCM prices emerge from player-to-player negotiation, reflecting
+     supply and demand independent of the store's fixed prices. The Price History charts allow
+      anyone to track price trends over time. Because EW is tied to fixed store prices, it does
+      not inflate the way RG does &mdash; the store's buy and sell prices are the stable anchor.
+ </p>
+
+<h3 id="s5-3">5.3 Accessibility</h3>
+            <p>
+      The store accepts almost all basic items, not only rare metals like gold or diamonds. This
+         means a new player can begin trading immediately using common goods gathered in their first
+      days on the server. This design choice directly counters the advantage that veteran players
+       with mob farms hold over newcomers in the RG economy.
+       </p>
+
+            <h3 id="s5-4">5.4 Wealth Transparency</h3>
+    <p>
+             The Bank Dashboard publishes the wealth distribution of the player base every day. The
+   concentration of EW among the top 1%, next 9%, next 20%, and bottom 70% of players is
+                tracked and publicly visible. This is an intentional design choice: economic power should
+       be observable, not hidden.
+         </p>
+
+       <h3 id="s5-5">5.5 Why EW Resists Inflation</h3>
+    <p>
+         There is no automated mechanism to create EW. Every unit issued requires a real item
+    exchanged at the store's declared price. Every unit destroyed removes value that corresponded
+        to a real purchase or a completed trade. Compare this to RG, which roughly doubled in
+       nominal price over a twelve-month period on the same server. EW price anchors have remained
+        stable across wipe cycles because the supply is bounded by real economic activity, not by
+      player automation.
+       </p>
+        </article>
+
+        <!-- ?? 6. TRANSACTION SYSTEM ??????????????????????????????????????? -->
+        <article class="chapter" id="s6">
+        <h2>6. Transaction System</h2>
+   <p>
+    The following sections describe each transaction type supported by Vak's Store, what
+       triggers it, and its effect on the total EW supply.
+    </p>
+
+ <h3 id="s6-1">6.1 Store Buy (Player Sells Items to Store)</h3>
+            <p>
+ A player submits a sell order via the website. The administrator reviews and approves the
+             request, crediting EW to the player's account. The items are physically deposited into
+    the player's deposit box. <strong>Effect on EW supply: increase</strong> (issuance event).
+  </p>
+
+  <h3 id="s6-2">6.2 Store Sell (Player Buys Items from Store)</h3>
+     <p>
+    A player submits a buy order via the website. The administrator approves the request and
+          delivers the item to the player's deposit box. The EW amount is deducted from the player's
+        account. <strong>Effect on EW supply: decrease</strong> (destruction event).
+            </p>
+
+            <h3 id="s6-3">6.3 P2P Transfer</h3>
+     <p>
+           A player sends EW directly to another player via the Account page. No items change hands
+    through the system; it is a purely ledger-based balance transfer.
+  <strong>Effect on EW supply: neutral</strong> (no creation or destruction).
+            </p>
+
+     <h3 id="s6-4">6.4 OCM Trade</h3>
+ <p>
+      A merchant posts a listing; a customer sends a trade request. Both parties confirm; the
+      administrator finalizes the trade. The merchant receives 90% of the agreed EW price; the
+      remaining 10% is the admin fee. Items are physically delivered by the merchant to the
+         customer's deposit box. <strong>Effect on EW supply: decrease by 10% fee</strong>
+    (destruction event).
+      </p>
+
+            <h3 id="s6-5">6.5 Insurance Deposit</h3>
+      <p>
+    A player requests to convert EW into a metals-backed insurance policy. The administrator
+           approves; the EW is deducted and logged against the reserve. The player receives
+   physical metals in their deposit box. <strong>Effect on EW supply: decrease</strong>
+            (EW moves from circulating balance into reserve).
+          </p>
+
+     <h3 id="s6-6">6.6 Insurance Withdrawal</h3>
+        <p>
+ A player requests to redeem insurance units back to EW. The administrator approves; EW
+       is credited back to the player's balance. <strong>Effect on EW supply: increase</strong>
+      (EW returns to circulation from reserve).
+            </p>
+        </article>
+
+     <!-- ?? 7. DATA MODEL (CONCEPTUAL) ?????????????????????????????????? -->
+  <article class="chapter" id="s7">
+         <h2>7. Data Model (Conceptual)</h2>
+            <p>
+  The backend schema is kept private. This section describes the conceptual data model only
+           &mdash; what information the system tracks, not the specific implementation details of how
+          it is stored.
+  </p>
+
+            <h3>Players</h3>
+        <p>
+      Each player record stores a unique ID, their in-game player name, deposit box address
+                (mailbox), current EW balance, leaderboard consent preference (full name, anonymous alias,
+    or opt-out), and account status (active or deleted).
+            </p>
+
+   <h3>Transaction History</h3>
+            <p>
+   Every balance change generates a transaction history record containing a unique transaction
+        ID, the transaction type (store buy, store sell, transfer, OCM trade, insurance deposit,
+           and others), the EW delta (positive for credits, negative for debits), the balance after
+     the transaction, and a timestamp. All records are permanent and immutable; nothing is
+   ever deleted from the history.
+          </p>
+
+            <h3>Store Requests</h3>
+        <p>
+             Store request records capture the requesting player, the list of items with quantities and
+            prices, the net EW amount, and a status field. Requests move through a lifecycle:
+     PENDING &rarr; EXECUTED or DENIED.
+            </p>
+
+          <h3>OCM Listings</h3>
+     <p>
+     Each OCM listing records the merchant, the item being offered, quantity available,
+      pricing mode (STORE or HALF), and current status. Status lifecycle:
+ PENDING_REVIEW &rarr; ACTIVE &rarr; COMPLETED, PAUSED, or DELETED.
+          </p>
+
+            <h3>OCM Trades</h3>
+    <p>
+       When a customer sends a trade request, an immutable snapshot of all trade details is created
+                at that moment and stored permanently. This snapshot includes both parties, the item,
+    quantity, pricing, payment method, and fee rate. The immutable snapshot ensures that any
+    dispute can always be resolved from the record, even if listings are later modified.
+    Trade status lifecycle: PENDING &rarr; EXECUTED or DENIED.
+            </p>
+
+    <h3>Insurance Policies</h3>
+            <p>
+              Insurance policy records store the policy ID, owning player, number of units held, metal
+    allocation percentages, and current activity state. Activity states: Empty &rarr; Active
+(funded) &rarr; Pending (during admin review) &rarr; Active or Empty.
+            </p>
+
+<div class="wp-seealso">
+             <p>Full backend schema and data flow diagrams:</p>
+                <ul>
+        <li><a href="SystemArchitecture.html">System Architecture</a></li>
+                </ul>
+        </div>
+        </article>
+
+        <!-- ?? 8. SOFTWARE ARCHITECTURE (SUMMARY) ?????????????????????????? -->
+    <article class="chapter" id="s8">
+            <h2>8. Software Architecture (Summary)</h2>
+         <p>
+    The full architecture page will contain complete diagrams and module maps. This section
+ provides a high-level overview. The backend source code is private.
+          </p>
+
+     <h3 id="s8-1">8.1 Frontend</h3>
+<p>
+          The frontend consists of static HTML pages and segmented JavaScript modules. It is hosted
+      on vakstore.com and served via Cloudflare's CDN for global availability. The frontend
+       source code is publicly available at:
+   </p>
+<p>
+      <a class="wp-gh-badge" href="https://github.com/vilhoKettunen/Finnish-small-fox-trading-company" target="_blank" rel="noopener">
+  &#x1f4ce; github.com/vilhoKettunen/Finnish-small-fox-trading-company
+     </a>
+          </p>
+            <p>
+      The backend source code is kept private for security reasons, but its behavior is fully
+        documented in this whitepaper.
+        </p>
+
+        <h3 id="s8-2">8.2 Authentication</h3>
+        <p>
+     Authentication is handled by Google Sign-In (GSI). Vak's Store stores no passwords.
+       Google issues a secure id_token which the backend verifies on every request via Google's
+          tokeninfo API. Player identity is tied to their Google account. This approach delegates
+    credential management entirely to Google, significantly reducing the system's attack surface.
+            </p>
+
+            <h3 id="s8-3">8.3 Edge Layer</h3>
+  <p>
+  A Cloudflare Worker acts as a proxy between the frontend and the backend. It provides
+     routing, a stable public URL, and an optional caching layer. The frontend communicates
+   exclusively with the Worker's URL; the backend Apps Script URL is not exposed directly
+      to clients.
+    </p>
+
+       <h3 id="s8-4">8.4 Backend</h3>
+    <p>
+     The backend is implemented as a Google Apps Script web app, written in server-side
+           JavaScript. It is split into sixteen-plus modules handling authentication, users, balance
+      management, store requests, OCM listings and trades, statistics, bank snapshots, insurance,
+                work pay rates, and more. There are two separate Apps Script projects: the main backend and
+                a price history subsystem that archives daily trade velocity data. The backend source code
+    is not published on GitHub.
+       </p>
+
+       <h3 id="s8-5">8.5 Data Storage</h3>
+<p>
+                Google Sheets is used as a structured database. Separate spreadsheets handle users,
+     transaction history, store requests, OCM listings, OCM trades, stock, insurance policies,
+   bank snapshots, and more. All write operations go through backend validation; the frontend
+cannot write directly to any sheet.
+            </p>
+
+ <div class="wp-seealso">
+    <p>Full architecture documentation, page/module map, and data flow diagrams:</p>
+         <ul>
+     <li><a href="SystemArchitecture.html">System Architecture</a></li>
+                </ul>
+          </div>
+        </article>
+
+        <!-- ?? 9. TRANSPARENCY AND DATA INTEGRITY ?????????????????????????? -->
+        <article class="chapter" id="s9">
+     <h2>9. Transparency and Data Integrity</h2>
+  <p>
+                Every balance change creates a permanent, uneditable history record. When an OCM trade is
+             created, all details &mdash; both parties, item, quantity, pricing, and fee rate &mdash; are
+  locked into an immutable snapshot. The agreed price and terms cannot be changed retroactively,
+    which means any dispute can always be resolved from the original record.
+      </p>
+            <p>
+  When a player deletes their account, their personal data (specifically their email address)
+         is cleared. However, the EW balance history and all transaction records are retained for
+     economic integrity; removing them would make the history inaccurate and would compromise
+     the audit trail.
+ </p>
+ <p>
+          The Bank Dashboard is fully public. Anyone &mdash; logged in or not &mdash; can observe the
+  total EW in circulation, daily issuance and destruction, metal backing ratio, and wealth
+    distribution. This openness is intentional: an economy that can be observed is an economy
+  that can be trusted.
+       </p>
+            <p>
+         Leaderboards use a consent model. Players choose whether to appear under their full player
+                name, an anonymous alias, or not at all. No one is forced into a public ranking.
+     </p>
+        </article>
+
+        <!-- ?? 10. SECURITY CONSIDERATIONS ???????????????????????????????? -->
+        <article class="chapter" id="s10">
+         <h2>10. Security Considerations</h2>
+       <p>
+                Authentication is provided by Google OAuth. No Vak's Store passwords exist; the system
+       has no password database to compromise. The backend verifies every token server-side on
+        every request; the frontend cannot spoof a player's identity.
+        </p>
+            <p>
+      All write operations &mdash; balance adjustments, stock changes, trade approvals &mdash;
+           require administrator authorization. Players cannot self-approve their own requests.
+    Rate limiting is applied to prevent abuse: there is a 60-second cooldown between
+   consecutive store requests per player, and a 15-second cooldown between duplicate OCM
+      trade sends to the same listing.
+     </p>
+            <p>
+           The backend source code is kept private to prevent exploitation of implementation details.
+           Known limitations are acknowledged openly below.
+   </p>
+            <p>
+                <strong>Known limitations:</strong> The system is centralized; one person (Vak) approves all
+    transactions, which introduces a single point of trust. Google Sheets write operations are
+             not fully atomic, meaning that simultaneous writes can theoretically conflict (the code
+mitigates this but does not eliminate it entirely). Finally, physical item delivery relies
+       on player trust: the system records that delivery must occur, but cannot enforce it in-game.
+      </p>
+        </article>
+
+     <!-- ?? 11. LIMITATIONS ????????????????????????????????????????????? -->
+    <article class="chapter" id="s11">
+            <h2>11. Limitations</h2>
+            <p>
+           <strong>Centralized approval.</strong> All store requests and OCM trades require admin
+   sign-off. There is no smart contract or automated settlement. This keeps the system simple
+      and flexible but means throughput is bounded by the administrator's availability.
+            </p>
+            <p>
+         <strong>Physical delivery.</strong> Items must be manually deposited and picked up at
+           in-game deposit boxes. The system cannot automate in-game movement or item transfer;
+           it can only record that delivery is expected and track when it has been confirmed.
+            </p>
+    <p>
+           <strong>Server-dependent.</strong> The EW economy exists only while the TOPS server is
+       active and players are participating. A server wipe resets all in-game items. EW balances
+            are handled separately per-wipe by Vak on a case-by-case basis, considering economy
+ continuity and fairness.
+            </p>
+            <p>
+            <strong>Experimental scope.</strong> Vak's Store is a community project run by one person.
+   It is not a regulated financial system and has no real-money implications whatsoever. It
+                should be understood as a social experiment in in-game economics, not as a financial product.
+            </p>
+        </article>
+
+        <!-- ?? 12. FUTURE DEVELOPMENT IDEAS ??????????????????????????????? -->
+        <article class="chapter" id="s12">
+<h2>12. Future Development Ideas</h2>
+  <p>
+       The following are development directions being considered for future wipe cycles or
+   ongoing improvements.
+    </p>
+<p>
+            <strong>Economy Specifications page.</strong> Detailed technical documentation of EW
+  mechanics, including full formula derivations, pricing model design, and the OCM peg
+        system. Work on this page begins immediately after the whitepaper is published.
+            </p>
+ <p>
+         <strong>System Architecture page.</strong> A full map of pages, JavaScript modules, and
+       backend actions, with data flow diagrams for critical paths such as store request approval
+    and OCM trade execution. Also beginning immediately.
+  </p>
+      <p>
+       <strong>Automated price signals.</strong> Using daily velocity data to algorithmically
+   suggest store price adjustments when an item's trading volume indicates that the current
+        price is out of step with actual demand.
+            </p>
+  <p>
+    <strong>Expanded OCM features.</strong> Auction-style listings, bundle trades, and
+        multi-item buy requests to make the marketplace more expressive and useful for complex
+     trading scenarios.
+            </p>
+     <p>
+              <strong>Public read-only API.</strong> Exposing a subset of economy data through public
+         endpoints so that community-built tools and third-party scripts can integrate with
+           Vak's Store without requiring backend access.
+       </p>
+            <p>
+           <strong>Inflation index.</strong> A composite price index tracking EW purchasing power
+   over time across a basket of commonly traded goods, making the stability of EW
+      quantitatively visible to players.
+  </p>
+        </article>
+
+        <!-- ?? 13. LEGAL / COMMUNITY NOTES ???????????????????????????????? -->
+ <footer class="colophon" id="s13">
+            <h2>13. Legal / Community Notes</h2>
+   <ul>
+         <li>
+     <strong>Fan project.</strong> Vak's Store is not affiliated with Tyron Madlener or
+            the official Vintage Story development team. It is an independent community project.
+     </li>
+             <li>
+      <strong>No real-money economy.</strong> EW has no monetary value outside the TOPS
+        server ecosystem. No real-world goods or currency are exchanged. All prices and
+      balances refer exclusively to in-game items and in-game trade value.
+</li>
+    <li>
+       <strong>Server.</strong> TOPS (The Official Public Server) is a community-run
+      Vintage Story server. Vak's Store operates on this server but is not officially
+            endorsed by it.
+      </li>
+      <li>
+          <strong>Data privacy.</strong> The only personal information stored by the system is
+     a player's Google account email address, used for authentication. This email is
+           cleared when a player deletes their account. No other sensitive personal information
+       is collected.
+                </li>
+  <li>
+ <strong>Open frontend.</strong> The website's source code is publicly available at
+<a href="https://github.com/vilhoKettunen/Finnish-small-fox-trading-company" target="_blank" rel="noopener" style="color:#7a5c2e;">github.com/vilhoKettunen/Finnish-small-fox-trading-company</a>.
+       The backend is private for security reasons, but its complete behavior is documented
+       in this whitepaper and its planned sub-pages.
+                </li>
+     </ul>
+        </footer>
+
+    </div><!-- /.book -->
+
+    <!-- Boot script: initSharedTopBar + silent auth restore -->
+    <script src="whitepaper_js/whitepaper-boot.js"></script>
+</body>
+</html>
