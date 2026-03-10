@@ -1,0 +1,401 @@
+/* css/pages/economyspecs.css
+   Page-specific styles for EconomySpecifications.html.
+   Duplicates base .book/.chapter/.cover/.toc/.colophon patterns from whitepaper.css
+   independently — do NOT @import whitepaper.css (avoid cascade conflicts).
+   Adds page-specific classes: .es-formula, .es-example, .es-table, .es-statemachine,
+   .es-callout, .es-warning, .es-research, .es-note, .es-companion-badge, .es-disclaimer.
+   NOTE: Do NOT redefine #topBar styles here — topbar.js injects its own. */
+
+/* ?? Base page ??????????????????????????????????????????????????????????? */
+body {
+    background: #efe6d6;
+    font-family: "EB Garamond", Georgia, serif;
+    color: #2b2318;
+    margin: 0;
+    padding: 2rem;
+}
+
+/* ?? Book wrapper ????????????????????????????????????????????????????????? */
+.book {
+    width: 780px;
+    margin: 0 auto;
+    background: linear-gradient(180deg, #fbf6ef 0%, #f7efe0 100%);
+ box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    padding: 48px 60px;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+
+/* ?? Cover ???????????????????????????????????????????????????????????????? */
+.cover {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px dashed rgba(0,0,0,0.12);
+}
+
+.title {
+    font-family: "Playfair Display", serif;
+    font-size: 40px;
+    margin: 8px 0;
+    color: #1e160e;
+}
+
+.subtitle {
+    font-size: 15px;
+    color: #5a4b3b;
+    margin-bottom: 8px;
+}
+
+.cover-date {
+    font-size: 13px;
+    color: #7a6850;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* Companion link badge */
+.es-companion-badge {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 5px 14px;
+    border: 1px solid #9c8060;
+    border-radius: 4px;
+    font-size: 13px;
+  color: #5a4030;
+    background: rgba(255,255,255,0.4);
+    text-decoration: none;
+    font-style: normal;
+}
+.es-companion-badge:hover {
+    background: rgba(255,255,255,0.65);
+    text-decoration: underline;
+}
+
+/* Price disclaimer on cover */
+.es-disclaimer {
+    font-size: 12px;
+    color: #7a6850;
+    font-style: italic;
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+
+/* ?? Headings ????????????????????????????????????????????????????????????? */
+h2 {
+    font-family: "Playfair Display", serif;
+    font-size: 22px;
+    margin-top: 32px;
+    color: #3b2f24;
+    border-bottom: 1px dashed rgba(0,0,0,0.08);
+    padding-bottom: 8px;
+}
+
+h3 {
+    font-family: "Playfair Display", serif;
+    font-size: 16px;
+    margin-top: 16px;
+    color: #483428;
+}
+
+p {
+    line-height: 1.7;
+ font-size: 16px;
+    margin: 0 0 1em 0;
+    text-align: justify;
+}
+
+/* ?? Table of contents ???????????????????????????????????????????????????? */
+.toc {
+    margin-bottom: 32px;
+}
+
+.toclist {
+    background: transparent;
+    border: none;
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: 15px;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    padding: 0;
+    margin: 0;
+}
+
+.toclist a {
+ color: #7a5c2e;
+    text-decoration: none;
+}
+
+.toclist a:hover {
+    text-decoration: underline;
+}
+
+/* ?? Chapters ????????????????????????????????????????????????????????????? */
+.chapter {
+    margin-bottom: 24px;
+}
+
+/* ?? Lists ???????????????????????????????????????????????????????????????? */
+ul, ol {
+    margin: 0 0 1em 0;
+    padding-left: 1.6em;
+    line-height: 1.75;
+    font-size: 16px;
+}
+
+li {
+    margin-bottom: 4px;
+}
+
+/* ?? Page-specific blocks ????????????????????????????????????????????????? */
+
+/* Formula block — LaTeX-style display (light tan background, left border) */
+.es-formula {
+    background: #f5efe0;
+    border-left: 3px solid #9c8060;
+    padding: 12px 18px;
+    border-radius: 4px;
+    margin: 12px 0;
+    font-size: 14px;
+    line-height: 1.8;
+    overflow-x: auto;
+    color: #2b2318;
+}
+
+/* Worked example box — slight green tint, dashed left border */
+.es-example {
+    background: rgba(220,240,220,0.4);
+    border-left: 3px solid #6a9e6a;
+    padding: 12px 18px;
+    border-radius: 4px;
+    margin: 12px 0;
+    font-size: 15px;
+    line-height: 1.75;
+}
+
+/* Warning / limitation note — amber tinted */
+.es-warning {
+    background: rgba(255,235,180,0.5);
+    border: 1px solid #c8a030;
+ padding: 12px 18px;
+    border-radius: 4px;
+    margin: 12px 0;
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+/* Research context note — blue-grey tinted */
+.es-research {
+    background: rgba(200,220,240,0.4);
+    border-left: 3px solid #5a8ab0;
+ padding: 12px 18px;
+    border-radius: 4px;
+  margin: 12px 0;
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+/* Comparison / reference table */
+.es-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 14px 0;
+    font-size: 13px;
+}
+
+.es-table th {
+    background: #e8dcc8;
+    border: 1px solid #b0956a;
+    padding: 6px 10px;
+    text-align: left;
+    font-family: "Playfair Display", serif;
+}
+
+.es-table td {
+    border: 1px solid #c8b090;
+    padding: 6px 10px;
+}
+
+.es-table tr:nth-child(even) td {
+    background: rgba(245,235,215,0.5);
+}
+
+/* State machine — CSS Unicode flow diagram */
+.es-statemachine {
+font-family: monospace;
+    font-size: 12px;
+    line-height: 1.8;
+padding: 14px 22px;
+    background: #f9f5ed;
+ border: 1px dashed #9c8060;
+    border-radius: 4px;
+    margin: 12px 0;
+    overflow-x: auto;
+}
+
+.es-statemachine pre {
+    margin: 0;
+    padding: 0;
+    white-space: pre;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    background: none;
+    border: none;
+}
+
+/* Small inline footnote / note text */
+.es-note {
+    font-size: 12px;
+    color: #6b5040;
+ font-style: italic;
+}
+
+/* See-also callout — reuses .wp-seealso appearance */
+.es-callout.wp-seealso {
+    border: 1px dashed #9c8060;
+    background: rgba(255, 240, 200, 0.35);
+    padding: 12px 18px;
+    border-radius: 6px;
+    margin: 20px 0;
+}
+
+.es-callout.wp-seealso p {
+    margin: 0 0 6px 0;
+    font-size: 14px;
+    color: #4a3520;
+    font-style: italic;
+}
+
+.es-callout.wp-seealso ul {
+    margin: 4px 0 0 0;
+    padding-left: 1.2em;
+    list-style: "? ";
+}
+
+.es-callout.wp-seealso li {
+    margin-bottom: 4px;
+    font-size: 15px;
+}
+
+.es-callout.wp-seealso a {
+    color: #7a5c2e;
+  font-weight: bold;
+    text-decoration: none;
+}
+
+.es-callout.wp-seealso a:hover {
+    text-decoration: underline;
+}
+
+/* Stand-alone .wp-seealso used in see-also section (same style) */
+.wp-seealso {
+    border: 1px dashed #9c8060;
+    background: rgba(255, 240, 200, 0.35);
+    padding: 12px 18px;
+    border-radius: 6px;
+    margin: 20px 0;
+}
+
+.wp-seealso p {
+    margin: 0 0 6px 0;
+    font-size: 14px;
+    color: #4a3520;
+    font-style: italic;
+}
+
+.wp-seealso ul {
+    margin: 4px 0 0 0;
+    padding-left: 1.2em;
+    list-style: "? ";
+}
+
+.wp-seealso li {
+ margin-bottom: 4px;
+    font-size: 15px;
+}
+
+.wp-seealso a {
+    color: #7a5c2e;
+ font-weight: bold;
+    text-decoration: none;
+}
+
+.wp-seealso a:hover {
+    text-decoration: underline;
+}
+
+/* ?? Colophon / footer ???????????????????????????????????????????????????? */
+.colophon {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px dashed rgba(0,0,0,0.12);
+    font-size: 14px;
+    color: #5a4b3b;
+}
+
+.colophon h2 {
+    font-size: 18px;
+    margin-top: 0;
+}
+
+.colophon ul {
+    padding-left: 1.2em;
+    line-height: 1.7;
+}
+
+/* ?? Anchor offset for fixed top bar ?????????????????????????????????????? */
+[id] {
+    scroll-margin-top: 68px;
+}
+
+/* ?? Responsive ??????????????????????????????????????????????????????????? */
+@media (max-width: 840px) {
+    .book {
+        width: auto;
+        padding: 24px 20px;
+    }
+
+    body {
+        padding: 1rem;
+    }
+
+    .title {
+        font-size: 28px;
+    }
+
+    .es-table {
+    font-size: 12px;
+    }
+
+    .es-formula {
+        font-size: 13px;
+    }
+
+    .es-statemachine {
+        font-size: 11px;
+    }
+}
+
+@media print {
+    body {
+        background: white;
+        padding: 0;
+    }
+
+    .book {
+        box-shadow: none;
+        border: none;
+        width: auto;
+   padding: 24mm;
+ margin: 0;
+    }
+
+    .chapter, .toc {
+        page-break-before: always;
+    }
+
+    @page {
+     size: A4;
+      margin: 18mm;
+    }
+}
