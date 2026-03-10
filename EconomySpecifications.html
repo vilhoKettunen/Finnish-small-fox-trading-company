@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -34,7 +34,7 @@
 
     <div class="book">
 
-        <!-- ?? COVER ???????????????????????????????????????????????????? -->
+        <!-- ── COVER ──────────────────────────────────────────────────── -->
         <header class="cover">
       <h1 class="title">Economy Specifications</h1>
    <p class="subtitle">EW design, formulas, mechanics, and research framework for<br>Vak's Store &mdash; Vintage Story TOPS server</p>
@@ -49,7 +49,7 @@
             </div>
         </header>
 
-     <!-- ?? TABLE OF CONTENTS ???????????????????????????????????????? -->
+     <!-- ── TABLE OF CONTENTS ──────────────────────────────────────── -->
         <section class="toc" id="toc">
     <h2>Table of Contents</h2>
             <pre class="toclist"><a href="#s1">1. What EW Is (and Is Not)</a>
@@ -108,7 +108,7 @@
 <a href="#s11">11. See Also</a></pre>
       </section>
 
-        <!-- ?? 1. WHAT EW IS (AND IS NOT) ??????????????????????????????? -->
+        <!-- ── 1. WHAT EW IS (AND IS NOT) ─────────────────────────────── -->
     <article class="chapter" id="s1">
      <h2>1. What EW Is (and Is Not)</h2>
 
@@ -161,7 +161,7 @@
  </ul>
         </article>
 
-        <!-- ?? 2. EW ISSUANCE ??????????????????????????????????????????? -->
+        <!-- ── 2. EW ISSUANCE ─────────────────────────────────────────── -->
       <article class="chapter" id="s2">
             <h2>2. EW Issuance: How New EW Enters the Economy</h2>
 
@@ -218,7 +218,7 @@
        <p>This is an inflationary event &mdash; total EW in circulation increases.</p>
         </article>
 
-      <!-- ?? 3. EW DESTRUCTION ???????????????????????????????????????? -->
+      <!-- ── 3. EW DESTRUCTION ──────────────────────────────────────── -->
         <article class="chapter" id="s3">
             <h2>3. EW Destruction: How EW Leaves the Economy</h2>
 
@@ -287,93 +287,102 @@ to real economic behavior, not a policy target.
             </div>
         </article>
 
- <!-- ?? 4. STORE PRICING MODEL ??????????????????????????????????? -->
-      <article class="chapter" id="s4">
+ <!-- ── 4. STORE PRICING MODEL ─────────────────────────────────── -->
+        <article class="chapter" id="s4">
             <h2>4. Store Pricing Model</h2>
 
-  <h3 id="s4-1">4.1 Buy/sell spread</h3>
-      <p>The store maintains a spread between what it pays sellers (buy price) and what it charges buyers (sell price):</p>
-    <div class="es-formula">
-   spread = sellPrice &minus; buyPrice &nbsp;&nbsp;&nbsp;(always &gt; 0)
+            <h3 id="s4-1">4.1 Buy/sell spread</h3>
+            <p>The store maintains a spread between what it pays sellers (buy price) and what it charges buyers (sell price):</p>
+            <div class="es-formula">
+                spread = sellPrice &minus; buyPrice &nbsp;&nbsp;&nbsp;(always &gt; 0)
             </div>
             <p>This spread serves three purposes:</p>
-     <ol>
-       <li>It ensures the total item value in stock always exceeds total EW in circulation (liquidity guarantee &mdash; see Section 7.2).</li>
-  <li>It incentivizes players to trade with each other through the OCM, where they can negotiate better rates than the store spread.</li>
-    <li>It provides the store's long-term operational margin.</li>
-   </ol>
+            <ol>
+                <li>It ensures the total item value in stock always exceeds total EW in circulation (liquidity guarantee &mdash; see Section 7.2).</li>
+                <li>It incentivizes players to trade with each other through the OCM, where they can negotiate better rates than the store spread.</li>
+                <li>It provides the store's long-term operational margin.</li>
+            </ol>
 
-       <h3 id="s4-2">4.2 Individual vs bundle pricing</h3>
-     <p>Items are priced per full stack (bundle). Per-unit pricing is derived:</p>
-         <div class="es-formula">
-        buyPricePerUnit &nbsp;= stackBuyPrice / bundleSize &nbsp;&nbsp;&nbsp;(backend: round2_())<br>
-       sellPricePerUnit = stackSellPrice / bundleSize<br>
-     <br>
-           Stack totals: totalEW = qty_stacks &times; stackBuyPrice &nbsp;&nbsp;(no per-unit rounding error)
+            <h3 id="s4-2">4.2 Individual vs bundle pricing</h3>
+            <p>Items are priced per full stack (bundle). Per-unit pricing is derived:</p>
+            <div class="es-formula">
+                buyPricePerUnit &nbsp;= stackBuyPrice / bundleSize &nbsp;&nbsp;&nbsp;(backend: round2_())<br>
+                sellPricePerUnit = stackSellPrice / bundleSize<br>
+                <br>
+                Stack totals: totalEW = qty_stacks &times; stackBuyPrice &nbsp;&nbsp;(no per-unit rounding error)
             </div>
 
             <h3 id="s4-3">4.3 Algorithmic price adjustment</h3>
             <p>
-      Each item has a configured spread (the range between minimum and maximum payout) and a target
-          stock level. The buy and sell prices adjust automatically based on the current stock level
-      relative to the target:
-       </p>
- <div class="es-formula">
-       fill_ratio &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= currentStock / targetStock &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(clamped to [0, 1])<br>
-           buyPrice(item) &nbsp;= maxBuyPrice &minus; fill_ratio &times; (maxBuyPrice &minus; minBuyPrice)<br>
-            sellPrice(item) = buyPrice(item) + spread
-   </div>
-            <p>
-             At stock&nbsp;=&nbsp;0 (empty): buyPrice = maxBuyPrice (store pays the most).<br>
-       At stock&nbsp;=&nbsp;target (full): buyPrice = minBuyPrice (store pays the least).<br>
-    Between 0 and target: price is linearly interpolated based on the fill ratio.
-        </p>
-    <p>
-      The admin sets the spread (min/max) per item. The price engine applies the adjustment
-      automatically after each approved transaction. This means prices are always live and respond
-     to real trading activity without requiring manual intervention after each trade.
+                Each item has a configured price range (minimum and maximum sell price) and a target
+                stock level. The sell price adjusts automatically based on current stock relative to
+                the target, and the buy price is then derived from the sell price via a
+                <strong>margin</strong> multiplier:
             </p>
-
+            <div class="es-formula">
+                fill_ratio &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= currentStockStacks / targetStockStacks &nbsp;&nbsp;&nbsp;&nbsp;(clamped to [0, 1])<br>
+                sellPrice(item) = maxPrice &minus; fill_ratio &times; (maxPrice &minus; minPrice)<br>
+                buyPrice(item) &nbsp;= sellPrice(item) &times; margin
+            </div>
+            <p>Where:</p>
+            <ul>
+                <li><strong>sellPrice</strong> &mdash; what the store charges a buyer for the item</li>
+                <li><strong>buyPrice</strong> &mdash; what the store pays a seller for the item</li>
+                <li><strong>margin</strong> &mdash; a multiplier (0&ndash;1) that sets the buy price as a fraction of the sell price; configured per item by the admin</li>
+                <li><strong>maxPrice / minPrice</strong> &mdash; the upper and lower bounds of the sell price range; configured per item by the admin</li>
+                <li><strong>currentStockStacks</strong> &mdash; current stock measured in stacks (= individual units &divide; bundleSize)</li>
+                <li><strong>targetStockStacks</strong> &mdash; the stock level the store wants to maintain, in stacks</li>
+            </ul>
+            <p>
+                At stock&nbsp;=&nbsp;0 (empty): sellPrice = maxPrice (store charges the most; buyers pay a premium, sellers earn the most).<br>
+                At stock&nbsp;=&nbsp;target (full): sellPrice = minPrice (store charges the least; sellers earn the least).<br>
+                Between 0 and target: sell price is linearly interpolated. Buy price always tracks sell price &times; margin.
+            </p>
+            <p>
+                The admin sets the price range (min/max) and the margin per item. The price engine
+                applies the adjustment automatically after each approved transaction &mdash; no manual
+                intervention is required after each trade.
+            </p>
             <div class="es-example">
-         <strong>Worked example &mdash; Resin price at different stock levels.</strong>
-            <br><br>
-      Current Resin values (illustrative): maxBuyPrice&nbsp;=&nbsp;128&nbsp;EW/stack, minBuyPrice&nbsp;=&nbsp;64&nbsp;EW/stack, spread&nbsp;=&nbsp;32&nbsp;EW.
+                <strong>Worked example &mdash; Resin price at different stock levels.</strong>
                 <br><br>
-     <em>Scenario A: Stock is 5 of 20 (fill_ratio = 0.25)</em><br>
-                buyPrice &nbsp;= 128 &minus; 0.25 &times; (128 &minus; 64) = 128 &minus; 16 = <strong>112 EW/stack</strong><br>
-      sellPrice = 112 + 32 = <strong>144 EW/stack</strong>
- <br><br>
-        <em>Scenario B: Stock is 15 of 20 (fill_ratio = 0.75)</em><br>
-    buyPrice &nbsp;= 128 &minus; 0.75 &times; (128 &minus; 64) = 128 &minus; 48 = <strong>80 EW/stack</strong><br>
-    sellPrice = 80 + 32 = <strong>112 EW/stack</strong>
-    <br><br>
-     As stock fills up, the store pays less for incoming Resin &mdash; and charges less to buyers,
-     since sell price tracks buy price plus the spread.
-     <br><br>
-     <span class="es-note">Numbers are illustrative. Current Resin prices will differ. Check the live price sheet.</span>
- </div>
+                Illustrative Resin configuration: maxPrice&nbsp;=&nbsp;128&nbsp;EW/stack, minPrice&nbsp;=&nbsp;64&nbsp;EW/stack, margin&nbsp;=&nbsp;0.75, targetStockStacks&nbsp;=&nbsp;20.
+                <br><br>
+                <em>Scenario A: Stock is 5 stacks of 20 (fill_ratio = 0.25)</em><br>
+                sellPrice = 128 &minus; 0.25 &times; (128 &minus; 64) = 128 &minus; 16 = <strong>112 EW/stack</strong><br>
+                buyPrice &nbsp;= 112 &times; 0.75 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <strong>84 EW/stack</strong>
+                <br><br>
+                <em>Scenario B: Stock is 15 stacks of 20 (fill_ratio = 0.75)</em><br>
+                sellPrice = 128 &minus; 0.75 &times; (128 &minus; 64) = 128 &minus; 48 = <strong>80 EW/stack</strong><br>
+                buyPrice &nbsp;= 80 &times; 0.75 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <strong>60 EW/stack</strong>
+                <br><br>
+                As stock fills up, the store charges buyers less <em>and</em> pays sellers less &mdash;
+                both prices move together because buy price is always a fixed fraction (margin) of sell price.
+                <br><br>
+                <span class="es-note">Numbers are illustrative. Current Resin prices will differ. Check the live price sheet.</span>
+            </div>
 
             <h3 id="s4-4">4.4 Price locking at submission: the bulk trading incentive</h3>
-     <p>
-              When a player submits a trade request, the price is locked at the moment of submission &mdash;
+            <p>
+                When a player submits a trade request, the price is locked at the moment of submission &mdash;
                 not at the moment of approval. This has an important consequence: large trades lock in a
-           favorable price before the post-trade price adjustment takes effect.
-    </p>
-     <p>
-After a big sell order is approved, the buy price drops (because stock increased). The seller
-       already locked in the high price before that drop. The next seller gets less for the same
+                favorable price before the post-trade price adjustment takes effect.
+            </p>
+            <p>
+                After a big sell order is approved, the buy price drops (because stock increased). The seller
+                already locked in the high price before that drop. The next seller gets less for the same
                 goods. Similarly, a large buy order locks in a low price &mdash; after approval, sell prices
-    rise (stock fell), but the buyer already secured the deal at the pre-adjustment rate.
-       </p>
-  <p>
- This mechanism strongly incentivizes bulk trading: the first large trade in a cycle captures
-     the best available price, and subsequent smaller trades operate at the adjusted (less
-        favorable) rate. There is no explicit bulk discount &mdash; the incentive is structural,
-          created by the price adjustment mechanics rather than a separate pricing tier.
- </p>
+                rise (stock fell), but the buyer already secured the deal at the pre-adjustment rate.
+            </p>
+            <p>
+                This mechanism strongly incentivizes bulk trading: the first large trade in a cycle captures
+                the best available price, and subsequent smaller trades operate at the adjusted (less
+                favorable) rate. There is no explicit bulk discount &mdash; the incentive is structural,
+                created by the price adjustment mechanics rather than a separate pricing tier.
+            </p>
         </article>
 
-        <!-- ?? 5. EW INFLATION AND DEFLATION ??????????????????????????? -->
+        <!-- ── 5. EW INFLATION AND DEFLATION ─────────────────────────── -->
       <article class="chapter" id="s5">
          <h2>5. EW Inflation and Deflation</h2>
 
@@ -491,7 +500,7 @@ After a big sell order is approved, the buy price drops (because stock increased
        </span>
         </article>
 
-        <!-- ?? 6. OCM PEG SYSTEM ???????????????????????????????????????? -->
+        <!-- ── 6. OCM PEG SYSTEM ──────────────────────────────────────── -->
 <article class="chapter" id="s6">
           <h2>6. OCM Peg System</h2>
 
@@ -622,7 +631,7 @@ After a big sell order is approved, the buy price drops (because stock increased
             </div>
         </article>
 
-        <!-- ?? 7. LIQUIDITY GUARANTEE AND METAL BACKING ???????????????? -->
+        <!-- ── 7. LIQUIDITY GUARANTEE AND METAL BACKING ──────────────── -->
         <article class="chapter" id="s7">
      <h2>7. Liquidity Guarantee and Metal Backing</h2>
 
@@ -733,40 +742,40 @@ participation allows.
 
        <h3 id="s7-6">7.6 Insurance policy lifecycle (state machine)</h3>
         <div class="es-statemachine"><pre>
-  ???????????
-?  Empty  ?
-  ???????????
-     ? set allocation (immediate � no admin approval)
-       ?
-  ????????????????????????
-  ?  Empty (ready)       ?
-  ????????????????????????
-         ? requestDeposit ? admin approves
-         ?
-  ????????????????????????
-  ?   Active (funded)    ???????????????????????????????
-  ????????????????????????          ?
-             ?           ?
-    ???????????????????????????????             ?
-    ?    ?        ?       ?
-    ?    ?         ? ?
-requestWi- updateAlloc-      requestWithdraw-         ?
-thdrawUnits ation          Metals          ?
-    ?        ? ? REALLOC         ?    ?
-    ?        ?   Pending ?          ?
-    ?        ?   ? admin   ?   ?
-  ?        ?   approves    ?             ?
-    ?        ?     ?             ?
-    ?  Active (realloc-  Empty (EW nullified �?
-    ?  ated)    metals delivered,          ?
-    ?     ?         not returned)      ?
-    ?        ??????????????????????????????????????????
-    ?
-    ? admin approves withdrawal
-  ?????????   ?????????????????????????????
-  ? Empty ?    or    ? Active (partial withdrawal ?
-  ?????????       ? remains) ?
-      ?????????????????????????????</pre>
+  ┌─────────┐
+│  Empty  │
+  └────┬────┘
+     │ set allocation (immediate — no admin approval)
+       ▼
+  ┌──────────────────────┐
+  │  Empty (ready)       │
+  └──────────┬───────────┘
+         │ requestDeposit → admin approves
+         ▼
+  ┌──────────────────────┐
+  │   Active (funded)    │◄────────────────────────────┐
+  └──────────┬───────────┘          │
+             │           │
+    ┌────────┼────────────────────┐             │
+    │    │        │       │
+    ▼    ▼         ▼ │
+requestWi- updateAlloc-      requestWithdraw-         │
+thdrawUnits ation          Metals          │
+    │        │ → REALLOC         │    │
+    │        │   Pending │          │
+    │        │   → admin   │   │
+  │        │   approves    │             │
+    │        ▼     ▼             │
+    │  Active (realloc-  Empty (EW nullified —│
+    │  ated)    metals delivered,          │
+    │     │         not returned)      │
+    │        └────────────────────────────────────────┘
+    │
+    ▼ admin approves withdrawal
+  ┌───────┐   ┌───────────────────────────┐
+  │ Empty │    or    │ Active (partial withdrawal │
+  └───────┘       │ remains) │
+      └───────────────────────────┘</pre>
 </div>
             <p><strong>Key rules:</strong></p>
    <ul>
@@ -780,7 +789,7 @@ thdrawUnits ation          Metals          ?
         </ul>
 </article>
 
-        <!-- ?? 8. RESEARCH CONTEXT ????????????????????????????????????? -->
+        <!-- ── 8. RESEARCH CONTEXT ───────────────────────────────────── -->
         <article class="chapter" id="s8">
          <h2>8. Research Context: What This Economy Is Studying</h2>
 
@@ -885,7 +894,7 @@ that item, as the self-correction mechanism predicts?</li>
         multiple wipe cycles.</p>
         </article>
 
-        <!-- ?? 9. LIMITATIONS ?????????????????????????????????????????? -->
+        <!-- ── 9. LIMITATIONS ────────────────────────────────────────── -->
         <article class="chapter" id="s9">
             <h2>9. Limitations</h2>
 
@@ -939,7 +948,7 @@ that item, as the self-correction mechanism predicts?</li>
    </p>
   </article>
 
- <!-- ?? 10. FULL TRANSACTION TYPE REFERENCE ????????????????????? -->
+ <!-- ── 10. FULL TRANSACTION TYPE REFERENCE ───────────────────── -->
      <article class="chapter" id="s10">
        <h2>10. Full Transaction Type Reference</h2>
             <p>Quick-reference table for all transaction types, their EW supply effect, and the backend
@@ -1022,7 +1031,7 @@ that item, as the self-correction mechanism predicts?</li>
             </table>
       </article>
 
-    <!-- ?? 11. SEE ALSO ???????????????????????????????????????????? -->
+    <!-- ── 11. SEE ALSO ──────────────────────────────────────────── -->
         <footer class="colophon" id="s11">
             <h2>11. See Also</h2>
 
