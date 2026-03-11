@@ -333,9 +333,15 @@ to real economic behavior, not a policy target.
                 <li><strong>currentStockStacks</strong> &mdash; current stock measured in stacks (= individual units &divide; bundleSize)</li>
                 <li><strong>targetStockStacks</strong> &mdash; the stock level the store wants to maintain, in stacks</li>
             </ul>
+            <div class="es-warning">
+                <strong>Constraint:</strong> minPrice must always be set to maxPrice &times; margin.
+                This guarantees that even at maximum stock (fill_ratio&nbsp;=&nbsp;1), the store never sells
+                an item for less than it paid &mdash; i.e. buyPrice &le; sellPrice always holds at every
+                stock level.
+            </div>
             <p>
-                At stock&nbsp;=&nbsp;0 (empty): sellPrice = maxPrice (store charges the most; buyers pay a premium, sellers earn the most).<br>
-                At stock&nbsp;=&nbsp;target (full): sellPrice = minPrice (store charges the least; sellers earn the least).<br>
+                At stock&nbsp;=&nbsp;0 (empty): sellPrice = maxPrice (store charges the most; sellers earn the most).<br>
+                At stock&nbsp;=&nbsp;target (full): sellPrice = minPrice = maxPrice &times; margin (store charges the least; sellers earn the least).<br>
                 Between 0 and target: sell price is linearly interpolated. Buy price always tracks sell price &times; margin.
             </p>
             <p>
@@ -346,18 +352,21 @@ to real economic behavior, not a policy target.
             <div class="es-example">
                 <strong>Worked example &mdash; Resin price at different stock levels.</strong>
                 <br><br>
-                Illustrative Resin configuration: maxPrice&nbsp;=&nbsp;128&nbsp;EW/stack, minPrice&nbsp;=&nbsp;64&nbsp;EW/stack, margin&nbsp;=&nbsp;0.75, targetStockStacks&nbsp;=&nbsp;20.
+                Illustrative Resin configuration: maxPrice&nbsp;=&nbsp;128&nbsp;EW/stack, margin&nbsp;=&nbsp;0.5,
+                therefore minPrice&nbsp;=&nbsp;128&nbsp;&times;&nbsp;0.5&nbsp;=&nbsp;<strong>64&nbsp;EW/stack</strong>,
+                targetStockStacks&nbsp;=&nbsp;20.
                 <br><br>
                 <em>Scenario A: Stock is 5 stacks of 20 (fill_ratio = 0.25)</em><br>
                 sellPrice = 128 &minus; 0.25 &times; (128 &minus; 64) = 128 &minus; 16 = <strong>112 EW/stack</strong><br>
-                buyPrice &nbsp;= 112 &times; 0.75 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <strong>84 EW/stack</strong>
+                buyPrice &nbsp;= 112 &times; 0.5 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <strong>56 EW/stack</strong>
                 <br><br>
                 <em>Scenario B: Stock is 15 stacks of 20 (fill_ratio = 0.75)</em><br>
                 sellPrice = 128 &minus; 0.75 &times; (128 &minus; 64) = 128 &minus; 48 = <strong>80 EW/stack</strong><br>
-                buyPrice &nbsp;= 80 &times; 0.75 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <strong>60 EW/stack</strong>
+                buyPrice &nbsp;= 80 &times; 0.5 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <strong>40 EW/stack</strong>
                 <br><br>
-                As stock fills up, the store charges buyers less <em>and</em> pays sellers less &mdash;
-                both prices move together because buy price is always a fixed fraction (margin) of sell price.
+                As stock fills up, both prices fall proportionally. At full stock (fill_ratio&nbsp;=&nbsp;1):
+                sellPrice would reach minPrice&nbsp;=&nbsp;64&nbsp;EW and buyPrice would reach
+                64&nbsp;&times;&nbsp;0.5&nbsp;=&nbsp;32&nbsp;EW &mdash; the store still earns its margin on every sale.
                 <br><br>
                 <span class="es-note">Numbers are illustrative. Current Resin prices will differ. Check the live price sheet.</span>
             </div>
