@@ -8,8 +8,8 @@ window.BankUI = (function () {
         backingMode: 'raw',
         backingShowMetal: true,
         backingShowCirc: true,
-        issuanceShowDestroyed: true,
-issuanceShowStoreBuy: false,
+        issuanceShowDestroyedLine: true,
+        issuanceShowStoreBuy: false,
       issuanceShowOcmFees: false,
         issuanceShowNet: false,
  metalAllocMode: 'line',
@@ -137,48 +137,64 @@ if (!ewCircRows) return;
     function renderIssuanceDestruction() {
         if (!ewVelRows || !ewDestRows) return;
 
-  const velByDate = {};
-   ewVelRows.forEach(r => {
-     const k = dateKey(r.ts);
-        if (!velByDate[k]) velByDate[k] = { ts: r.ts, ewSell: 0, ewBuy: 0 };
-      velByDate[k].ewSell += isFinite(r.ewSellTotal) ? r.ewSellTotal : 0;
+        const velByDate = {};
+        ewVelRows.forEach(r => {
+            const k = dateKey(r.ts);
+            if (!velByDate[k]) velByDate[k] = { ts: r.ts, ewSell: 0, ewBuy: 0 };
+            velByDate[k].ewSell += isFinite(r.ewSellTotal) ? r.ewSellTotal : 0;
             velByDate[k].ewBuy += isFinite(r.ewBuyTotal) ? r.ewBuyTotal : 0;
         });
 
         const destByDate = {};
         ewDestRows.forEach(r => {
-          const k = dateKey(r.ts);
+            const k = dateKey(r.ts);
             destByDate[k] = { ts: r.ts, ewBuyTotal: r.ewBuyTotal, ocmFeesTotal: r.ocmFeesTotal };
-      });
+        });
 
         const allKeys = [...new Set([...Object.keys(velByDate), ...Object.keys(destByDate)])].sort();
         const dates = allKeys.map(k => (velByDate[k] && velByDate[k].ts) || (destByDate[k] && destByDate[k].ts) || new Date(k));
 
-        const issuedData = allKeys.map(k => (velByDate[k] && velByDate[k].ewSell) || null);
-        const destroyedData = allKeys.map(k => {
-    const d = destByDate[k]; const v = velByDate[k];
-   const storeBuy = d ? (d.ewBuyTotal || 0) : 0;
-            const ocmFees = d ? (d.ocmFeesTotal || 0) : 0;
-         const velBuy = v ? (v.ewBuy || 0) : 0;
-        return (d ? storeBuy + ocmFees : velBuy) || null;
-  });
-        const storeBuyData = allKeys.map(k => { const d = destByDate[k]; return d ? (d.ewBuyTotal || 0) : null; });
-        const ocmFeesData = allKeys.map(k => { const d = destByDate[k]; return d ? (d.ocmFeesTotal || 0) : null; });
-        const netData = allKeys.map((k, i) => {
-            const iss = issuedData[i]; const des = destroyedData[i];
-   return (iss != null && des != null) ? iss - des : null;
-});
+        // Step 2A: issuedData — return 0 (not null) even for 0-sell days
+        const issuedData = allKeys.map(k => {
+            const v = velByDate[k];
+            return v != null ? (isFinite(v.ewSell) ? v.ewSell : 0) : 0;
+        });
 
+        // Step 2B: destroyedData — no velBuy fallback, no || null
+        const destroyedData = allKeys.map(k => {
+            const d = destByDate[k];
+            if (!d) return 0;
+            const storeBuy = isFinite(d.ewBuyTotal)   ? d.ewBuyTotal   : 0;
+            const ocmFees  = isFinite(d.ocmFeesTotal) ? d.ocmFeesTotal : 0;
+            return storeBuy + ocmFees;
+        });
+
+        // Step 2C: storeBuyData — return 0 when destByDate is missing
+        const storeBuyData = allKeys.map(k => {
+            const d = destByDate[k];
+            return d ? (isFinite(d.ewBuyTotal) ? d.ewBuyTotal : 0) : 0;
+        });
+
+        // Step 2D: ocmFeesData — return 0 when destByDate is missing
+        const ocmFeesData = allKeys.map(k => {
+            const d = destByDate[k];
+            return d ? (isFinite(d.ocmFeesTotal) ? d.ocmFeesTotal : 0) : 0;
+        });
+
+        // Step 2E: netData — always-numeric subtraction
+        const netData = allKeys.map((k, i) => issuedData[i] - destroyedData[i]);
+
+        // Step 2F: datasets block — fully independent flags, no exclusion logic
         const datasets = [];
         datasets.push({ label: 'EW Issued', data: issuedData, borderColor: '#16A34A', backgroundColor: 'transparent', tension: 0.2, pointRadius: 2 });
-        if (state.issuanceShowDestroyed && !state.issuanceShowStoreBuy && !state.issuanceShowOcmFees)
-            datasets.push({ label: 'EW Destroyed (total)', data: destroyedData, borderColor: '#DC2626', backgroundColor: 'transparent', tension: 0.2, pointRadius: 2 });
+        if (state.issuanceShowDestroyedLine)
+            datasets.push({ label: 'EW Destroyed (combined)', data: destroyedData, borderColor: '#DC2626', backgroundColor: 'transparent', tension: 0.2, pointRadius: 2 });
         if (state.issuanceShowStoreBuy)
-  datasets.push({ label: 'Store Buy', data: storeBuyData, borderColor: '#DC2626', backgroundColor: 'transparent', tension: 0.2, pointRadius: 2 });
-      if (state.issuanceShowOcmFees)
-      datasets.push({ label: 'OCM Fees', data: ocmFeesData, borderColor: '#EA580C', backgroundColor: 'transparent', tension: 0.2, pointRadius: 2 });
+            datasets.push({ label: 'Store Buy', data: storeBuyData, borderColor: '#b91c1c', backgroundColor: 'transparent', tension: 0.2, pointRadius: 2 });
+        if (state.issuanceShowOcmFees)
+            datasets.push({ label: 'OCM Fees', data: ocmFeesData, borderColor: '#EA580C', backgroundColor: 'transparent', tension: 0.2, pointRadius: 2 });
         if (state.issuanceShowNet)
-datasets.push({ label: 'Net EW Change', data: netData, borderColor: '#7C3AED', borderDash: [5, 3], backgroundColor: 'transparent', tension: 0.2, pointRadius: 2 });
+            datasets.push({ label: 'Net EW Change', data: netData, borderColor: '#7C3AED', borderDash: [5, 3], backgroundColor: 'transparent', tension: 0.2, pointRadius: 2 });
 
       BankCharts.drawIssuanceDestructionChart('bankIssuanceChart', dates, datasets, state.range);
     }
@@ -343,11 +359,12 @@ const circByDate = {};
             const btn = $(id); if (!btn) return;
             btn.addEventListener('click', () => {
                 state[key] = !state[key];
-    btn.classList.toggle('active', state[key]);
-     renderIssuanceDestruction();
+                btn.classList.toggle('active', state[key]);
+                renderIssuanceDestruction();
             });
         }
-     bind('btnIssuanceDestroyed', 'issuanceShowDestroyed');
+        // Step 3: bind new button id and state key; remove old btnIssuanceDestroyed binding
+        bind('btnIssuanceDestroyedAlways', 'issuanceShowDestroyedLine');
         bind('btnIssuanceStoreBuy', 'issuanceShowStoreBuy');
         bind('btnIssuanceOcmFees', 'issuanceShowOcmFees');
         bind('btnIssuanceNet', 'issuanceShowNet');
@@ -653,43 +670,72 @@ const btnMoreInfo = $('btnIntroMoreInfo');
     }
 
     function buildVelDatasets(rows, items, toggles, metricKey) {
-const palette = BankConfig.METAL_COLOR_PALETTE;
+        const palette = BankConfig.METAL_COLOR_PALETTE;
         const { a: aName, b: bName } = velLineLabels(metricKey);
 
         const allDates = [...new Set(rows.map(r => dateKey(r.ts)))].sort();
         const dates = allDates.map(d => new Date(d));
 
- const datasets = [];
+        const datasets = [];
 
-   items.forEach((item, i) => {
- const c = palette[i % palette.length];
-const itemRows = rows.filter(r => r.item === item);
-   const byDate = {};
+        // Step 4A: compute first/last index per item before the main loop
+        const itemFirstIdx = {};
+        const itemLastIdx  = {};
+        items.forEach(item => {
+            let first = -1, last = -1;
+            allDates.forEach((d, j) => {
+                if (rows.some(r => r.item === item && dateKey(r.ts) === d)) {
+                    if (first === -1) first = j;
+                    last = j;
+                }
+            });
+            itemFirstIdx[item] = first;
+            itemLastIdx[item]  = last;
+        });
+
+        items.forEach((item, i) => {
+            const c = palette[i % palette.length];
+            const itemRows = rows.filter(r => r.item === item);
+            const byDate = {};
             itemRows.forEach(r => { byDate[dateKey(r.ts)] = r; });
 
-            const aData = allDates.map(d => { const r = byDate[d]; return r ? r.a : null; });
-   const bData = bName ? allDates.map(d => { const r = byDate[d]; return (r && r.b != null) ? r.b : null; }) : null;
-            const total = allDates.map((d, j) => {
-   const av = aData[j]; const bv = bData ? bData[j] : null;
-      if (av == null && bv == null) return null;
-return (av || 0) + (bv || 0);
-         });
+            // Step 4B: explicit 0-fill within first-to-last date range
+            const aData = allDates.map((d, j) => {
+                const r = byDate[d];
+                if (r) return isFinite(r.a) ? r.a : 0;
+                const fi = itemFirstIdx[item], li = itemLastIdx[item];
+                if (fi !== -1 && j >= fi && j <= li) return 0;
+                return null;
+            });
+            const bData = bName ? allDates.map((d, j) => {
+                const r = byDate[d];
+                if (r) return (r.b != null && isFinite(r.b)) ? r.b : 0;
+                const fi = itemFirstIdx[item], li = itemLastIdx[item];
+                if (fi !== -1 && j >= fi && j <= li) return 0;
+                return null;
+            }) : null;
 
-         function maybeNorm(series) {
+            const total = allDates.map((d, j) => {
+                const av = aData[j]; const bv = bData ? bData[j] : null;
+                if (av == null && bv == null) return null;
+                return (av || 0) + (bv || 0);
+            });
+
+            function maybeNorm(series) {
                 if (!toggles.norm) return series;
-       const first = series.find(v => v != null && v !== 0);
-      if (!first) return series;
-    return series.map(v => v != null ? (v / first) * 100 : null);
+                const first = series.find(v => v != null && v !== 0);
+                if (!first) return series;
+                return series.map(v => v != null ? (v / first) * 100 : null);
             }
 
-       if (toggles.breakdown) {
-        if (toggles.showA)
-           datasets.push({ label: `${item} (${aName})`, data: maybeNorm(aData), borderColor: c, backgroundColor: 'transparent', tension: 0.2, pointRadius: 2, borderWidth: 2, spanGaps: false });
- if (bName && toggles.showB)
-      datasets.push({ label: `${item} (${bName})`, data: maybeNorm(bData), borderColor: c, backgroundColor: 'transparent', tension: 0.2, pointRadius: 2, borderWidth: 2, borderDash: [5, 4], spanGaps: false });
-    } else {
-       datasets.push({ label: `${item} (Total)`, data: maybeNorm(total), borderColor: c, backgroundColor: 'transparent', tension: 0.2, pointRadius: 2, borderWidth: 2, spanGaps: false });
-  }
+            if (toggles.breakdown) {
+                if (toggles.showA)
+                    datasets.push({ label: `${item} (${aName})`, data: maybeNorm(aData), borderColor: c, backgroundColor: 'transparent', tension: 0.2, pointRadius: 2, borderWidth: 2, spanGaps: false });
+                if (bName && toggles.showB)
+                    datasets.push({ label: `${item} (${bName})`, data: maybeNorm(bData), borderColor: c, backgroundColor: 'transparent', tension: 0.2, pointRadius: 2, borderWidth: 2, borderDash: [5, 4], spanGaps: false });
+            } else {
+                datasets.push({ label: `${item} (Total)`, data: maybeNorm(total), borderColor: c, backgroundColor: 'transparent', tension: 0.2, pointRadius: 2, borderWidth: 2, spanGaps: false });
+            }
         });
 
         return { dates, datasets };
