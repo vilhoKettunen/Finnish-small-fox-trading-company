@@ -284,30 +284,117 @@
         // ── Insurance transaction details ────────────────────────────────────────
         function renderInsuranceDetailsHtml(h, d) {
             const prettyAt = formatDatePretty(h.at || '');
-            const deltaStr = fmt(h.deltaBT || 0);
-            const balanceAfterValue = fmt(h.balanceAfterBT || 0);
-            const creatorRaw = String(d.creator || '');
-            const creatorLabel = creatorRaw === 'Admin' ? 'Admin (on behalf of)' : (creatorRaw === 'User' ? 'User' : (creatorRaw || null));
-            const txType = String(h.type || '').toUpperCase();
-            let typeLabel = txType;
+          const deltaStr = fmt(h.deltaBT || 0);
+     const balanceAfterValue = fmt(h.balanceAfterBT || 0);
+          const creatorRaw = String(d.creator || '');
+     const creatorLabel = creatorRaw === 'Admin' ? 'Admin (on behalf of)' : (creatorRaw === 'User' ? 'User' : (creatorRaw || null));
+      const txType = String(h.type || '').toUpperCase();
+  let typeLabel = txType;
             if (txType === 'INSURANCE_DEPOSIT') typeLabel = 'Insurance Deposit';
-            else if (txType === 'INSURANCE_WITHDRAW_PARTIAL') typeLabel = 'Insurance Withdrawal (Partial)';
-            else if (txType === 'INSURANCE_WITHDRAW_ALL') typeLabel = 'Insurance Withdrawal (Full)';
+    else if (txType === 'INSURANCE_WITHDRAW_PARTIAL') typeLabel = 'Insurance Withdrawal (Partial)';
+  else if (txType === 'INSURANCE_WITHDRAW_ALL') typeLabel = 'Insurance Withdrawal (Full)';
             else if (txType === 'INSURANCE_WITHDRAW_METALS') typeLabel = 'Insurance Metals Withdrawal';
-            const policyId = d.insuranceId || '';
-            const units = d.units != null ? d.units : (d.withdrawUnits != null ? d.withdrawUnits : null);
-            const cost = d.cost != null ? fmt(d.cost) : null;
-            const credit = d.credit != null ? fmt(d.credit) : null;
+            else if (txType === 'INSURANCE_REALLOC') typeLabel = 'Insurance Reallocation';
+        const policyId = d.insuranceId || '';
+  const units = d.units != null ? d.units : (d.withdrawUnits != null ? d.withdrawUnits : null);
+  const cost = d.cost != null ? fmt(d.cost) : null;
+          const credit = d.credit != null ? fmt(d.credit) : null;
+
+            // Build price map from metalPrices snapshot
+            const priceMap = {};
+       (d.metalPrices || []).forEach(mp => { priceMap[String(mp.name)] = Number(mp.sellEW || 0); });
+
+  // Helper: render a metals object as a breakdown list of lines
+       function renderMetalsBreakdown(metalsObj) {
+                if (!metalsObj || typeof metalsObj !== 'object') return '';
+   const keys = Object.keys(metalsObj);
+         if (!keys.length) return '';
+                let html = '';
+      for (const ingotKey of keys) {
+       const val = metalsObj[ingotKey];
+  if (!val) continue;
+                 const ingots = Number(val.ingots || 0);
+       const nuggets = Number(val.nuggets || 0);
+         if (ingots > 0) {
+     const ingotPrice = priceMap[ingotKey] || 0;
+               const ingotTotal = ingots * ingotPrice;
+       html += `<div class="small" style="margin-left:12px;">${ingotKey}: <strong>${ingots}</strong> × ${ingotPrice} EW = <strong>${fmt(ingotTotal)} EW</strong></div>`;
+       }
+                    if (nuggets > 0) {
+    // Derive nugget name: strip ' Ingot', append ' Nuggets' (Steel has no nuggets)
+          if (!ingotKey.includes('Steel')) {
+               const nuggetKey = ingotKey.replace(' Ingot', '') + ' Nuggets';
+          const nuggetPrice = priceMap[nuggetKey] || 0;
+      const nuggetTotal = nuggets * nuggetPrice;
+                html += `<div class="small" style="margin-left:12px;">${nuggetKey}: <strong>${nuggets}</strong> × ${nuggetPrice} EW = <strong>${fmt(nuggetTotal)} EW</strong></div>`;
+                   }
+                    }
+        }
+         return html;
+      }
+
+   let metalsHtml = '';
+
+            // REALLOC: show old metals returned + new metals allocated
+    if (txType === 'INSURANCE_REALLOC' && d.oldMetals && Object.keys(d.oldMetals).length) {
+    const oldBreakdown = renderMetalsBreakdown(d.oldMetals);
+        if (oldBreakdown) {
+      metalsHtml += `<div class="small" style="margin-bottom:4px;margin-top:6px;"><strong>Metals returned to store:</strong></div>${oldBreakdown}`;
+            }
+          const newBreakdown = renderMetalsBreakdown(d.metals);
+ if (newBreakdown) {
+     metalsHtml += `<div class="small" style="margin-bottom:4px;margin-top:6px;"><strong>New metals allocated:</strong></div>${newBreakdown}`;
+  }
+     } else if (d.metals && Object.keys(d.metals).length) {
+    // DEPOSIT / WITHDRAW_* / WITHDRAW_METALS: show delta metals
+            let deltaHeader = '';
+           if (txType === 'INSURANCE_DEPOSIT') deltaHeader = 'Metals deposited this transaction:';
+ else if (txType === 'INSURANCE_WITHDRAW_PARTIAL' || txType === 'INSURANCE_WITHDRAW_ALL') deltaHeader = 'Metals withdrawn this transaction:';
+        else if (txType === 'INSURANCE_WITHDRAW_METALS') deltaHeader = 'Metals collected physically:';
+                if (deltaHeader) {
+       metalsHtml += `<div class="small" style="margin-bottom:4px;margin-top:6px;"><strong>${deltaHeader}</strong></div>`;
+       }
+     metalsHtml += renderMetalsBreakdown(d.metals);
+            }
+
+   // Policy metals after transaction (policyMetals) — shown for DEPOSIT and WITHDRAW_PARTIAL
+if (d.policyMetals && Object.keys(d.policyMetals).length &&
+      (txType === 'INSURANCE_DEPOSIT' || txType === 'INSURANCE_WITHDRAW_PARTIAL')) {
+      const policyBreakdown = renderMetalsBreakdown(d.policyMetals);
+                if (policyBreakdown) {
+          metalsHtml += `<div class="small" style="margin-bottom:4px;margin-top:6px;"><strong>Full policy metals after transaction:</strong></div>${policyBreakdown}`;
+      }
+            }
+
+      // Summary footer
+   let summaryHtml = '';
+      if (d.totalInsuredEW != null) {
+    summaryHtml += `<div class="small" style="margin-top:6px;">Total insured: <strong>${fmt(d.totalInsuredEW)} EW</strong></div>`;
+ }
+            if (d.totalLeftoverEW != null) {
+           summaryHtml += `<div class="small">Uninsured EW (leftover): <strong>${fmt(d.totalLeftoverEW)} EW</strong></div>`;
+            }
+            if (d.depositedInsuredEW != null) {
+                summaryHtml += `<div class="small">Newly insured this deposit: <strong>${fmt(d.depositedInsuredEW)} EW</strong></div>`;
+            }
+          if (d.withdrawnInsuredEW != null) {
+            summaryHtml += `<div class="small">Withdrawn insured EW: <strong>${fmt(d.withdrawnInsuredEW)} EW</strong></div>`;
+}
+       if (d.withdrawType === 'METALS') {
+                summaryHtml += `<div class="small" style="margin-top:4px;"><em>Metals collected physically — no EW credited.</em></div>`;
+    }
 
             return `<div class="history-details-box">
             <div class="small" style="margin-bottom:6px;">Date: <strong>${prettyAt || (h.at || '')}</strong></div>
-            <div class="small" style="margin-bottom:6px;">Type: <strong>${typeLabel}</strong></div>
-            <div class="small" style="margin-bottom:6px;">Delta: <strong>${deltaStr} EW</strong> &nbsp;|&nbsp; Balance After: <strong>${balanceAfterValue} EW</strong></div>
-            ${creatorLabel ? `<div class="small" style="margin-bottom:6px;">Submitted by: <strong>${creatorLabel}</strong></div>` : ''}
+        <div class="small" style="margin-bottom:6px;">Type: <strong>${typeLabel}</strong></div>
+       <div class="small" style="margin-bottom:6px;">Delta: <strong>${deltaStr} EW</strong> &nbsp;|&nbsp; Balance After: <strong>${balanceAfterValue} EW</strong></div>
+    ${creatorLabel ? `<div class="small" style="margin-bottom:6px;">Submitted by: <strong>${creatorLabel}</strong></div>` : ''}
             ${policyId ? `<div class="small" style="margin-bottom:6px;">Policy ID: <strong>${policyId}</strong></div>` : ''}
             ${units != null ? `<div class="small" style="margin-bottom:6px;">Units: <strong>${units}</strong></div>` : ''}
-            ${cost != null ? `<div class="small" style="margin-bottom:6px;">Cost: <strong>${cost} EW</strong></div>` : ''}
-            ${credit != null ? `<div class="small" style="margin-bottom:6px;">Credit: <strong>${credit} EW</strong></div>` : ''}
+    ${cost != null ? `<div class="small" style="margin-bottom:6px;">Cost: <strong>${cost} EW</strong></div>` : ''}
+      ${credit != null ? `<div class="small" style="margin-bottom:6px;">Credit: <strong>${credit} EW</strong></div>` : ''}
+          ${metalsHtml}
+        ${summaryHtml}
           </div>`;
         }
 
