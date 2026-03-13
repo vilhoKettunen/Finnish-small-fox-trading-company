@@ -122,24 +122,45 @@ window.BankInflation = (function () {
     }
 
 // ??? Item catalog ?????????????????????????????????????????????????????????
-    // Build the list of selectable items from ValuationHistory (already cached)
-    function loadItemCatalog() {
-        const rows = BankData.cache.valuationHistory || [];
- const seen = new Set();
+    // Build the list of selectable items for the inflation selector.
+    // IMPORTANT: do not rely on BankData.cache being preloaded (init order varies).
+    async function loadItemCatalog() {
+        const seen = new Set();
         const items = [];
-        rows.forEach(r => {
-       if (r.item && !seen.has(r.item)) {
-       seen.add(r.item);
-                items.push(r.item);
-       }
-        });
-   // Fallback to metals list if cache empty
-     if (!items.length) {
-         BankConfig.METALS_LIST.forEach(m => {
-        if (!seen.has(m)) { seen.add(m); items.push(m); }
-    });
+
+        function addItem(name) {
+            const n = String(name || '').trim();
+            if (!n) return;
+            if (seen.has(n)) return;
+            seen.add(n);
+            items.push(n);
         }
- _uniqueItems = items;
+
+        // 1) Prefer valuationHistory (broad item list on bank page), but fetch if missing.
+        try {
+            if (!BankData.cache.valuationHistory) {
+                await BankData.fetchValuationHistory();
+            }
+            (BankData.cache.valuationHistory || []).forEach(r => addItem(r.item));
+        } catch (e) {
+            console.warn('BankInflation.loadItemCatalog: valuationHistory unavailable', e);
+        }
+
+        // 2) Also include anything that appears in SellHistory (price sheet).
+        // This helps ensure "all items" are available even if valuation history is incomplete.
+        try {
+            const priceRows = await fetchPriceHistory();
+            (priceRows || []).forEach(r => addItem(r.item));
+        } catch (e) {
+            console.warn('BankInflation.loadItemCatalog: SellHistory unavailable', e);
+        }
+
+        // 3) Last-resort fallback (should be rare now)
+        if (!items.length) {
+            (BankConfig.METALS_LIST || []).forEach(addItem);
+        }
+
+        _uniqueItems = items;
     }
 
     // ??? Price history fetch ??????????????????????????????????????????????????
@@ -533,8 +554,8 @@ input.value = '';
         if (_inited) return;
         _inited = true;
 
-        // 1. Build item catalog from already-cached valuation data
-     loadItemCatalog();
+        // 1. Build item catalog (may fetch valuationHistory / SellHistory)
+        await loadItemCatalog();
 
         // 2. Restore preset from localStorage
         const preset = loadPreset();
