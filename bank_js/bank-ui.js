@@ -135,68 +135,78 @@ if (!ewCircRows) return;
 
     // ─── Chart 2: Issuance & Destruction ──────────────────────────────────────
     function renderIssuanceDestruction() {
-        if (!ewVelRows || !ewDestRows) return;
+ if (!ewVelRows || !ewDestRows) return;
 
-        const velByDate = {};
-        ewVelRows.forEach(r => {
-            const k = dateKey(r.ts);
-            if (!velByDate[k]) velByDate[k] = { ts: r.ts, ewSell: 0, ewBuy: 0 };
-            velByDate[k].ewSell += isFinite(r.ewSellTotal) ? r.ewSellTotal : 0;
-            velByDate[k].ewBuy += isFinite(r.ewBuyTotal) ? r.ewBuyTotal : 0;
-        });
+ const velByDate = {};
+ ewVelRows.forEach(r => {
+ const k = dateKey(r.ts);
+ if (!velByDate[k]) velByDate[k] = { ts: r.ts, ewSell:0, ewBuy:0 };
+ velByDate[k].ewSell += isFinite(r.ewSellTotal) ? r.ewSellTotal :0;
+ velByDate[k].ewBuy += isFinite(r.ewBuyTotal) ? r.ewBuyTotal :0;
+ });
 
-        const destByDate = {};
-        ewDestRows.forEach(r => {
-            const k = dateKey(r.ts);
-            destByDate[k] = { ts: r.ts, ewBuyTotal: r.ewBuyTotal, ocmFeesTotal: r.ocmFeesTotal };
-        });
+ const destByDate = {};
+ ewDestRows.forEach(r => {
+ const k = dateKey(r.ts);
+ destByDate[k] = { ts: r.ts, ewBuyTotal: r.ewBuyTotal, ocmFeesTotal: r.ocmFeesTotal };
+ });
 
-        const allKeys = [...new Set([...Object.keys(velByDate), ...Object.keys(destByDate)])].sort();
-        const dates = allKeys.map(k => (velByDate[k] && velByDate[k].ts) || (destByDate[k] && destByDate[k].ts) || new Date(k));
+ // Step A1: build shifted OCM fees map (OCM fees written ~22:00 previous day → shift +1 day)
+ const shiftedOcmByDate = {};
+ Object.entries(destByDate).forEach(([k, v]) => {
+ try {
+ const d = new Date(k);
+ d.setUTCDate(d.getUTCDate() +1);
+ const shifted = dateKey(d);
+ shiftedOcmByDate[shifted] = isFinite(v.ocmFeesTotal) ? v.ocmFeesTotal :0;
+ } catch (e) {
+ // ignore invalid dates
+ }
+ });
 
-        // Step 2A: issuedData — return 0 (not null) even for 0-sell days
-        const issuedData = allKeys.map(k => {
-            const v = velByDate[k];
-            return v != null ? (isFinite(v.ewSell) ? v.ewSell : 0) : 0;
-        });
+ // Step A5: include shifted OCM fee dates so they appear on the chart
+ const allKeys = [...new Set([...Object.keys(velByDate), ...Object.keys(destByDate), ...Object.keys(shiftedOcmByDate)])].sort();
+ const dates = allKeys.map(k => (velByDate[k] && velByDate[k].ts) || (destByDate[k] && destByDate[k].ts) || new Date(k));
 
-        // Step 2B: destroyedData — no velBuy fallback, no || null
-        const destroyedData = allKeys.map(k => {
-            const d = destByDate[k];
-            if (!d) return 0;
-            const storeBuy = isFinite(d.ewBuyTotal)   ? d.ewBuyTotal   : 0;
-            const ocmFees  = isFinite(d.ocmFeesTotal) ? d.ocmFeesTotal : 0;
-            return storeBuy + ocmFees;
-        });
+ // Step2A: issuedData — return0 (not null) even for0-sell days
+ const issuedData = allKeys.map(k => {
+ const v = velByDate[k];
+ return v != null ? (isFinite(v.ewSell) ? v.ewSell :0) :0;
+ });
 
-        // Step 2C: storeBuyData — return 0 when destByDate is missing
-        const storeBuyData = allKeys.map(k => {
-            const d = destByDate[k];
-            return d ? (isFinite(d.ewBuyTotal) ? d.ewBuyTotal : 0) : 0;
-        });
+ // Step A2: storeBuyData — read ewBuy from velocity sheet so dates align with issuedData
+ const storeBuyData = allKeys.map(k => {
+ const v = velByDate[k];
+ return v != null ? (isFinite(v.ewBuy) ? v.ewBuy :0) :0;
+ });
 
-        // Step 2D: ocmFeesData — return 0 when destByDate is missing
-        const ocmFeesData = allKeys.map(k => {
-            const d = destByDate[k];
-            return d ? (isFinite(d.ocmFeesTotal) ? d.ocmFeesTotal : 0) : 0;
-        });
+ // Step A3: ocmFeesData — read from shiftedOcmByDate (already shifted +1 day)
+ const ocmFeesData = allKeys.map(k => {
+ const fee = shiftedOcmByDate[k];
+ return isFinite(fee) ? fee :0;
+ });
 
-        // Step 2E: netData — always-numeric subtraction
-        const netData = allKeys.map((k, i) => issuedData[i] - destroyedData[i]);
+ // Step A4: destroyedData — combine storeBuyData (from vel) + shifted OCM fees
+ const destroyedData = allKeys.map((k, i) => {
+ return storeBuyData[i] + ocmFeesData[i];
+ });
 
-        // Step 2F: datasets block — fully independent flags, no exclusion logic
-        const datasets = [];
-        datasets.push({ label: 'EW Issued', data: issuedData, borderColor: '#16A34A', backgroundColor: 'transparent', tension: 0.2, pointRadius: 2 });
-        if (state.issuanceShowDestroyedLine)
-            datasets.push({ label: 'EW Destroyed (combined)', data: destroyedData, borderColor: '#DC2626', backgroundColor: 'transparent', tension: 0.2, pointRadius: 2 });
-        if (state.issuanceShowStoreBuy)
-            datasets.push({ label: 'Store Buy', data: storeBuyData, borderColor: '#b91c1c', backgroundColor: 'transparent', tension: 0.2, pointRadius: 2 });
-        if (state.issuanceShowOcmFees)
-            datasets.push({ label: 'OCM Fees', data: ocmFeesData, borderColor: '#EA580C', backgroundColor: 'transparent', tension: 0.2, pointRadius: 2 });
-        if (state.issuanceShowNet)
-            datasets.push({ label: 'Net EW Change', data: netData, borderColor: '#7C3AED', borderDash: [5, 3], backgroundColor: 'transparent', tension: 0.2, pointRadius: 2 });
+ // Step2E: netData — always-numeric subtraction
+ const netData = allKeys.map((k, i) => issuedData[i] - destroyedData[i]);
 
-      BankCharts.drawIssuanceDestructionChart('bankIssuanceChart', dates, datasets, state.range);
+ // Step2F: datasets block — fully independent flags, no exclusion logic
+ const datasets = [];
+ datasets.push({ label: 'EW Issued', data: issuedData, borderColor: '#16A34A', backgroundColor: 'transparent', tension:0.2, pointRadius:2 });
+ if (state.issuanceShowDestroyedLine)
+ datasets.push({ label: 'EW Destroyed (combined)', data: destroyedData, borderColor: '#DC2626', backgroundColor: 'transparent', tension:0.2, pointRadius:2 });
+ if (state.issuanceShowStoreBuy)
+ datasets.push({ label: 'Store Buy', data: storeBuyData, borderColor: '#b91c1c', backgroundColor: 'transparent', tension:0.2, pointRadius:2 });
+ if (state.issuanceShowOcmFees)
+ datasets.push({ label: 'OCM Fees', data: ocmFeesData, borderColor: '#EA580C', backgroundColor: 'transparent', tension:0.2, pointRadius:2 });
+ if (state.issuanceShowNet)
+ datasets.push({ label: 'Net EW Change', data: netData, borderColor: '#7C3AED', borderDash: [5,3], backgroundColor: 'transparent', tension:0.2, pointRadius:2 });
+
+ BankCharts.drawIssuanceDestructionChart('bankIssuanceChart', dates, datasets, state.range);
     }
 
     // ─── Chart 3: Metal Backing ────────────────────────────────────────────────

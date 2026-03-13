@@ -80,8 +80,8 @@
     max-height: 400px;
   }
 
-  /* ── On PC (≥ 768px): drawers behave as inline flex — normal layout ── */
-  @media (min-width: 768px) {
+  /* ── On PC (≥ 980px): drawers behave as inline flex — normal layout ── */
+  @media (min-width: 980px) {
     .tb-drawer {
       position: static;
       flex-direction: row;
@@ -114,8 +114,8 @@
     }
   }
 
-  /* ── Mobile (< 768px) ── */
-  @media (max-width: 767px) {
+  /* ── Mobile (< 980px) ── */
+  @media (max-width: 980px) {
     #topBar {
       height: 52px;
       flex-wrap: nowrap;
