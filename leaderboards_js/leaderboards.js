@@ -127,6 +127,24 @@ const start  = fmtIso_(x && x.start);
         }).join('');
     }
 
+    function renderTableFavorites_(tbodyId, items) {
+    const tb = byId(tbodyId);
+   if (!tb) return;
+    const arr = Array.isArray(items) ? items : [];
+  if (!arr.length) {
+      tb.innerHTML = '<tr><td class="rank">&mdash;</td><td class="muted">No data</td><td class="muted">&mdash;</td><td class="num">0</td><td class="num">0</td><td class="num">0</td></tr>';
+ return;
+        }
+        tb.innerHTML = arr.map((x, idx) => {
+  const name = (x && x.displayName) ? String(x.displayName) : 'No data';
+       const item = (x && x.itemName) ? String(x.itemName) : '—';
+   const qty = fmtNumber_(x && x.totalQty, 0);
+        const val = fmtNumber_(x && (x.totalValueEW ?? x.valueEW), 2);
+        const req = fmtNumber_(x && x.rows, 0);
+ return `<tr><td class="rank">${idx + 1}</td><td>${escapeHtml_(name)}</td><td>${escapeHtml_(item)}</td><td class="num">${escapeHtml_(qty)}</td><td class="num">${escapeHtml_(val)}</td><td class="num">${escapeHtml_(req)}</td></tr>`;
+    }).join('');
+    }
+
     // A6 fix: render BOTH current and record sections without a mode parameter
     function renderLeaderboardsFull_() {
         if (!cachedData) return;
@@ -141,6 +159,10 @@ const start  = fmtIso_(x && x.start);
         renderTable_('tb_storeMaxBuyValueEW',      lb && lb.storeMaxBuyValueEW,      v => fmtNumber_(v, 2));
         renderTable_('tb_storeMaxSellValueEW',     lb && lb.storeMaxSellValueEW,     v => fmtNumber_(v, 2));
       renderTable_('tb_storeTradesWithStoreCount', lb && lb.storeTradesWithStoreCount, v => fmtNumber_(v, 0));
+        renderTable_('tb_storeTotalBuyValueEW',    lb && lb.storeTotalBuyValueEW,    v => fmtNumber_(v, 2));
+      renderTable_('tb_storeTotalSellValueEW',   lb && lb.storeTotalSellValueEW,   v => fmtNumber_(v, 2));
+        renderTableFavorites_('tb_storeFavoriteBuyItemByValueEW',  lb && lb.storeFavoriteBuyItemByValueEW);
+        renderTableFavorites_('tb_storeFavoriteSellItemByValueEW', lb && lb.storeFavoriteSellItemByValueEW);
 
   // OCM leaderboards
         renderTable_('tb_ocmAsCustomerCount',  lb && lb.ocmAsCustomerCount,  v => fmtNumber_(v, 0));
@@ -170,20 +192,24 @@ const start  = fmtIso_(x && x.start);
     function renderAllEmpty_() {
         const simpleIds = [
         'tb_storeMaxBuyValueEW', 'tb_storeMaxSellValueEW', 'tb_storeTradesWithStoreCount',
+        'tb_storeTotalBuyValueEW', 'tb_storeTotalSellValueEW',
         'tb_ocmAsCustomerCount', 'tb_ocmAsMerchantCount', 'tb_ocmFeesPaidEW',
   'tb_ocmMaxTradeValueEW', 'tb_ocmTotalValueEW'
  ];
         simpleIds.forEach(id => renderTable_(id, []));
 
-        const periodIds = [
+        renderTableFavorites_('tb_storeFavoriteBuyItemByValueEW', []);
+   renderTableFavorites_('tb_storeFavoriteSellItemByValueEW', []);
+
+   const periodIds = [
      'tb_weekBoughtEW', 'tb_weekSoldEW',
-     'tb_monthBoughtEW', 'tb_monthSoldEW',
-        'tb_yearBoughtEW', 'tb_yearSoldEW',
-          // record period tables
-            'tb_record_weekBoughtEW', 'tb_record_weekSoldEW',
-            'tb_record_monthBoughtEW', 'tb_record_monthSoldEW',
-        'tb_record_yearBoughtEW', 'tb_record_yearSoldEW'
-        ];
+ 'tb_monthBoughtEW', 'tb_monthSoldEW',
+    'tb_yearBoughtEW', 'tb_yearSoldEW',
+      // record period tables
+ 'tb_record_weekBoughtEW', 'tb_record_weekSoldEW',
+      'tb_record_monthBoughtEW', 'tb_record_monthSoldEW',
+    'tb_record_yearBoughtEW', 'tb_record_yearSoldEW'
+  ];
         periodIds.forEach(id => renderTablePeriods_(id, []));
     }
 

@@ -265,11 +265,13 @@
 
  // Store
  setText('st_storeTrades',   fmtNumber_(st?.store?.tradesWithStoreCount, 0));
- setText('st_storeNet',      fmtNumber_(st?.store?.netDeltaBT, 2));
+ setText('st_storeNet', fmtNumber_(st?.store?.netDeltaBT, 2));
  // A1 fix: use fmtIso_ not fmtNumber_ for date field
  setText('st_storeLast',     fmtIso_(st?.store?.lastStoreAt));
  setText('st_storeMaxBuy',   fmtNumber_(st?.store?.maxBuyValueEW, 2));
  setText('st_storeMaxSell',  fmtNumber_(st?.store?.maxSellValueEW, 2));
+ setText('st_storeTotalBuyValue',  fmtNumber_(st?.store?.totalBuyValueEW, 2));
+ setText('st_storeTotalSellValue', fmtNumber_(st?.store?.totalSellValueEW, 2));
  renderStoreFavorites_();
 
  // OCM
