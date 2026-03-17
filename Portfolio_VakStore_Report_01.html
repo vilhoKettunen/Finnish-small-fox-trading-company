@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vak’s Store — Report #1 (Portfolio) | up to end of March 2026</title>
+    <meta name="description" content="Report #1 for Vak’s Store — rubric-aligned project report covering work up to end of March 2026." />
+    <link rel="icon" href="favicon.ico">
+
+    <!-- Shared site stack (match docs pages) -->
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
+    <script src="api-client.js"></script>
+    <script src="topbar.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+    <!-- Shared CSS -->
+    <link rel="stylesheet" href="css/site-layout.css">
+    <link rel="stylesheet" href="css/site-theme.css">
+    <link rel="stylesheet" href="css/panels-paper.css">
+
+    <!-- Page CSS -->
+    <link rel="stylesheet" href="css/pages/portfolio-vakstore-report01.css">
+
+    <!-- Shared decorative JS -->
+    <script src="shared/site-decor.js"></script>
+    <script src="shared/site-footer.js"></script>
+</head>
+<body class="withTopBar no-paper">
+
+    <div class="book">
+
+        <!-- Title / cover -->
+        <header class="cover">
+            <h1 class="title">Vak’s Store — Report #1</h1>
+            <p class="subtitle">All work from project start through end of March 2026</p>
+            <p class="cover-date">Version: 2026-03-17</p>
+
+            <div class="rpt-buttons" style="margin-top:14px;">
+                <a class="rpt-btn" href="Portfolio_VakStore.html">? Main project page</a>
+                <a class="rpt-btn" href="https://vakstore.com" target="_blank" rel="noopener">Live site</a>
+                <a class="rpt-btn" href="https://github.com/vilhoKettunen/Finnish-small-fox-trading-company" target="_blank" rel="noopener">Frontend GitHub</a>
+            </div>
+        </header>
+
+        <!-- 0) Disclaimer (MUST APPEAR EARLY) -->
+        <article class="chapter" id="disclaimer">
+            <h2>0) Disclaimer (pre-launch status)</h2>
+            <div class="rpt-callout rpt-callout-warning">
+                <p><strong>This report was written before the next TOPS server wipe launch.</strong></p>
+                <ul>
+                    <li>During this reporting period, the system had not yet been validated under real player load.</li>
+                    <li>No long-term wipe-cycle data exists yet for EW behavior, scalability, or throughput.</li>
+                    <li>Design goals and expected behavior are based on implementation, limited testing, and written documentation; real validation is a future milestone.</li>
+                </ul>
+            </div>
+        </article>
+
+        <!-- 1) Project name -->
+        <article class="chapter" id="project-name">
+            <h2>1) Project name</h2>
+            <p><strong>Vak’s Store</strong> (formerly Finnish Small Fox Trading Company / FSFTC)</p>
+        </article>
+
+        <!-- 2) Project description -->
+        <article class="chapter" id="project-description">
+            <h2>2) Project description</h2>
+            <h3>What the project is</h3>
+            <p>
+                Vak’s Store is a browser-based trading platform and experimental in-game economy for the
+                Vintage Story server <strong>TOPS (The Official Public Server)</strong>.
+                It supports asynchronous trading (no real-time coordination required) using a ledger currency called <strong>EW</strong>.
+            </p>
+
+            <h3>Intended purpose &amp; target audience</h3>
+            <ul>
+                <li><strong>Audience:</strong> TOPS players who want reliable trades without scheduling meetups.</li>
+                <li><strong>Goals:</strong> reduce barter friction; avoid Rusty Gear (RG) inflation effects; increase price transparency.</li>
+            </ul>
+
+            <h3>How the project was planned</h3>
+            <ul>
+                <li>Primarily ad-hoc implementation with daily logs early in the project.</li>
+                <li>A GitHub Issues Kanban board was used later (started ~1 month before March 2026).</li>
+                <li>No separate formal bug list; planned fixes in `txt/plan_fix*` files served as issue documentation.</li>
+            </ul>
+
+            <h3>What was accomplished so far</h3>
+            <ul>
+                <li>Full end-to-end trading flows: Store requests, OCM listings/trades, account history, and admin toolchain.</li>
+                <li>EW economy mechanics implemented and documented (Whitepaper + Economy Specs).</li>
+                <li>Observability added: Bank Dashboard charts, Price History charts, daily velocity tracking and snapshots.</li>
+                <li>Security hardening and abuse prevention informed by penetration testing and feedback.</li>
+            </ul>
+
+            <h3>Next step(s)</h3>
+            <ul>
+                <li><strong>Real wipe launch validation:</strong> observe real user load, throughput, and EW behavior across the wipe cycle.</li>
+                <li>Complete <a href="SystemArchitecture.html">System Architecture</a> documentation.</li>
+                <li>Automated stock target / price signal improvements.</li>
+                <li>Potential future game integration mechanics.</li>
+                <li>Design versatility improvements (layout/theme options).</li>
+            </ul>
+
+            <h3>Work division among team members</h3>
+            <ul>
+                <li><strong>Vak</strong> — 100% of coding, documentation, and design; operator/admin of the trading platform.</li>
+                <li><strong>Arctic Toast</strong> — penetration testing and security feedback only (no links, for privacy).</li>
+            </ul>
+
+            <h3>Timeline</h3>
+            <p>
+                The “320h” referenced in earlier notes was an estimate; Report #1 covers the entire timeline up to end of March 2026.
+            </p>
+
+            <div class="rpt-scroll">
+                <table class="rpt-table" aria-label="Work log timeline">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Work summary</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>10.03.2026</td><td>11h 0min</td><td>Added Whitepaper + Economy Specifications page; LLM-friendly docs.</td></tr>
+                        <tr><td>09.03.2026</td><td>6h 30min</td><td>Added documentation to all pages/sections; “How do i use this?” help links; limited OCM duplicate requests.</td></tr>
+                        <tr><td>09.03.2026</td><td>2h 0min</td><td>Prevented duplicate listing creation requests in OCM merchant page.</td></tr>
+                        <tr><td>08.03.2026</td><td>9h 0min</td><td>Docs up to date; improved auto login reliability across pages; fixed statistics (normal + top5) correctness + performance.</td></tr>
+                        <tr><td>07.03.2026</td><td>10h 0min</td><td>Added EW Insurance page + backend/admin support; bank/main page section toggles; insurance admin tools completed.</td></tr>
+                        <tr><td>06.03.2026</td><td>6h 0min</td><td>Remade infrastructure investments panel; added “creator/submitted by” to receipts; limited request sending + sending UI.</td></tr>
+                        <tr><td>05.03.2026</td><td>7h 0min</td><td>Built Bank page with charts; started tracking issuance/destroyed EW + net worth + wealth inequality.</td></tr>
+                        <tr><td>04.03.2026</td><td>10h 0min</td><td>Finished velocity statistics bugs; added to Price History; added 6 new leaderboards for week/month/year totals.</td></tr>
+                        <tr><td>03.03.2026</td><td>8h 0min</td><td>Finished trade velocity tracking numbers; BT?EW and buyer/seller?Customer/Merchant renames; fixed listing loading bug due to renames.</td></tr>
+                        <tr><td>02.03.2026</td><td>9h 0min</td><td>Planned + built velocity tracking on admin sheet to store later datapoints for history.</td></tr>
+                        <tr><td>01.03.2026</td><td>4h 0min</td><td>Planning tasks/ideas: central bank tracking, velocity, more user stats, whitepaper, bug hunting.</td></tr>
+                        <tr><td>16.02.2026</td><td>8h 15min</td><td>Struggled with Google OAuth; multi OAuth system for test vs production; bought domain vakstore.com; privacy policy + GDPR updates.</td></tr>
+                        <tr><td>15.02.2026</td><td>1h 30min</td><td>Fixed Account Settings login/topbar; planned ToS/Privacy improvements.</td></tr>
+                        <tr><td>14.02.2026</td><td>8h 30min</td><td>Universal search dropdown with favorites; split backend ~4000 lines into multiple modules.</td></tr>
+                        <tr><td>13.02.2026</td><td>5h 0min</td><td>Improved visuals: backgrounds + paper panels; fixed menu button bug.</td></tr>
+                        <tr><td>10.02.2026</td><td>8h 0min</td><td>New features: multi-item charts, leaderboards, pay with/item converter improvements, info popups.</td></tr>
+                        <tr><td>09.02.2026</td><td>5h 30min</td><td>Added OCM filters (item name/merchant/peg payment/etc).</td></tr>
+                        <tr><td>08.02.2026</td><td>6h 0min</td><td>Account Settings stats + ToS page + login warnings; mechanics mostly working.</td></tr>
+                        <tr><td>07.02.2026</td><td>3h 30min</td><td>Basic account editing + plan for user statistics + deletion.</td></tr>
+                        <tr><td>28.01.2026</td><td>5h 0min</td><td>Fixed OCM listing quantity display; improved OCM history; admin OCM on-behalf works.</td></tr>
+                        <tr><td>22.01.2026</td><td>3h 0min</td><td>Favor system + admin OCM restock/create/adjust on behalf.</td></tr>
+                        <tr><td>20.01.2026</td><td>4h 0min</td><td>Favor % system comparing store vs OCM values; found issues with PEG tool.</td></tr>
+                        <tr><td>19.01.2026</td><td>7h 0min</td><td>Display currency changes; fixed sending BT; split index.html into separate JS.</td></tr>
+                        <tr><td>18.01.2026</td><td>8h 0min</td><td>OCM value indicator; clarified pending requests; stack sizes show.</td></tr>
+                        <tr><td>17.01.2026</td><td>10h 0min</td><td>Testing with customers; planned; got opinions ? new ideas; work on value exchange visibility.</td></tr>
+                        <tr><td>16.01.2026</td><td>6h 0min</td><td>Finished admin OCM management; split admin + OCM pages into separate JS.</td></tr>
+                        <tr><td>15.01.2026</td><td>9h 0min</td><td>Almost finished OCM; penetration testing; patched big issues with Arctic Toast; up to 11 pegs per listing.</td></tr>
+                        <tr><td>14.01.2026</td><td>6h 0min</td><td>Combined store history + OCM history on history page + admin; penetration testing login/account setup; fixed admin accepting OCM requests.</td></tr>
+                        <tr><td>13.01.2026</td><td>10h 30min</td><td>Wrote ~8 pages of OCM plan; implemented partially; admin work pending.</td></tr>
+                        <tr><td>10.01.2026</td><td>2h 30min</td><td>Transactions accepted by admin; stock changes; bypass to avoid doPost bug.</td></tr>
+                        <tr><td>08.01.2026</td><td>8h 0min</td><td>Bypass bug for stock changes; automatic/manual stock changes; fixed login issues; new bugs later.</td></tr>
+                        <tr><td>07.01.2026</td><td>4h 0min</td><td>Stock mechanism; Sheets issues reading/writing; tried restoring versions.</td></tr>
+                        <tr><td>07.01.2026</td><td>3h 0min</td><td>New datapoints for price tracking: daily price change, % from goal stock, stock value.</td></tr>
+                        <tr><td>05.01.2026</td><td>4h 30min</td><td>Admin UI for manual stock override; trouble writing correct column.</td></tr>
+                        <tr><td>02.01.2026</td><td>8h 0min</td><td>Planned stock automation tied to buy/sell requests.</td></tr>
+                        <tr><td>19.12.2025</td><td>5h 0min</td><td>Worked on OCM backend; frontend mostly done for testing.</td></tr>
+                        <tr><td>21.11.2025</td><td>7h 0min</td><td>Backend fixes for measuring history + OCM transactions; admin panel changes; still need frontend fixes.</td></tr>
+                        <tr><td>19.11.2025</td><td>6h 0min</td><td>Fixed marking trades; custom changes; history good; login works.</td></tr>
+                        <tr><td>16.11.2025</td><td>6h 0min</td><td>Improved login persistence across pages; feature gating behind login.</td></tr>
+                        <tr><td>15.11.2025</td><td>3h 0min</td><td>Login works: backend stores login data after first registration; Google login.</td></tr>
+                        <tr><td>14.11.2025</td><td>4h 0min</td><td>OAuth integration hurdles; Cloudflare Worker planned to solve walls.</td></tr>
+                        <tr><td>13.11.2025</td><td>2h 30min</td><td>Color indicators for exceeding buy/sell limits (price change warnings).</td></tr>
+                        <tr><td>12.11.2025</td><td>6h 0min</td><td>Continued Google login learning.</td></tr>
+                        <tr><td>12.11.2025</td><td>1h 0min</td><td>Fixed visual indicator for stock amount difference vs stock goals.</td></tr>
+                        <tr><td>10.11.2025</td><td>2h 0min</td><td>Studied writing data from website to Sheets; purchase history; added stock info to history tables.</td></tr>
+                        <tr><td>10.11.2025</td><td>7h 45min</td><td>Studied Google login integration; backend storage using Sheets; progress.</td></tr>
+                        <tr><td>09.11.2025</td><td>0h 30min</td><td>Ideation/planning: login, history, stored account value, Google sign-in.</td></tr>
+                        <tr><td>07.11.2025</td><td>2h 30min</td><td>Price history date localization and tooltip numbers (older hours added later).</td></tr>
+                        <tr><td>06.11.2025</td><td>10h 30min</td><td>Currency selector, “BT Takuu” (insurance precursor), wrote VS economics essay web format (older hours added later).</td></tr>
+                        <tr><td>05.11.2025</td><td>10h 30min</td><td>Show sellable stock %; fixed pay-with/item converter (older hours added later).</td></tr>
+                        <tr><td>04.11.2025</td><td>10h 30min</td><td>Footer links; Item Converter using % of money (older hours added later).</td></tr>
+                        <tr><td>03.11.2025</td><td>10h 30min</td><td>Website base, basic listings, info tabs (older hours added later).</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </article>
+
+        <!-- 3) Task description(s) -->
+        <article class="chapter" id="tasks">
+            <h2>3) Task description(s)</h2>
+            <p>Tasks are grouped by feature area and the major phases visible in the work log.</p>
+
+            <h3>Phase 1 — Foundation / core store</h3>
+            <ul>
+                <li>Built initial site UI and price tooling (cart, calculators, early history tracking).</li>
+                <li>Implemented writing from website to Google Sheets via Apps Script.</li>
+                <li>Introduced account system and Google sign-in for identity and persistence.</li>
+            </ul>
+
+            <h3>Phase 2 — OCM marketplace buildout</h3>
+            <ul>
+                <li>Created OCM marketplace page and merchant tools (listing lifecycle, filters, trade requests).</li>
+                <li>Implemented admin-side OCM management and on-behalf-of workflows.</li>
+                <li>Added price comparison / “% indicator” to improve value visibility.</li>
+            </ul>
+
+            <h3>Phase 3 — Refactor / compliance / reliability</h3>
+            <ul>
+                <li>Split a large backend file (~4000 lines) into multiple modules.</li>
+                <li>Improved OAuth reliability and separated production vs test client IDs after domain purchase.</li>
+                <li>Updated privacy policy / ToS and improved login persistence across pages.</li>
+            </ul>
+
+            <h3>Phase 4 — Observability + documentation</h3>
+            <ul>
+                <li>Bank Dashboard with currency snapshots, backing, and wealth distribution.</li>
+                <li>Velocity tracking system + daily archival and reset via a separate priceHistory subsystem.</li>
+                <li>Documentation overhaul: Instructions page; Whitepaper; Economy Specifications.</li>
+            </ul>
+        </article>
+
+        <!-- 4) Function description(s) -->
+        <article class="chapter" id="functions">
+            <h2>4) Function description(s) (key functions/features)</h2>
+
+            <h3>Store flow (admin-approved)</h3>
+            <ol>
+                <li>Player builds a cart (buy/sell items) on the main store page.</li>
+                <li>Player submits a request; it goes to a pending admin queue.</li>
+                <li>Admin approves/denies; on approval EW balances and store stock are updated and a receipt is produced.</li>
+            </ol>
+
+            <h3>OCM flow (player-to-player)</h3>
+            <ol>
+                <li>Merchant creates an OCM listing (often peg-based pricing); listing enters review queue.</li>
+                <li>Admin approves; listing becomes public.</li>
+                <li>Customer sends a trade request; merchant (or admin) accepts/denies.</li>
+                <li>On execution: balances are updated, history is written, and (when admin-service applies) the fee is burned.</li>
+            </ol>
+
+            <h3>EW mechanics (issuance / destruction)</h3>
+            <ul>
+                <li><strong>Issuance:</strong> EW is created only when a player sells items to the store.</li>
+                <li><strong>Destruction:</strong> EW is removed when players buy from the store, via OCM admin fees, and via insurance metal-withdraw nullification.</li>
+                <li><strong>Public observability:</strong> the Bank Dashboard makes macro metrics public (no login needed).</li>
+            </ul>
+
+            <h3>Bank metrics / observability</h3>
+            <ul>
+                <li>Daily snapshots: EW circulation, wealth distribution, destroyed EW.</li>
+                <li>Trade velocity: per-item daily counters archived by a separate Apps Script project.</li>
+                <li>Public charts on Bank + Price History pages.</li>
+            </ul>
+
+            <h3>Insurance</h3>
+            <ul>
+                <li>Convert EW to a metals-backed policy via an admin-approved workflow.</li>
+                <li>Supports deposit, withdrawal to EW, and withdrawal of physical metals (nullifies the allocated EW).</li>
+            </ul>
+
+            <h3>Auth / account</h3>
+            <ul>
+                <li>Google Sign-In (GSI) for obtaining an <code>id_token</code>; backend validates it on every request.</li>
+                <li>Account Settings: player name, mailbox/mall mailbox, leaderboard consent model.</li>
+                <li>Account History: immutable log of all balance changes.</li>
+            </ul>
+
+            <h3>Admin tools</h3>
+            <ul>
+                <li>Queues: pending store requests, OCM listing review, OCM pending trades, insurance pending actions.</li>
+                <li>Controls: approve/deny, stock adjustments, on-behalf-of operations for support.</li>
+            </ul>
+        </article>
+
+        <!-- 5) Issues and solutions -->
+        <article class="chapter" id="issues">
+            <h2>5) Issues and solutions</h2>
+
+            <section class="rpt-issue">
+                <h3>1) Google OAuth / GSI integration complexity</h3>
+                <p><strong>Problem:</strong> OAuth token flows, persistence across pages, and correct audience validation created a high learning curve.</p>
+                <p><strong>Impact:</strong> Login reliability issues and additional implementation time.</p>
+                <p><strong>Root cause / diagnosis:</strong> Multi-step OAuth behavior (token issuance, client IDs, audience matching), plus new production/test separation after the domain purchase.</p>
+                <p><strong>Fix / mitigation:</strong> Implemented multi OAuth client ID allow-listing (test vs production). Improved token storage/restore and topbar login state handling.</p>
+                <p><strong>Result / lessons:</strong> Login became more reliable, and the system avoided coupling to a single environment/client ID.</p>
+            </section>
+
+            <section class="rpt-issue">
+                <h3>2) “doPost bug” (critical): POST requests not reaching Apps Script reliably</h3>
+                <p><strong>Problem:</strong> POST requests stopped reaching the Apps Script backend reliably; the root cause was not determined.</p>
+                <p><strong>Impact:</strong> Write actions became unreliable, blocking core trading operations.</p>
+                <p><strong>Root cause / diagnosis:</strong> Unknown; treated as an external platform/environment failure.</p>
+                <p><strong>Fix / mitigation:</strong> Routed specific write operations through a GET-bypass action routing system (“doGet bypass”) to restore reliability. (Frontend kept a bypass allow-list for write actions so it can send them via GET when needed.)</p>
+                <p><strong>Result / lessons:</strong> Core actions worked reliably again, with a clear contract for which operations are safe/required via GET in this environment.</p>
+            </section>
+
+            <section class="rpt-issue">
+                <h3>3) Early Google Sheets linking/reference errors (Jan 2026)</h3>
+                <p><strong>Problem:</strong> Reading/writing wrong spreadsheets/tabs/columns during early learning (mis-linked IDs and tab references).</p>
+                <p><strong>Impact:</strong> Incorrect stock updates or missing data until references were corrected.</p>
+                <p><strong>Root cause / diagnosis:</strong> Learning curve around how Apps Script references spreadsheets and tabs; insufficient guardrails initially.</p>
+                <p><strong>Fix / mitigation:</strong> Corrected sheet IDs/tab references and improved column targeting. Later documentation explicitly notes risks like hardcoded column indices.</p>
+                <p><strong>Result / lessons:</strong> Reinforced that Sheets-backed systems must be treated like a schema with migration discipline.</p>
+            </section>
+
+            <section class="rpt-issue">
+                <h3>4) OCM request/listing spam prevention (Mar 2026)</h3>
+                <p><strong>Problem:</strong> Duplicate trade requests and duplicate listing creation attempts.</p>
+                <p><strong>Impact:</strong> Spammy queues and risk of accidental duplicate actions.</p>
+                <p><strong>Root cause / diagnosis:</strong> Users double-clicking / retrying when network latency makes it unclear whether an action was sent.</p>
+                <p><strong>Fix / mitigation:</strong> Added rate limiting (server-side cache TTL) and frontend “sending…” state/UI prevention to block repeats.</p>
+                <p><strong>Result / lessons:</strong> Fewer accidental duplicates; admin workload reduced.</p>
+            </section>
+
+            <section class="rpt-issue">
+                <h3>5) Stats correctness + performance</h3>
+                <p><strong>Problem:</strong> Statistics and Top5 calculations initially had correctness issues and performance problems.</p>
+                <p><strong>Impact:</strong> Incorrect charts/leaderboards and slow updates on larger datasets.</p>
+                <p><strong>Root cause / diagnosis:</strong> Per-transaction rebuild patterns and insufficient checkpointing/incremental computation.</p>
+                <p><strong>Fix / mitigation:</strong> Moved stats to scheduled batch jobs; used incremental checkpoints; reduced repeated full scans.</p>
+                <p><strong>Result / lessons:</strong> Faster and more consistent stats updates with clearer computation boundaries.</p>
+            </section>
+
+            <section class="rpt-issue">
+                <h3>6) Naming migrations: BT ? EW and roles (Customer/Merchant)</h3>
+                <p><strong>Problem:</strong> Renaming core concepts risked breaking UI/backend mappings and existing data expectations.</p>
+                <p><strong>Impact:</strong> Bugs such as listing loading issues during transition.</p>
+                <p><strong>Root cause / diagnosis:</strong> Contract drift between stored fields, frontend DTOs, and long-lived legacy identifiers.</p>
+                <p><strong>Fix / mitigation:</strong> Performed systematic renaming, added compatibility shims where needed, and fixed mismatched field access.</p>
+                <p><strong>Result / lessons:</strong> Clearer domain language improved documentation and user understanding, but required careful contract management.</p>
+            </section>
+
+            <section class="rpt-issue">
+                <h3>7) Security hardening (penetration testing)</h3>
+                <p><strong>Problem:</strong> User input surfaces (profile fields, listing creation) needed abuse resistance.</p>
+                <p><strong>Impact:</strong> Risk of injection-like payloads, malformed records, and abuse via unexpected characters or formats.</p>
+                <p><strong>Root cause / diagnosis:</strong> Any web app with user-supplied inputs needs explicit allow-lists and server-side validation.</p>
+                <p><strong>Fix / mitigation:</strong> Strengthened sanitizers, enforced backend validation, and applied rate limits on sensitive actions.</p>
+                <p><strong>Result / lessons:</strong> Reduced abuse surface; clearer definition of “allowed” formats for user fields.</p>
+            </section>
+
+            <div class="rpt-seealso">
+                <p>Documentation references:</p>
+                <ul>
+                    <li><a href="Whitepaper.html">Whitepaper</a> (project background, security model)</li>
+                    <li><a href="EconomySpecifications.html">Economy Specifications</a> (mechanics deep-dive)</li>
+                    <li><a href="Instructions.html">Instructions</a> (feature walkthrough + screenshots)</li>
+                </ul>
+            </div>
+        </article>
+
+        <!-- 6) Screenshots -->
+        <article class="chapter" id="screenshots">
+            <h2>6) Screenshots</h2>
+            <p>
+                This report reuses screenshots from <a href="Instructions.html">Instructions</a> (stored under <code>images/instructions/</code>)
+                and adds portfolio-specific screenshots (admin tools + documentation covers) under
+                <code>images/portfolio/vakstore/report01/</code>.
+            </p>
+
+            <h3>Reused screenshots (from Instructions)</h3>
+            <div class="rpt-gallery">
+                <figure class="rpt-fig"><img src="images/instructions/login-panel.png" alt="Login panel" onerror="this.classList.add('rpt-img-missing')"><figcaption>Login panel</figcaption></figure>
+                <figure class="rpt-fig"><img src="images/instructions/topbar-balance.png" alt="Top bar with balance" onerror="this.classList.add('rpt-img-missing')"><figcaption>Top bar (user + EW balance)</figcaption></figure>
+                <figure class="rpt-fig"><img src="images/instructions/ocm-filter-panel.png" alt="OCM filter panel" onerror="this.classList.add('rpt-img-missing')"><figcaption>OCM: filter panel</figcaption></figure>
+                <figure class="rpt-fig"><img src="images/instructions/ocm-listings-table.png" alt="OCM listings table" onerror="this.classList.add('rpt-img-missing')"><figcaption>OCM: listings table</figcaption></figure>
+                <figure class="rpt-fig"><img src="images/instructions/bank-circulation-chart.png" alt="Bank circulation chart" onerror="this.classList.add('rpt-img-missing')"><figcaption>Bank: EW in circulation</figcaption></figure>
+                <figure class="rpt-fig"><img src="images/instructions/pricehistory-price-chart.png" alt="Price history chart" onerror="this.classList.add('rpt-img-missing')"><figcaption>Price History: price trend</figcaption></figure>
+                <figure class="rpt-fig"><img src="images/instructions/insurance-active.png" alt="Insurance active policy" onerror="this.classList.add('rpt-img-missing')"><figcaption>Insurance: active policy view</figcaption></figure>
+                <figure class="rpt-fig"><img src="images/instructions/history-details-expanded.png" alt="History details expanded" onerror="this.classList.add('rpt-img-missing')"><figcaption>Account History: transaction details</figcaption></figure>
+            </div>
+
+            <p class="rpt-muted">
+                Note: The full screenshot checklist (all Instructions images to reuse) is defined in the plan file
+                <code>txt/plan_portfolio_vakstore_report_320h.txt</code>. This page embeds a representative subset plus the required new admin/doc captures below.
+            </p>
+
+            <h3>New screenshots required for Report #1</h3>
+            <div class="rpt-gallery">
+                <figure class="rpt-fig"><img src="images/portfolio/vakstore/report01/admin-pending-requests.png" alt="Admin pending store requests" onerror="this.classList.add('rpt-img-missing')"><figcaption>Admin: pending store requests queue</figcaption></figure>
+                <figure class="rpt-fig"><img src="images/portfolio/vakstore/report01/admin-stock-management.png" alt="Admin stock management" onerror="this.classList.add('rpt-img-missing')"><figcaption>Admin: stock management</figcaption></figure>
+                <figure class="rpt-fig"><img src="images/portfolio/vakstore/report01/admin-ocm-tools.png" alt="Admin OCM tools" onerror="this.classList.add('rpt-img-missing')"><figcaption>Admin: OCM management tools</figcaption></figure>
+                <figure class="rpt-fig"><img src="images/portfolio/vakstore/report01/admin-insurance-pending.png" alt="Admin insurance pending" onerror="this.classList.add('rpt-img-missing')"><figcaption>Admin: insurance pending approvals</figcaption></figure>
+                <figure class="rpt-fig"><img src="images/portfolio/vakstore/report01/doc-whitepaper-cover.png" alt="Whitepaper cover" onerror="this.classList.add('rpt-img-missing')"><figcaption>Documentation: Whitepaper cover + GitHub link</figcaption></figure>
+                <figure class="rpt-fig"><img src="images/portfolio/vakstore/report01/doc-economy-specs-cover.png" alt="Economy Specifications cover" onerror="this.classList.add('rpt-img-missing')"><figcaption>Documentation: Economy Specifications cover + TOC</figcaption></figure>
+            </div>
+
+            <div class="rpt-callout">
+                <strong>Capture note:</strong> These new images must be created before publishing the report publicly.
+                If any are missing, they will show with a visible missing-image style.
+            </div>
+        </article>
+
+        <!-- 7) Testing documents / feedback -->
+        <article class="chapter" id="testing">
+            <h2>7) Testing documents / feedback</h2>
+
+            <h3>Customer feedback summary (informal)</h3>
+            <ul>
+                <li><strong>Lack of understanding</strong> ? comprehensive documentation overhaul + contextual “How do I use this?” links.</li>
+                <li><strong>UI needed more color</strong> ? improved theme, backgrounds, and paper-panel styling.</li>
+                <li><strong>Need clearer value comparisons</strong> ? added “% indicator” showing value difference vs store prices.</li>
+            </ul>
+
+            <h3>Security testing summary (Arctic Toast)</h3>
+            <ul>
+                <li>Scope: login flow, account setup, and input abuse attempts (unexpected chars / formats).</li>
+                <li>Outcome: strengthened input sanitization and backend validation; added limitations/rate limits to reduce abuse.</li>
+            </ul>
+
+            <h3>Minimal test log (from work log + memory)</h3>
+            <div class="rpt-scroll">
+                <table class="rpt-table" aria-label="Test log table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Area</th>
+                            <th>Scenario</th>
+                            <th>Expected</th>
+                            <th>Observed</th>
+                            <th>Fix / outcome</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Jan 2026</td>
+                            <td>Store / Sheets</td>
+                            <td>Stock update writes correct row/tab</td>
+                            <td>Correct item and column updated</td>
+                            <td>Wrong linkage / column targeting at first</td>
+                            <td>Corrected sheet IDs/tabs; improved reference discipline</td>
+                        </tr>
+                        <tr>
+                            <td>Jan 2026</td>
+                            <td>Backend routing</td>
+                            <td>Write actions reach Apps Script reliably</td>
+                            <td>POST delivers request</td>
+                            <td>POST intermittently fails (“doPost bug”)</td>
+                            <td>GET-bypass routing for specific writes</td>
+                        </tr>
+                        <tr>
+                            <td>Feb 2026</td>
+                            <td>Auth</td>
+                            <td>Login persistence across pages</td>
+                            <td>Silent restore works consistently</td>
+                            <td>Intermittent re-login prompts</td>
+                            <td>Improved token storage/restore and UI wiring</td>
+                        </tr>
+                        <tr>
+                            <td>Mar 2026</td>
+                            <td>Stats</td>
+                            <td>Leaderboards / Top5 correctness</td>
+                            <td>Correct totals and ranking</td>
+                            <td>Incorrect / slow earlier implementation</td>
+                            <td>Batch compute + incremental checkpoints</td>
+                        </tr>
+                        <tr>
+                            <td>Mar 2026</td>
+                            <td>OCM</td>
+                            <td>Duplicate request prevention</td>
+                            <td>No double-send duplicates</td>
+                            <td>Users could re-send quickly</td>
+                            <td>Backend rate limiting + frontend sending state</td>
+                        </tr>
+                        <tr>
+                            <td>Jan–Mar 2026</td>
+                            <td>Security</td>
+                            <td>Input abuse in profile/listing fields</td>
+                            <td>Only allowed formats accepted</td>
+                            <td>Edge-case formats needed filtering</td>
+                            <td>Sanitizers + backend validation tightened</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="rpt-muted">
+                Note: This project did not maintain separate formal testing documents at the time; the table above is a portfolio-friendly
+                summary based on the developer work log and remembered test scenarios.
+            </p>
+        </article>
+
+        <!-- 8) Gameplay video -->
+        <article class="chapter" id="video">
+            <h2>8) Gameplay video of the product</h2>
+            <div class="rpt-callout">
+                <strong>Placeholder:</strong> A gameplay/demo video will be added here.
+            </div>
+            <p>The video is intended to demonstrate:</p>
+            <ul>
+                <li>Logging in and showing the topbar balance + account identity.</li>
+                <li>Building a store cart and submitting a request.</li>
+                <li>Browsing OCM listings, sending a trade request, and viewing pending trades.</li>
+                <li>Viewing Bank Dashboard metrics and Price History charts.</li>
+                <li>Insurance policy creation, allocation update, and a deposit/withdraw request flow.</li>
+                <li>A short admin-side walkthrough of queues and approvals (no player names shown).</li>
+            </ul>
+        </article>
+
+        <!-- 9) Appendix -->
+        <article class="chapter" id="appendix">
+            <h2>9) Appendix</h2>
+
+            <h3>Appendix A — Full work log</h3>
+            <p>
+                The full work log is embedded earlier in this report under the Timeline section.
+            </p>
+
+            <h3>Appendix B — Glossary (optional)</h3>
+            <dl class="rpt-glossary">
+                <dt>TOPS</dt><dd>The Official Public Server (Vintage Story multiplayer server).</dd>
+                <dt>EW</dt><dd>Exchange Weight — ledger currency in Vak’s Store (previously called BT).</dd>
+                <dt>RG</dt><dd>Rusty Gears — Vintage Story in-game currency with inflation issues on long wipe cycles.</dd>
+                <dt>OCM</dt><dd>Open Community Market — player-to-player marketplace built on EW.</dd>
+                <dt>Velocity</dt><dd>Daily trading activity metrics (volume, unique traders, trade count) tracked per item.</dd>
+            </dl>
+
+            <h3>Appendix C — Documentation links</h3>
+            <ul>
+                <li><a href="Whitepaper.html">Whitepaper</a></li>
+                <li><a href="EconomySpecifications.html">Economy Specifications</a></li>
+                <li><a href="Instructions.html">Instructions</a></li>
+                <li><a href="Documentation/master back end.txt">Backend documentation (internal repo doc)</a></li>
+            </ul>
+        </article>
+
+        <footer class="colophon">
+            <h2>Navigation</h2>
+            <ul>
+                <li><a href="Portfolio_VakStore.html">Main project page</a></li>
+                <li><a href="Whitepaper.html">Whitepaper</a> • <a href="EconomySpecifications.html">Economy Specs</a> • <a href="Instructions.html">Instructions</a></li>
+            </ul>
+        </footer>
+
+    </div><!-- /.book -->
+
+    <script>
+        // Keep top bar consistent with the rest of the site, but do not require login.
+        window.addEventListener('load', () => {
+            try {
+                if (window.initSharedTopBar) window.initSharedTopBar();
+            } catch (e) {
+                console.warn('Top bar init failed:', e);
+            }
+        });
+    </script>
+</body>
+</html>

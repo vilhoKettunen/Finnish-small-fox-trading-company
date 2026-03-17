@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vak’s Store — Vintage Story TOPS Trading Platform (Portfolio)</title>
+    <meta name="description" content="Portfolio overview of Vak’s Store — a community trading platform and experimental in?game economy for Vintage Story TOPS." />
+    <link rel="icon" href="favicon.ico">
+
+    <!-- Shared site stack (match docs pages) -->
+    <script src="app-config.js"></script>
+    <script src="auth-storage.js"></script>
+    <script src="api-client.js"></script>
+    <script src="topbar.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+    <!-- Shared CSS -->
+    <link rel="stylesheet" href="css/site-layout.css">
+    <link rel="stylesheet" href="css/site-theme.css">
+    <link rel="stylesheet" href="css/panels-paper.css">
+
+    <!-- Page CSS -->
+    <link rel="stylesheet" href="css/pages/portfolio-vakstore.css">
+
+    <!-- Shared decorative JS -->
+    <script src="shared/site-decor.js"></script>
+    <script src="shared/site-footer.js"></script>
+</head>
+<body class="withTopBar no-paper">
+    <!-- Top bar is injected by JS (optional). This page is intentionally usable without login. -->
+
+    <div class="book">
+        <header class="cover">
+            <h1 class="title">Vak’s Store — Vintage Story TOPS Trading Platform</h1>
+            <p class="subtitle">Community trading platform + experimental in?game economy</p>
+            <p class="cover-date">Portfolio page • Updated: 2026-03-17</p>
+
+            <div class="pvk-buttons" style="margin-top:14px;">
+                <a class="pvk-btn" href="https://vakstore.com" target="_blank" rel="noopener">Live site</a>
+                <a class="pvk-btn" href="https://github.com/vilhoKettunen/Finnish-small-fox-trading-company" target="_blank" rel="noopener">Frontend GitHub</a>
+                <a class="pvk-btn pvk-btn-primary" href="Portfolio_VakStore_Report_01.html">Read Report #1</a>
+            </div>
+
+            <p class="pvk-muted" style="margin-top:10px;">
+                Project name: <strong>Vak’s Store</strong> (formerly Finnish Small Fox Trading Company / FSFTC)
+            </p>
+        </header>
+
+        <article class="chapter" id="desc">
+            <h2>Project description (brief)</h2>
+            <p>
+                Vak’s Store is a web app that supports a community-run trading platform and an experimental in-game economy
+                for the Vintage Story server <strong>TOPS (The Official Public Server)</strong>. It is designed for TOPS players
+                who want to trade without having to coordinate real-time meetups.
+            </p>
+            <p>
+                It exists to address three persistent problems: barter friction (scheduling + trust overhead), Rusty Gear (RG)
+                inflation (RG can be mass-produced by mob farms), and price opacity (a lack of shared reference prices).
+            </p>
+
+            <ul>
+                <li><strong>Main Store</strong>: build buy/sell carts and submit admin-approved trade requests (asynchronous trading via in-game mailboxes).</li>
+                <li><strong>EW currency</strong>: ledger-based currency issued only when players sell to the store, destroyed when they buy from the store and via OCM admin fees.</li>
+                <li><strong>OCM marketplace</strong>: player-to-player listings with peg-based pricing and admin/service fee model.</li>
+                <li><strong>Public observability</strong>: Bank Dashboard + Price History charts, visible without login.</li>
+                <li><strong>Insurance</strong>: optional metals-backed reserve mechanism for EW.</li>
+            </ul>
+
+            <div class="pvk-callout">
+                <strong>Role / team:</strong> Solo development by Vak (coding, design, documentation). “Arctic Toast” contributed penetration testing and security feedback.
+            </div>
+        </article>
+
+        <article class="chapter" id="overview">
+            <h2>System overview (high-level features)</h2>
+            <div class="pvk-grid">
+                <div class="pvk-card">
+                    <h3>Main Store (admin approvals)</h3>
+                    <ul>
+                        <li>Cart building + calculators</li>
+                        <li>Submit buy/sell requests</li>
+                        <li>Admin executes and issues receipts</li>
+                    </ul>
+                </div>
+                <div class="pvk-card">
+                    <h3>EW mechanics</h3>
+                    <ul>
+                        <li>Issuance: only when players sell items to the store</li>
+                        <li>Destruction: store purchases + OCM admin fee + (optional) metal-withdraw nullification</li>
+                        <li>Transaction history: immutable balance change log</li>
+                    </ul>
+                </div>
+                <div class="pvk-card">
+                    <h3>OCM marketplace</h3>
+                    <ul>
+                        <li>Player listings + filters</li>
+                        <li>Multi-peg pricing and payment options</li>
+                        <li>Admin-service fee model (10%)</li>
+                    </ul>
+                </div>
+                <div class="pvk-card">
+                    <h3>Observability + tools</h3>
+                    <ul>
+                        <li>Bank Dashboard (circulation, issuance/destroyed, backing, wealth distribution)</li>
+                        <li>Price History (prices + velocity charts)</li>
+                        <li>Leaderboards + Work Pay Rates</li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <article class="chapter" id="architecture">
+            <h2>Architecture summary</h2>
+            <p>
+                The system is a static frontend backed by serverless components. Data is stored in Google Sheets as structured tables.
+            </p>
+
+            <div class="pvk-diagram" role="img" aria-label="Architecture diagram">
+                <div class="pvk-diagram-row">
+                    <div class="pvk-diagram-box">
+                        <div class="pvk-diagram-title">Frontend</div>
+                        <div class="pvk-diagram-sub">Static HTML + segmented JS modules</div>
+                        <div class="pvk-diagram-sub">Served via Cloudflare CDN</div>
+                    </div>
+                </div>
+                <div class="pvk-diagram-arrow">?</div>
+                <div class="pvk-diagram-row">
+                    <div class="pvk-diagram-box">
+                        <div class="pvk-diagram-title">Edge layer</div>
+                        <div class="pvk-diagram-sub">Cloudflare Worker proxy</div>
+                        <div class="pvk-diagram-sub">Routing + stability layer</div>
+                    </div>
+                </div>
+                <div class="pvk-diagram-arrow">?</div>
+                <div class="pvk-diagram-row pvk-diagram-row-split">
+                    <div class="pvk-diagram-box">
+                        <div class="pvk-diagram-title">Backend</div>
+                        <div class="pvk-diagram-sub">Google Apps Script Web App</div>
+                        <div class="pvk-diagram-sub">Server-side validation + routing</div>
+                    </div>
+                    <div class="pvk-diagram-box">
+                        <div class="pvk-diagram-title">Data</div>
+                        <div class="pvk-diagram-sub">Google Sheets</div>
+                        <div class="pvk-diagram-sub">Structured tables + daily snapshot subsystem</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pvk-seealso">
+                <p>Related documentation written during the project:</p>
+                <ul>
+                    <li><a href="Whitepaper.html">Whitepaper</a></li>
+                    <li><a href="EconomySpecifications.html">Economy Specifications</a></li>
+                    <li><a href="Instructions.html">Instructions</a></li>
+                </ul>
+            </div>
+        </article>
+
+        <article class="chapter" id="timeline">
+            <h2>Timeline snapshot + next steps</h2>
+
+            <h3>Phases (high-level)</h3>
+            <ol>
+                <li><strong>Foundation</strong>: core store workflows, early pricing tooling, initial backend learning.</li>
+                <li><strong>OCM buildout</strong>: player-to-player marketplace, listing/trade flows, admin tools.</li>
+                <li><strong>Refactor + compliance</strong>: backend modularization, OAuth hardening, consent/GDPR improvements.</li>
+                <li><strong>Observability + docs</strong>: Bank Dashboard, velocity/price history, documentation overhaul.</li>
+            </ol>
+
+            <h3>Next steps (planned)</h3>
+            <ul>
+                <li>Complete the <a href="SystemArchitecture.html">System Architecture</a> page (deep technical map).</li>
+                <li>Automated stock target / price signal system (data-driven suggestions for pricing and restocking).</li>
+                <li>Possible game integration mechanics (future exploration).</li>
+                <li>Design versatility improvements (more theme/layout options across pages).</li>
+            </ul>
+
+            <div class="pvk-callout">
+                Report #1 contains the detailed rubric-aligned writeup, issues/solutions, screenshots checklist, and a full work log appendix.
+                <a href="Portfolio_VakStore_Report_01.html">Open Report #1 ?</a>
+            </div>
+        </article>
+
+        <article class="chapter" id="ack">
+            <h2>Acknowledgements</h2>
+            <ul>
+                <li><strong>Arctic Toast</strong> — penetration testing and security feedback (no public links, by request).</li>
+            </ul>
+        </article>
+
+        <footer class="colophon">
+            <h2>Links</h2>
+            <ul>
+                <li><a href="Portfolio_VakStore_Report_01.html">Report #1 (up to end of March 2026)</a></li>
+                <li><a href="https://vakstore.com" target="_blank" rel="noopener">Live site</a></li>
+                <li><a href="https://github.com/vilhoKettunen/Finnish-small-fox-trading-company" target="_blank" rel="noopener">Frontend GitHub</a></li>
+                <li><a href="Whitepaper.html">Whitepaper</a> • <a href="EconomySpecifications.html">Economy Specs</a> • <a href="Instructions.html">Instructions</a></li>
+            </ul>
+        </footer>
+    </div><!-- /.book -->
+
+    <script>
+        // Keep top bar consistent with the rest of the site, but do not require login.
+        window.addEventListener('load', () => {
+            try {
+                if (window.initSharedTopBar) window.initSharedTopBar();
+            } catch (e) {
+                // Page should still work as a static document even if shared scripts change.
+                console.warn('Top bar init failed:', e);
+            }
+        });
+    </script>
+</body>
+</html>
