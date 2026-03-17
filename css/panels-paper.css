@@ -25,7 +25,12 @@ body.no-paper .peg-box,
 body.no-paper .peg-row,
 body.no-paper .picklist-container,
 body.no-paper #controls,
-body.no-paper #publicArea {
+body.no-paper #publicArea,
+/* docs/portfolio containers */
+body.no-paper .book,
+body.no-paper .chapter,
+body.no-paper .cover,
+body.no-paper .colophon {
  background-image: none !important;
  background-color: transparent !important;
  box-shadow: none !important;
@@ -43,6 +48,20 @@ body.no-paper #publicArea {
  /* blend to make texture more visible against white */
  background-blend-mode: multiply !important;
  border:1px solid var(--paper-border) !important;
+ box-shadow: var(--paper-shadow) !important;
+}
+
+/* Docs/portfolio pages use `book/cover/chapter/colophon` instead of `section/panel`.
+ Keep it background-only: do not set padding/margins/widths here. */
+.book .cover,
+.book .chapter,
+.book .colophon {
+ background-image: url("../images/pack_Ground/paper.png") !important;
+ background-size: 100% auto !important;
+ background-repeat: repeat-y !important;
+ background-color: rgba(255,255,255,0.92) !important;
+ background-blend-mode: multiply !important;
+ border: 1px solid var(--paper-border) !important;
  box-shadow: var(--paper-shadow) !important;
 }
 
