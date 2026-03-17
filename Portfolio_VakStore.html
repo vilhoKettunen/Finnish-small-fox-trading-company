@@ -3,6 +3,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Ensure correct decoding even when served with missing/incorrect headers -->
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Vak’s Store — Vintage Story TOPS Trading Platform (Portfolio)</title>
     <meta name="description" content="Portfolio overview of Vak’s Store — a community trading platform and experimental in?game economy for Vintage Story TOPS." />
     <link rel="icon" href="favicon.ico">
@@ -29,7 +31,7 @@
     <script src="shared/site-decor.js"></script>
     <script src="shared/site-footer.js"></script>
 </head>
-<body class="withTopBar no-paper">
+<body class="withTopBar">
     <!-- Top bar is injected by JS (optional). This page is intentionally usable without login. -->
 
     <div class="book">
