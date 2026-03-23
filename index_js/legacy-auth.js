@@ -270,14 +270,23 @@
  const hasSetup = !computeProfileIncomplete_(window.currentUser);
  const passedCaptcha = !!window.currentUser.captchaPassed;
 
+ const showRecap = () => {
+ try { window.SharedLogin?.showRecaptcha && window.SharedLogin.showRecaptcha(); } catch { }
+ try { window.showRecaptchaWidget && window.showRecaptchaWidget(); } catch { }
+ };
+ const hideRecap = () => {
+ try { window.SharedLogin?.hideRecaptcha && window.SharedLogin.hideRecaptcha(); } catch { }
+ try { window.hideRecaptchaWidget && window.hideRecaptchaWidget(); } catch { }
+ };
+
  if (hasSetup && passedCaptcha) {
  localStorage.setItem('vak_captcha_ok', '1');
- window.hideRecaptchaWidget && window.hideRecaptchaWidget();
+ hideRecap();
  window.hideSetupShowApp && window.hideSetupShowApp();
  } else {
  localStorage.removeItem('vak_captcha_ok');
  window.showSetupOnly && window.showSetupOnly();
- window.showRecaptchaWidget && window.showRecaptchaWidget();
+ showRecap();
  }
 
  setSetupHighlightAndNote_(window.currentUser);

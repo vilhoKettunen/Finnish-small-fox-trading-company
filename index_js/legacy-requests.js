@@ -150,9 +150,15 @@ method: 'GET',
     });
     };
 
-        (skipCaptcha ? Promise.resolve(null) : (typeof window.recaptchaWrap === 'function' ? window.recaptchaWrap('createRequest') : Promise.resolve(null)))
-            .then(token => doRequestViaGet(token))
-   .then(r => r.json())
+        const getCaptchaToken = () => {
+ if (skipCaptcha) return Promise.resolve(null);
+ if (typeof window.recaptchaWrap === 'function') return window.recaptchaWrap('createRequest');
+ return Promise.resolve(null);
+ };
+
+ getCaptchaToken()
+ .then(token => doRequestViaGet(token))
+ .then(r => r.json())
             .then(j => {
         // Backend rate-limited: the first request already went through
   if (!j.ok && j.error === 'RATE_LIMITED') {

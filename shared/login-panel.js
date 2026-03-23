@@ -12,7 +12,7 @@
  *   window.submitSetup()   ? central copy for all pages
  *
  * options:
- *   showRecaptcha  {boolean}  — include #recaptchaContainer (index.html only)
+ *   showRecaptcha  {boolean}  — include #recaptchaContainer
  */
 (function () {
     'use strict';
@@ -104,12 +104,14 @@
             '<div id="loginStatus" class="small"></div>';
   panel.appendChild(googleArea);
 
-        // --- Recaptcha (index.html only, hidden by default) ---
-        const recap = document.createElement('div');
+        // --- Recaptcha (optional; hidden by default) ---
+ if (options.showRecaptcha) {
+ const recap = document.createElement('div');
         recap.id = 'recaptchaContainer';
  recap.style.display = 'none';
    recap.style.marginTop = '10px';
         panel.appendChild(recap);
+ }
 
         // --- Setup form (ALWAYS rendered; hidden by default; revealed by evaluateSetupForm) ---
         const setup = document.createElement('div');
@@ -161,6 +163,14 @@
 
         // Reset save button state
     onSetupInput_();
+
+        // Captcha visibility: show when logged in, setup complete, but captcha not passed.
+        const recapEl = document.getElementById('recaptchaContainer');
+        if (recapEl) {
+            const hasSetup = loggedIn && !incomplete;
+            const passedCaptcha = !!user?.captchaPassed;
+            recapEl.style.display = (hasSetup && !passedCaptcha) ? 'block' : 'none';
+        }
 
         // --- Blocking logic for trading pages ---
         const isIndex       = !!document.getElementById('requestControls');
@@ -331,11 +341,20 @@
 
     // ?? Expose ??????????????????????????????????????????????????????????????
     window.SharedLogin = {
-        init:    init,
-        evaluateSetupForm:     evaluateSetupForm,
-        onSetupInput_: onSetupInput_,
-     _dismissSetupOverlay_: _dismissSetupOverlay_
-    };
+ init: init,
+ evaluateSetupForm: evaluateSetupForm,
+ onSetupInput_: onSetupInput_,
+ _dismissSetupOverlay_: _dismissSetupOverlay_,
+ showRecaptcha: function showRecaptcha() {
+ const c = document.getElementById('recaptchaContainer');
+ if (c) c.style.display = 'block';
+ },
+ hideRecaptcha: function hideRecaptcha() {
+ const c = document.getElementById('recaptchaContainer');
+ if (c) c.style.display = 'none';
+ }
+ };
+
     window.setLoginTermsWarningVisible_ = setLoginTermsWarningVisible_;
 
 })();
