@@ -315,11 +315,10 @@
      payload: { playerName, mailbox }
             });
 
-  // Refresh current user from backend
-   const meResp = await fetch(`${window.WEB_APP_URL}?action=me&idToken=${encodeURIComponent(idToken)}`);
-            const meJson = await meResp.json();
-        if (!meJson.ok) throw new Error(meJson.error || 'Backend error');
-      const freshUser = meJson.data.user || {};
+  // Refresh current user from backend (use shared apiGet so base URL handling is consistent)
+   const meJson = await window.apiGet('me', { idToken });
+            if (!meJson.ok) throw new Error(meJson.error || 'Backend error');
+      const freshUser = meJson.data?.user || meJson.user || {};
 
     if (msg) msg.textContent = 'Saved!';
 

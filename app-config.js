@@ -17,7 +17,7 @@
  const DEFAULT_OAUTH_CLIENT_ID = isProdHost ? OAUTH_CLIENT_ID_PROD : OAUTH_CLIENT_ID_TEST;
 
  const DEFAULTS = {
- WEB_APP_URL: 'https://yellow-king-52c6.vilhokettu1.workers.dev/exec',
+     WEB_APP_URL: 'https://yellow-king-52c6.vilhokettu1.workers.dev/exec',
  OAUTH_CLIENT_ID: DEFAULT_OAUTH_CLIENT_ID,
      RECAPTCHA_SITE_KEY: '6LdjcAgsAAAAABWoHl5dmFjbJQL61kOu7ddvkUZF'
  };
