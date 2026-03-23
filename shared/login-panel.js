@@ -109,8 +109,15 @@
  const recap = document.createElement('div');
         recap.id = 'recaptchaContainer';
  recap.style.display = 'none';
-   recap.style.marginTop = '10px';
-        panel.appendChild(recap);
+ recap.style.marginTop = '10px';
+ recap.innerHTML =
+ '<div class="small" style="margin-bottom:6px;"><b>Human verification required</b></div>' +
+ '<label class="small" style="display:block;margin-bottom:6px;">' +
+ '<input type="checkbox" id="recaptchaConsent"> I am not a bot' +
+ '</label>' +
+ '<button id="btnVerifyRecaptcha" type="button" onclick="SharedLogin.verifyCaptcha()" disabled>Verify</button>' +
+ '<div id="recaptchaMsg" class="small" style="margin-top:6px;"></div>';
+ panel.appendChild(recap);
  }
 
         // --- Setup form (ALWAYS rendered; hidden by default; revealed by evaluateSetupForm) ---
@@ -170,7 +177,15 @@
             const hasSetup = loggedIn && !incomplete;
             const passedCaptcha = !!user?.captchaPassed;
             recapEl.style.display = (hasSetup && !passedCaptcha) ? 'block' : 'none';
-        }
+
+ // keep Verify button enabled only when consent checkbox is checked
+ const cb = document.getElementById('recaptchaConsent');
+ const btn = document.getElementById('btnVerifyRecaptcha');
+ if (cb && btn) {
+ btn.disabled = !cb.checked;
+ cb.onchange = () => { btn.disabled = !cb.checked; };
+ }
+ }
 
         // --- Blocking logic for trading pages ---
         const isIndex       = !!document.getElementById('requestControls');
@@ -339,12 +354,73 @@
         }
     };
 
+    // ?? verifyCaptcha_ ??????????????????????????????????????????????????
+    /**
+     * Executes reCAPTCHA verification and reports result to the backend.
+     */
+    async function verifyCaptcha_() {
+ const msg = document.getElementById('recaptchaMsg');
+ const cb = document.getElementById('recaptchaConsent');
+ if (!window.googleIdToken) {
+ if (msg) msg.textContent = 'Login required.';
+ return;
+ }
+ if (!cb?.checked) {
+ if (msg) msg.textContent = 'Please tick the checkbox first.';
+ return;
+ }
+
+ const btn = document.getElementById('btnVerifyRecaptcha');
+ if (btn) btn.disabled = true;
+ if (msg) msg.textContent = 'Verifying…';
+
+ try {
+ const token = (typeof window.recaptchaWrap === 'function')
+ ? await window.recaptchaWrap('linkPlayer')
+ : null;
+
+ // linkPlayer is the existing backend action that sets captchaPassed=1.
+ // It also writes playerName/mailbox, so we must send the current values.
+ const playerName = String(window.currentUser?.playerName || '').trim();
+ const mailbox = String(window.currentUser?.mailbox || '').trim();
+
+ const payload = { playerName, mailbox, recaptchaToken: token, recaptchaAction: 'linkPlayer' };
+
+ const r = await window.apiPost('linkPlayer', {
+ idToken: window.googleIdToken,
+ payload
+ });
+
+ if (!r?.ok) throw new Error(r?.error || 'Captcha verification failed');
+
+ // Refresh profile so UI updates and captcha gets hidden.
+ const me = await window.apiGet('me', { idToken: window.googleIdToken });
+ const u = (me?.data?.user) || (me?.user) || {};
+ window.currentUser = Object.assign(window.currentUser || {}, u);
+
+ if (msg) msg.textContent = 'Verified.';
+ try { evaluateSetupForm(window.currentUser); } catch { }
+
+ // Persist the local helper flag used by index gating.
+ localStorage.setItem('vak_captcha_ok', '1');
+
+ // Some pages hide the setup-only overlay when captcha is passed.
+ try { window.hideRecaptchaWidget && window.hideRecaptchaWidget(); } catch { }
+ try { window.hideSetupShowApp && window.hideSetupShowApp(); } catch { }
+ } catch (e) {
+ if (msg) msg.textContent = 'Error: ' + (e.message || e);
+ } finally {
+ if (btn && cb) btn.disabled = !cb.checked;
+ }
+    }
+
     // ?? Expose ??????????????????????????????????????????????????????????????
     window.SharedLogin = {
  init: init,
  evaluateSetupForm: evaluateSetupForm,
  onSetupInput_: onSetupInput_,
  _dismissSetupOverlay_: _dismissSetupOverlay_,
+ verifyCaptcha: verifyCaptcha,
  showRecaptcha: function showRecaptcha() {
  const c = document.getElementById('recaptchaContainer');
  if (c) c.style.display = 'block';

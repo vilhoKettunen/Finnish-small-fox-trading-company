@@ -13,6 +13,8 @@
     <script src="app-config.js"></script>
     <script src="auth-storage.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <script src="index_js/index-recaptcha.js"></script>
     <script src="topbar.js"></script>
     <script src="shared/login-panel.js"></script>
     <script src="api-client.js"></script>
@@ -258,7 +260,7 @@
             const sell = carts.sell || [];
             const totals = d.totals || {};
             const net = Number(totals.netEW || 0);
-            const manual = d.manualBalanceDeltaBT != null ? Number(d.manualBalanceDeltaBT) : null;
+            const manual = d.manualBalanceDeltaBT != null ? Number(d.manualBalanceBT) : null;
             const deltaStr = fmt(h.deltaBT || 0);
             const prettyAt = formatDatePretty(h.at || '');
             const hasAfterEW = d.afterEW != null && isFinite(Number(d.afterEW));
@@ -590,7 +592,7 @@ if (d.policyMetals && Object.keys(d.policyMetals).length &&
         // ── Boot ─────────────────────────────────────────────────────────────────
         window.onload = async () => {
             window.initSharedTopBar && window.initSharedTopBar();
-            window.SharedLogin && window.SharedLogin.init({});
+            window.SharedLogin && window.SharedLogin.init({ showRecaptcha: true });
             updateTermsWarning_();
 
             // Silent restore — loads history on success; leaves _autoLoginDone false on failure

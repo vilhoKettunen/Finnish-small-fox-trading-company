@@ -44,7 +44,7 @@
 
  window.onload = () => {
  window.initSharedTopBar && window.initSharedTopBar();
- window.SharedLogin && window.SharedLogin.init({});
+ window.SharedLogin && window.SharedLogin.init({ showRecaptcha: true });
  document.body.classList.add('withTopBar');
 
  // Default UI
