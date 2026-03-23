@@ -372,7 +372,8 @@
 
  const btn = document.getElementById('btnVerifyRecaptcha');
  if (btn) btn.disabled = true;
- if (msg) msg.textContent = 'Verifying…';
+ // Use ASCII dots to avoid encoding/display issues
+ if (msg) msg.textContent = 'Verifying...';
 
  try {
  const token = (typeof window.recaptchaWrap === 'function')
