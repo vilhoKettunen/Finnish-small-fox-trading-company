@@ -40,8 +40,8 @@
         'createListing', 'updateListing', 'deleteListing', 'toggleListingStatus',
         'adjustStock',
 
-        // Account setup (NEW)
-        'linkPlayer',
+        // Account setup
+        // NOTE: `linkPlayer` MUST be POST (token + payload can exceed URL limits)
 
         // Self account settings (NEW)
         'updateMyProfile',

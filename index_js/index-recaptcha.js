@@ -1,114 +1,147 @@
-// Recaptcha v2 wrapper used by legacy-requests.js (adapted for explicit v2 checkbox)
+// Recaptcha v2 explicit widget wrapper (solve once during onboarding)
 (function () {
-    'use strict';
+ 'use strict';
 
-    const SITE_KEY_ = () => window.RECAPTCHA_SITE_KEY;
+ const SITE_KEY_ = () => window.RECAPTCHA_SITE_KEY;
 
-    function _isReady_() {
-        return !!(window.grecaptcha && typeof window.grecaptcha.render === 'function');
-    }
+ let widgetId_ = null;
+ let lastToken_ = null;
+ let didSolve_ = false;
 
-    // Helper: wait up to `timeoutMs` for grecaptcha to appear
-    function _waitForGreCaptcha(timeoutMs = 5000) {
-        return new Promise((resolve) => {
-            const start = Date.now();
-            function check() {
-                if (window.grecaptcha && typeof window.grecaptcha.render === 'function') return resolve(true);
-                if (Date.now() - start >= timeoutMs) return resolve(false);
-                setTimeout(check, 150);
-            }
-            check();
-        });
-    }
+ function _isReady_() {
+ return !!(window.grecaptcha && typeof window.grecaptcha.render === 'function');
+ }
 
-    // Called by the grecaptcha script when loaded (index.html loads the script with onload=vakRecaptchaOnload&render=explicit)
-    window.vakRecaptchaOnload = window.vakRecaptchaOnload || function vakRecaptchaOnload() {
-        window.__vakRecaptchaLoaded = true;
-        try { window.initRecaptcha && window.initRecaptcha(); } catch (e) { /* ignore */ }
-    };
+ function _waitForGreCaptcha(timeoutMs =5000) {
+ return new Promise((resolve) => {
+ const start = Date.now();
+ (function check() {
+ if (_isReady_()) return resolve(true);
+ if (Date.now() - start >= timeoutMs) return resolve(false);
+ setTimeout(check,150);
+ })();
+ });
+ }
 
-    window.initRecaptcha = window.initRecaptcha || function initRecaptcha() {
-        const key = SITE_KEY_();
-        if (!key) {
-            console.warn('[recaptcha] RECAPTCHA_SITE_KEY missing; recaptchaWrap() will return null.');
-            return;
-        }
-        if (!_isReady_()) {
-            console.warn('[recaptcha] grecaptcha not ready yet (script loads async).');
-            return;
-        }
+ function _hideContainer_() {
+ const c = document.getElementById('recaptchaContainer');
+ if (c) c.style.display = 'none';
+ }
 
-        // If a widget container exists and widget not yet rendered, render it explicitly.
-        try {
-            const el = document.getElementById('recaptchaWidget');
-            if (el && typeof window.__vakRecaptchaWidgetId === 'undefined') {
-                window.__vakRecaptchaWidgetId = window.grecaptcha.render('recaptchaWidget', {
-                    'sitekey': key,
-                    'theme': 'light',
-                    'callback': function (token) {
-                        window.lastRecaptchaToken = token || null;
-                        // Enable verify button only when custom consent checkbox (if present) is checked
-                        const btn = document.getElementById('btnVerifyRecaptcha');
-                        const cb = document.getElementById('recaptchaConsent');
-                        if (btn) {
-                            if (!cb || (cb && cb.checked)) btn.disabled = !(window.lastRecaptchaToken);
-                        }
-                    },
-                    'expired-callback': function () {
-                        window.lastRecaptchaToken = null;
-                        const btn = document.getElementById('btnVerifyRecaptcha');
-                        if (btn) btn.disabled = true;
-                    }
-                });
-            }
-        } catch (e) {
-            console.warn('[recaptcha] render failed', e);
-        }
-    };
+ function _showContainer_() {
+ const c = document.getElementById('recaptchaContainer');
+ if (c) c.style.display = 'block';
+ }
 
-    window.recaptchaWrap = window.recaptchaWrap || function recaptchaWrap(action) {
-        const key = SITE_KEY_();
+ function _ensureRendered_() {
+ const key = SITE_KEY_();
+ if (!key) return false;
+ if (!_isReady_()) return false;
 
-        // If the user already passed captcha via backend flag, treat as no-token-needed.
-        if (window.currentUser?.captchaPassed) return Promise.resolve(null);
+ const el = document.getElementById('recaptchaWidget');
+ if (!el) return false;
 
-        if (!key) return Promise.resolve(null);
+ if (widgetId_ !== null) return true;
 
-        return new Promise(async (resolve) => {
-            const available = await _waitForGreCaptcha(5000);
-            if (!available) {
-                console.warn('[recaptcha] grecaptcha not available after waiting; continuing without token.');
-                resolve(null);
-                return;
-            }
+ widgetId_ = window.grecaptcha.render('recaptchaWidget', {
+ sitekey: key,
+ theme: 'light',
+ callback: function (token) {
+ lastToken_ = token || null;
+ didSolve_ = !!lastToken_;
 
-            // Ensure widget is rendered if the container exists
-            if (typeof window.__vakRecaptchaWidgetId === 'undefined' && document.getElementById('recaptchaWidget')) {
-                try {
-                    window.__vakRecaptchaWidgetId = window.grecaptcha.render('recaptchaWidget', {
-                        'sitekey': key,
-                        'theme': 'light',
-                        'callback': function (token) { window.lastRecaptchaToken = token || null; },
-                        'expired-callback': function () { window.lastRecaptchaToken = null; }
-                    });
-                } catch (e) {
-                    console.warn('[recaptcha] render failed', e);
-                }
-            }
+ // Hide after solve (token stored in memory for immediate `linkPlayer`)
+ if (didSolve_) _hideContainer_();
 
-            const wid = window.__vakRecaptchaWidgetId;
-            let token = null;
-            try {
-                if (typeof wid !== 'undefined' && typeof window.grecaptcha.getResponse === 'function') {
-                    token = window.grecaptcha.getResponse(wid) || null;
-                } else {
-                    token = window.lastRecaptchaToken || null;
-                }
-            } catch (e) {
-                token = window.lastRecaptchaToken || null;
-            }
+ // Optional: notify listeners (login-panel uses this with the Verify button)
+ try {
+ if (window.__vakRecaptchaOnSolvedCb) window.__vakRecaptchaOnSolvedCb(lastToken_);
+ } catch { /* ignore */ }
+ },
+ 'expired-callback': function () {
+ lastToken_ = null;
+ didSolve_ = false;
+ }
+ });
 
-            resolve(token || null);
-        });
-    };
+ return true;
+ }
+
+ // Called by the reCAPTCHA script when loaded (index.html loads with onload=vakRecaptchaOnload&render=explicit)
+ window.vakRecaptchaOnload = window.vakRecaptchaOnload || function vakRecaptchaOnload() {
+ window.__vakRecaptchaLoaded = true;
+ try { window.initRecaptcha && window.initRecaptcha(); } catch { /* ignore */ }
+ };
+
+ // Initialize: render ONLY if the container is currently visible/needed.
+ window.initRecaptcha = window.initRecaptcha || function initRecaptcha() {
+ const key = SITE_KEY_();
+ if (!key) {
+ console.warn('[recaptcha] RECAPTCHA_SITE_KEY missing; captcha will be disabled.');
+ return;
+ }
+
+ // If user already passed per backend, never render.
+ if (window.currentUser?.captchaPassed) {
+ _hideContainer_();
+ return;
+ }
+
+ // Render only if UI is actually showing the container.
+ const c = document.getElementById('recaptchaContainer');
+ const isVisible = !!(c && c.style.display !== 'none');
+ if (!isVisible) return;
+
+ try { _ensureRendered_(); } catch (e) { console.warn('[recaptcha] init/render failed', e); }
+ };
+
+ // Stable API for callers.
+ // NOTE: returns last token (or null). Does NOT call execute() (this is v2 checkbox only).
+ window.recaptchaWrap = window.recaptchaWrap || async function recaptchaWrap() {
+ // If backend says passed, no token required.
+ if (window.currentUser?.captchaPassed) return null;
+
+ const key = SITE_KEY_();
+ if (!key) return null;
+
+ const ok = await _waitForGreCaptcha(5000);
+ if (!ok) return null;
+
+ // If container is hidden but captcha is required, show it and render.
+ const c = document.getElementById('recaptchaContainer');
+ if (c && c.style.display === 'none') _showContainer_();
+
+ _ensureRendered_();
+
+ if (widgetId_ !== null && typeof window.grecaptcha.getResponse === 'function') {
+ const t = window.grecaptcha.getResponse(widgetId_) || '';
+ lastToken_ = t ? String(t) : (lastToken_ || null);
+ }
+
+ return lastToken_ || null;
+ };
+
+ // Optional helpers (not required by existing code, but useful for future pages)
+ window.vakRecaptcha = window.vakRecaptcha || {
+ renderIfNeeded: function renderIfNeeded() {
+ if (window.currentUser?.captchaPassed) {
+ _hideContainer_();
+ return { rendered: false, reason: 'already_passed' };
+ }
+ const c = document.getElementById('recaptchaContainer');
+ if (!c || c.style.display === 'none') return { rendered: false, reason: 'container_hidden' };
+ const rendered = _ensureRendered_();
+ return { rendered };
+ },
+ getToken: function getToken() { return lastToken_ || null; },
+ reset: function reset() {
+ try {
+ if (widgetId_ !== null && window.grecaptcha && typeof window.grecaptcha.reset === 'function') {
+ window.grecaptcha.reset(widgetId_);
+ }
+ } catch { /* ignore */ }
+ lastToken_ = null;
+ didSolve_ = false;
+ }
+ };
 })();

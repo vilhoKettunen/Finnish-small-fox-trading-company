@@ -152,33 +152,36 @@
      * @param {object|null} user
      */
   function evaluateSetupForm(user) {
-        const loggedIn = !!(user);
-    const incomplete = loggedIn && (
-   !String(user.playerName || '').trim() ||
+ const loggedIn = !!(user);
+ const incomplete = loggedIn && (
+ !String(user.playerName || '').trim() ||
  !String(user.mailbox || '').trim()
-    );
+ );
 
-        const setupEl = document.getElementById('setupForm');
-        const shouldShowSetup = loggedIn && incomplete;
+ const setupEl = document.getElementById('setupForm');
+ const shouldShowSetup = loggedIn && incomplete;
 
-        if (setupEl) {
-    setupEl.style.display = shouldShowSetup ? 'block' : 'none';
-   // Apply green highlight class whenever the form is visible
-            setupEl.classList.toggle('setup-highlight', shouldShowSetup);
-   }
+ if (setupEl) {
+ setupEl.style.display = shouldShowSetup ? 'block' : 'none';
+ setupEl.classList.toggle('setup-highlight', shouldShowSetup);
+ }
 
-        // Terms: hide only when logged in AND profile complete (Q9 answer B)
-        setLoginTermsWarningVisible_(!loggedIn || incomplete);
+ setLoginTermsWarningVisible_(!loggedIn || incomplete);
+ onSetupInput_();
 
-        // Reset save button state
-    onSetupInput_();
+ // Captcha visibility: show when logged in, setup complete, but captcha not passed.
+ const recapEl = document.getElementById('recaptchaContainer');
+ if (recapEl) {
+ const hasSetup = loggedIn && !incomplete;
+ const passedCaptcha = !!user?.captchaPassed;
 
-        // Captcha visibility: show when logged in, setup complete, but captcha not passed.
-        const recapEl = document.getElementById('recaptchaContainer');
-        if (recapEl) {
-            const hasSetup = loggedIn && !incomplete;
-            const passedCaptcha = !!user?.captchaPassed;
-            recapEl.style.display = (hasSetup && !passedCaptcha) ? 'block' : 'none';
+ recapEl.style.display = (hasSetup && !passedCaptcha) ? 'block' : 'none';
+
+ // If it is now needed and grecaptcha is available, render explicit widget.
+ if (hasSetup && !passedCaptcha) {
+ try { window.initRecaptcha && window.initRecaptcha(); } catch { }
+ try { window.vakRecaptcha && window.vakRecaptcha.renderIfNeeded && window.vakRecaptcha.renderIfNeeded(); } catch { }
+ }
 
  // keep Verify button enabled only when consent checkbox is checked
  const cb = document.getElementById('recaptchaConsent');
@@ -374,41 +377,38 @@
 
  const btn = document.getElementById('btnVerifyRecaptcha');
  if (btn) btn.disabled = true;
- // Use ASCII dots to avoid encoding/display issues
  if (msg) msg.textContent = 'Verifying...';
 
  try {
+ // Ensure widget is rendered and get the v2 response token.
+ try { window.initRecaptcha && window.initRecaptcha(); } catch { }
  const token = (typeof window.recaptchaWrap === 'function')
  ? await window.recaptchaWrap('linkPlayer')
  : null;
 
- // If recaptchaWrap returned null, avoid sending a null token to backend.
- if (token === null) {
- // If user already has captchaPassed flagged, consider it verified.
+ if (!token) {
  if (window.currentUser?.captchaPassed) {
  if (msg) msg.textContent = 'Already verified.';
  try { evaluateSetupForm(window.currentUser); } catch { }
  return;
  }
- // Helpful messages for missing infra/cfg
  if (!window.RECAPTCHA_SITE_KEY) {
  if (msg) msg.textContent = 'reCAPTCHA site key missing.';
  return;
  }
- if (!window.grecaptcha || typeof window.grecaptcha.execute !== 'function') {
+ if (!window.grecaptcha) {
  if (msg) msg.textContent = 'reCAPTCHA not ready. Please try again in a moment.';
  return;
  }
- if (msg) msg.textContent = 'Failed to obtain reCAPTCHA token. Please try again.';
+ if (msg) msg.textContent = 'Please complete the reCAPTCHA checkbox first.';
  return;
  }
 
- // linkPlayer is the existing backend action that sets captchaPassed=1.
- // It also writes playerName/mailbox, so we must send the current values.
+ // `linkPlayer` sets captchaPassed=1. Send v2 token only (no v3 action/score fields).
  const playerName = String(window.currentUser?.playerName || '').trim();
  const mailbox = String(window.currentUser?.mailbox || '').trim();
 
- const payload = { playerName, mailbox, recaptchaToken: token, recaptchaAction: 'linkPlayer' };
+ const payload = { playerName, mailbox, recaptchaToken: token };
 
  const r = await window.apiPost('linkPlayer', {
  idToken: window.googleIdToken,
@@ -417,7 +417,7 @@
 
  if (!r?.ok) throw new Error(r?.error || 'Captcha verification failed');
 
- // Refresh profile so UI updates and captcha gets hidden.
+ // Refresh profile so UI updates and captcha gets permanently hidden.
  const me = await window.apiGet('me', { idToken: window.googleIdToken });
  const u = (me?.data?.user) || (me?.user) || {};
  window.currentUser = Object.assign(window.currentUser || {}, u);
@@ -425,10 +425,9 @@
  if (msg) msg.textContent = 'Verified.';
  try { evaluateSetupForm(window.currentUser); } catch { }
 
- // Persist the local helper flag used by index gating.
+ // Legacy helper flag used by some index gating.
  localStorage.setItem('vak_captcha_ok', '1');
 
- // Some pages hide the setup-only overlay when captcha is passed.
  try { window.hideRecaptchaWidget && window.hideRecaptchaWidget(); } catch { }
  try { window.hideSetupShowApp && window.hideSetupShowApp(); } catch { }
  } catch (e) {
