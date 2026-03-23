@@ -174,24 +174,43 @@
         return out;
     }
 
+    function _estimateMaxChunkSize_(baseUrl, action, body, reqId, totalChunks) {
+        // Build a worst-case URL without payloadChunk to estimate overhead.
+        const u = new URL(baseUrl);
+        u.searchParams.set('action', 'bypassChunk');
+        u.searchParams.set('targetAction', action);
+        u.searchParams.set('reqId', reqId);
+        u.searchParams.set('i', String(0));
+        u.searchParams.set('n', String(totalChunks));
+
+        if (body) {
+            for (const [key, value] of Object.entries(body)) {
+                if (key === 'payload') continue;
+                const enc = _encodeValueForBypass_(value);
+                if (enc !== '') u.searchParams.set(key, enc);
+            }
+        }
+
+        // Leave headroom for encoding expansion.
+        const overhead = u.toString().length;
+        const budget =1950 - overhead;
+        return Math.max(120, Math.min(600, budget));
+    }
+
     // Send bypass using one or more GETs (chunked mode for big payloads).
     async function apiGetBypass(action, body) {
         if (!BASE_OK) throw missingBaseError_();
 
         // First try: single request (existing behavior)
-        const trySingle = async () => {
-            const url = new URL(BASE);
-            url.searchParams.append('action', action);
-            if (body) {
-                for (const [key, value] of Object.entries(body)) {
-                    const enc = _encodeValueForBypass_(value);
-                    if (enc !== '') url.searchParams.append(key, enc);
-                }
+        const url = new URL(BASE);
+        url.searchParams.append('action', action);
+        if (body) {
+            for (const [key, value] of Object.entries(body)) {
+                const enc = _encodeValueForBypass_(value);
+                if (enc !== '') url.searchParams.append(key, enc);
             }
-            return url;
-        };
+        }
 
-        const url = await trySingle();
         if (url.toString().length <=1900) {
             const r = await fetch(url.toString(), { method: 'GET' });
             const j = await readJsonOrThrow_(r);
@@ -211,7 +230,17 @@
         }
 
         const reqId = 'bp_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-        const chunks = _chunkString_(payloadStr,800);
+
+        // Start with a conservative chunk size, then adapt to overhead.
+        let chunkSize =350;
+        let chunks = _chunkString_(payloadStr, chunkSize);
+        chunkSize = _estimateMaxChunkSize_(BASE, action, body, reqId, chunks.length);
+        chunks = _chunkString_(payloadStr, chunkSize);
+
+        // Safety: if token is extremely large, even tiny chunks may not fit.
+        if (_estimateMaxChunkSize_(BASE, action, body, reqId, chunks.length) <=140) {
+            throw new Error('Bypass request too large (idToken/params exceed URL limits).');
+        }
 
         //1) send chunks
         for (let i =0; i < chunks.length; i++) {
@@ -233,7 +262,13 @@
             }
 
             if (u.toString().length >2000) {
-                throw new Error('Chunk URL still exceeds2000 chars. Reduce chunk size.');
+                // If we still exceed, shrink chunk size and retry once.
+                const smaller = Math.max(120, Math.floor(chunkSize *0.7));
+                if (smaller === chunkSize) throw new Error('Chunk URL still exceeds2000 chars. Reduce chunk size.');
+                chunkSize = smaller;
+                chunks = _chunkString_(payloadStr, chunkSize);
+                i = -1; // restart loop with new chunking
+                continue;
             }
 
             const rr = await fetch(u.toString(), { method: 'GET' });
