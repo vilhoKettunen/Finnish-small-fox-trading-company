@@ -5,7 +5,8 @@
 
 (function () {
     const RAW_BASE = String(window.WEB_APP_URL || '').trim();
-    const BASE = RAW_BASE.replace(/\/+|\s+$/g, '');
+    // IMPORTANT: only remove trailing slashes/whitespace. Do NOT strip all slashes (breaks https://).
+    const BASE = RAW_BASE.replace(/\/+$/g, '').replace(/\s+$/g, '');
     const BASE_OK = /^https?:\/\//i.test(BASE);
 
     // =========================
