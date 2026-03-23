@@ -56,16 +56,12 @@
             console.warn('[recaptcha] RECAPTCHA_SITE_KEY missing; not loading reCAPTCHA script.');
             return;
         }
-        // Remove any existing generic recaptcha script tags without render param
+        // Remove any existing recaptcha script tags to avoid conflicts
         const existing = Array.from(document.querySelectorAll('script[src*="recaptcha/api.js"]'));
-        for (const el of existing) {
-            if (!el.src.includes('?render=')) el.remove();
-        }
-        const enc = encodeURIComponent(key);
-        // If already loaded with the same key, do nothing
-        if (Array.from(document.querySelectorAll('script[src*="recaptcha/api.js?render="]')).some(s => s.src.includes(enc))) return;
+        for (const el of existing) el.remove();
+        // Load explicit v2 widget script and call vakRecaptchaOnload when ready
         const s = document.createElement('script');
-        s.src = 'https://www.google.com/recaptcha/api.js?render=' + enc;
+        s.src = 'https://www.google.com/recaptcha/api.js?onload=vakRecaptchaOnload&render=explicit';
         s.async = true; s.defer = true;
         document.head.appendChild(s);
     })();

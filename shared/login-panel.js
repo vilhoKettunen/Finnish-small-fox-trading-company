@@ -112,6 +112,8 @@
  recap.style.marginTop = '10px';
  recap.innerHTML =
  '<div class="small" style="margin-bottom:6px;"><b>Human verification required</b></div>' +
+ // v2 widget target — grecaptcha.render will use this container
+ '<div id="recaptchaWidget" style="margin-bottom:8px;"></div>' +
  '<label class="small" style="display:block;margin-bottom:6px;">' +
  '<input type="checkbox" id="recaptchaConsent"> I am not a bot' +
  '</label>' +
@@ -279,7 +281,7 @@
       if (el) el.style.display = visible ? 'block' : 'none';
     }
 
-    // ?? submitSetup (central copy for all pages) ????????????????????????????
+    // ?? submitSetup (central copy for all pages) ?????????????????????????????
   window.submitSetup = window.submitSetup || async function submitSetup() {
       const msg = document.getElementById('setupMsg');
     const playerName = String(document.getElementById('setupPlayerName')?.value || '').trim();
