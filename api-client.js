@@ -5,7 +5,7 @@
 
 (function () {
     const RAW_BASE = String(window.WEB_APP_URL || '').trim();
-    const BASE = RAW_BASE.replace(/\/+$|\s+$/g, '');
+    const BASE = RAW_BASE.replace(/\/+|\s+$/g, '');
     const BASE_OK = /^https?:\/\//i.test(BASE);
 
     // =========================
@@ -41,7 +41,7 @@
         'adjustStock',
 
         // Account setup
-        // NOTE: `linkPlayer` MUST be POST (token + payload can exceed URL limits)
+        'linkPlayer',
 
         // Self account settings (NEW)
         'updateMyProfile',
@@ -160,29 +160,102 @@
         return normalize(j);
     }
 
+    function _encodeValueForBypass_(value) {
+        if (typeof value === 'object' && value !== null) return JSON.stringify(value);
+        if (value === undefined || value === null) return '';
+        return String(value);
+    }
+
+    // Chunk large string into smaller pieces (for GET URL limits)
+    function _chunkString_(s, chunkSize) {
+        const out = [];
+        for (let i =0; i < s.length; i += chunkSize) out.push(s.slice(i, i + chunkSize));
+        return out;
+    }
+
+    // Send bypass using one or more GETs (chunked mode for big payloads).
     async function apiGetBypass(action, body) {
         if (!BASE_OK) throw missingBaseError_();
 
-        const url = new URL(BASE);
-        url.searchParams.append('action', action);
-
-        if (body) {
-            for (const [key, value] of Object.entries(body)) {
-                // Stringify complex objects (payloads) so GAS can parse them
-                if (typeof value === 'object' && value !== null) {
-                    url.searchParams.append(key, JSON.stringify(value));
-                } else if (value !== undefined && value !== null) {
-                    url.searchParams.append(key, String(value));
+        // First try: single request (existing behavior)
+        const trySingle = async () => {
+            const url = new URL(BASE);
+            url.searchParams.append('action', action);
+            if (body) {
+                for (const [key, value] of Object.entries(body)) {
+                    const enc = _encodeValueForBypass_(value);
+                    if (enc !== '') url.searchParams.append(key, enc);
                 }
+            }
+            return url;
+        };
+
+        const url = await trySingle();
+        if (url.toString().length <=1900) {
+            const r = await fetch(url.toString(), { method: 'GET' });
+            const j = await readJsonOrThrow_(r);
+            return normalize(j);
+        }
+
+        // Chunk fallback: split `payload` only (common large field). Requires backend support.
+        const payloadStr = body && Object.prototype.hasOwnProperty.call(body, 'payload')
+? _encodeValueForBypass_(body.payload)
+: '';
+
+        if (!payloadStr) {
+            console.warn('URL length exceeds limit but no `payload` field to chunk. Request may fail.');
+            const r = await fetch(url.toString(), { method: 'GET' });
+            const j = await readJsonOrThrow_(r);
+            return normalize(j);
+        }
+
+        const reqId = 'bp_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        const chunks = _chunkString_(payloadStr,800);
+
+        //1) send chunks
+        for (let i =0; i < chunks.length; i++) {
+            const u = new URL(BASE);
+            u.searchParams.set('action', 'bypassChunk');
+            u.searchParams.set('targetAction', action);
+            u.searchParams.set('reqId', reqId);
+            u.searchParams.set('i', String(i));
+            u.searchParams.set('n', String(chunks.length));
+            u.searchParams.set('payloadChunk', chunks[i]);
+
+            // include small fields on every chunk (idToken, recaptchaToken etc.)
+            if (body) {
+                for (const [key, value] of Object.entries(body)) {
+                    if (key === 'payload') continue;
+                    const enc = _encodeValueForBypass_(value);
+                    if (enc !== '') u.searchParams.set(key, enc);
+                }
+            }
+
+            if (u.toString().length >2000) {
+                throw new Error('Chunk URL still exceeds2000 chars. Reduce chunk size.');
+            }
+
+            const rr = await fetch(u.toString(), { method: 'GET' });
+            const jj = await readJsonOrThrow_(rr);
+            if (!jj || jj.ok !== true) {
+                return normalize(jj);
             }
         }
 
-        // Safety check
-        if (url.toString().length > 2000) {
-            console.warn('URL length exceeds 2000 chars. Request might fail via Bypass.');
+        //2) finalize (executes upstream action with reassembled payload)
+        const fin = new URL(BASE);
+        fin.searchParams.set('action', 'bypassChunkFinalize');
+        fin.searchParams.set('targetAction', action);
+        fin.searchParams.set('reqId', reqId);
+        if (body) {
+            for (const [key, value] of Object.entries(body)) {
+                if (key === 'payload') continue;
+                const enc = _encodeValueForBypass_(value);
+                if (enc !== '') fin.searchParams.set(key, enc);
+            }
         }
 
-        const r = await fetch(url.toString(), { method: 'GET' });
+        const r = await fetch(fin.toString(), { method: 'GET' });
         const j = await readJsonOrThrow_(r);
         return normalize(j);
     }

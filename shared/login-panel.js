@@ -380,8 +380,8 @@
  if (msg) msg.textContent = 'Verifying...';
 
  try {
- // Ensure widget is rendered and get the v2 response token.
  try { window.initRecaptcha && window.initRecaptcha(); } catch { }
+
  const token = (typeof window.recaptchaWrap === 'function')
  ? await window.recaptchaWrap('linkPlayer')
  : null;
@@ -392,24 +392,17 @@
  try { evaluateSetupForm(window.currentUser); } catch { }
  return;
  }
- if (!window.RECAPTCHA_SITE_KEY) {
- if (msg) msg.textContent = 'reCAPTCHA site key missing.';
- return;
- }
- if (!window.grecaptcha) {
- if (msg) msg.textContent = 'reCAPTCHA not ready. Please try again in a moment.';
- return;
- }
  if (msg) msg.textContent = 'Please complete the reCAPTCHA checkbox first.';
  return;
  }
 
- // `linkPlayer` sets captchaPassed=1. Send v2 token only (no v3 action/score fields).
  const playerName = String(window.currentUser?.playerName || '').trim();
  const mailbox = String(window.currentUser?.mailbox || '').trim();
 
+ // Keep payload minimal: only fields required for onboarding.
  const payload = { playerName, mailbox, recaptchaToken: token };
 
+ // NOTE: `linkPlayer` is routed through GET-bypass in `api-client.js`.
  const r = await window.apiPost('linkPlayer', {
  idToken: window.googleIdToken,
  payload
@@ -417,7 +410,7 @@
 
  if (!r?.ok) throw new Error(r?.error || 'Captcha verification failed');
 
- // Refresh profile so UI updates and captcha gets permanently hidden.
+ // Refresh `me` so UI updates and captcha is permanently hidden.
  const me = await window.apiGet('me', { idToken: window.googleIdToken });
  const u = (me?.data?.user) || (me?.user) || {};
  window.currentUser = Object.assign(window.currentUser || {}, u);
@@ -425,7 +418,6 @@
  if (msg) msg.textContent = 'Verified.';
  try { evaluateSetupForm(window.currentUser); } catch { }
 
- // Legacy helper flag used by some index gating.
  localStorage.setItem('vak_captcha_ok', '1');
 
  try { window.hideRecaptchaWidget && window.hideRecaptchaWidget(); } catch { }
