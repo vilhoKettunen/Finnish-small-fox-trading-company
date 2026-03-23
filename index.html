@@ -2,7 +2,7 @@
 <html>
 <head>
     <script src="auth-storage.js"></script>
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
     <title>Vak Store Trading Calculator</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="description" content="We organize and facilitate trade among players in Vintage Story on The Official Public Server (TOPS). Instant trades via our main store, pricing data tracking, and the OCM player marketplace. This site is a player-driven in-game trading hub and calculator for the Vintage Story TOPS server — no real‑world goods or money are exchanged; all prices refer to in‑game items only." />
@@ -24,7 +24,7 @@
     <script src="shared/login-panel.js"></script>
     <script src="shared/universal-dropdown.js"></script>
 
- <!-- Index page modules (split out from inline script) -->
+    <!-- Index page modules (split out from inline script) -->
     <script src="index_js/index-core.js"></script>
     <script src="index_js/legacy-utils.js"></script>
     <script src="index_js/index-formatting.js"></script>
@@ -32,10 +32,13 @@
     <script src="index_js/index-data.js"></script>
     <script src="index_js/index-collapsible.js"></script>
 
+    <!-- Recaptcha wrapper (must be before legacy-requests.js) -->
+    <script src="index_js/index-recaptcha.js"></script>
+
     <!-- Auth / transfer / admin / carts / requests (logical order) -->
     <script src="index_js/legacy-auth.js"></script>
     <script src="index_js/legacy-transfer.js"></script>
-<script src="index_js/legacy-admin.js"></script>
+    <script src="index_js/legacy-admin.js"></script>
     <script src="index_js/legacy-carts.js"></script>
     <script src="index_js/legacy-requests.js"></script>
 
@@ -49,18 +52,18 @@
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
     <script type="application/ld+json">
- {
- "@context": "https://schema.org",
- "@type": "SoftwareApplication",
- "name": "Vak Store Trading Calculator",
- "alternateName": "Vakstore",
- "url": "/",
- "applicationCategory": "GameApplication",
- "operatingSystem": "Web",
- "isAccessibleForFree": true,
- "description": "We organize and facilitate trade among players in Vintage Story (TOPS). We run a main store for instant trades, track pricing data, and provide a player-to-player marketplace. This site is a player-driven in-game trading hub and calculator for the Vintage Story TOPS server — no real‑world goods or money are exchanged; all prices refer to in‑game items only."
- }
- </script>
+        {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Vak Store Trading Calculator",
+        "alternateName": "Vakstore",
+        "url": "/",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Web",
+        "isAccessibleForFree": true,
+        "description": "We organize and facilitate trade among players in Vintage Story (TOPS). We run a main store for instant trades, track pricing data, and provide a player-to-player marketplace. This site is a player-driven in-game trading hub and calculator for the Vintage Story TOPS server — no real‑world goods or money are exchanged; all prices refer to in‑game items only."
+        }
+    </script>
 </head>
 <body class="index-page">
     <!-- top bar injected by topbar.js -->

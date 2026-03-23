@@ -150,7 +150,7 @@ method: 'GET',
     });
     };
 
-        (skipCaptcha ? Promise.resolve(null) : window.recaptchaWrap())
+        (skipCaptcha ? Promise.resolve(null) : (typeof window.recaptchaWrap === 'function' ? window.recaptchaWrap('createRequest') : Promise.resolve(null)))
             .then(token => doRequestViaGet(token))
    .then(r => r.json())
             .then(j => {
