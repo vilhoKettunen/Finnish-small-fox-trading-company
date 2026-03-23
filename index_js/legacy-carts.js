@@ -179,8 +179,20 @@
     window.addSellIndividual = window.addSellIndividual || function addSellIndividual() {
         const name = document.getElementById('sellIndivSelect').value;
         const qty = parseInt(document.getElementById('sellIndivQty').value) || 0;
-        const item = (window.items || []).find(i => i.name === name); if (!item || !item.buyEach) return;
-        window.sellCart.push({ name: item.name, qty, price: item.buyEach, source: 'STORE' });
+
+        const item = (window.items || []).find(i => i.name === name);
+        if (!item || qty <= 0) return;
+
+        const bundleSize = Number(item.bundleSize || 1) || 1;
+
+        // Prefer explicit per-each sell price; fallback to sellStack / bundleSize.
+        const perEachSell = (item.sellEach != null && isFinite(Number(item.sellEach)))
+            ? Number(item.sellEach)
+            : (item.sellStack != null && isFinite(Number(item.sellStack))) ? (Number(item.sellStack) / bundleSize) : null;
+
+        if (!(perEachSell > 0)) return;
+
+        window.sellCart.push({ name: item.name, qty, price: perEachSell, source: 'STORE' });
         window.renderSellList && window.renderSellList();
     };
 
