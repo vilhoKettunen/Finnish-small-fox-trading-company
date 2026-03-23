@@ -420,7 +420,8 @@
  evaluateSetupForm: evaluateSetupForm,
  onSetupInput_: onSetupInput_,
  _dismissSetupOverlay_: _dismissSetupOverlay_,
- verifyCaptcha: verifyCaptcha,
+ // Fix: actual implementation is `verifyCaptcha_`.
+ verifyCaptcha: verifyCaptcha_,
  showRecaptcha: function showRecaptcha() {
  const c = document.getElementById('recaptchaContainer');
  if (c) c.style.display = 'block';
@@ -435,7 +436,7 @@
 
     // Provide a stable global for legacy/inline onclick usage.
     // Some pages/components may reference `verifyCaptcha()` directly.
-window.verifyCaptcha = window.verifyCaptcha || function verifyCaptcha() {
+ window.verifyCaptcha = window.verifyCaptcha || function verifyCaptcha() {
  try {
  if (window.SharedLogin && typeof window.SharedLogin.verifyCaptcha === 'function') {
  return window.SharedLogin.verifyCaptcha();
