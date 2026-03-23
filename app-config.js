@@ -19,7 +19,7 @@
  const DEFAULTS = {
  WEB_APP_URL: 'https://yellow-king-52c6.vilhokettu1.workers.dev/exec',
  OAUTH_CLIENT_ID: DEFAULT_OAUTH_CLIENT_ID,
- RECAPTCHA_SITE_KEY: '6LdjcAgsAAAAABWoHl5dmFjbJQL61kOu7ddvkUZF'
+     RECAPTCHA_SITE_KEY: '6LdjcAgsAAAAABWoHl5dmFjbJQL61kOu7ddvkUZF'
  };
 
  // Override from deployment if you want, but ensure it is non-empty

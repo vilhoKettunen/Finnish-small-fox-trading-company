@@ -26,6 +26,19 @@
         }
     };
 
+    // Helper: wait up to `timeoutMs` for grecaptcha to appear
+    function _waitForGreCaptcha(timeoutMs = 5000) {
+        return new Promise((resolve) => {
+            const start = Date.now();
+            function check() {
+                if (window.grecaptcha && typeof window.grecaptcha.ready === 'function') return resolve(true);
+                if (Date.now() - start >= timeoutMs) return resolve(false);
+                setTimeout(check, 150);
+            }
+            check();
+        });
+    }
+
     window.recaptchaWrap = window.recaptchaWrap || function recaptchaWrap(action) {
         const key = SITE_KEY_();
         const act = String(action || 'createRequest');
@@ -35,10 +48,11 @@
 
         if (!key) return Promise.resolve(null);
 
-        return new Promise((resolve, reject) => {
-            if (!_isReady_()) {
-                // Don't hard-fail the transaction for missing captcha infra.
-                console.warn('[recaptcha] grecaptcha not available; continuing without token.');
+        return new Promise(async (resolve, reject) => {
+            // Wait briefly for grecaptcha to load (script is async/defer)
+            const available = await _waitForGreCaptcha(5000);
+            if (!available) {
+                console.warn('[recaptcha] grecaptcha not available after waiting; continuing without token.');
                 resolve(null);
                 return;
             }

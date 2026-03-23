@@ -380,6 +380,27 @@
  ? await window.recaptchaWrap('linkPlayer')
  : null;
 
+ // If recaptchaWrap returned null, avoid sending a null token to backend.
+ if (token === null) {
+ // If user already has captchaPassed flagged, consider it verified.
+ if (window.currentUser?.captchaPassed) {
+ if (msg) msg.textContent = 'Already verified.';
+ try { evaluateSetupForm(window.currentUser); } catch { }
+ return;
+ }
+ // Helpful messages for missing infra/cfg
+ if (!window.RECAPTCHA_SITE_KEY) {
+ if (msg) msg.textContent = 'reCAPTCHA site key missing.';
+ return;
+ }
+ if (!window.grecaptcha || typeof window.grecaptcha.execute !== 'function') {
+ if (msg) msg.textContent = 'reCAPTCHA not ready. Please try again in a moment.';
+ return;
+ }
+ if (msg) msg.textContent = 'Failed to obtain reCAPTCHA token. Please try again.';
+ return;
+ }
+
  // linkPlayer is the existing backend action that sets captchaPassed=1.
  // It also writes playerName/mailbox, so we must send the current values.
  const playerName = String(window.currentUser?.playerName || '').trim();
