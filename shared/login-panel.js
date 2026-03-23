@@ -433,4 +433,14 @@
 
     window.setLoginTermsWarningVisible_ = setLoginTermsWarningVisible_;
 
+    // Provide a stable global for legacy/inline onclick usage.
+    // Some pages/components may reference `verifyCaptcha()` directly.
+window.verifyCaptcha = window.verifyCaptcha || function verifyCaptcha() {
+ try {
+ if (window.SharedLogin && typeof window.SharedLogin.verifyCaptcha === 'function') {
+ return window.SharedLogin.verifyCaptcha();
+ }
+ } catch { }
+};
+
 })();
