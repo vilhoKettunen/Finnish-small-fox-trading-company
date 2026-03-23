@@ -44,6 +44,9 @@
         // Account setup
         'linkPlayer',
 
+        // Captcha status (lightweight)
+        'markCaptchaPassed',
+
         // Self account settings (NEW)
         'updateMyProfile',
         'deleteMyAccount',
@@ -167,34 +170,10 @@
         return String(value);
     }
 
-    // Chunk large string into smaller pieces (for GET URL limits)
     function _chunkString_(s, chunkSize) {
         const out = [];
         for (let i =0; i < s.length; i += chunkSize) out.push(s.slice(i, i + chunkSize));
         return out;
-    }
-
-    function _estimateMaxChunkSize_(baseUrl, action, body, reqId, totalChunks) {
-        // Build a worst-case URL without payloadChunk to estimate overhead.
-        const u = new URL(baseUrl);
-        u.searchParams.set('action', 'bypassChunk');
-        u.searchParams.set('targetAction', action);
-        u.searchParams.set('reqId', reqId);
-        u.searchParams.set('i', String(0));
-        u.searchParams.set('n', String(totalChunks));
-
-        if (body) {
-            for (const [key, value] of Object.entries(body)) {
-                if (key === 'payload') continue;
-                const enc = _encodeValueForBypass_(value);
-                if (enc !== '') u.searchParams.set(key, enc);
-            }
-        }
-
-        // Leave headroom for encoding expansion.
-        const overhead = u.toString().length;
-        const budget =1950 - overhead;
-        return Math.max(120, Math.min(600, budget));
     }
 
     // Send bypass using one or more GETs (chunked mode for big payloads).
@@ -231,18 +210,11 @@
 
         const reqId = 'bp_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-        // Start with a conservative chunk size, then adapt to overhead.
-        let chunkSize =350;
-        let chunks = _chunkString_(payloadStr, chunkSize);
-        chunkSize = _estimateMaxChunkSize_(BASE, action, body, reqId, chunks.length);
-        chunks = _chunkString_(payloadStr, chunkSize);
+        // Conservative chunk size since the recaptcha token and other fields may be present on finalize.
+        const chunkSize =300;
+        const chunks = _chunkString_(payloadStr, chunkSize);
 
-        // Safety: if token is extremely large, even tiny chunks may not fit.
-        if (_estimateMaxChunkSize_(BASE, action, body, reqId, chunks.length) <=140) {
-            throw new Error('Bypass request too large (idToken/params exceed URL limits).');
-        }
-
-        //1) send chunks
+        //1) send chunks WITHOUT auth fields (avoid huge URLs due to idToken)
         for (let i =0; i < chunks.length; i++) {
             const u = new URL(BASE);
             u.searchParams.set('action', 'bypassChunk');
@@ -252,23 +224,8 @@
             u.searchParams.set('n', String(chunks.length));
             u.searchParams.set('payloadChunk', chunks[i]);
 
-            // include small fields on every chunk (idToken, recaptchaToken etc.)
-            if (body) {
-                for (const [key, value] of Object.entries(body)) {
-                    if (key === 'payload') continue;
-                    const enc = _encodeValueForBypass_(value);
-                    if (enc !== '') u.searchParams.set(key, enc);
-                }
-            }
-
             if (u.toString().length >2000) {
-                // If we still exceed, shrink chunk size and retry once.
-                const smaller = Math.max(120, Math.floor(chunkSize *0.7));
-                if (smaller === chunkSize) throw new Error('Chunk URL still exceeds2000 chars. Reduce chunk size.');
-                chunkSize = smaller;
-                chunks = _chunkString_(payloadStr, chunkSize);
-                i = -1; // restart loop with new chunking
-                continue;
+                throw new Error('Chunk URL still exceeds2000 chars. Reduce chunk size.');
             }
 
             const rr = await fetch(u.toString(), { method: 'GET' });
@@ -278,7 +235,8 @@
             }
         }
 
-        //2) finalize (executes upstream action with reassembled payload)
+        //2) finalize (executes upstream action with reassembled payload).
+        // Send auth data ONLY here.
         const fin = new URL(BASE);
         fin.searchParams.set('action', 'bypassChunkFinalize');
         fin.searchParams.set('targetAction', action);
@@ -289,6 +247,10 @@
                 const enc = _encodeValueForBypass_(value);
                 if (enc !== '') fin.searchParams.set(key, enc);
             }
+        }
+
+        if (fin.toString().length >2000) {
+            throw new Error('Finalize URL exceeds2000 chars (idToken too large for GET-bypass).');
         }
 
         const r = await fetch(fin.toString(), { method: 'GET' });

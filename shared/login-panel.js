@@ -382,7 +382,7 @@
  try { window.initRecaptcha && window.initRecaptcha(); } catch { }
 
  const token = (typeof window.recaptchaWrap === 'function')
- ? await window.recaptchaWrap('linkPlayer')
+ ? await window.recaptchaWrap('markCaptchaPassed')
  : null;
 
  if (!token) {
@@ -395,16 +395,10 @@
  return;
  }
 
- const playerName = String(window.currentUser?.playerName || '').trim();
- const mailbox = String(window.currentUser?.mailbox || '').trim();
-
- // Keep payload minimal: only fields required for onboarding.
- const payload = { playerName, mailbox, recaptchaToken: token };
-
- // NOTE: `linkPlayer` is routed through GET-bypass in `api-client.js`.
- const r = await window.apiPost('linkPlayer', {
+ // New lightweight endpoint: edge verifies token, backend only flips captchaPassed.
+ const r = await window.apiPost('markCaptchaPassed', {
  idToken: window.googleIdToken,
- payload
+ recaptchaToken: token
  });
 
  if (!r?.ok) throw new Error(r?.error || 'Captcha verification failed');
