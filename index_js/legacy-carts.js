@@ -185,14 +185,14 @@
 
         const bundleSize = Number(item.bundleSize || 1) || 1;
 
-        // Prefer explicit per-each sell price; fallback to sellStack / bundleSize.
-        const perEachSell = (item.sellEach != null && isFinite(Number(item.sellEach)))
-            ? Number(item.sellEach)
-            : (item.sellStack != null && isFinite(Number(item.sellStack))) ? (Number(item.sellStack) / bundleSize) : null;
+        // Prefer explicit per-each payout (store buys from user -> use buyEach). Fallback to buyStack / bundleSize.
+        const perEachPayout = (item.buyEach != null && isFinite(Number(item.buyEach)))
+            ? Number(item.buyEach)
+            : (item.buyStack != null && isFinite(Number(item.buyStack))) ? (Number(item.buyStack) / bundleSize) : null;
 
-        if (!(perEachSell > 0)) return;
+        if (!(perEachPayout > 0)) return;
 
-        window.sellCart.push({ name: item.name, qty, price: perEachSell, source: 'STORE' });
+        window.sellCart.push({ name: item.name, qty, price: perEachPayout, source: 'STORE' });
         window.renderSellList && window.renderSellList();
     };
 
