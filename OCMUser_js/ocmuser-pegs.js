@@ -95,27 +95,27 @@
         function updatePriceInfo_() {
             const it = O.findCatalogItem(input.value);
             if (!it) { priceInfo.textContent = '—'; return; }
-            const bs = Number(it.bundleSize || 1) || 1;
+            const bs = Number(it.bundleSize ||1) ||1;
             const parts = [];
-            if (it.buyEach != null) parts.push(`buyEach:${fmt2(O.parseMaybeScaledBt_(it.buyEach))}`);
-            if (it.sellEach != null) parts.push(`sellEach:${fmt2(O.parseMaybeScaledBt_(it.sellEach))}`);
-            if (it.buyStack != null) parts.push(`buyStack:${fmt2(O.parseMaybeScaledBt_(it.buyStack))}`);
-            if (it.sellStack != null) parts.push(`sellStack:${fmt2(O.parseMaybeScaledBt_(it.sellStack))}`);
+            if (it.buyEach != null) parts.push(`buyEach:${fmt2(O.parseBtNumber_(it.buyEach))}`);
+            if (it.sellEach != null) parts.push(`sellEach:${fmt2(O.parseBtNumber_(it.sellEach))}`);
+            if (it.buyStack != null) parts.push(`buyStack:${fmt2(O.parseBtNumber_(it.buyStack))}`);
+            if (it.sellStack != null) parts.push(`sellStack:${fmt2(O.parseBtNumber_(it.sellStack))}`);
             priceInfo.textContent = `${parts.join(', ')} (bs:${bs})`;
         }
 
         function updateStatement_() {
             const soldName = cfg.getSoldName ? cfg.getSoldName() : 'ITEM';
-            const soldSS = Number(cfg.getSoldStackSize ? cfg.getSoldStackSize() : 1) || 1;
+            const soldSS = Number(cfg.getSoldStackSize ? cfg.getSoldStackSize() :1) ||1;
             const pb = String(priceBasis.value || 'IND').toUpperCase();
             const pegName = input.value || 'PEG';
-            const q = Math.max(1, Math.round(Number(qtyInput.value || 1) || 1));
+            const q = Math.max(1, Math.round(Number(qtyInput.value ||1) ||1));
             const qb = String(qtyBasis.value || 'IND').toUpperCase();
             const pegBS = O.bundleSizeOfName(pegName);
             const pegQtyInd = (qb === 'STACK') ? (q * pegBS) : q;
 
             // Equation quantities
-            const leftQtyInd = (pb === 'STACK') ? soldSS : 1;
+            const leftQtyInd = (pb === 'STACK') ? soldSS :1;
             const rightQtyInd = pegQtyInd;
 
             // Base equation line
@@ -128,12 +128,12 @@
                 const it = O.findCatalogItem(name);
                 if (!it) return null;
                 const v = (side === 'BUY') ? it.buyEach : it.sellEach;
-                const n = O.parseMaybeScaledBt_ ? O.parseMaybeScaledBt_(v) : (v == null ? null : Number(v));
+                const n = O.parseBtNumber_ ? O.parseBtNumber_(v) : (v == null ? null : Number(v));
                 if (n != null) return n;
                 // fallback to stack price / bundle
                 const st = (side === 'BUY') ? it.buyStack : it.sellStack;
-                const sn = O.parseMaybeScaledBt_ ? O.parseMaybeScaledBt_(st) : (st == null ? null : Number(st));
-                const bs = Number(it.bundleSize || 1) || 1;
+                const sn = O.parseBtNumber_ ? O.parseBtNumber_(st) : (st == null ? null : Number(st));
+                const bs = Number(it.bundleSize ||1) ||1;
                 if (sn != null) return sn / bs;
                 return null;
             }
@@ -160,7 +160,11 @@
             const pegSellTotal = (pegSell != null) ? (rightQtyInd * pegSell) : null;
 
             function favorLineHtml_(who, pct) {
-                const good = pct >= 0;
+                if (window.OcmFavor && typeof window.OcmFavor.formatLineHtml === 'function') {
+                    return window.OcmFavor.formatLineHtml(who, pct);
+                }
+                // fallback (shouldn't happen if shared is included)
+                const good = pct >=0;
                 const label = good ? `${who} favor` : `${who} disfavor`;
                 const word = good ? 'cheaper' : 'more expensive';
                 const magTxt = Math.abs(pct).toFixed(1);

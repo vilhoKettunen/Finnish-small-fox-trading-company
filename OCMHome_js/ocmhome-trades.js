@@ -430,15 +430,21 @@
 
                 function renderFavorLine_(el, who, pct) {
                     if (!el || pct == null || !isFinite(pct)) { if (el) el.style.display = 'none'; return; }
-                    const good = pct >= 0;
-                    const label = good ? `${who} favor` : `${who} disfavor`;
-                    const word = good ? 'cheaper' : 'more expensive';
-                    const magTxt = Math.abs(pct).toFixed(1);
+                    if (window.OcmFavor && typeof window.OcmFavor.renderLine === 'function') {
+                    // renders inner <span class="trade-favor good|bad">...
+                    window.OcmFavor.renderLine(el, who, pct);
+                    return;
+                    }
+                   // fallback
+                   const good = pct >=0;
+                   const label = good ? `${who} favor` : `${who} disfavor`;
+                   const word = good ? 'cheaper' : 'more expensive';
+                   const magTxt = Math.abs(pct).toFixed(1);
 
-                    el.classList.remove('good', 'bad');
-                    el.classList.add(good ? 'good' : 'bad');
-                    el.textContent = `${label}: ${magTxt}% ${word} compared to store`;
-                    el.style.display = '';
+                   el.classList.remove('good', 'bad');
+                   el.classList.add(good ? 'good' : 'bad');
+                   el.textContent = `${label}: ${magTxt}% ${word} compared to store`;
+                   el.style.display = '';
                 }
 
                 renderFavorLine_(customerFavorEl, 'Customer', customerPct);

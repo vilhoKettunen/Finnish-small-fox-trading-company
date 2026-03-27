@@ -1,0 +1,7 @@
+/* Shared styling for OCM favor/disfavor lines */
+.trade-favor {
+ font-weight:600;
+ margin-top:4px;
+}
+.trade-favor.good { color: #2e7d32; }
+.trade-favor.bad { color: #b71c1c; }

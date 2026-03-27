@@ -70,17 +70,6 @@
  return isFinite(n) ? n : null;
  };
 
- // Keep catalog values consistent by also handling the historical "x10" scaling bug.
- // Example bad values:28 (should be2.8),896 (should be89.6)
- OCMUser.parseMaybeScaledBt_ = function parseMaybeScaledBt_(raw) {
- const n = OCMUser.parseBtNumber_(raw);
- if (n == null || !isFinite(n)) return null;
-
- // If it's an integer >=10, assume legacy scaling by10.
- if (Number.isInteger(n) && n >=10) return n /10;
- return n;
- };
-
  OCMUser.esc = function esc(s) {
  return String(s || '')
  .replace(/&/g, '&amp;')

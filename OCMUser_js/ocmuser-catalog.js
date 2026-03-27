@@ -112,8 +112,8 @@
  // Ensure bundle size is a number
  out.bundleSize = Number(out.bundleSize ||1) ||1;
 
- // Normalize numeric prices consistently
- const norm = (v) => (O.parseMaybeScaledBt_ ? O.parseMaybeScaledBt_(v) : (v == null ? null : Number(v)));
+ // Normalize numeric prices consistently (NO legacy scaling)
+ const norm = (v) => (O.parseBtNumber_ ? O.parseBtNumber_(v) : (v == null ? null : Number(v)));
 
  if (out.buyEach != null) out.buyEach = norm(out.buyEach);
  if (out.sellEach != null) out.sellEach = norm(out.sellEach);
@@ -126,10 +126,11 @@
  async function ensureCatalogLoaded() {
  if (S.catalog && S.catalog.length) return;
  try {
- const r = await apiGet('ocmGetCatalogSnapshot', {});
- const d = r.data || r.result || r;
- const raw = d.items || [];
- S.catalog = raw.map(normalizeCatalogItem_);
+ if (!window.OcmCatalog || typeof window.OcmCatalog.ensureLoaded !== 'function') {
+ throw new Error('Shared OcmCatalog loader is not available');
+ }
+ await window.OcmCatalog.ensureLoaded();
+ S.catalog = (window.OcmCatalog.get() || []).map(normalizeCatalogItem_);
  } catch {
  S.catalog = [];
  }
