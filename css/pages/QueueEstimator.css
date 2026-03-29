@@ -1,0 +1,493 @@
+/**
+ * Queue Estimator Page Styles
+ * Consistent with site theme using panels-paper.css styling
+ */
+
+/* Import shared styles is done in HTML */
+
+/* Queue Estimator Page Specific Styles */
+
+.queue-estimator-page {
+    background-color: #fafafa;
+}
+
+/* Main heading */
+.queue-estimator-page h1 {
+    text-align: center;
+    color: #2c3e50;
+    margin: 30px 0 40px;
+    font-size: 2.5em;
+}
+
+/* Section styling (inherited from panels-paper.css) */
+.queue-estimator-page .section {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 24px;
+    margin: 20px auto;
+    max-width: 900px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.queue-estimator-page .section h2 {
+    color: #2c3e50;
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 1.4em;
+}
+
+.queue-estimator-page .section h3 {
+    color: #34495e;
+    margin-top: 16px;
+    margin-bottom: 12px;
+    font-size: 1.1em;
+}
+
+/* Intro section */
+#qeIntro p {
+    color: #555;
+    line-height: 1.6;
+}
+
+#qeIntro .small-text {
+    font-size: 0.9em;
+    color: #888;
+    font-style: italic;
+    background: #f9f9f9;
+    padding: 12px;
+    border-left: 3px solid #4ECDC4;
+    margin: 16px 0;
+}
+
+/* Upload Area */
+.upload-area {
+    border: 2px dashed #4ECDC4;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+background: #f0fffe;
+}
+
+.upload-area:hover {
+    background: #e0fffe;
+    border-color: #2ab8ab;
+}
+
+.upload-area.dragover {
+  background: #d4f5f3;
+    border-color: #00a89d;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.2);
+}
+
+.upload-area-content {
+    pointer-events: none;
+}
+
+.upload-icon {
+    font-size: 3em;
+    margin: 0 0 12px 0;
+}
+
+.upload-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 8px 0;
+}
+
+.upload-subtitle {
+    color: #888;
+    margin: 4px 0;
+}
+
+.upload-hint {
+    font-size: 0.85em;
+    color: #aaa;
+    margin: 8px 0 0 0;
+}
+
+/* Textarea */
+.log-textarea {
+    width: 100%;
+    min-height: 150px;
+    max-height: 400px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    resize: vertical;
+background: #f9f9f9;
+    color: #333;
+}
+
+.log-textarea:focus {
+  outline: none;
+    border-color: #4ECDC4;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+}
+
+/* Analyze Button */
+.analyze-btn {
+    display: block;
+    margin: 20px auto;
+ padding: 12px 32px;
+    background: #4ECDC4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.analyze-btn:hover {
+    background: #2ab8ab;
+}
+
+.analyze-btn:active {
+    transform: scale(0.98);
+}
+
+/* Error Container */
+.error-container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 16px;
+    background: #ffebee;
+    border: 1px solid #ff5252;
+    border-radius: 4px;
+    display: none;
+}
+
+.error-message {
+    color: #c62828;
+    font-weight: 500;
+}
+
+/* Session Selector */
+.session-buttons {
+ display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 16px 0;
+}
+
+.session-btn {
+    padding: 10px 16px;
+ background: #f0f0f0;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+ font-size: 0.95em;
+}
+
+.session-btn:hover {
+    background: #e0f7f6;
+    border-color: #4ECDC4;
+    color: #2c3e50;
+}
+
+.session-btn:focus {
+    outline: none;
+    border-color: #4ECDC4;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.2);
+}
+
+/* Results Section */
+#qeResultsSection {
+    display: none;
+}
+
+/* Estimate Summary */
+.estimate-summary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 24px;
+    border-radius: 8px;
+    margin: 16px 0;
+}
+
+.estimate-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.estimate-header h3 {
+ color: white;
+    margin: 0;
+}
+
+.confidence-badge {
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    font-size: 0.75em;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.confidence-high {
+    background: rgba(76, 175, 80, 0.8) !important;
+}
+
+.confidence-medium {
+    background: rgba(255, 193, 7, 0.8) !important;
+}
+
+.confidence-low {
+    background: rgba(244, 67, 54, 0.8) !important;
+}
+
+.estimate-display {
+ text-align: center;
+}
+
+.estimate-main {
+    font-size: 2.5em;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.estimate-range {
+    font-size: 0.95em;
+    opacity: 0.95;
+}
+
+/* Breakdown Info */
+.breakdown-info {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 16px 0;
+}
+
+.breakdown-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.breakdown-row:last-child {
+    border-bottom: none;
+}
+
+.breakdown-label {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+.breakdown-value {
+    color: #4ECDC4;
+    font-weight: 600;
+}
+
+/* Issues Info */
+.issues-info {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+  padding: 16px;
+    margin: 16px 0;
+}
+
+.issues-info h3 {
+    margin-top: 0;
+ color: #856404;
+}
+
+.issue-item {
+    padding: 8px 0;
+    color: #856404;
+}
+
+/* Chart Container */
+.chart-container {
+background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.chart-container h3 {
+  margin-top: 0;
+}
+
+#qeChart {
+    max-height: 400px;
+}
+
+/* Results Actions */
+.results-actions {
+    display: flex;
+    gap: 12px;
+  flex-wrap: wrap;
+ justify-content: center;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #eee;
+}
+
+.copy-btn,
+.download-btn,
+.reset-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+ font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.copy-btn {
+    background: #4ECDC4;
+ color: white;
+}
+
+.copy-btn:hover {
+    background: #2ab8ab;
+}
+
+.download-btn {
+    background: #667eea;
+    color: white;
+}
+
+.download-btn:hover {
+    background: #5568d3;
+}
+
+.reset-btn {
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.reset-btn:hover {
+    background: #efefef;
+}
+
+.copy-btn:active,
+.download-btn:active,
+.reset-btn:active {
+    transform: scale(0.98);
+}
+
+/* Links Section */
+.links-section {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.link-btn {
+    padding: 12px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #4ECDC4;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: block;
+}
+
+.link-btn:hover {
+    background: #e0f7f6;
+    border-color: #4ECDC4;
+}
+
+.link-btn.internal {
+    color: #667eea;
+}
+
+.link-btn.internal:hover {
+background: #f0f1ff;
+    border-color: #667eea;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .queue-estimator-page .section {
+   margin: 16px;
+padding: 16px;
+    }
+
+    .queue-estimator-page h1 {
+        font-size: 1.8em;
+        margin: 20px 0 30px;
+    }
+
+    .upload-area {
+        padding: 30px 20px;
+    }
+
+    .upload-icon {
+        font-size: 2em;
+  }
+
+    .estimate-summary {
+        padding: 16px;
+    }
+
+    .estimate-main {
+        font-size: 1.8em;
+    }
+
+    .estimate-header {
+ flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .results-actions {
+   flex-direction: column;
+ }
+
+    .copy-btn,
+    .download-btn,
+    .reset-btn {
+        width: 100%;
+    }
+
+    .links-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Accessibility */
+button:focus,
+input:focus,
+textarea:focus,
+.upload-area:focus {
+    outline: 2px solid #4ECDC4;
+    outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+    .queue-estimator-page .section {
+        page-break-inside: avoid;
+    }
+
+    .results-actions {
+        display: none;
+    }
+}

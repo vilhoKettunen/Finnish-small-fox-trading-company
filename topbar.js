@@ -201,6 +201,7 @@
       <button type="button" data-nav="leaderboards">Leaderboards</button>
       <button type="button" data-nav="workpay">Work Pay Rates</button>
       <button type="button" data-nav="bank">Bank</button>
+      <button type="button" data-nav="queueEstimator">Queue Estimator</button>
       <button type="button" data-nav="instructions">Instructions</button>
       <button type="button" data-nav="whitepaper">Whitepaper</button>
       <button id="adminPanelBtn" style="display:none" type="button" data-nav="admin">Admin Panel</button>
@@ -430,21 +431,22 @@ if (!document.getElementById('topbar-shared-style')) {
 
             // ── Nav routing ──
             if (btn.dataset && btn.dataset.nav) {
-    const nav = btn.dataset.nav;
-       if (nav === 'store') window.location.href = 'index.html';
-           else if (nav === 'history') window.location.href = 'AccountHistory.html';
-        else if (nav === 'ocm') window.location.href = 'OCMHome.html';
-      else if (nav === 'Merchant') window.location.href = 'OCMUser.html';
-   else if (nav === 'leaderboards') window.location.href = 'Leaderboards.html';
-                else if (nav === 'workpay') window.location.href = 'WorkPayRates.html';
+      const nav = btn.dataset.nav;
+    if (nav === 'store') window.location.href = 'index.html';
+     else if (nav === 'history') window.location.href = 'AccountHistory.html';
+                else if (nav === 'ocm') window.location.href = 'OCMHome.html';
+else if (nav === 'Merchant') window.location.href = 'OCMUser.html';
+            else if (nav === 'leaderboards') window.location.href = 'Leaderboards.html';
+    else if (nav === 'workpay') window.location.href = 'WorkPayRates.html';
           else if (nav === 'bank') window.location.href = 'Bank.html';
-        else if (nav === 'instructions') window.location.href = 'Instructions.html';
-     else if (nav === 'whitepaper') window.location.href = 'Whitepaper.html';
-      else if (nav === 'admin') {
-      if (!state.idToken || !state.isAdmin) { alert('Admin only'); return; }
-         window.location.href = 'Admin.html';
-     }
-       }
+    else if (nav === 'queueEstimator') window.location.href = 'QueueEstimator.html';
+                else if (nav === 'instructions') window.location.href = 'Instructions.html';
+       else if (nav === 'whitepaper') window.location.href = 'Whitepaper.html';
+            else if (nav === 'admin') {
+            if (!state.idToken || !state.isAdmin) { alert('Admin only'); return; }
+   window.location.href = 'Admin.html';
+   }
+ }
         });
 
         // Outside-click: close both drawers when user clicks anywhere outside the top bar

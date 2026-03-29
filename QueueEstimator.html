@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="auth-storage.js"></script>
+    <meta charset="UTF-8">
+    <title>Queue Time Estimator - Vak Store</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Estimate your queue wait time for Vintage Story TOPS server by analyzing your game log files. Upload or paste your logs and get accurate time estimates based on historical queue progression data." />
+    <meta property="og:description" content="Estimate your queue wait time for Vintage Story TOPS server by analyzing your game log files." />
+    <meta name="twitter:description" content="Estimate your queue wait time for Vintage Story TOPS server by analyzing your game log files." />
+    <link rel="icon" href="favicon.ico">
+    <link rel="stylesheet" href="css/pages/QueueEstimator.css">
+    <link rel="stylesheet" href="css/site-layout.css">
+    <link rel="stylesheet" href="css/panels-paper.css">
+    <link rel="stylesheet" href="css/shared/universal-dropdown.css">
+    <link rel="stylesheet" href="css/shared/instr-help-link.css">
+<script src="shared/site-decor.js"></script>
+    <script src="shared/site-footer.js"></script>
+
+ <script src="app-config.js"></script>
+  <script src="topbar.js"></script>
+
+    <!-- Queue Estimator Modules -->
+    <script src="queue_estimator_js/queue-estimator-core.js"></script>
+    <script src="queue_estimator_js/queue-estimator-ui.js"></script>
+    <script src="queue_estimator_js/queue-estimator-boot.js"></script>
+
+    <!-- Chart.js for visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+</head>
+<body class="queue-estimator-page">
+    <!-- top bar injected by topbar.js -->
+
+    <div id="loginPanelMount"></div>
+
+    <h1>?? Queue Time Estimator</h1>
+
+    <!-- How to Use / Intro Section -->
+    <div class="section" id="qeIntro">
+        <h2>How to Use</h2>
+        <p>
+      Upload or paste your Vintage Story game log file to estimate how long it will take to reach queue position 0.
+   The estimator analyzes your queue progression and calculates an average time based on your historical data.
+     </p>
+        <p class="small-text">
+            <strong>Note:</strong> Estimates are based on the data in your log file and may vary based on current server load and other factors.
+            For best accuracy, use a log file covering at least 30 minutes of queue time.
+        </p>
+    </div>
+
+    <!-- File Upload / Paste Section -->
+    <div class="section" id="qeInputSection">
+        <h2>?? Upload or Paste Your Log</h2>
+
+        <!-- Upload Area -->
+<div id="qeUploadArea" class="upload-area" tabindex="0" role="button" aria-label="Drop zone for log file upload">
+   <div class="upload-area-content">
+ <p class="upload-icon">??</p>
+                <p class="upload-title">Drag & drop your log file here</p>
+            <p class="upload-subtitle">or click to select a file</p>
+             <p class="upload-hint">Supports .log and .txt files</p>
+            </div>
+            <input type="file" id="qeFileInput" accept=".log,.txt,text/plain" style="display:none;" aria-label="Select log file" />
+        </div>
+
+        <p style="text-align: center; margin: 20px 0; color: #666;">— OR —</p>
+
+      <!-- Paste Area -->
+        <label for="qeTextarea" style="display: block; margin-bottom: 8px; font-weight: bold;">Paste Log Content:</label>
+        <textarea 
+  id="qeTextarea" 
+         class="log-textarea" 
+          placeholder="Paste your entire log file here (Ctrl+A from your log file, then Ctrl+V here)"
+     aria-label="Text area for pasting log content"></textarea>
+
+        <!-- Analyze Button -->
+        <button id="qeAnalyzeBtn" class="analyze-btn" type="button" onclick="window.queueEstimatorUI && window.queueEstimatorUI.analyzeLog()">
+            Analyze Log
+ </button>
+    </div>
+
+    <!-- Error Messages -->
+    <div id="qeErrorContainer" class="error-container" style="display:none;">
+        <div id="qeErrorMessage" class="error-message"></div>
+</div>
+
+    <!-- Session Selection (shown only if multiple sessions detected) -->
+    <div id="qeSessionSelector" class="section" style="display:none;">
+        <h2>?? Multiple Sessions Detected</h2>
+   <p>Your log file contains multiple queue sessions. Select which session you'd like to analyze:</p>
+        <div id="qeSessionButtons" class="session-buttons">
+ <!-- Buttons will be injected here -->
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="qeResultsSection" class="section" style="display:none;">
+        <h2>?? Analysis Results</h2>
+
+  <!-- Estimate Summary -->
+        <div class="estimate-summary">
+            <div class="estimate-header">
+         <h3>Estimated Time to Reach Queue Position 0</h3>
+                <div class="confidence-badge" id="qeConfidenceBadge"></div>
+         </div>
+         <div class="estimate-display">
+                <div class="estimate-main" id="qeEstimateMain">--</div>
+      <div class="estimate-range" id="qeEstimateRange">Best: -- | Worst: --</div>
+        </div>
+        </div>
+
+        <!-- Breakdown Info -->
+        <div class="breakdown-info">
+         <h3>Breakdown</h3>
+            <div class="breakdown-row">
+       <span class="breakdown-label">Starting Position:</span>
+            <span class="breakdown-value" id="qeStartPos">--</span>
+          </div>
+            <div class="breakdown-row">
+       <span class="breakdown-label">Ending Position:</span>
+    <span class="breakdown-value" id="qeEndPos">--</span>
+ </div>
+    <div class="breakdown-row">
+        <span class="breakdown-label">Positions Cleared:</span>
+      <span class="breakdown-value" id="qePositionsCleared">--</span>
+      </div>
+            <div class="breakdown-row">
+   <span class="breakdown-label">Time Period Analyzed:</span>
+        <span class="breakdown-value" id="qeTimeAnalyzed">--</span>
+         </div>
+            <div class="breakdown-row">
+   <span class="breakdown-label">Average Rate:</span>
+    <span class="breakdown-value" id="qeAvgRate">--</span>
+            </div>
+            <div class="breakdown-row">
+     <span class="breakdown-label">Total Queue Entries:</span>
+          <span class="breakdown-value" id="qeEntryCount">--</span>
+      </div>
+        </div>
+
+        <!-- Stalls / Issues Info -->
+      <div id="qeIssuesContainer" class="issues-info" style="display:none;">
+    <h3>?? Issues Detected</h3>
+  <div id="qeIssuesList"></div>
+  </div>
+
+        <!-- Chart -->
+        <div class="chart-container">
+         <h3>Queue Progression Chart</h3>
+     <canvas id="qeChart"></canvas>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="results-actions">
+            <button id="qeCopyBtn" class="copy-btn" type="button" onclick="window.queueEstimatorUI && window.queueEstimatorUI.copyResults()">
+?? Copy Results to Clipboard
+    </button>
+            <button id="qeDownloadChartBtn" class="download-btn" type="button" onclick="window.queueEstimatorUI && window.queueEstimatorUI.downloadChart()">
+       ?? Download Chart as PNG
+</button>
+    <button id="qeResetBtn" class="reset-btn" type="button" onclick="window.queueEstimatorUI && window.queueEstimatorUI.reset()">
+                ?? Analyze Another Log
+  </button>
+        </div>
+    </div>
+
+    <!-- Useful Links Section -->
+    <div class="section links-section" id="usefulLinks">
+        <h2>?? Other Tools</h2>
+        <nav class="links-grid" aria-label="Other tools">
+  <a class="link-btn internal" href="index.html">?? Trading Calculator</a>
+     <a class="link-btn internal" href="OCMHome.html">?? OCM Marketplace</a>
+     <a class="link-btn internal" href="Bank.html">?? Bank / Inflation</a>
+    <a class="link-btn internal" href="EWInsurance.html">??? EW Insurance</a>
+            <a class="link-btn internal" href="Leaderboards.html">?? Leaderboards</a>
+       <a class="link-btn internal" href="AccountHistory.html">?? Account History</a>
+</nav>
+    </div>
+
+    <script type="application/ld+json">
+        {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Queue Time Estimator",
+        "url": "/QueueEstimator.html",
+     "applicationCategory": "GameApplication",
+ "description": "Estimate queue wait times for Vintage Story TOPS server by analyzing game log files."
+        }
+    </script>
+
+    <script>
+        // Boot only. All feature logic is in `queue_estimator_js/*`.
+      window.onload = () => {
+   window.initSharedTopBar && window.initSharedTopBar();
+            document.body.classList.add('withTopBar');
+    window.queueEstimatorUI && window.queueEstimatorUI.init();
+        };
+  </script>
+</body>
+</html>
