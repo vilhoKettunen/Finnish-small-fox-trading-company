@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Queue Estimator UI Module - ENHANCED WITH MULTI-FILE SUPPORT
  * Handles user interface, file input, results rendering, and file management
  */
@@ -335,7 +335,7 @@ if (!fileData.sessions || fileData.sessions.length === 0) {
        const btn = document.createElement('button');
    btn.className = `session-btn ${i === currentSessionId ? 'active' : ''}`;
  btn.textContent = `Session ${i + 1}`;
- btn.title = `Queue progression: ${session.startPosition}?${session.endPosition} (${session.duration.toFixed(1)}m)`;
+ btn.title = `Queue progression: ${session.startPosition}→${session.endPosition} (${session.duration.toFixed(1)}m)`;
   btn.onclick = () => selectSessionFromFile(i);
          buttonsContainer.appendChild(btn);
    }
@@ -417,7 +417,7 @@ loadFileForDisplay(file);
         // Toggle icon
         const icon = document.querySelector('.panel-toggle .toggle-icon');
         if (icon) {
-            icon.textContent = isHidden ? '?' : '?';
+            icon.textContent = isHidden ? '▲' : '▼';
         }
     }
 
@@ -466,7 +466,7 @@ infoEl.innerHTML = `
             </div>
     <p>${sizeKB} KB / ${limitMB} MB (${info.percentUsed}% used)</p>
             <p>${info.fileCount} file${info.fileCount !== 1 ? 's' : ''} stored</p>
-            ${info.isWarning ? '<p class="warning">?? Storage getting full</p>' : ''}
+            ${info.isWarning ? '<p class="warning">⚠️ Storage getting full</p>' : ''}
         `;
     }
 
@@ -582,16 +582,16 @@ infoEl.innerHTML = `
    if (freezeInfo.isFrozen) {
        freezeWarning.innerHTML = `
 <div class="freeze-critical">
-  ?? <strong>QUEUE FROZEN!</strong> No position updates for ${freezeInfo.formattedTimeSinceLastEntry}
+  ⚠️ <strong>QUEUE FROZEN!</strong> No position updates for ${freezeInfo.formattedTimeSinceLastEntry}
      </div>
       <p class="freeze-advice">The queue may be frozen or your log file is outdated.</p>
-     <p class="freeze-advice">? Try refreshing the game or check if your log file is recent</p>
+     <p class="freeze-advice">→ Try refreshing the game or check if your log file is recent</p>
    `;
          freezeContainer.style.display = 'block';
         } else if (freezeInfo.warningLevel === 'warning') {
    freezeWarning.innerHTML = `
 <div class="freeze-warning">
-      ?? Last queue update: ${freezeInfo.formattedTimeSinceLastEntry} ago
+      ⚠️ Last queue update: ${freezeInfo.formattedTimeSinceLastEntry} ago
      </div>
        `;
     freezeContainer.style.display = 'block';
@@ -648,121 +648,161 @@ renderChart(entries, analysis);
     }
 
     /**
-     * Render chart using Chart.js
-   */
+  * Render chart using Chart.js
+*/
     function renderChart(entries, analysis) {
-    const ctx = document.getElementById('qeChart');
+        const ctx = document.getElementById('qeChart');
         if (!ctx) return;
 
         // Verify entries have dateObj
- if (!entries || entries.length === 0) {
- console.error('No entries to render chart');
-         return;
+        if (!entries || entries.length === 0) {
+            console.error('No entries to render chart');
+            return;
         }
 
         // Check if first entry has dateObj
         if (!entries[0].dateObj) {
-  console.error('Entries missing dateObj property');
-   return;
+            console.error('Entries missing dateObj property');
+            return;
         }
 
-    // Get the start time for this session
+        // Get the start time for this session
         const sessionStartTime = entries[0].dateObj;
-        
+
         // Prepare data
         const labels = [];
-const positions = [];
+        const positions = [];
         const projectionData = [];
 
         // Build labels and positions
-   for (let i = 0; i < entries.length; i++) {
-       const entry = entries[i];
-     
-   // Calculate elapsed time from SESSION START
-        const elapsedMs = entry.dateObj - sessionStartTime;
+        for (let i = 0; i < entries.length; i++) {
+            const entry = entries[i];
+
+            // Calculate elapsed time from SESSION START
+            const elapsedMs = entry.dateObj - sessionStartTime;
             const elapsedMinutes = elapsedMs / (1000 * 60);
-      
-   labels.push(elapsedMinutes.toFixed(1));
-         positions.push(entry.position);
+
+            // Ensure we have valid numbers
+            if (isNaN(elapsedMinutes)) {
+                console.warn('Invalid elapsed minutes for entry', i, entry);
+                labels.push('0');
+                positions.push(entry.position);
+                continue;
+            }
+
+            labels.push(elapsedMinutes.toFixed(1));
+            positions.push(entry.position);
         }
 
-      // Calculate trend line for projection - START FROM SESSION START
+        // Calculate trend line for projection - START FROM SESSION START
         const rate = analysis.ratePerMinute;
         const startPos = analysis.startPosition;
-        
- for (let i = 0; i < entries.length; i++) {
-     // Calculate elapsed time from SESSION START
-     const elapsedMs = entries[i].dateObj - sessionStartTime;
- const elapsedMinutes = elapsedMs / (1000 * 60);
-         
-   // Calculate projected position based on rate and elapsed time
- const projectedPos = Math.max(0, startPos - (rate * elapsedMinutes));
-   projectionData.push(projectedPos);
+
+        for (let i = 0; i < entries.length; i++) {
+            // Calculate elapsed time from SESSION START
+            const elapsedMs = entries[i].dateObj - sessionStartTime;
+            const elapsedMinutes = elapsedMs / (1000 * 60);
+
+            // Ensure we have valid numbers for projection
+            if (isNaN(elapsedMinutes)) {
+                projectionData.push(startPos);
+                continue;
+            }
+
+            // Calculate projected position based on rate and elapsed time
+            const projectedPos = Math.max(0, startPos - (rate * elapsedMinutes));
+            projectionData.push(projectedPos);
         }
 
         // Destroy existing chart if any
         if (chartInstance) {
-chartInstance.destroy();
+            chartInstance.destroy();
         }
 
         // Create new chart
         chartInstance = new Chart(ctx, {
             type: 'line',
-  data: {
-          labels: labels,
-      datasets: [
-      {
-        label: 'Actual Queue Position',
-     data: positions,
-            borderColor: '#FF6B6B',
-      backgroundColor: 'rgba(255, 107, 107, 0.1)',
-        borderWidth: 2,
-                    fill: true,
-         tension: 0.1,
-pointRadius: 3,
-   pointBackgroundColor: '#FF6B6B',
-           pointBorderColor: '#fff',
-       pointBorderWidth: 1
-        },
-         {
-         label: 'Trend Line (Projected to 0)',
-         data: projectionData,
-  borderColor: '#4ECDC4',
-             borderWidth: 2,
-    borderDash: [5, 5],
-              fill: false,
-         tension: 0.1,
-        pointRadius: 0,
-        pointHoverRadius: 0
-       }
-    ]
-       },
-    options: {
-         responsive: true,
-     maintainAspectRatio: true,
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Actual Queue Position',
+                        data: positions,
+                        borderColor: '#FF6B6B',
+                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#FF6B6B',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 1,
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function (context) {
+                                    const elapsedMinutes = parseFloat(context.label);
+                                    if (!isNaN(elapsedMinutes)) {
+                                        const hours = Math.floor(elapsedMinutes / 60);
+                                        const mins = Math.round(elapsedMinutes % 60);
+                                        return `Elapsed: ${elapsedMinutes.toFixed(1)}m`;
+                                    }
+                                    return '';
+                                }
+                            }
+                        }
+                    },
+                    {
+                        label: 'Trend Line (Projected to 0)',
+                        data: projectionData,
+                        borderColor: '#4ECDC4',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0.1,
+                        pointRadius: 0,
+                        pointHoverRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
                 plugins: {
-  legend: {
- position: 'top'
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function (context) {
+                                if (context.dataset.label === 'Actual Queue Position') {
+                                    return `Position: ${context.parsed.y}`;
+                                } else {
+                                    return `Projected: ${Math.round(context.parsed.y)}`;
+                                }
+                            }
+                        }
                     }
                 },
-  scales: {
-          y: {
-          title: {
-          display: true,
-      text: 'Queue Position'
-              },
-         beginAtZero: true,
-      max: analysis.startPosition + 5,
-       reverse: false
-       },
-       x: {
-               title: {
-         display: true,
-         text: 'Elapsed Time (Minutes)'
- }
-           }
- }
-  }
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Queue Position'
+                        },
+                        beginAtZero: true,
+                        max: analysis.startPosition + 5,
+                        reverse: false
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Elapsed Time (Minutes)'
+                        }
+                    }
+                }
+            }
         });
     }
 
@@ -789,29 +829,29 @@ pointRadius: 3,
         const worstGameStart = window.QueueEstimatorCore.formatGameStartTime(gameStartTimes.worst);
 
     const freezeInfo = window.QueueEstimatorCore.detectQueueFreeze(currentEstimate.lastLogEntryTime);
-        const freezeStatus = freezeInfo.isFrozen ? `?? FROZEN (${freezeInfo.formattedTimeSinceLastEntry} ago)` : `? Active (${freezeInfo.formattedTimeSinceLastEntry} ago)`;
+        const freezeStatus = freezeInfo.isFrozen ? `⚠️ FROZEN (${freezeInfo.formattedTimeSinceLastEntry} ago)` : `✓ Active (${freezeInfo.formattedTimeSinceLastEntry} ago)`;
 
   const textToCopy = `
-?? QUEUE TIME ESTIMATE
-???????????????????????
+🕐 QUEUE TIME ESTIMATE
+═══════════════════════
 
 Estimated Time to Position 0: ${estimateDisplay}
 Confidence Level: ${currentEstimate.confidence.toUpperCase()}
 Best Case: ${bestDisplay}
 Worst Case: ${worstDisplay}
 
-?? GAME START TIME (When you'll reach queue position 0)
-?????????????????????????????????????????????????????
+🎮 GAME START TIME (When you'll reach queue position 0)
+─────────────────────────────────────────────────────
 Estimated: ${estimatedGameStart}
 Best Case: ${bestGameStart}
 Worst Case: ${worstGameStart}
 
-?? QUEUE STATUS
-???????????????
+⏱️ QUEUE STATUS
+───────────────
 ${freezeStatus}
 
 ANALYSIS BREAKDOWN
-?????????????????
+─────────────────
 Starting Position: ${currentAnalysis.startPosition}
 Ending Position: ${currentAnalysis.endPosition}
 Positions Cleared: ${currentAnalysis.positionsCleared}
@@ -830,7 +870,7 @@ https://vakstore.com/QueueEstimator.html
       // Show feedback
    const btn = document.getElementById('qeCopyBtn');
         const originalText = btn.textContent;
-     btn.textContent = '? Copied!';
+     btn.textContent = '✓ Copied!';
        setTimeout(() => {
     btn.textContent = originalText;
           }, 2000);
@@ -919,8 +959,8 @@ https://vakstore.com/QueueEstimator.html
         const warning = document.createElement('div');
         warning.className = 'qe-warning-banner';
         warning.innerHTML = `
-            <strong>?? Storage Cleaned:</strong> Deleted ${count} oldest file(s) to make room for new data.
-            <button onclick="this.parentElement.remove()" class="close-btn">�</button>
+            <strong>⚠️ Storage Cleaned:</strong> Deleted ${count} oldest file(s) to make room for new data.
+            <button onclick="this.parentElement.remove()" class="close-btn">×</button>
 `;
         warning.style.cssText = `
      position: fixed;
