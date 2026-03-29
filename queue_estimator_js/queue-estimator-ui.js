@@ -648,8 +648,8 @@ renderChart(entries, analysis);
     }
 
     /**
-  * Render chart using Chart.js
-*/
+    * Render chart using Chart.js
+    */
     function renderChart(entries, analysis) {
         const ctx = document.getElementById('qeChart');
         if (!ctx) return;
@@ -668,23 +668,25 @@ renderChart(entries, analysis);
 
         // Get the start time for this session
         const sessionStartTime = entries[0].dateObj;
+        const sessionStartPosition = entries[0].position;
 
         // Prepare data
         const labels = [];
         const positions = [];
         const projectionData = [];
 
-        // Build labels and positions
+        // Build labels and positions - Calculate elapsed time correctly
         for (let i = 0; i < entries.length; i++) {
             const entry = entries[i];
 
             // Calculate elapsed time from SESSION START
+            // Simple: just subtract the timestamps and convert to minutes
             const elapsedMs = entry.dateObj - sessionStartTime;
             const elapsedMinutes = elapsedMs / (1000 * 60);
 
             // Ensure we have valid numbers
-            if (isNaN(elapsedMinutes)) {
-                console.warn('Invalid elapsed minutes for entry', i, entry);
+            if (isNaN(elapsedMinutes) || elapsedMs < 0) {
+                console.warn('Invalid elapsed time for entry', i, entry);
                 labels.push('0');
                 positions.push(entry.position);
                 continue;
@@ -694,9 +696,10 @@ renderChart(entries, analysis);
             positions.push(entry.position);
         }
 
-        // Calculate trend line for projection - START FROM SESSION START
+        // Calculate trend line for projection
+        // Trend line should show the AVERAGE trajectory at the current rate
+        // Formula: projectedPosition = startPosition - (ratePerMinute * elapsedMinutes)
         const rate = analysis.ratePerMinute;
-        const startPos = analysis.startPosition;
 
         for (let i = 0; i < entries.length; i++) {
             // Calculate elapsed time from SESSION START
@@ -704,13 +707,15 @@ renderChart(entries, analysis);
             const elapsedMinutes = elapsedMs / (1000 * 60);
 
             // Ensure we have valid numbers for projection
-            if (isNaN(elapsedMinutes)) {
-                projectionData.push(startPos);
+            if (isNaN(elapsedMinutes) || elapsedMs < 0) {
+                projectionData.push(sessionStartPosition);
                 continue;
             }
 
             // Calculate projected position based on rate and elapsed time
-            const projectedPos = Math.max(0, startPos - (rate * elapsedMinutes));
+            // At time 0, position should be startPosition
+            // Position decreases by rate * elapsed time
+            const projectedPos = Math.max(0, sessionStartPosition - (rate * elapsedMinutes));
             projectionData.push(projectedPos);
         }
 
@@ -733,30 +738,18 @@ renderChart(entries, analysis);
                         borderWidth: 2,
                         fill: true,
                         tension: 0.1,
-                        pointRadius: 3,
+                        pointRadius: 4,
                         pointBackgroundColor: '#FF6B6B',
                         pointBorderColor: '#fff',
-                        pointBorderWidth: 1,
-                        tooltip: {
-                            callbacks: {
-                                afterLabel: function (context) {
-                                    const elapsedMinutes = parseFloat(context.label);
-                                    if (!isNaN(elapsedMinutes)) {
-                                        const hours = Math.floor(elapsedMinutes / 60);
-                                        const mins = Math.round(elapsedMinutes % 60);
-                                        return `Elapsed: ${elapsedMinutes.toFixed(1)}m`;
-                                    }
-                                    return '';
-                                }
-                            }
-                        }
+                        pointBorderWidth: 2
                     },
                     {
-                        label: 'Trend Line (Projected to 0)',
+                        label: 'Average Trajectory (Estimated)',
                         data: projectionData,
-                        borderColor: '#4ECDC4',
-                        borderWidth: 2,
-                        borderDash: [5, 5],
+                        borderColor: '#FF6B6B',
+                        backgroundColor: 'transparent',
+                        borderWidth: 3,
+                        borderDash: [8, 4],
                         fill: false,
                         tension: 0.1,
                         pointRadius: 0,
@@ -769,17 +762,38 @@ renderChart(entries, analysis);
                 maintainAspectRatio: true,
                 plugins: {
                     legend: {
-                        position: 'top'
+                        position: 'top',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 12
+                            }
+                        }
                     },
                     tooltip: {
                         mode: 'index',
                         intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: {
+                            size: 13
+                        },
+                        bodyFont: {
+                            size: 12
+                        },
                         callbacks: {
+                            title: function (context) {
+                                if (context.length > 0) {
+                                    const label = context[0].label;
+                                    return `Elapsed Time: ${label} minutes`;
+                                }
+                                return '';
+                            },
                             label: function (context) {
                                 if (context.dataset.label === 'Actual Queue Position') {
-                                    return `Position: ${context.parsed.y}`;
+                                    return `Current Position: ${Math.round(context.parsed.y)}`;
                                 } else {
-                                    return `Projected: ${Math.round(context.parsed.y)}`;
+                                    return `Estimated Position: ${Math.round(context.parsed.y)}`;
                                 }
                             }
                         }
@@ -789,7 +803,11 @@ renderChart(entries, analysis);
                     y: {
                         title: {
                             display: true,
-                            text: 'Queue Position'
+                            text: 'Queue Position',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
                         },
                         beginAtZero: true,
                         max: analysis.startPosition + 5,
@@ -798,7 +816,11 @@ renderChart(entries, analysis);
                     x: {
                         title: {
                             display: true,
-                            text: 'Elapsed Time (Minutes)'
+                            text: 'Elapsed Time (Minutes)',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
                         }
                     }
                 }
