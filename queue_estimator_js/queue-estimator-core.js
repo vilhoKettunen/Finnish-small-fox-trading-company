@@ -21,8 +21,9 @@ const errors = [];
         }
 
         // Regex to match queue position lines
-        // Format: DD.MM.YYYY HH.MM.SS [Notification] Client is in connect queue at position: N
-   const queueRegex = /(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2})\.(\d{1,2})\.(\d{1,2})\s+\[Notification\]\s+Client is in connect queue at position:\s+(\d+)/g;
+        // Format: DD.MM.YYYY HH:MM:SS or DD.MM.YYYY HH.MM.SS [Notification] Client is in connect queue at position: N
+        // Updated to accept both colon (:) and dot (.) separators for time
+   const queueRegex = /(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2})[:.](\d{1,2})[:.](\d{1,2})\s+\[Notification\]\s+Client is in connect queue at position:\s+(\d+)/g;
    
       // Regex to detect session disconnects/restarts
         const disconnectRegex = /Destroying game session/;
@@ -86,7 +87,7 @@ if (nextPos > currentPos + 5 || nextPos > currentPos) {
    
             // Advance entryIndex to track position in entries array
 // Simple heuristic: count timestamp-like lines to sync with entries
-    if (lines[i].match(/\d{1,2}\.\d{1,2}\.\d{4}\s+\d{1,2}\.\d{1,2}\.\d{1,2}/)) {
+    if (lines[i].match(/\d{1,2}\.\d{1,2}\.\d{4}\s+\d{1,2}[:\.]\d{1,2}[:\.]\d{1,2}/)) {
        entryIndex++;
  }
   }

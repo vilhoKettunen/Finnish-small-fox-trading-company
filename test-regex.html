@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Queue Estimator Regex Test</title>
+</head>
+<body>
+    <h1>Queue Estimator Regex Test</h1>
+    <pre id="results"></pre>
+
+    <script>
+        // Test both time formats
+        const testCases = [
+            // Colon format (HH:MM:SS)
+            '29.3.2026 13:27:13 [Notification] Client is in connect queue at position: 97',
+            // Dot format (HH.MM.SS)
+       '29.3.2026 13.27.13 [Notification] Client is in connect queue at position: 97',
+       // Mixed (shouldn't match - invalid)
+            '29.3.2026 13:27.13 [Notification] Client is in connect queue at position: 97',
+     '29.3.2026 13.27:13 [Notification] Client is in connect queue at position: 97',
+        ];
+
+    const queueRegex = /(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2})[:.](\d{1,2})[:.](\d{1,2})\s+\[Notification\]\s+Client is in connect queue at position:\s+(\d+)/g;
+
+   let results = 'Testing Queue Estimator Regex\n';
+        results += '='.repeat(50) + '\n\n';
+
+        testCases.forEach((testCase, index) => {
+     // Reset regex lastIndex
+      queueRegex.lastIndex = 0;
+            const match = queueRegex.exec(testCase);
+   
+            results += `Test ${index + 1}:\n`;
+            results += `Input: ${testCase}\n`;
+            
+     if (match) {
+         results += `? MATCHED\n`;
+        results += `  Day: ${match[1]}, Month: ${match[2]}, Year: ${match[3]}\n`;
+      results += `  Hour: ${match[4]}, Minute: ${match[5]}, Second: ${match[6]}\n`;
+       results += `  Position: ${match[7]}\n`;
+            } else {
+     results += `? NO MATCH\n`;
+            }
+            results += '\n';
+        });
+
+        results += '='.repeat(50) + '\n';
+        results += 'Expected Results:\n';
+        results += '- Test 1 (colon format): MATCHED ?\n';
+        results += '- Test 2 (dot format): MATCHED ?\n';
+        results += '- Test 3 (mixed colon-dot): NO MATCH ?\n';
+        results += '- Test 4 (mixed dot-colon): NO MATCH ?\n';
+
+        document.getElementById('results').textContent = results;
+    </script>
+</body>
+</html>
