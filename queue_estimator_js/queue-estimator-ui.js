@@ -651,92 +651,118 @@ renderChart(entries, analysis);
      * Render chart using Chart.js
    */
     function renderChart(entries, analysis) {
-        const ctx = document.getElementById('qeChart');
+    const ctx = document.getElementById('qeChart');
         if (!ctx) return;
 
+        // Verify entries have dateObj
+ if (!entries || entries.length === 0) {
+ console.error('No entries to render chart');
+         return;
+        }
+
+        // Check if first entry has dateObj
+        if (!entries[0].dateObj) {
+  console.error('Entries missing dateObj property');
+   return;
+        }
+
+    // Get the start time for this session
+        const sessionStartTime = entries[0].dateObj;
+        
         // Prepare data
-     const labels = [];
-        const positions = [];
+        const labels = [];
+const positions = [];
         const projectionData = [];
 
-        for (let i = 0; i < entries.length; i++) {
-    const entry = entries[i];
- const elapsedMinutes = (entry.dateObj - entries[0].dateObj) / (1000 * 60);
-            labels.push(elapsedMinutes.toFixed(1));
-            positions.push(entry.position);
+        // Build labels and positions
+   for (let i = 0; i < entries.length; i++) {
+       const entry = entries[i];
+     
+   // Calculate elapsed time from SESSION START
+        const elapsedMs = entry.dateObj - sessionStartTime;
+            const elapsedMinutes = elapsedMs / (1000 * 60);
+      
+   labels.push(elapsedMinutes.toFixed(1));
+         positions.push(entry.position);
         }
 
-        // Calculate trend line for projection
+      // Calculate trend line for projection - START FROM SESSION START
         const rate = analysis.ratePerMinute;
         const startPos = analysis.startPosition;
-        for (let i = 0; i < entries.length; i++) {
-       const elapsedMinutes = (entries[i].dateObj - entries[0].dateObj) / (1000 * 60);
-          const projectedPos = Math.max(0, startPos - (rate * elapsedMinutes));
-  projectionData.push(projectedPos);
-      }
-
- // Destroy existing chart if any
-        if (chartInstance) {
-            chartInstance.destroy();
+        
+ for (let i = 0; i < entries.length; i++) {
+     // Calculate elapsed time from SESSION START
+     const elapsedMs = entries[i].dateObj - sessionStartTime;
+ const elapsedMinutes = elapsedMs / (1000 * 60);
+         
+   // Calculate projected position based on rate and elapsed time
+ const projectedPos = Math.max(0, startPos - (rate * elapsedMinutes));
+   projectionData.push(projectedPos);
         }
 
-   // Create new chart
-    chartInstance = new Chart(ctx, {
-  type: 'line',
-     data: {
-     labels: labels,
-     datasets: [
+        // Destroy existing chart if any
+        if (chartInstance) {
+chartInstance.destroy();
+        }
+
+        // Create new chart
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+  data: {
+          labels: labels,
+      datasets: [
       {
-    label: 'Actual Queue Position',
-         data: positions,
-    borderColor: '#FF6B6B',
+        label: 'Actual Queue Position',
+     data: positions,
+            borderColor: '#FF6B6B',
       backgroundColor: 'rgba(255, 107, 107, 0.1)',
-   borderWidth: 2,
-   fill: true,
-          tension: 0.1,
-        pointRadius: 3,
-      pointBackgroundColor: '#FF6B6B',
-     pointBorderColor: '#fff',
- pointBorderWidth: 1
-       },
-     {
-      label: 'Trend Line (Projected to 0)',
-data: projectionData,
-    borderColor: '#4ECDC4',
-      borderWidth: 2,
-         borderDash: [5, 5],
-       fill: false,
-            tension: 0.1,
-     pointRadius: 0
-  }
-]
-            },
-            options: {
-       responsive: true,
-       maintainAspectRatio: true,
-     plugins: {
- legend: {
-   position: 'top'
-         }
+        borderWidth: 2,
+                    fill: true,
+         tension: 0.1,
+pointRadius: 3,
+   pointBackgroundColor: '#FF6B6B',
+           pointBorderColor: '#fff',
+       pointBorderWidth: 1
         },
-     scales: {
-       y: {
-       title: {
-             display: true,
-             text: 'Queue Position'
-          },
-           beginAtZero: true,
-      max: analysis.startPosition + 5,
-                   reverse: false
-         },
-             x: {
-     title: {
-           display: true,
-    text: 'Elapsed Time (Minutes)'
-    }
+         {
+         label: 'Trend Line (Projected to 0)',
+         data: projectionData,
+  borderColor: '#4ECDC4',
+             borderWidth: 2,
+    borderDash: [5, 5],
+              fill: false,
+         tension: 0.1,
+        pointRadius: 0,
+        pointHoverRadius: 0
        }
-          }
-    }
+    ]
+       },
+    options: {
+         responsive: true,
+     maintainAspectRatio: true,
+                plugins: {
+  legend: {
+ position: 'top'
+                    }
+                },
+  scales: {
+          y: {
+          title: {
+          display: true,
+      text: 'Queue Position'
+              },
+         beginAtZero: true,
+      max: analysis.startPosition + 5,
+       reverse: false
+       },
+       x: {
+               title: {
+         display: true,
+         text: 'Elapsed Time (Minutes)'
+ }
+           }
+ }
+  }
         });
     }
 
