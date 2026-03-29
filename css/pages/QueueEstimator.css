@@ -582,7 +582,7 @@ background: #f0f1ff;
 /* Responsive Design */
 @media (max-width: 768px) {
     .queue-estimator-page .section {
-   margin: 16px;
+margin: 16px;
 padding: 16px;
     }
 
@@ -591,7 +591,7 @@ padding: 16px;
         margin: 20px 0 30px;
     }
 
-    .upload-area {
+.upload-area {
         padding: 30px 20px;
     }
 
@@ -610,7 +610,7 @@ padding: 16px;
     .estimate-header {
  flex-direction: column;
         gap: 12px;
-        align-items: flex-start;
+  align-items: flex-start;
     }
 
     .results-actions {
@@ -624,26 +624,513 @@ padding: 16px;
     }
 
     .links-grid {
-        grid-template-columns: 1fr;
+  grid-template-columns: 1fr;
     }
 }
 
+/* ???????????????????????????????????????????????????????????? */
+/* MULTI-FILE QUEUE ESTIMATOR UI STYLES */
+/* ???????????????????????????????????????????????????????????? */
+
+/* File History Panel */
+.qe-file-history-panel {
+ background: linear-gradient(135deg, #f5f7fa 0%, #f0f1ff 100%);
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin: 16px 0;
+    overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.panel-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 1em;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.panel-toggle:hover {
+    color: #4ECDC4;
+}
+
+.toggle-icon {
+    display: inline-block;
+    transition: transform 0.2s ease;
+    font-size: 0.8em;
+}
+
+.file-count {
+    font-size: 0.85em;
+  color: #888;
+    background: #f5f5f5;
+    padding: 4px 12px;
+    border-radius: 12px;
+}
+
+.panel-content {
+    padding: 16px;
+ background: white;
+}
+
+.file-selector-group,
+.session-selector-group {
+    margin-bottom: 16px;
+}
+
+.file-selector-group:last-of-type {
+    margin-bottom: 0;
+}
+
+.file-selector-group label,
+.session-selector-group label {
+  display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.9em;
+}
+
+#qeFileSelector {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9em;
+    background: white;
+    color: #333;
+    cursor: pointer;
+}
+
+#qeFileSelector:focus {
+    outline: none;
+    border-color: #4ECDC4;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+}
+
+/* Session Buttons Group */
+.session-buttons-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.session-label {
+    padding: 10px;
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #888;
+    font-size: 0.9em;
+}
+
+.session-btn {
+    padding: 10px 16px;
+    background: #f0f0f0;
+    border: 2px solid #ddd;
+border-radius: 4px;
+    cursor: pointer;
+transition: all 0.2s ease;
+  font-size: 0.85em;
+    font-weight: 500;
+}
+
+.session-btn:hover {
+    background: #e0f7f6;
+    border-color: #4ECDC4;
+    color: #2c3e50;
+}
+
+.session-btn.active {
+    background: #4ECDC4;
+    border-color: #2ab8ab;
+    color: white;
+    font-weight: 600;
+}
+
+.session-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.2);
+}
+
+/* File Management Buttons */
+.file-management {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.btn-secondary {
+    flex: 1;
+    padding: 10px 16px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: #5568d3;
+}
+
+.btn-secondary:active {
+    transform: scale(0.98);
+}
+
+/* File & Session Info Display */
+.qe-file-session-info {
+    background: linear-gradient(135deg, #e0f7f6 0%, #f0f1ff 100%);
+    border: 1px solid #c8f0ed;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px 0;
+    display: none;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 0.95em;
+}
+
+.info-row:not(:last-child) {
+    border-bottom: 1px solid #d0e8e5;
+}
+
+.info-row .label {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.info-row .value {
+    color: #667eea;
+    font-weight: 500;
+}
+
+/* Storage Manager Modal */
+.qe-modal {
+    display: none;
+    position: fixed;
+    z-index: 5000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    overflow: auto;
+}
+
+.qe-modal-content {
+    background: white;
+    margin: 50px auto;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 600px;
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.qe-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.qe-modal-header h3 {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.qe-modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5em;
+    cursor: pointer;
+  padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.qe-modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.qe-modal-body {
+    padding: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.storage-usage {
+    margin-bottom: 24px;
+}
+
+.storage-usage h4 {
+    color: #2c3e50;
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.storage-info {
+    background: #f5f5f5;
+    border-radius: 4px;
+    padding: 12px;
+}
+
+.storage-bar {
+    width: 100%;
+    height: 20px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.storage-used {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.3s ease;
+}
+
+.storage-info p {
+    margin: 6px 0;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.storage-info .warning {
+    color: #ff9800;
+    font-weight: 600;
+}
+
+.files-list {
+    margin-bottom: 24px;
+}
+
+.files-list h4 {
+    color: #2c3e50;
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.files-list-content {
+    background: #f9f9f9;
+    border-radius: 4px;
+    max-height: 300px;
+  overflow-y: auto;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #e0e0e0;
+    background: white;
+}
+
+.file-item:last-child {
+    border-bottom: none;
+}
+
+.file-item:hover {
+    background: #f5f5f5;
+}
+
+.file-name {
+    flex: 1;
+    font-weight: 600;
+    color: #2c3e50;
+    word-break: break-word;
+}
+
+.file-meta {
+    flex: 0 0 150px;
+    text-align: right;
+    color: #888;
+    font-size: 0.85em;
+    margin: 0 12px;
+}
+
+.btn-delete {
+    padding: 6px 12px;
+    background: #ff5252;
+    color: white;
+border: none;
+    border-radius: 4px;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-delete:hover {
+    background: #ff1744;
+}
+
+.qe-modal-footer {
+    display: flex;
+    gap: 12px;
+    padding: 16px 20px;
+    background: #f5f5f5;
+    border-top: 1px solid #e0e0e0;
+}
+
+.btn-primary {
+    flex: 1;
+    padding: 10px 16px;
+    background: #4ECDC4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: #2ab8ab;
+}
+
+.btn-danger {
+    flex: 1;
+    padding: 10px 16px;
+    background: #ff5252;
+  color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+  cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+    background: #ff1744;
+}
+
+/* Warning Banner */
+.qe-warning-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.qe-warning-banner .close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2em;
+    color: #856404;
+    padding: 0;
+    margin-left: 12px;
+}
+
 /* Accessibility */
-button:focus,
-input:focus,
-textarea:focus,
-.upload-area:focus {
+.qe-modal-close:focus,
+.btn-delete:focus,
+.btn-primary:focus,
+.btn-danger:focus,
+.btn-secondary:focus {
     outline: 2px solid #4ECDC4;
     outline-offset: 2px;
 }
 
-/* Print styles */
-@media print {
-    .queue-estimator-page .section {
-        page-break-inside: avoid;
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .qe-file-history-panel {
+    margin: 12px 0;
     }
 
-    .results-actions {
-        display: none;
+    .panel-content {
+        padding: 12px;
+    }
+
+    .file-selector-group,
+    .session-selector-group {
+        margin-bottom: 12px;
+    }
+
+  .file-management {
+        flex-direction: column;
+  gap: 8px;
+    }
+
+    .btn-secondary {
+  width: 100%;
+    }
+
+.session-buttons-group {
+    gap: 8px;
+    }
+
+    .session-btn {
+        font-size: 0.8em;
+        padding: 8px 12px;
+    }
+
+    .qe-modal-content {
+        width: 95%;
+   margin: 30px auto;
+    }
+
+    .file-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .file-meta {
+        width: 100%;
+     text-align: left;
+        margin: 0;
+    }
+
+    .btn-delete {
+        width: 100%;
+    }
+
+    .qe-modal-footer {
+        flex-direction: column;
+    }
+
+    .btn-primary,
+    .btn-danger {
+        width: 100%;
     }
 }

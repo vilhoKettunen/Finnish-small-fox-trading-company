@@ -22,6 +22,7 @@
 
     <!-- Queue Estimator Modules -->
     <script src="queue_estimator_js/queue-estimator-core.js"></script>
+    <script src="queue_estimator_js/queue-estimator-storage.js"></script>
     <script src="queue_estimator_js/queue-estimator-ui.js"></script>
     <script src="queue_estimator_js/queue-estimator-boot.js"></script>
 
@@ -147,7 +148,58 @@
 
     <!-- Results Section -->
     <div id="qeResultsSection" class="section" style="display:none;">
-        <h2> Analysis Results</h2>
+      <h2> Analysis Results</h2>
+
+        <!-- File History Panel (Collapsible) -->
+        <div id="qeFileHistoryPanel" class="qe-file-history-panel" style="display:none;">
+   <div class="panel-header">
+      <button class="panel-toggle" onclick="window.queueEstimatorUI && window.queueEstimatorUI.toggleFilePanel()">
+           📁 File History
+          <span class="toggle-icon">▼</span>
+                </button>
+ <span class="file-count" id="qeFileCount">0 files</span>
+     </div>
+            <div class="panel-content" id="qeFilePanelContent" style="display:none;">
+   <div class="file-selector-group">
+    <label>Select File:</label>
+          <select id="qeFileSelector" onchange="window.queueEstimatorUI && window.queueEstimatorUI.selectFile()">
+    <option value="">No files uploaded yet</option>
+      </select>
+     </div>
+  
+       <div class="session-selector-group">
+   <label>Select Session:</label>
+          <div id="qeSessionButtons" class="session-buttons-group">
+              <!-- Session buttons will be populated here -->
+   </div>
+ </div>
+     
+        <div class="file-management">
+     <button class="btn-secondary" onclick="window.queueEstimatorUI && window.queueEstimatorUI.openStorageManager()">
+            Manage Files
+            </button>
+       <button class="btn-secondary" onclick="window.queueEstimatorUI && window.queueEstimatorUI.exportFiles()">
+         Download ZIP
+  </button>
+         </div>
+            </div>
+        </div>
+
+        <!-- File & Session Info Display -->
+     <div id="qeFileSessionInfo" class="qe-file-session-info" style="display:none;">
+       <div class="info-row">
+        <span class="label">File:</span>
+    <span class="value" id="qeDisplayFileName">--</span>
+            </div>
+            <div class="info-row">
+    <span class="label">Uploaded:</span>
+         <span class="value" id="qeDisplayUploadTime">--</span>
+          </div>
+  <div class="info-row">
+  <span class="label">Session:</span>
+         <span class="value" id="qeDisplaySessionInfo">--</span>
+   </div>
+        </div>
 
   <!-- Estimate Summary -->
         <div class="estimate-summary">
@@ -244,7 +296,38 @@
             <a class="link-btn internal" href="Leaderboards.html"> Leaderboards</a>
        <a class="link-btn internal" href="AccountHistory.html"> Account History</a>
 </nav>
-    </div>
+ </div>
+
+    <!-- Storage Manager Modal -->
+    <div id="qeStorageManagerModal" class="qe-modal" style="display:none;">
+<div class="qe-modal-content">
+        <div class="qe-modal-header">
+      <h3>📁 Manage Your Files</h3>
+   <button class="qe-modal-close" onclick="window.queueEstimatorUI && window.queueEstimatorUI.closeStorageManager()">×</button>
+   </div>
+  <div class="qe-modal-body">
+              <!-- Storage Usage -->
+       <div class="storage-usage">
+   <h4>Storage Usage</h4>
+   <div class="storage-info" id="qeStorageInfo">
+ <p>Loading...</p>
+         </div>
+               </div>
+
+     <!-- Files List -->
+     <div class="files-list">
+      <h4>Your Files</h4>
+       <div id="qeStorageFilesList" class="files-list-content">
+   <p>No files uploaded yet</p>
+       </div>
+     </div>
+      </div>
+     <div class="qe-modal-footer">
+ <button class="btn-primary" onclick="window.queueEstimatorUI && window.queueEstimatorUI.closeStorageManager()">Close</button>
+               <button class="btn-danger" onclick="window.queueEstimatorUI && window.queueEstimatorUI.clearAllFilesConfirm()">Clear All Files</button>
+   </div>
+        </div>
+ </div>
 
     <script type="application/ld+json">
         {
