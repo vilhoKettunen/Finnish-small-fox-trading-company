@@ -33,38 +33,38 @@ let match;
      try {
     const day = parseInt(match[1], 10);
     const month = parseInt(match[2], 10);
-         const year = parseInt(match[3], 10);
+  const year = parseInt(match[3], 10);
   const hour = parseInt(match[4], 10);
      const minute = parseInt(match[5], 10);
         const second = parseInt(match[6], 10);
-     const position = parseInt(match[7], 10);
+   const position = parseInt(match[7], 10);
 
   // Validate date components
 if (month < 1 || month > 12 || day < 1 || day > 31 || hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59) {
-          continue; // Skip invalid timestamps
+   continue; // Skip invalid timestamps
            }
 
-          // Create ISO date string
+          // Create Date object (not ISO string)
   const dateObj = new Date(year, month - 1, day, hour, minute, second);
    const isoString = dateObj.toISOString();
 
   // DETECT NEW SESSION: Queue position goes UP (player left and re-joined queue)
      // In normal queueing, position always goes down or stays same
   // If it goes up, that means a new queue session started
-        if (lastPosition !== null && position > lastPosition) {
-   currentSessionId++;
+   if (lastPosition !== null && position > lastPosition) {
+ currentSessionId++;
         }
-        lastPosition = position;
+      lastPosition = position;
 
   entries.push({
-             timestamp: isoString,
-          dateObj: dateObj,
+         timestamp: isoString,
+      dateObj: dateObj,
     position: position,
       sessionId: currentSessionId
         });
 
    } catch (e) {
-                // Skip malformed entries
+  // Skip malformed entries
     console.warn('Failed to parse log entry:', match[0], e);
          }
    }
