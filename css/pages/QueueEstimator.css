@@ -349,7 +349,7 @@ background: #f9f9f9;
 }
 
 .estimate-header {
-    display: flex;
+ display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
@@ -361,7 +361,7 @@ background: #f9f9f9;
 }
 
 .confidence-badge {
-    padding: 6px 12px;
+ padding: 6px 12px;
     background: rgba(255, 255, 255, 0.2);
     border-radius: 20px;
     font-size: 0.75em;
@@ -374,11 +374,11 @@ background: #f9f9f9;
 }
 
 .confidence-medium {
-    background: rgba(255, 193, 7, 0.8) !important;
+ background: rgba(255, 193, 7, 0.8) !important;
 }
 
 .confidence-low {
-    background: rgba(244, 67, 54, 0.8) !important;
+  background: rgba(244, 67, 54, 0.8) !important;
 }
 
 .estimate-display {
@@ -396,52 +396,74 @@ background: #f9f9f9;
     opacity: 0.95;
 }
 
-/* Breakdown Info */
-.breakdown-info {
-    background: #f9f9f9;
-    padding: 20px;
+/* Game Start Time */
+.game-start-time {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 24px;
     border-radius: 8px;
     margin: 16px 0;
 }
 
-.breakdown-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid #eee;
+.game-start-header {
+    margin-bottom: 12px;
 }
 
-.breakdown-row:last-child {
-    border-bottom: none;
+.game-start-header h3 {
+    color: white;
+    margin: 0;
 }
 
-.breakdown-label {
-    font-weight: bold;
-    color: #2c3e50;
+.game-start-description {
+    margin: 8px 0 16px 0;
+    opacity: 0.95;
+    font-size: 0.95em;
 }
 
-.breakdown-value {
-    color: #4ECDC4;
-    font-weight: 600;
+.game-start-display {
+    text-align: center;
 }
 
-/* Issues Info */
-.issues-info {
-    background: #fff3cd;
-    border: 1px solid #ffc107;
-    border-radius: 4px;
-  padding: 16px;
+.game-start-main {
+    font-size: 2.2em;
+  font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.game-start-range {
+    font-size: 0.95em;
+    opacity: 0.95;
+}
+
+/* Queue Freeze Warning */
+.freeze-warning-container {
     margin: 16px 0;
+    padding: 16px;
+    border-radius: 8px;
+border: 2px solid #ff6b6b;
 }
 
-.issues-info h3 {
-    margin-top: 0;
- color: #856404;
+.freeze-warning {
+    background: #ffe0e0;
+    color: #d63031;
+    padding: 12px;
+ border-radius: 4px;
+    font-weight: 500;
 }
 
-.issue-item {
-    padding: 8px 0;
-    color: #856404;
+.freeze-critical {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+    color: white;
+    padding: 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.freeze-advice {
+  color: #c92a2a;
+    margin: 8px 0;
+    font-size: 0.9em;
 }
 
 /* Chart Container */

@@ -267,29 +267,29 @@ if (!currentStallStart) {
      * @returns {object} Estimate result
      */
     function estimateTimeToZero(entries, analysis) {
-        if (!analysis || analysis.endPosition === 0) {
+     if (!analysis || analysis.endPosition === 0) {
  return {
          estimatedMinutes: 0,
       estimatedSeconds: 0,
  confidence: 'high',
   bestCaseMinutes: 0,
-         worstCaseMinutes: 0,
+       worstCaseMinutes: 0,
          breakdown: null,
      message: 'Already at queue position 0!'
-          };
+   };
      }
 
-        const remainingPositions = analysis.endPosition;
+   const remainingPositions = analysis.endPosition;
   
      // Use average rate as primary estimate
      let estimatedMinutes = remainingPositions / analysis.ratePerMinute;
       let estimatedSeconds = remainingPositions * analysis.secondsPerPosition;
 
-        // Calculate best case (using recent/better rate)
+ // Calculate best case (using recent/better rate)
         const bestRate = Math.max(analysis.ratePerMinute, analysis.recentRatePerMinute);
     let bestCaseMinutes = remainingPositions / bestRate;
 
-        // Calculate worst case (slower rate, add stall time)
+     // Calculate worst case (slower rate, add stall time)
         let worstCaseMinutes = estimatedMinutes;
         if (analysis.stalls.length > 0) {
  // Estimate additional stall time
@@ -303,11 +303,11 @@ if (!currentStallStart) {
 
         // Determine confidence level
         let confidence = 'high';
-        let confidenceReasons = [];
+     let confidenceReasons = [];
 
-        if (analysis.totalTimeMinutes < 30) {
+ if (analysis.totalTimeMinutes < 30) {
      confidence = 'medium';
-            confidenceReasons.push('Log covers less than 30 minutes');
+     confidenceReasons.push('Log covers less than 30 minutes');
  }
 
   if (analysis.totalTimeMinutes < 15) {
@@ -316,59 +316,89 @@ if (!currentStallStart) {
     }
 
         if (analysis.stalls.length > 3) {
-            confidence = confidence === 'high' ? 'medium' : 'low';
-            confidenceReasons.push(`${analysis.stalls.length} stalls detected`);
-        }
+          confidence = confidence === 'high' ? 'medium' : 'low';
+    confidenceReasons.push(`${analysis.stalls.length} stalls detected`);
+  }
 
         const positionRange = analysis.startPosition - analysis.endPosition;
     if (positionRange < 10) {
-          confidence = 'low';
+ confidence = 'low';
    confidenceReasons.push('Queue moved only ' + positionRange + ' positions');
         }
 
         return {
-         estimatedMinutes: Math.round(estimatedMinutes),
-            estimatedSeconds: Math.round(estimatedSeconds),
+ estimatedMinutes: Math.round(estimatedMinutes),
+       estimatedSeconds: Math.round(estimatedSeconds),
   confidence: confidence,
-        confidenceReasons: confidenceReasons,
+     confidenceReasons: confidenceReasons,
      bestCaseMinutes: Math.round(bestCaseMinutes),
      worstCaseMinutes: Math.round(worstCaseMinutes),
     remainingPositions: remainingPositions,
             ratePerMinute: analysis.ratePerMinute,
-         analysisTimeMinutes: analysis.totalTimeMinutes
+       analysisTimeMinutes: analysis.totalTimeMinutes,
+        lastLogEntryTime: entries[entries.length - 1].dateObj
         };
  }
 
     /**
-     * Format time duration as human-readable string
-     * @param {number} minutes - Minutes
+     * Calculate game start time (when player reaches position 0)
+     * @param {object} estimate - Estimate result
+     * @returns {object} Game start time details
+   */
+    function calculateGameStartTime(estimate) {
+        const now = new Date();
+  
+        // Convert minutes to milliseconds
+        const estimatedMs = estimate.estimatedMinutes * 60 * 1000;
+        const bestCaseMs = estimate.bestCaseMinutes * 60 * 1000;
+        const worstCaseMs = estimate.worstCaseMinutes * 60 * 1000;
+   
+        // Calculate game start times
+        const estimatedStartTime = new Date(now.getTime() + estimatedMs);
+        const bestCaseStartTime = new Date(now.getTime() + bestCaseMs);
+     const worstCaseStartTime = new Date(now.getTime() + worstCaseMs);
+        
+        return {
+            estimated: estimatedStartTime,
+      best: bestCaseStartTime,
+            worst: worstCaseStartTime
+      };
+    }
+
+    /**
+     * Format time for display (HH:MM AM/PM)
+     * @param {Date} date - Date object
      * @returns {string} Formatted time
      */
-    function formatTime(minutes) {
-        if (minutes < 1) {
-       return 'Less than 1 minute';
-}
+    function formatGameStartTime(date) {
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = hours % 12 || 12;
+        const displayMinutes = String(minutes).padStart(2, '0');
+        return `${displayHours}:${displayMinutes} ${ampm}`;
+    }
+
+    /**
+     * Detect queue freeze by comparing last log entry time to current time
+     * @param {Date} lastLogEntryTime - Timestamp of last log entry
+     * @returns {object} Freeze detection result
+     */
+    function detectQueueFreeze(lastLogEntryTime) {
+        const now = new Date();
+        const timeSinceLastEntry = now - lastLogEntryTime;
+        const minutesSinceLastEntry = Math.floor(timeSinceLastEntry / (60 * 1000));
+        const secondsSinceLastEntry = Math.floor((timeSinceLastEntry % (60 * 1000)) / 1000);
+  
+        const isFrozen = minutesSinceLastEntry >= 5;
         
-        const hours = Math.floor(minutes / 60);
-   const mins = Math.round(minutes % 60);
-
-        if (hours === 0) {
-            return `${mins} minute${mins !== 1 ? 's' : ''}`;
-        }
-
-        if (hours === 1 && mins === 0) {
-            return '1 hour';
-  }
-
-        if (hours === 1) {
-     return `1 hour ${mins} minute${mins !== 1 ? 's' : ''}`;
-        }
-
-        if (mins === 0) {
-            return `${hours} hours`;
-        }
-
-        return `${hours} hour${hours !== 1 ? 's' : ''} ${mins} minute${mins !== 1 ? 's' : ''}`;
+        return {
+            isFrozen: isFrozen,
+            minutesSinceLastEntry: minutesSinceLastEntry,
+            secondsSinceLastEntry: secondsSinceLastEntry,
+     formattedTimeSinceLastEntry: `${minutesSinceLastEntry}m ${secondsSinceLastEntry}s`,
+          warningLevel: isFrozen ? 'critical' : (minutesSinceLastEntry >= 2 ? 'warning' : 'ok')
+        };
     }
 
     // Public API
@@ -377,6 +407,9 @@ if (!currentStallStart) {
         validateLog: validateLog,
    analyzeQueueProgression: analyzeQueueProgression,
      estimateTimeToZero: estimateTimeToZero,
-      formatTime: formatTime
+      formatTime: formatTime,
+     calculateGameStartTime: calculateGameStartTime,
+     formatGameStartTime: formatGameStartTime,
+     detectQueueFreeze: detectQueueFreeze
     };
 })();

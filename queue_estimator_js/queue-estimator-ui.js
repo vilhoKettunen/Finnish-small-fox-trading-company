@@ -228,24 +228,58 @@ btn.textContent = `Session ${parseInt(sessionId) + 1}: ${startPos} ? ${endPos} (
     const resultsSection = document.getElementById('qeResultsSection');
         if (!resultsSection) return;
 
-        // Hide input section, show results
+  // Hide input section, show results
    document.getElementById('qeInputSection').style.display = 'none';
    resultsSection.style.display = 'block';
 
        // Update estimate display
        const estimateTime = window.QueueEstimatorCore.formatTime(estimate.estimatedMinutes);
  const bestTime = window.QueueEstimatorCore.formatTime(estimate.bestCaseMinutes);
-        const worstTime = window.QueueEstimatorCore.formatTime(estimate.worstCaseMinutes);
+      const worstTime = window.QueueEstimatorCore.formatTime(estimate.worstCaseMinutes);
 
         document.getElementById('qeEstimateMain').textContent = estimateTime;
        document.getElementById('qeEstimateRange').textContent = `Best: ${bestTime} | Worst: ${worstTime}`;
+
+       // Calculate and display game start time
+ const gameStartTimes = window.QueueEstimatorCore.calculateGameStartTime(estimate);
+      const estimatedGameStart = window.QueueEstimatorCore.formatGameStartTime(gameStartTimes.estimated);
+    const bestGameStart = window.QueueEstimatorCore.formatGameStartTime(gameStartTimes.best);
+   const worstGameStart = window.QueueEstimatorCore.formatGameStartTime(gameStartTimes.worst);
+
+        document.getElementById('qeGameStartTimeMain').textContent = estimatedGameStart;
+        document.getElementById('qeGameStartTimeRange').textContent = `Best: ${bestGameStart} | Worst: ${worstGameStart}`;
+
+ // Detect queue freeze
+        const freezeInfo = window.QueueEstimatorCore.detectQueueFreeze(estimate.lastLogEntryTime);
+      const freezeContainer = document.getElementById('qeFreezeWarningContainer');
+ const freezeWarning = document.getElementById('qeFreezeWarning');
+
+  if (freezeInfo.isFrozen) {
+   freezeWarning.innerHTML = `
+<div class="freeze-critical">
+  ?? <strong>QUEUE FROZEN!</strong> No position updates for ${freezeInfo.formattedTimeSinceLastEntry}
+         </div>
+      <p class="freeze-advice">The queue may be frozen or your log file is outdated.</p>
+     <p class="freeze-advice">? Try refreshing the game or check if your log file is recent</p>
+          `;
+  freezeContainer.style.display = 'block';
+ } else if (freezeInfo.warningLevel === 'warning') {
+ freezeWarning.innerHTML = `
+<div class="freeze-warning">
+      ?? Last queue update: ${freezeInfo.formattedTimeSinceLastEntry} ago
+            </div>
+       `;
+  freezeContainer.style.display = 'block';
+  } else {
+   freezeContainer.style.display = 'none';
+        }
 
        // Update confidence badge
        const confidenceBadge = document.getElementById('qeConfidenceBadge');
    const confidenceClass = `confidence-${estimate.confidence}`;
   confidenceBadge.className = `confidence-badge ${confidenceClass}`;
   confidenceBadge.textContent = estimate.confidence.toUpperCase();
-        if (estimate.confidenceReasons.length > 0) {
+     if (estimate.confidenceReasons.length > 0) {
    confidenceBadge.title = estimate.confidenceReasons.join('; ');
  }
 
@@ -264,18 +298,18 @@ btn.textContent = `Session ${parseInt(sessionId) + 1}: ${startPos} ? ${endPos} (
        issuesList.innerHTML = '';
     for (const stall of analysis.stalls) {
     const stallItem = document.createElement('div');
-        stallItem.className = 'issue-item';
-        stallItem.innerHTML = `<strong>Stall at position ${stall.position}:</strong> ${stall.durationMinutes.toFixed(1)} minutes`;
+      stallItem.className = 'issue-item';
+    stallItem.innerHTML = `<strong>Stall at position ${stall.position}:</strong> ${stall.durationMinutes.toFixed(1)} minutes`;
    issuesList.appendChild(stallItem);
     }
  for (const reason of estimate.confidenceReasons) {
         const reasonItem = document.createElement('div');
        reasonItem.className = 'issue-item';
-          reasonItem.textContent = reason;
+   reasonItem.textContent = reason;
     issuesList.appendChild(reasonItem);
           }
   issuesContainer.style.display = 'block';
-   } else {
+ } else {
      issuesContainer.style.display = 'none';
         }
 
@@ -394,7 +428,15 @@ text: 'Elapsed Time (Minutes)'
  const bestTime = window.QueueEstimatorCore.formatTime(currentEstimate.bestCaseMinutes);
     const worstTime = window.QueueEstimatorCore.formatTime(currentEstimate.worstCaseMinutes);
 
-   const textToCopy = `
+   const gameStartTimes = window.QueueEstimatorCore.calculateGameStartTime(currentEstimate);
+    const estimatedGameStart = window.QueueEstimatorCore.formatGameStartTime(gameStartTimes.estimated);
+   const bestGameStart = window.QueueEstimatorCore.formatGameStartTime(gameStartTimes.best);
+    const worstGameStart = window.QueueEstimatorCore.formatGameStartTime(gameStartTimes.worst);
+
+   const freezeInfo = window.QueueEstimatorCore.detectQueueFreeze(currentEstimate.lastLogEntryTime);
+    const freezeStatus = freezeInfo.isFrozen ? `?? FROZEN (${freezeInfo.formattedTimeSinceLastEntry} ago)` : `? Active (${freezeInfo.formattedTimeSinceLastEntry} ago)`;
+
+  const textToCopy = `
 ?? QUEUE TIME ESTIMATE
 ???????????????????????
 
@@ -402,6 +444,16 @@ Estimated Time to Position 0: ${estimateTime}
 Confidence Level: ${currentEstimate.confidence.toUpperCase()}
 Best Case: ${bestTime}
 Worst Case: ${worstTime}
+
+?? GAME START TIME (When you'll reach queue position 0)
+?????????????????????????????????????????????????????
+Estimated: ${estimatedGameStart}
+Best Case: ${bestGameStart}
+Worst Case: ${worstGameStart}
+
+?? QUEUE STATUS
+???????????????
+${freezeStatus}
 
 ANALYSIS BREAKDOWN
 ?????????????????
@@ -425,10 +477,10 @@ https://vakstore.com/QueueEstimator.html
       const originalText = btn.textContent;
       btn.textContent = '? Copied!';
        setTimeout(() => {
-              btn.textContent = originalText;
+ btn.textContent = originalText;
         }, 2000);
        }).catch(err => {
-     showError('Failed to copy: ' + err.message);
+ showError('Failed to copy: ' + err.message);
       });
     }
 
