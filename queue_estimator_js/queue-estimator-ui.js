@@ -648,182 +648,222 @@ renderChart(entries, analysis);
     }
 
     /**
-    * Render chart using Chart.js
-    */
+ * Render chart using Chart.js
+ * 
+ * CRITICAL: Handles date conversions since dateObj may be stored as string
+ * This function calculates elapsed time from session start and creates the chart
+ */
     function renderChart(entries, analysis) {
         const ctx = document.getElementById('qeChart');
         if (!ctx) return;
 
         // Verify entries have dateObj
-    if (!entries || entries.length === 0) {
-         console.error('No entries to render chart');
-  return;
-        }
-
-  // Check if first entry has dateObj
-        if (!entries[0].dateObj) {
-  console.error('Entries missing dateObj property');
+        if (!entries || entries.length === 0) {
+            console.error('No entries to render chart');
             return;
         }
 
-        // Ensure dateObj is a Date object, not a string
-      const sessionStartTime = entries[0].dateObj instanceof Date ? entries[0].dateObj : new Date(entries[0].dateObj);
-  const sessionStartPosition = entries[0].position;
+        // Check if first entry has dateObj
+        if (!entries[0].dateObj) {
+            console.error('Entries missing dateObj property');
+            return;
+        }
+
+        // ✅ CRITICAL FIX: Ensure dateObj is ALWAYS a Date object
+        // dateObj is often stored as ISO string, must convert for calculations
+        // Using .getTime() forces conversion and avoids string arithmetic
+        let sessionStartTime = entries[0].dateObj;
+        if (typeof sessionStartTime === 'string' || !(sessionStartTime instanceof Date)) {
+            sessionStartTime = new Date(sessionStartTime);
+        }
+        const sessionStartPosition = entries[0].position;
 
         // Prepare data
         const labels = [];
         const positions = [];
         const projectionData = [];
 
-        // Build labels and positions - Calculate elapsed time correctly
+        console.log('=== CHART RENDERING DEBUG ===');
+        console.log('Session Start Time:', sessionStartTime);
+        console.log('Session Start Position:', sessionStartPosition);
+        console.log('Rate per Minute:', analysis.ratePerMinute);
+
+        // ✅ Build labels and positions - Calculate elapsed time correctly
         for (let i = 0; i < entries.length; i++) {
-       const entry = entries[i];
+            const entry = entries[i];
 
-            // Ensure dateObj is a Date object
-    const entryDate = entry.dateObj instanceof Date ? entry.dateObj : new Date(entry.dateObj);
+            // ✅ Convert dateObj to Date object if it's a string
+            let entryDate = entry.dateObj;
+            if (typeof entryDate === 'string' || !(entryDate instanceof Date)) {
+                entryDate = new Date(entryDate);
+            }
 
-         // Calculate elapsed time from SESSION START
-            const elapsedMs = entryDate - sessionStartTime;
-        const elapsedMinutes = elapsedMs / (1000 * 60);
+            // ✅ Calculate elapsed time from SESSION START
+            // Must use .getTime() to get milliseconds for both dates
+            // This ensures: Number - Number = Number (not String - String = NaN)
+            const elapsedMs = entryDate.getTime() - sessionStartTime.getTime();
+            const elapsedMinutes = elapsedMs / (1000 * 60);
 
-            // Ensure we have valid numbers
-         if (isNaN(elapsedMinutes) || elapsedMs < 0) {
-     console.warn('Invalid elapsed time for entry', i, entry);
- labels.push('0');
-   positions.push(entry.position);
-  projectionData.push(sessionStartPosition);
-          continue;
-  }
+            // ✅ Validate calculation result
+            if (isNaN(elapsedMinutes) || elapsedMs < 0) {
+                console.warn('Invalid elapsed time for entry', i, 'elapsedMs:', elapsedMs, 'entry:', entry);
+                labels.push('0');
+                positions.push(entry.position);
+                projectionData.push(sessionStartPosition);
+                continue;
+            }
 
+            // ✅ Add valid data to chart
             labels.push(elapsedMinutes.toFixed(1));
             positions.push(entry.position);
 
-         // Calculate projected position based on average rate and elapsed time
-       const rate = analysis.ratePerMinute;
+            // ✅ Calculate projected position based on average rate and elapsed time
+            // Formula: projectedPos = startPosition - (ratePerMinute × elapsedMinutes)
+            // This shows where position SHOULD be at the current rate
+            const rate = analysis.ratePerMinute;
             const projectedPos = Math.max(0, sessionStartPosition - (rate * elapsedMinutes));
-     projectionData.push(projectedPos);
+            projectionData.push(projectedPos);
         }
+
+        console.log('Sample labels:', labels.slice(0, 5), '...');
+        console.log('Sample projections:', projectionData.slice(0, 5), '...');
 
         // Destroy existing chart if any
         if (chartInstance) {
             chartInstance.destroy();
-}
+        }
 
         // Create new chart
-   chartInstance = new Chart(ctx, {
+        chartInstance = new Chart(ctx, {
             type: 'line',
-         data: {
-      labels: labels,
-      datasets: [
-   {
-            label: 'Actual Queue Position',
-    data: positions,
-              borderColor: '#FF6B6B',
-          backgroundColor: 'rgba(255, 107, 107, 0.1)',
-            borderWidth: 2,
-           fill: true,
-   tension: 0.1,
-         pointRadius: 4,
-  pointBackgroundColor: '#FF6B6B',
-          pointBorderColor: '#fff',
-       pointBorderWidth: 2
-    },
-    {
-  label: 'Average Trajectory (Estimated)',
-        data: projectionData,
-   borderColor: '#4ECDC4',
-backgroundColor: 'transparent',
-     borderWidth: 3,
-       borderDash: [8, 4],
-    fill: false,
-         tension: 0.2,
-                pointRadius: 0,
-        pointHoverRadius: 0
-          }
-      ]
-         },
-    options: {
- responsive: true,
-        maintainAspectRatio: true,
-      plugins: {
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        // ✅ ACTUAL QUEUE POSITION LINE
+                        label: 'Actual Queue Position',
+                        data: positions,
+                        // LINE COLOR: RED (#FF6B6B) - Actual positions
+                        borderColor: '#FF6B6B',
+                        // FILL COLOR: Light red with transparency for area under line
+                        backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1,
+                        // POINTS: Red with white border for visibility
+                        pointRadius: 4,
+                        pointBackgroundColor: '#FF6B6B', // ✅ Red fill
+                        pointBorderColor: '#fff', // ✅ White border
+                        pointBorderWidth: 2
+                    },
+                    {
+                        // ✅ ESTIMATED TRAJECTORY LINE
+                        label: 'Average Trajectory (Estimated)',
+                        data: projectionData,
+                        // LINE COLOR: BLUE (#4ECDC4) - Different from actual data
+                        borderColor: '#4ECDC4',
+                        backgroundColor: 'transparent',
+                        borderWidth: 3,
+                        // DASHED LINE: 8px dash, 4px gap pattern
+                        borderDash: [8, 4],
+                        fill: false,
+                        tension: 0.2,
+                        // NO POINTS on trend line
+                        pointRadius: 0,
+                        pointHoverRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
                     legend: {
-        position: 'top',
- labels: {
-    padding: 15,
-     font: {
-       size: 12
-        },
-               usePointStyle: true,
-     pointStyle: 'line'
-     }
-       },
-    tooltip: {
-    mode: 'index',
-    intersect: false,
-       backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    padding: 12,
-       titleFont: {
-      size: 13
-            },
-         bodyFont: {
-         size: 12
-         },
-   callbacks: {
-    title: function (context) {
-            if (context.length > 0) {
-                const label = context[0].label;
-        return `Elapsed Time: ${label} minutes`;
-        }
-     return '';
-       },
-        label: function (context) {
-          if (context.dataset.label === 'Actual Queue Position') {
-      return `Current Position: ${Math.round(context.parsed.y)}`;
-  } else {
-        return `Estimated Position: ${Math.round(context.parsed.y)}`;
-         }
-          }
-          }
-           }
-},
-          scales: {
-                y: {
-     title: {
-     display: true,
- text: 'Queue Position',
-        font: {
-size: 14,
- weight: 'bold'
-       }
-            },
-   beginAtZero: true,
-               max: Math.max(analysis.startPosition + 5, Math.max(...positions)),
-       reverse: false,
-   ticks: {
-            callback: function(value) {
-     return Math.round(value);
-   }
-     }
-      },
-              x: {
-  title: {
-display: true,
-  text: 'Elapsed Time (Minutes)',
-         font: {
-      size: 14,
-     weight: 'bold'
-      }
-      },
-     ticks: {
-            callback: function(value) {
-       return labels[value];
-       }
- }
-      }
-         }
-        }
+                        position: 'top',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 12
+                            },
+                            usePointStyle: true,
+                            pointStyle: 'line'
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: {
+                            size: 13
+                        },
+                        bodyFont: {
+                            size: 12
+                        },
+                        callbacks: {
+                            // ✅ TOOLTIP TITLE: Show elapsed time
+                            title: function (context) {
+                                if (context.length > 0) {
+                                    const label = context[0].label;
+                                    return `Elapsed Time: ${label} minutes`;
+                                }
+                                return '';
+                            },
+                            // ✅ TOOLTIP BODY: Show position values
+                            label: function (context) {
+                                if (context.dataset.label === 'Actual Queue Position') {
+                                    return `Current Position: ${Math.round(context.parsed.y)}`;
+                                } else {
+                                    return `Estimated Position: ${Math.round(context.parsed.y)}`;
+                                }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Queue Position',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        beginAtZero: true,
+                        max: Math.max(analysis.startPosition + 5, Math.max(...positions)),
+                        reverse: false,
+                        ticks: {
+                            callback: function (value) {
+                                return Math.round(value);
+                            }
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            // ✅ X-AXIS LABEL
+                            text: 'Elapsed Time (Minutes)',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        ticks: {
+                            // ✅ Show elapsed time values on X-axis
+                            callback: function (value) {
+                                // value is the index position, return label at that index
+                                if (labels[value] !== undefined) {
+                                    return labels[value];
+                                }
+                                return '';
+                            }
+                        }
+                    }
+                }
+            }
         });
-}
+    }
 
     /**
      * Copy results to clipboard
