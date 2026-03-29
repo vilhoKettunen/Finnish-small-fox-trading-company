@@ -401,15 +401,38 @@ if (!currentStallStart) {
         };
     }
 
+    /**
+     * Format minutes as HH:MM string
+  * @param {number} minutes - Number of minutes
+     * @returns {string} Formatted time (HH:MM)
+     */
+    function formatTime(minutes) {
+   if (!minutes || minutes < 0) {
+            return '0:00';
+        }
+        
+    const hours = Math.floor(minutes / 60);
+        const mins = Math.round(minutes % 60);
+  
+        // Pad minutes with leading zero if needed
+   const paddedMins = String(mins).padStart(2, '0');
+        
+     if (hours === 0) {
+  return `${mins}:${paddedMins}`;
+        }
+
+        return `${hours}:${paddedMins}`;
+    }
+
     // Public API
     return {
         parseLogFile: parseLogFile,
         validateLog: validateLog,
-   analyzeQueueProgression: analyzeQueueProgression,
-     estimateTimeToZero: estimateTimeToZero,
-      formatTime: formatTime,
-     calculateGameStartTime: calculateGameStartTime,
-     formatGameStartTime: formatGameStartTime,
-     detectQueueFreeze: detectQueueFreeze
+        analyzeQueueProgression: analyzeQueueProgression,
+  estimateTimeToZero: estimateTimeToZero,
+     formatTime: formatTime,
+      calculateGameStartTime: calculateGameStartTime,
+formatGameStartTime: formatGameStartTime,
+        detectQueueFreeze: detectQueueFreeze
     };
 })();

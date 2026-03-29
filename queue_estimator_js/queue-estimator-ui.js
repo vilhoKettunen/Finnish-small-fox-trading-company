@@ -129,10 +129,16 @@ textarea.addEventListener('focus', () => {
      * Analyze log text
      */
     function analyzeLogText(logText) {
-        clearError();
+     clearError();
+
+        // Check if core module is loaded
+        if (!window.QueueEstimatorCore) {
+  showError('Queue Estimator core module failed to load. Please refresh the page.');
+   return;
+        }
 
  // Parse log
-      const parseResult = window.QueueEstimatorCore.parseLogFile(logText);
+   const parseResult = window.QueueEstimatorCore.parseLogFile(logText);
 
    if (parseResult.errors.length > 0) {
   showError('Error parsing log: ' + parseResult.errors.join(', '));
