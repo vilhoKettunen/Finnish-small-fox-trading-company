@@ -24,7 +24,7 @@
     background: white;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
-    padding: 24px;
+  padding: 24px;
     margin: 20px auto;
     max-width: 900px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
@@ -32,7 +32,7 @@
 
 .queue-estimator-page .section h2 {
     color: #2c3e50;
-    margin-top: 0;
+ margin-top: 0;
     margin-bottom: 16px;
     font-size: 1.4em;
 }
@@ -57,7 +57,7 @@
     background: #f9f9f9;
     padding: 12px;
  border-left: 3px solid #4ECDC4;
-    margin: 16px 0;
+margin: 16px 0;
 }
 
 /* Log File Location Guide */
@@ -73,7 +73,7 @@
     color: #2c3e50;
     margin-top: 0;
   margin-bottom: 20px;
-    font-size: 1.2em;
+ font-size: 1.2em;
 }
 
 .log-location-guide h4 {
@@ -178,7 +178,7 @@ kbd {
 .upload-instructions li {
     color: #0d47a1;
     margin: 8px 0;
-    line-height: 1.6;
+  line-height: 1.6;
 }
 
 .upload-instructions strong {
@@ -229,12 +229,12 @@ background: #f0fffe;
     font-size: 1.2em;
     font-weight: bold;
     color: #2c3e50;
-    margin: 8px 0;
+ margin: 8px 0;
 }
 
 .upload-subtitle {
     color: #888;
-    margin: 4px 0;
+margin: 4px 0;
 }
 
 .upload-hint {
@@ -274,7 +274,7 @@ background: #f9f9f9;
     color: white;
     border: none;
     border-radius: 4px;
-    font-size: 1em;
+font-size: 1em;
     font-weight: bold;
     cursor: pointer;
     transition: background 0.3s ease;
@@ -291,9 +291,9 @@ background: #f9f9f9;
 /* Error Container */
 .error-container {
     max-width: 900px;
-    margin: 20px auto;
+  margin: 20px auto;
     padding: 16px;
-    background: #ffebee;
+  background: #ffebee;
     border: 1px solid #ff5252;
     border-radius: 4px;
     display: none;
@@ -313,7 +313,7 @@ background: #f9f9f9;
 }
 
 .session-btn {
-    padding: 10px 16px;
+padding: 10px 16px;
  background: #f0f0f0;
     border: 2px solid #ddd;
     border-radius: 4px;
@@ -357,7 +357,7 @@ background: #f9f9f9;
 
 .estimate-header h3 {
  color: white;
-    margin: 0;
+  margin: 0;
 }
 
 .confidence-badge {
@@ -415,7 +415,7 @@ background: #f9f9f9;
 }
 
 .game-start-description {
-    margin: 8px 0 16px 0;
+  margin: 8px 0 16px 0;
     opacity: 0.95;
     font-size: 0.95em;
 }
@@ -437,7 +437,7 @@ background: #f9f9f9;
 
 /* Queue Freeze Warning */
 .freeze-warning-container {
-    margin: 16px 0;
+ margin: 16px 0;
     padding: 16px;
     border-radius: 8px;
 border: 2px solid #ff6b6b;
@@ -480,7 +480,7 @@ background: white;
 }
 
 #qeChart {
-    max-height: 400px;
+ max-height: 400px;
 }
 
 /* Results Actions */
@@ -498,7 +498,7 @@ background: white;
 .download-btn,
 .reset-btn {
     padding: 10px 20px;
-    border: none;
+border: none;
     border-radius: 4px;
  font-size: 0.95em;
     font-weight: 600;
@@ -558,7 +558,7 @@ background: white;
     background: #f5f5f5;
     border: 1px solid #ddd;
     border-radius: 4px;
-    text-decoration: none;
+ text-decoration: none;
     color: #4ECDC4;
     font-weight: 600;
     transition: all 0.3s ease;
@@ -592,15 +592,15 @@ padding: 16px;
     }
 
 .upload-area {
-        padding: 30px 20px;
+   padding: 30px 20px;
     }
 
-    .upload-icon {
+  .upload-icon {
         font-size: 2em;
   }
 
     .estimate-summary {
-        padding: 16px;
+      padding: 16px;
     }
 
     .estimate-main {
@@ -621,7 +621,7 @@ padding: 16px;
     .download-btn,
     .reset-btn {
         width: 100%;
-    }
+ }
 
     .links-grid {
   grid-template-columns: 1fr;
@@ -637,7 +637,7 @@ padding: 16px;
  background: linear-gradient(135deg, #f5f7fa 0%, #f0f1ff 100%);
     border: 1px solid #e0e0e0;
     border-radius: 8px;
-    margin: 16px 0;
+  margin: 16px 0;
     overflow: hidden;
 }
 
@@ -660,7 +660,7 @@ padding: 16px;
     font-weight: 600;
     color: #2c3e50;
     font-size: 1em;
-    padding: 0;
+  padding: 0;
     transition: color 0.2s ease;
 }
 
@@ -752,7 +752,7 @@ transition: all 0.2s ease;
 .session-btn:hover {
     background: #e0f7f6;
     border-color: #4ECDC4;
-    color: #2c3e50;
+color: #2c3e50;
 }
 
 .session-btn.active {
@@ -769,7 +769,7 @@ transition: all 0.2s ease;
 
 /* File Management Buttons */
 .file-management {
-    display: flex;
+  display: flex;
     gap: 12px;
     margin-top: 16px;
     padding-top: 16px;
@@ -777,7 +777,7 @@ transition: all 0.2s ease;
 }
 
 .btn-secondary {
-    flex: 1;
+flex: 1;
     padding: 10px 16px;
     background: #667eea;
     color: white;
@@ -804,13 +804,13 @@ transition: all 0.2s ease;
     border-radius: 8px;
   padding: 16px;
     margin: 16px 0;
-    display: none;
+ display: none;
 }
 
 .info-row {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+ align-items: center;
     padding: 8px 0;
     font-size: 0.95em;
 }
@@ -863,7 +863,7 @@ transition: all 0.2s ease;
     padding: 12px 20px;
     background: #e3f2fd;
     border: 2px solid #90caf9;
-    border-radius: 6px;
+ border-radius: 6px;
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 0.95em;
@@ -882,7 +882,7 @@ transition: all 0.2s ease;
     border-color: #1565c0;
     color: white;
     font-weight: 600;
-    box-shadow: 0 4px 8px rgba(25, 118, 210, 0.3);
+ box-shadow: 0 4px 8px rgba(25, 118, 210, 0.3);
 }
 
 .session-buttons-container .session-btn:focus {
@@ -911,6 +911,238 @@ transition: all 0.2s ease;
     }
 }
 
+/* Storage Manager Modal */
+.qe-modal {
+    display: none;
+    position: fixed;
+    z-index: 5000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    overflow: auto;
+}
+
+.qe-modal-content {
+    background: white;
+    margin: 50px auto;
+    border-radius: 8px;
+    width: 90%;
+  max-width: 600px;
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.qe-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.qe-modal-header h3 {
+    margin: 0;
+ font-size: 1.2em;
+}
+
+.qe-modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5em;
+    cursor: pointer;
+  padding: 0;
+    width: 30px;
+ height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.qe-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.qe-modal-body {
+    padding: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.storage-usage {
+    margin-bottom: 24px;
+}
+
+.storage-usage h4 {
+    color: #2c3e50;
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.storage-info {
+    background: #f5f5f5;
+    border-radius: 4px;
+    padding: 12px;
+}
+
+.storage-bar {
+    width: 100%;
+    height: 20px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.storage-used {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    transition: width 0.3s ease;
+}
+
+.storage-info p {
+    margin: 6px 0;
+color: #666;
+    font-size: 0.9em;
+}
+
+.storage-info .warning {
+    color: #ff9800;
+    font-weight: 600;
+}
+
+.files-list {
+    margin-bottom: 24px;
+}
+
+.files-list h4 {
+    color: #2c3e50;
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.files-list-content {
+    background: #f9f9f9;
+    border-radius: 4px;
+    max-height: 300px;
+  overflow-y: auto;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #e0e0e0;
+    background: white;
+}
+
+.file-item:last-child {
+    border-bottom: none;
+}
+
+.file-item:hover {
+    background: #f5f5f5;
+}
+
+.file-name {
+    flex: 1;
+    font-weight: 600;
+    color: #2c3e50;
+  word-break: break-word;
+}
+
+.file-meta {
+    flex: 0 0 150px;
+    text-align: right;
+    color: #888;
+    font-size: 0.85em;
+    margin: 0 12px;
+}
+
+.btn-delete {
+    padding: 6px 12px;
+    background: #ff5252;
+    color: white;
+border: none;
+    border-radius: 4px;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-delete:hover {
+    background: #ff1744;
+}
+
+.qe-modal-footer {
+    display: flex;
+    gap: 12px;
+  padding: 16px 20px;
+    background: #f5f5f5;
+    border-top: 1px solid #e0e0e0;
+}
+
+.btn-primary {
+    flex: 1;
+    padding: 10px 16px;
+    background: #4ECDC4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+    background: #2ab8ab;
+}
+
+.btn-danger {
+    flex: 1;
+    padding: 10px 16px;
+    background: #ff5252;
+  color: white;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+  cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+    background: #ff1744;
+}
+
+/* Warning Banner */
+.qe-warning-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #fff3cd;
+    border: 2px solid #ffc107;
+border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.qe-warning-banner .close-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2em;
+    color: #856404;
+    padding: 0;
+    margin-left: 12px;
+}
+
 /* Accessibility */
 .qe-modal-close:focus,
 .btn-delete:focus,
@@ -934,7 +1166,7 @@ transition: all 0.2s ease;
     .file-selector-group,
     .session-selector-group {
         margin-bottom: 12px;
-    }
+}
 
   .file-management {
         flex-direction: column;
@@ -943,7 +1175,7 @@ transition: all 0.2s ease;
 
     .btn-secondary {
   width: 100%;
-    }
+  }
 
 .session-buttons-group {
     gap: 8px;
@@ -955,24 +1187,24 @@ transition: all 0.2s ease;
     }
 
     .qe-modal-content {
-        width: 95%;
+     width: 95%;
    margin: 30px auto;
-    }
+  }
 
     .file-item {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
+     align-items: flex-start;
+     gap: 8px;
     }
 
     .file-meta {
-        width: 100%;
+    width: 100%;
      text-align: left;
         margin: 0;
     }
 
     .btn-delete {
-        width: 100%;
+      width: 100%;
     }
 
     .qe-modal-footer {
@@ -981,6 +1213,6 @@ transition: all 0.2s ease;
 
     .btn-primary,
     .btn-danger {
-        width: 100%;
+     width: 100%;
     }
 }
