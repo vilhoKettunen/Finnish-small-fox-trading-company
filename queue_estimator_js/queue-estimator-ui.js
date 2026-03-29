@@ -549,15 +549,20 @@ infoEl.innerHTML = `
 
         // Hide input section, show results
   document.getElementById('qeInputSection').style.display = 'none';
-        resultsSection.style.display = 'block';
+      resultsSection.style.display = 'block';
 
-        // Update estimate display
-        const estimateTime = window.QueueEstimatorCore.formatTime(estimate.estimatedMinutes);
-        const bestTime = window.QueueEstimatorCore.formatTime(estimate.bestCaseMinutes);
-        const worstTime = window.QueueEstimatorCore.formatTime(estimate.worstCaseMinutes);
+      // Update estimate display with clear formatting
+    // Convert minutes to seconds for better formatting
+        const estimateTotalSeconds = estimate.estimatedMinutes * 60;
+        const bestTotalSeconds = estimate.bestCaseMinutes * 60;
+      const worstTotalSeconds = estimate.worstCaseMinutes * 60;
 
-        document.getElementById('qeEstimateMain').textContent = estimateTime;
-        document.getElementById('qeEstimateRange').textContent = `Best: ${bestTime} | Worst: ${worstTime}`;
+        const estimateDisplay = window.QueueEstimatorCore.formatTimeDisplay(estimateTotalSeconds);
+        const bestDisplay = window.QueueEstimatorCore.formatTimeDisplay(bestTotalSeconds);
+        const worstDisplay = window.QueueEstimatorCore.formatTimeDisplay(worstTotalSeconds);
+
+        document.getElementById('qeEstimateMain').textContent = estimateDisplay;
+        document.getElementById('qeEstimateRange').textContent = `Best: ${bestDisplay} | Worst: ${worstDisplay}`;
 
   // Calculate and display game start time
         const gameStartTimes = window.QueueEstimatorCore.calculateGameStartTime(estimate);
@@ -568,20 +573,20 @@ infoEl.innerHTML = `
         document.getElementById('qeGameStartTimeMain').textContent = estimatedGameStart;
         document.getElementById('qeGameStartTimeRange').textContent = `Best: ${bestGameStart} | Worst: ${worstGameStart}`;
 
-        // Detect queue freeze
+ // Detect queue freeze
         const freezeInfo = window.QueueEstimatorCore.detectQueueFreeze(estimate.lastLogEntryTime);
         const freezeContainer = document.getElementById('qeFreezeWarningContainer');
         const freezeWarning = document.getElementById('qeFreezeWarning');
 
-        if (freezeInfo.isFrozen) {
+   if (freezeInfo.isFrozen) {
        freezeWarning.innerHTML = `
 <div class="freeze-critical">
   ?? <strong>QUEUE FROZEN!</strong> No position updates for ${freezeInfo.formattedTimeSinceLastEntry}
-         </div>
+     </div>
       <p class="freeze-advice">The queue may be frozen or your log file is outdated.</p>
      <p class="freeze-advice">? Try refreshing the game or check if your log file is recent</p>
-          `;
-            freezeContainer.style.display = 'block';
+   `;
+         freezeContainer.style.display = 'block';
         } else if (freezeInfo.warningLevel === 'warning') {
    freezeWarning.innerHTML = `
 <div class="freeze-warning">
@@ -596,32 +601,32 @@ infoEl.innerHTML = `
         // Update confidence badge
         const confidenceBadge = document.getElementById('qeConfidenceBadge');
         const confidenceClass = `confidence-${estimate.confidence}`;
-        confidenceBadge.className = `confidence-badge ${confidenceClass}`;
+   confidenceBadge.className = `confidence-badge ${confidenceClass}`;
    confidenceBadge.textContent = estimate.confidence.toUpperCase();
         if (estimate.confidenceReasons.length > 0) {
-            confidenceBadge.title = estimate.confidenceReasons.join('; ');
+         confidenceBadge.title = estimate.confidenceReasons.join('; ');
         }
 
         // Update breakdown
-        document.getElementById('qeStartPos').textContent = analysis.startPosition;
+   document.getElementById('qeStartPos').textContent = analysis.startPosition;
         document.getElementById('qeEndPos').textContent = analysis.endPosition;
-        document.getElementById('qePositionsCleared').textContent = analysis.positionsCleared;
-        document.getElementById('qeTimeAnalyzed').textContent = `${analysis.totalTimeMinutes.toFixed(1)} minutes`;
-        document.getElementById('qeAvgRate').textContent = `${analysis.ratePerMinute.toFixed(2)} pos/min`;
-        document.getElementById('qeEntryCount').textContent = analysis.entryCount;
+      document.getElementById('qePositionsCleared').textContent = analysis.positionsCleared;
+document.getElementById('qeTimeAnalyzed').textContent = `${analysis.totalTimeMinutes.toFixed(1)} minutes`;
+   document.getElementById('qeAvgRate').textContent = `${analysis.ratePerMinute.toFixed(2)} pos/min`;
+     document.getElementById('qeEntryCount').textContent = analysis.entryCount;
 
     // Show/hide issues
  const issuesContainer = document.getElementById('qeIssuesContainer');
-        const issuesList = document.getElementById('qeIssuesList');
-        if (analysis.stalls.length > 0 || estimate.confidenceReasons.length > 0) {
+     const issuesList = document.getElementById('qeIssuesList');
+if (analysis.stalls.length > 0 || estimate.confidenceReasons.length > 0) {
  issuesList.innerHTML = '';
             for (const stall of analysis.stalls) {
          const stallItem = document.createElement('div');
-        stallItem.className = 'issue-item';
-                stallItem.innerHTML = `<strong>Stall at position ${stall.position}:</strong> ${stall.durationMinutes.toFixed(1)} minutes`;
+    stallItem.className = 'issue-item';
+          stallItem.innerHTML = `<strong>Stall at position ${stall.position}:</strong> ${stall.durationMinutes.toFixed(1)} minutes`;
           issuesList.appendChild(stallItem);
     }
-            for (const reason of estimate.confidenceReasons) {
+     for (const reason of estimate.confidenceReasons) {
 const reasonItem = document.createElement('div');
    reasonItem.className = 'issue-item';
        reasonItem.textContent = reason;
@@ -632,11 +637,11 @@ const reasonItem = document.createElement('div');
    issuesContainer.style.display = 'none';
         }
 
-        // Render chart
-        renderChart(entries, analysis);
+      // Render chart
+renderChart(entries, analysis);
 
-        // Scroll to results
-        setTimeout(() => {
+      // Scroll to results
+     setTimeout(() => {
     resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }, 100);
     }
@@ -743,26 +748,30 @@ data: projectionData,
             return;
         }
 
-        const estimateTime = window.QueueEstimatorCore.formatTime(currentEstimate.estimatedMinutes);
-     const bestTime = window.QueueEstimatorCore.formatTime(currentEstimate.bestCaseMinutes);
-const worstTime = window.QueueEstimatorCore.formatTime(currentEstimate.worstCaseMinutes);
+        const estimateTotalSeconds = currentEstimate.estimatedMinutes * 60;
+        const bestTotalSeconds = currentEstimate.bestCaseMinutes * 60;
+        const worstTotalSeconds = currentEstimate.worstCaseMinutes * 60;
+
+        const estimateDisplay = window.QueueEstimatorCore.formatTimeDisplay(estimateTotalSeconds);
+   const bestDisplay = window.QueueEstimatorCore.formatTimeDisplay(bestTotalSeconds);
+    const worstDisplay = window.QueueEstimatorCore.formatTimeDisplay(worstTotalSeconds);
 
         const gameStartTimes = window.QueueEstimatorCore.calculateGameStartTime(currentEstimate);
-        const estimatedGameStart = window.QueueEstimatorCore.formatGameStartTime(gameStartTimes.estimated);
+      const estimatedGameStart = window.QueueEstimatorCore.formatGameStartTime(gameStartTimes.estimated);
         const bestGameStart = window.QueueEstimatorCore.formatGameStartTime(gameStartTimes.best);
         const worstGameStart = window.QueueEstimatorCore.formatGameStartTime(gameStartTimes.worst);
 
-        const freezeInfo = window.QueueEstimatorCore.detectQueueFreeze(currentEstimate.lastLogEntryTime);
+    const freezeInfo = window.QueueEstimatorCore.detectQueueFreeze(currentEstimate.lastLogEntryTime);
         const freezeStatus = freezeInfo.isFrozen ? `?? FROZEN (${freezeInfo.formattedTimeSinceLastEntry} ago)` : `? Active (${freezeInfo.formattedTimeSinceLastEntry} ago)`;
 
   const textToCopy = `
 ?? QUEUE TIME ESTIMATE
 ???????????????????????
 
-Estimated Time to Position 0: ${estimateTime}
+Estimated Time to Position 0: ${estimateDisplay}
 Confidence Level: ${currentEstimate.confidence.toUpperCase()}
-Best Case: ${bestTime}
-Worst Case: ${worstTime}
+Best Case: ${bestDisplay}
+Worst Case: ${worstDisplay}
 
 ?? GAME START TIME (When you'll reach queue position 0)
 ?????????????????????????????????????????????????????
@@ -784,7 +793,7 @@ Average Rate: ${currentAnalysis.ratePerMinute.toFixed(2)} positions/minute
 Queue Entries: ${currentAnalysis.entryCount}
 
 Remaining Positions: ${currentEstimate.remainingPositions}
-At Current Rate: ${window.QueueEstimatorCore.formatTime(currentEstimate.estimatedMinutes)}
+At Current Rate: ${estimateDisplay}
 
 Generated by Vak Store Queue Estimator
 https://vakstore.com/QueueEstimator.html
@@ -796,7 +805,7 @@ https://vakstore.com/QueueEstimator.html
         const originalText = btn.textContent;
      btn.textContent = '? Copied!';
        setTimeout(() => {
-        btn.textContent = originalText;
+    btn.textContent = originalText;
           }, 2000);
   }).catch(err => {
       showError('Failed to copy: ' + err.message);

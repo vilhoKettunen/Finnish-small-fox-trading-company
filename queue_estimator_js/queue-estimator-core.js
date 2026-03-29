@@ -14,101 +14,78 @@ window.QueueEstimatorCore = (function() {
     function parseLogFile(logText) {
  const entries = [];
 const errors = [];
-        
+    
         if (!logText || typeof logText !== 'string' || logText.trim().length === 0) {
-      errors.push('Log file is empty');
+  errors.push('Log file is empty');
             return { entries: [], sessions: [], errors };
-        }
+    }
 
         // Regex to match queue position lines
         // Format: DD.MM.YYYY HH:MM:SS or DD.MM.YYYY HH.MM.SS [Notification] Client is in connect queue at position: N
         // Updated to accept both colon (:) and dot (.) separators for time
    const queueRegex = /(\d{1,2})\.(\d{1,2})\.(\d{4})\s+(\d{1,2})[:.](\d{1,2})[:.](\d{1,2})\s+\[Notification\]\s+Client is in connect queue at position:\s+(\d+)/g;
    
-      // Regex to detect session disconnects/restarts
-        const disconnectRegex = /Destroying game session/;
+let match;
+ let currentSessionId = 0;
+        let lastPosition = null;
 
-        let match;
-    let currentSessionId = 0;
-        let lastWasDisconnect = false;
-
-        while ((match = queueRegex.exec(logText)) !== null) {
+   while ((match = queueRegex.exec(logText)) !== null) {
      try {
     const day = parseInt(match[1], 10);
     const month = parseInt(match[2], 10);
          const year = parseInt(match[3], 10);
-                const hour = parseInt(match[4], 10);
+  const hour = parseInt(match[4], 10);
      const minute = parseInt(match[5], 10);
         const second = parseInt(match[6], 10);
      const position = parseInt(match[7], 10);
 
-       // Validate date components
-       if (month < 1 || month > 12 || day < 1 || day > 31 || hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59) {
+  // Validate date components
+if (month < 1 || month > 12 || day < 1 || day > 31 || hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59) {
           continue; // Skip invalid timestamps
            }
 
           // Create ISO date string
-         const dateObj = new Date(year, month - 1, day, hour, minute, second);
+  const dateObj = new Date(year, month - 1, day, hour, minute, second);
    const isoString = dateObj.toISOString();
+
+  // DETECT NEW SESSION: Queue position goes UP (player left and re-joined queue)
+     // In normal queueing, position always goes down or stays same
+  // If it goes up, that means a new queue session started
+        if (lastPosition !== null && position > lastPosition) {
+   currentSessionId++;
+        }
+        lastPosition = position;
 
   entries.push({
              timestamp: isoString,
           dateObj: dateObj,
     position: position,
-           sessionId: currentSessionId
+      sessionId: currentSessionId
         });
 
    } catch (e) {
                 // Skip malformed entries
-                console.warn('Failed to parse log entry:', match[0], e);
+    console.warn('Failed to parse log entry:', match[0], e);
          }
    }
 
-        // Check for disconnects and update session IDs
-        const lines = logText.split('\n');
-        let entryIndex = 0;
-      for (let i = 0; i < lines.length; i++) {
-        if (disconnectRegex.test(lines[i])) {
-                // Find the next entry after this disconnect
-              // Check if there's a position reset (big jump or restart)
-      if (entryIndex < entries.length - 1) {
-      const currentPos = entries[entryIndex].position;
-          const nextPos = entries[entryIndex + 1].position;
-         
-        // If position jumps significantly or goes up, likely a new session
-if (nextPos > currentPos + 5 || nextPos > currentPos) {
-               currentSessionId++;
-            for (let j = entryIndex + 1; j < entries.length; j++) {
-              entries[j].sessionId = currentSessionId;
-  }
-            }
-      }
-       }
-   
-            // Advance entryIndex to track position in entries array
-// Simple heuristic: count timestamp-like lines to sync with entries
-    if (lines[i].match(/\d{1,2}\.\d{1,2}\.\d{4}\s+\d{1,2}[:\.]\d{1,2}[:\.]\d{1,2}/)) {
-       entryIndex++;
- }
-  }
-
    // Group entries by session
-        const sessions = {};
-        for (const entry of entries) {
-        if (!sessions[entry.sessionId]) {
+   const sessions = {};
+  for (const entry of entries) {
+  if (!sessions[entry.sessionId]) {
      sessions[entry.sessionId] = [];
-            }
+    }
             sessions[entry.sessionId].push(entry);
-        }
+      }
 
         // If no entries found
         if (entries.length === 0) {
             errors.push('No queue position entries found in log file. Log file may be invalid or in unexpected format.');
-        }
+      }
 
-        return {
+     return {
   entries: entries,
-            sessions: sessions,
+   sessions: sessions,
          errors: errors
         };
     }
@@ -402,6 +379,29 @@ if (!currentStallStart) {
     }
 
     /**
+     * Format time for display - shows minutes/seconds if under 1 hour, or hours/minutes if 1+ hours
+     * @param {number} totalSeconds - Total seconds to format
+     * @returns {string} Formatted time with clear labels
+     */
+    function formatTimeDisplay(totalSeconds) {
+        if (!totalSeconds || totalSeconds < 0) {
+            return '0 seconds';
+        }
+
+        const hours = Math.floor(totalSeconds / 3600);
+   const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+
+        if (hours >= 1) {
+            // Show hours and minutes for durations >= 1 hour
+         return `${hours} hour${hours !== 1 ? 's' : ''} ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+  } else {
+       // Show minutes and seconds for durations < 1 hour
+      return `${minutes} minute${minutes !== 1 ? 's' : ''} ${seconds} second${seconds !== 1 ? 's' : ''}`;
+      }
+    }
+
+    /**
      * Format minutes as HH:MM string
   * @param {number} minutes - Number of minutes
      * @returns {string} Formatted time (HH:MM)
@@ -409,10 +409,10 @@ if (!currentStallStart) {
     function formatTime(minutes) {
    if (!minutes || minutes < 0) {
             return '0:00';
-        }
+   }
         
     const hours = Math.floor(minutes / 60);
-        const mins = Math.round(minutes % 60);
+ const mins = Math.round(minutes % 60);
   
         // Pad minutes with leading zero if needed
    const paddedMins = String(mins).padStart(2, '0');
@@ -428,9 +428,10 @@ if (!currentStallStart) {
     return {
         parseLogFile: parseLogFile,
         validateLog: validateLog,
-        analyzeQueueProgression: analyzeQueueProgression,
+      analyzeQueueProgression: analyzeQueueProgression,
   estimateTimeToZero: estimateTimeToZero,
      formatTime: formatTime,
+      formatTimeDisplay: formatTimeDisplay,
       calculateGameStartTime: calculateGameStartTime,
 formatGameStartTime: formatGameStartTime,
         detectQueueFreeze: detectQueueFreeze
