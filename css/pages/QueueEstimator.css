@@ -468,8 +468,16 @@ border: 2px solid #ff6b6b;
 
 /* Chart Container */
 .chart-container {
-background: white;
-    border: 1px solid #e0e0e0;
+    /* ? PAPER TEXTURE BACKGROUND */
+    background-image: url("../../images/pack_Ground/paper.png") !important;
+    background-size: 100% auto !important;
+    background-repeat: repeat-y !important;
+    background-color: rgba(255, 255, 255, 0.92) !important;
+  background-blend-mode: multiply !important;
+    /* ? PAPER BORDER AND SHADOW */
+    border: 1px solid rgba(0, 0, 0, 0.18) !important;
+    box-shadow: 8px 20px 18px rgba(0, 0, 0, 0.18) !important;
+    /* Preserve existing layout */
     border-radius: 8px;
     padding: 20px;
     margin: 20px 0;
@@ -634,10 +642,15 @@ padding: 16px;
 
 /* File History Panel */
 .qe-file-history-panel {
- background: linear-gradient(135deg, #f5f7fa 0%, #f0f1ff 100%);
-    border: 1px solid #e0e0e0;
+    background-image: url("../../images/pack_Ground/paper.png") !important;
+    background-size: 100% auto !important;
+    background-repeat: repeat-y !important;
+    background-color: rgba(255, 255, 255, 0.92) !important;
+    background-blend-mode: multiply !important;
+  border: 1px solid rgba(0, 0, 0, 0.18) !important;
+    box-shadow: 8px 20px 18px rgba(0, 0, 0, 0.18) !important;
     border-radius: 8px;
-  margin: 16px 0;
+    margin: 16px 0;
     overflow: hidden;
 }
 
@@ -799,12 +812,17 @@ flex: 1;
 
 /* File & Session Info Display */
 .qe-file-session-info {
-    background: linear-gradient(135deg, #e0f7f6 0%, #f0f1ff 100%);
-    border: 1px solid #c8f0ed;
+    background-image: url("../../images/pack_Ground/paper.png") !important;
+    background-size: 100% auto !important;
+    background-repeat: repeat-y !important;
+    background-color: rgba(255, 255, 255, 0.92) !important;
+    background-blend-mode: multiply !important;
+    border: 1px solid rgba(0, 0, 0, 0.18) !important;
+    box-shadow: 8px 20px 18px rgba(0, 0, 0, 0.18) !important;
     border-radius: 8px;
-  padding: 16px;
+    padding: 16px;
     margin: 16px 0;
- display: none;
+    display: none;
 }
 
 .info-row {
@@ -831,8 +849,13 @@ flex: 1;
 
 /* Session Selector Buttons - AFTER FILE INFO */
 .qe-session-selector-buttons {
-    background: linear-gradient(135deg, #f5f7fa 0%, #e8f4f8 100%);
-    border: 1px solid #b3e5fc;
+    background-image: url("../../images/pack_Ground/paper.png") !important;
+    background-size: 100% auto !important;
+    background-repeat: repeat-y !important;
+    background-color: rgba(255, 255, 255, 0.92) !important;
+    background-blend-mode: multiply !important;
+    border: 1px solid rgba(0, 0, 0, 0.18) !important;
+    box-shadow: 8px 20px 18px rgba(0, 0, 0, 0.18) !important;
     border-radius: 8px;
     padding: 20px;
     margin: 20px 0;
