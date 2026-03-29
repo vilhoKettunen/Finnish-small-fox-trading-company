@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
     <script src="auth-storage.js"></script>
@@ -42,10 +42,62 @@
       Upload or paste your Vintage Story game log file to estimate how long it will take to reach queue position 0.
    The estimator analyzes your queue progression and calculates an average time based on your historical data.
      </p>
-        <p class="small-text">
-            <strong>Note:</strong> Estimates are based on the data in your log file and may vary based on current server load and other factors.
-            For best accuracy, use a log file covering at least 30 minutes of queue time.
-        </p>
+      <p class="small-text">
+  <strong>Note:</strong> Estimates are based on the data in your log file and may vary based on current server load and other factors.
+     For best accuracy, use a log file covering at least 30 minutes of queue time.
+     </p>
+
+        <!-- Log File Location Guide -->
+        <div class="log-location-guide">
+       <h3> Finding Your Log File</h3>
+      
+  <!-- Windows Instructions -->
+            <div class="os-guide windows-guide">
+         <h4> Windows</h4>
+           <p>Navigate to your Vintage Story logs folder:</p>
+      <div class="path-box">
+            <code>%appdata%\VintagestoryData\Logs\</code>
+             </div>
+             <p><strong>Quick steps:</strong></p>
+  <ol>
+  <li>Press <kbd>Win + R</kbd> to open the Run dialog</li>
+                <li>Type: <code>%appdata%\VintagestoryData\Logs</code></li>
+      <li>Press Enter</li>
+      <li>Look for <code>client-main.log</code></li>
+      </ol>
+            </div>
+
+            <!-- Linux Instructions -->
+     <div class="os-guide linux-guide">
+                <h4> Linux</h4>
+   <p>Navigate to your Vintage Story logs folder:</p>
+    <div class="path-box">
+         <code>~/.config/VintagestoryData/Logs/</code>
+    </div>
+  <p><strong>Quick steps:</strong></p>
+        <ol>
+          <li>Open your file manager</li>
+  <li>Press <kbd>Ctrl + H</kbd> to show hidden files</li>
+ <li>Navigate to: <code>.config → VintagestoryData → Logs</code></li>
+ <li>Look for <code>client-main.log</code></li>
+                </ol>
+          <p><strong>Or use terminal:</strong></p>
+ <div class="path-box">
+            <code>cat ~/.config/VintagestoryData/Logs/client-main.log</code>
+      </div>
+            </div>
+
+            <!-- Upload Instructions -->
+            <div class="upload-instructions">
+        <h4>⬆️ Uploading Your Log</h4>
+        <p>Once you've found <code>client-main.log</code>:</p>
+    <ol>
+      <li><strong>Drag & drop:</strong> Drag the <code>client-main.log</code> file directly onto the upload area below</li>
+       <li><strong>Or click:</strong> Click the upload area to browse and select the file</li>
+        <li><strong>Or copy:</strong> Open the log file with a text editor, select all (<kbd>Ctrl+A</kbd>), copy, and paste the content into the textarea below</li>
+                </ol>
+            </div>
+ </div>
     </div>
 
     <!-- File Upload / Paste Section -->
@@ -63,7 +115,7 @@
             <input type="file" id="qeFileInput" accept=".log,.txt,text/plain" style="display:none;" aria-label="Select log file" />
         </div>
 
-        <p style="text-align: center; margin: 20px 0; color: #666;">� OR �</p>
+        <p style="text-align: center; margin: 20px 0; color: #666;">— OR —</p>
 
       <!-- Paste Area -->
         <label for="qeTextarea" style="display: block; margin-bottom: 8px; font-weight: bold;">Paste Log Content:</label>

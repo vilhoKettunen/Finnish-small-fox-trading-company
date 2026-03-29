@@ -56,8 +56,142 @@
     font-style: italic;
     background: #f9f9f9;
     padding: 12px;
-    border-left: 3px solid #4ECDC4;
+ border-left: 3px solid #4ECDC4;
     margin: 16px 0;
+}
+
+/* Log File Location Guide */
+.log-location-guide {
+    background: linear-gradient(135deg, #f5f7fa 0%, #f9f9f9 100%);
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.log-location-guide h3 {
+    color: #2c3e50;
+    margin-top: 0;
+  margin-bottom: 20px;
+    font-size: 1.2em;
+}
+
+.log-location-guide h4 {
+    color: #34495e;
+    margin-top: 16px;
+    margin-bottom: 12px;
+    font-size: 1.05em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* OS-specific guides */
+.os-guide {
+    background: white;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.os-guide:last-of-type {
+    margin-bottom: 0;
+}
+
+.os-guide p {
+    color: #555;
+    margin: 8px 0;
+    line-height: 1.5;
+}
+
+.os-guide ol {
+    margin: 12px 0;
+    padding-left: 24px;
+}
+
+.os-guide li {
+    color: #555;
+    margin: 6px 0;
+    line-height: 1.5;
+}
+
+/* Path boxes (monospace code display) */
+.path-box {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 12px;
+    margin: 12px 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+    color: #333;
+    word-break: break-all;
+  border-left: 3px solid #4ECDC4;
+}
+
+.path-box code {
+    color: #d63384;
+ font-weight: 500;
+}
+
+/* Keyboard key styling */
+kbd {
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.85em;
+    color: #333;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+    display: inline-block;
+    margin: 0 2px;
+    white-space: nowrap;
+}
+
+/* Upload instructions */
+.upload-instructions {
+    background: #e3f2fd;
+    border: 1px solid #90caf9;
+    border-radius: 6px;
+    padding: 16px;
+ margin-top: 16px;
+}
+
+.upload-instructions h4 {
+    color: #1565c0;
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.upload-instructions p {
+    color: #0d47a1;
+    margin: 8px 0;
+}
+
+.upload-instructions ol {
+    margin: 12px 0;
+    padding-left: 24px;
+}
+
+.upload-instructions li {
+    color: #0d47a1;
+    margin: 8px 0;
+    line-height: 1.6;
+}
+
+.upload-instructions strong {
+    color: #1565c0;
+    font-weight: 600;
+}
+
+.upload-instructions code {
+    background: #f5f5f5;
+ padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    color: #d63384;
 }
 
 /* Upload Area */
