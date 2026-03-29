@@ -243,27 +243,28 @@ window.queueEstimatorUI = (function() {
      * Load file data and display results
  */
     function loadFileForDisplay(fileData) {
-        if (!fileData || !fileData.sessions || fileData.sessions.length === 0) {
+      if (!fileData || !fileData.sessions || fileData.sessions.length === 0) {
           showError('Invalid file data');
-            return;
+    return;
      }
 
-        // Get selected session (newest by default)
-        const session = fileData.sessions[currentSessionId];
+   // Get selected session - DEFAULT TO NEWEST (last session = newest)
+        let session = fileData.sessions[currentSessionId];
         if (!session) {
-  currentSessionId = 0;
-            const session = fileData.sessions[0];
+          // Default to newest session (last one in array)
+         currentSessionId = fileData.sessions.length - 1;
+    session = fileData.sessions[currentSessionId];
         }
 
         currentAnalysis = session.analysis;
-        currentEstimate = session.estimate;
+     currentEstimate = session.estimate;
         currentEntries = session.entries;
      currentFileName = fileData.name;
 
         // Update UI
     renderResults(session.entries, session.analysis, session.estimate);
-        updateSessionButtons(fileData);
-        updateFileSessionInfo(fileData, session);
+    updateSessionButtons(fileData);
+ updateFileSessionInfo(fileData, session);
     }
 
     /**
@@ -310,34 +311,34 @@ minute: '2-digit'
     /**
      * Update session buttons
      */
-    function updateSessionButtons(fileData) {
-      const buttonsContainer = document.getElementById('qeSessionButtons');
-        if (!buttonsContainer) return;
+  function updateSessionButtons(fileData) {
+      const buttonsContainer = document.getElementById('qeSessionButtonsContainer');
+        const selectorSection = document.getElementById('qeSessionSelectorButtons');
+   if (!buttonsContainer || !selectorSection) return;
 
         buttonsContainer.innerHTML = '';
 
 if (!fileData.sessions || fileData.sessions.length === 0) {
          buttonsContainer.innerHTML = '<p>No sessions</p>';
+ selectorSection.style.display = 'none';
         return;
         }
 
-        if (fileData.sessions.length === 1) {
-            // Single session - show as label
-         const label = document.createElement('div');
-            label.className = 'session-label';
-  const session = fileData.sessions[0];
-         label.textContent = `Session 1 (${session.startPosition}?${session.endPosition}, ${session.duration.toFixed(1)}m)`;
-            buttonsContainer.appendChild(label);
+        // If only one session, hide the selector
+   if (fileData.sessions.length === 1) {
+       selectorSection.style.display = 'none';
     } else {
-            // Multiple sessions - show as buttons
+    // Multiple sessions - show all as buttons
+          selectorSection.style.display = 'block';
             for (let i = 0; i < fileData.sessions.length; i++) {
-                const session = fileData.sessions[i];
+    const session = fileData.sessions[i];
        const btn = document.createElement('button');
    btn.className = `session-btn ${i === currentSessionId ? 'active' : ''}`;
- btn.textContent = `Session ${i + 1} (${session.startPosition}?${session.endPosition})`;
-        btn.onclick = () => selectSessionFromFile(i);
+ btn.textContent = `Session ${i + 1}`;
+ btn.title = `Queue progression: ${session.startPosition}?${session.endPosition} (${session.duration.toFixed(1)}m)`;
+  btn.onclick = () => selectSessionFromFile(i);
          buttonsContainer.appendChild(btn);
-       }
+   }
         }
     }
 
