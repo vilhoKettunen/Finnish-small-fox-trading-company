@@ -1,14 +1,681 @@
+/* ══════════════════════════════════════════════════════════════
+   LIGHT THEME (default)
+   ══════════════════════════════════════════════════════════════ */
 :root {
- --site-font: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
- --site-text: #1f2937;
- --site-muted: #6b7280;
+    /* Typography */
+    --site-font: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --site-text: #1f2937;
+    --site-muted: #6b7280;
 
- --paper-padding:12px;
- --paper-radius:10px;
- --paper-border: rgba(0,0,0,0.18);
- --paper-shadow:08px20px rgba(0,0,0,0.18);
+    /* Page backgrounds */
+    --site-bg: #ffffff;
+    --site-bg-alt: #fafafa;
+    --site-bg-subtle: #f5f5f5;
 
- --table-border: rgba(0,0,0,0.18);
+    /* Paper panels */
+    --paper-padding: 12px;
+    --paper-radius: 10px;
+    --paper-bg-color: rgba(255, 255, 255, 0.92);
+    --paper-border: rgba(0, 0, 0, 0.18);
+    --paper-shadow: 8px 20px 18px rgba(0, 0, 0, 0.18);
+    --paper-blend: multiply;
 
- --focus-ring:0003px rgba(26,115,232,0.25);
+    /* Tables */
+    --table-bg: rgba(255, 255, 255, 0.98);
+    --table-border: rgba(0, 0, 0, 0.18);
+    --th-bg: #f5f5f5;
+
+    /* Borders */
+    --border-color: #ddd;
+    --border-color-light: #eee;
+    --border-color-med: #ccc;
+
+    /* Headings / shadows */
+    --heading-shadow: 1px 2px 4px rgba(0, 0, 0, 0.55);
+    --focus-ring: 0 0 3px rgba(26, 115, 232, 0.25);
+
+    /* Links */
+    --link-color: #2563eb;
+    --link-hover: #1d4ed8;
+
+    /* Inputs / forms */
+    --input-bg: #ffffff;
+    --input-border: #ddd;
+
+    /* Buttons */
+    --btn-bg: #ffffff;
+    --btn-border: #ccc;
+    --btn-active-bg: #222;
+    --btn-active-text: #fff;
+
+    /* Pills */
+    --pill-bg: #eee;
+    --pill-border: #ddd;
+    --pill-sell-bg: #e9ffe8;
+    --pill-buy-bg: #e8f7ff;
+    --pill-pending-bg: #fff8d0;
+    --pill-rejected-bg: #ffe3e3;
+
+    /* Status text */
+    --color-success: #2ecc71;
+    --color-danger: #dc2626;
+    --color-warning: #d97706;
+
+    /* Footer */
+    --footer-bg: rgba(255, 255, 255, 0.75);
+    --footer-border: rgba(0, 0, 0, 0.12);
+    --footer-text: rgba(0, 0, 0, 0.7);
+    --footer-link: #0066cc;
+
+    /* Dropdown */
+    --dropdown-bg: #fff;
+    --dropdown-border: #ccc;
+    --dropdown-hover: #f0f6ff;
+    --dropdown-active: #dff0ff;
+    --dropdown-fav-tint: #fff8d0;
+
+    /* Help-link badge */
+    --help-link-color: #2563eb;
+    --help-link-bg: #eff6ff;
+    --help-link-border: #dbeafe;
+    --help-link-hover-bg: #dbeafe;
+    --help-link-hover-border: #93c5fd;
+
+    /* Warning banner */
+    --warning-bg: #fff2f2;
+    --warning-border: #f3b3b3;
+    --warning-text: #a40000;
+
+    /* Dialog */
+    --dialog-backdrop: rgba(0, 0, 0, 0.35);
+
+    /* Suggestions */
+    --sugg-bg: #fff;
+    --sugg-hover: #f0f0f0;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DARK THEME
+   ══════════════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+    --site-text: #e5e7eb;
+    --site-muted: #9ca3af;
+
+    --site-bg: #111827;
+    --site-bg-alt: #1f2937;
+    --site-bg-subtle: #374151;
+
+    --paper-bg-color: rgba(31, 41, 55, 0.95);
+    --paper-border: rgba(255, 255, 255, 0.1);
+    --paper-shadow: 8px 20px 18px rgba(0, 0, 0, 0.4);
+    --paper-blend: screen;
+
+    --table-bg: rgba(31, 41, 55, 0.98);
+    --table-border: rgba(255, 255, 255, 0.1);
+    --th-bg: #1f2937;
+
+    --border-color: #374151;
+    --border-color-light: #1f2937;
+    --border-color-med: #4b5563;
+
+    --heading-shadow: 1px 2px 4px rgba(0, 0, 0, 0.8);
+    --focus-ring: 0 0 3px rgba(96, 165, 250, 0.4);
+
+    --link-color: #60a5fa;
+    --link-hover: #93c5fd;
+
+    --input-bg: #1f2937;
+    --input-border: #4b5563;
+
+    --btn-bg: #1f2937;
+    --btn-border: #4b5563;
+    --btn-active-bg: #f3f4f6;
+    --btn-active-text: #111827;
+
+    --pill-bg: #374151;
+    --pill-border: #4b5563;
+    --pill-sell-bg: rgba(46, 125, 50, 0.2);
+    --pill-buy-bg: rgba(37, 99, 235, 0.2);
+    --pill-pending-bg: rgba(245, 158, 11, 0.2);
+    --pill-rejected-bg: rgba(220, 38, 38, 0.2);
+
+    --color-success: #4ade80;
+    --color-danger: #f87171;
+    --color-warning: #fbbf24;
+
+    --footer-bg: rgba(17, 24, 39, 0.9);
+    --footer-border: rgba(255, 255, 255, 0.08);
+    --footer-text: rgba(255, 255, 255, 0.6);
+    --footer-link: #60a5fa;
+
+    --dropdown-bg: #1f2937;
+    --dropdown-border: #4b5563;
+    --dropdown-hover: #374151;
+    --dropdown-active: #374151;
+    --dropdown-fav-tint: rgba(245, 158, 11, 0.15);
+
+    --help-link-color: #60a5fa;
+    --help-link-bg: rgba(96, 165, 250, 0.1);
+    --help-link-border: rgba(96, 165, 250, 0.2);
+    --help-link-hover-bg: rgba(96, 165, 250, 0.2);
+    --help-link-hover-border: rgba(96, 165, 250, 0.3);
+
+    --warning-bg: rgba(127, 29, 29, 0.3);
+    --warning-border: rgba(220, 38, 38, 0.4);
+    --warning-text: #fca5a5;
+
+    --dialog-backdrop: rgba(0, 0, 0, 0.6);
+
+    --sugg-bg: #1f2937;
+    --sugg-hover: #374151;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   GLOBAL DARK-MODE OVERRIDES (common elements across all pages)
+   ══════════════════════════════════════════════════════════════ */
+[data-theme="dark"] body {
+    color: var(--site-text);
+}
+
+[data-theme="dark"] a {
+    color: var(--link-color);
+}
+
+[data-theme="dark"] a:hover {
+    color: var(--link-hover);
+}
+
+/* Tables */
+[data-theme="dark"] table {
+    background: var(--table-bg) !important;
+}
+
+[data-theme="dark"] th {
+    background: var(--th-bg) !important;
+    color: var(--site-muted);
+}
+
+[data-theme="dark"] th,
+[data-theme="dark"] td {
+    border-color: var(--border-color) !important;
+}
+
+/* Form elements */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+    background: var(--input-bg);
+    color: var(--site-text);
+    border-color: var(--input-border);
+}
+
+[data-theme="dark"] button {
+    background: var(--btn-bg);
+    color: var(--site-text);
+    border-color: var(--btn-border);
+}
+
+[data-theme="dark"] button:disabled,
+[data-theme="dark"] button[disabled] {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Headings */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4 {
+    color: var(--site-text);
+}
+
+/* Common utility classes */
+[data-theme="dark"] .small {
+    color: var(--site-muted) !important;
+}
+
+[data-theme="dark"] .muted {
+    color: var(--site-muted);
+}
+
+[data-theme="dark"] .section,
+[data-theme="dark"] .box,
+[data-theme="dark"] .card,
+[data-theme="dark"] .banner {
+    background: var(--paper-bg-color) !important;
+    border-color: var(--border-color-med) !important;
+}
+
+[data-theme="dark"] .pill,
+[data-theme="dark"] .pill-lite {
+    background: var(--pill-bg);
+    color: var(--site-text);
+    border-color: var(--pill-border);
+}
+
+[data-theme="dark"] .pill-sell,
+[data-theme="dark"] .pill-active {
+    background: var(--pill-sell-bg);
+}
+
+[data-theme="dark"] .pill-buy {
+    background: var(--pill-buy-bg);
+}
+
+[data-theme="dark"] .pill-pending {
+    background: var(--pill-pending-bg);
+}
+
+[data-theme="dark"] .pill-rejected {
+    background: var(--pill-rejected-bg);
+}
+
+/* Detail rows */
+[data-theme="dark"] .history-details-row td,
+[data-theme="dark"] .details-row td {
+    background: var(--site-bg-alt) !important;
+}
+
+[data-theme="dark"] .history-details-col h4,
+[data-theme="dark"] .details-grid h4 {
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .history-item-line {
+    border-color: var(--border-color-light);
+}
+
+[data-theme="dark"] .history-empty-msg,
+[data-theme="dark"] .picklist-empty {
+    color: var(--site-muted);
+}
+
+/* Warning banners */
+[data-theme="dark"] #loginTermsWarning {
+    background: var(--warning-bg) !important;
+    border-color: var(--warning-border) !important;
+    color: var(--warning-text);
+}
+
+[data-theme="dark"] #loginTermsWarning a {
+    color: var(--warning-text);
+}
+
+/* Dialogs */
+[data-theme="dark"] dialog {
+    background: var(--site-bg-alt);
+    color: var(--site-text);
+    border-color: var(--border-color-med);
+}
+
+[data-theme="dark"] dialog::backdrop {
+    background: var(--dialog-backdrop);
+}
+
+/* Stats / dashed borders */
+[data-theme="dark"] .stat {
+    border-color: var(--border-color-light);
+}
+
+/* Tabs (admin, subtabs, OCMUser .tabs) */
+[data-theme="dark"] .admin-tabs button,
+[data-theme="dark"] .subtabs button,
+[data-theme="dark"] .tabs button {
+    background: var(--btn-bg);
+    border-color: var(--btn-border);
+    color: var(--site-text);
+}
+
+[data-theme="dark"] .admin-tabs button.active,
+[data-theme="dark"] .subtabs button[aria-selected="true"],
+[data-theme="dark"] .tabs button[aria-selected="true"] {
+    background: var(--btn-active-bg);
+    color: var(--btn-active-text);
+    border-color: var(--btn-active-bg);
+}
+
+/* Suggestions dropdown */
+[data-theme="dark"] .suggestions {
+    background: var(--sugg-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .suggestions .sugg:hover {
+    background: var(--sugg-hover);
+}
+
+/* Picklist */
+[data-theme="dark"] .picklist-container {
+    background: var(--site-bg-alt) !important;
+    border-color: var(--border-color-med) !important;
+}
+
+[data-theme="dark"] .picklist-header {
+    border-color: var(--border-color-light);
+}
+
+[data-theme="dark"] .picklist-col h4 {
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .picklist-item {
+    border-color: var(--border-color-light);
+}
+
+/* Peg boxes */
+[data-theme="dark"] .peg-box {
+    background: var(--site-bg-alt) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .peg-row {
+    background: var(--site-bg-alt) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Link-styled buttons */
+[data-theme="dark"] .linkBtn {
+    color: var(--link-color);
+}
+
+/* Buttons with explicit light-theme colors that need dark overrides */
+[data-theme="dark"] .idx-toggle-btn,
+[data-theme="dark"] .bank-toggle-btn,
+[data-theme="dark"] .bank-mode-select {
+    background: var(--btn-bg);
+    color: var(--site-text);
+    border-color: var(--btn-border);
+}
+
+[data-theme="dark"] .idx-toggle-btn:hover,
+[data-theme="dark"] .bank-toggle-btn:hover {
+    background: var(--site-bg-subtle);
+}
+
+/* Active toggle buttons keep their blue */
+[data-theme="dark"] .idx-toggle-btn.active,
+[data-theme="dark"] .bank-toggle-btn.active {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
+}
+
+/* Section panels (index, bank) */
+[data-theme="dark"] .idx-section-panel,
+[data-theme="dark"] .bank-section-panel {
+    background: var(--site-bg-alt);
+    box-shadow: -2px 0 14px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .idx-section-panel-title {
+    color: var(--site-muted);
+}
+
+/* Buttons that already have good contrast (colored bg + white text) — preserve them */
+[data-theme="dark"] button.primary {
+    background: #e5e7eb;
+    color: #111827;
+    border-color: #e5e7eb;
+}
+
+[data-theme="dark"] .danger,
+[data-theme="dark"] button.danger {
+    background: #991b1b;
+    color: #fecaca;
+    border-color: #991b1b;
+}
+
+/* QueueEstimator buttons — already colored, just ensure dark context */
+[data-theme="dark"] .btn-secondary {
+    background: #667eea;
+    color: #fff;
+}
+
+[data-theme="dark"] .btn-primary {
+    background: #4ECDC4;
+    color: #fff;
+}
+
+[data-theme="dark"] .btn-delete,
+[data-theme="dark"] .btn-danger {
+    background: #dc2626;
+    color: #fff;
+}
+
+/* Economy specs heading overrides (brown → light in dark mode) */
+[data-theme="dark"] .economyspecs h2,
+[data-theme="dark"] .economyspecs h3 {
+    border-color: var(--border-color);
+}
+
+/* Instructions page elements */
+[data-theme="dark"] .instr-status-empty,
+[data-theme="dark"] .instr-status-paused {
+    background: var(--site-bg-subtle);
+    color: var(--site-text);
+    border-color: var(--border-color-med);
+}
+
+/* QueueEstimator warning banner */
+[data-theme="dark"] .qe-warning-banner {
+    background: rgba(127, 29, 29, 0.3);
+    border-color: rgba(220, 38, 38, 0.4);
+    color: #fca5a5;
+}
+
+[data-theme="dark"] .qe-warning-banner .close-btn {
+    color: #fca5a5;
+}
+
+/* QueueEstimator file/session info */
+[data-theme="dark"] .qe-file-session-info {
+    background-color: var(--paper-bg-color) !important;
+}
+
+[data-theme="dark"] .info-row .label {
+    color: var(--site-text);
+}
+
+[data-theme="dark"] .info-row .value {
+    color: var(--link-color);
+}
+
+[data-theme="dark"] .qe-modal-footer {
+    background: var(--site-bg-subtle);
+    border-color: var(--border-color);
+}
+
+/* Mailbox badge */
+[data-theme="dark"] .mailbox-badge {
+    background: var(--site-bg-subtle);
+    color: var(--site-text);
+}
+
+/* Order popup */
+[data-theme="dark"] #orderPopup {
+    background: var(--site-bg-alt);
+    border-color: var(--border-color-med);
+    color: var(--site-text);
+}
+
+/* Bank intro currency box */
+[data-theme="dark"] .bank-intro-currency {
+    background: var(--site-bg-alt);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .bank-intro-guide-btn {
+    color: var(--link-color);
+}
+
+/* Modal card (bank, pricehistory, shared) */
+[data-theme="dark"] .modalCard {
+    background: var(--site-bg-alt);
+    color: var(--site-text);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .modalTitle {
+    color: var(--site-text);
+}
+
+[data-theme="dark"] .modalClose {
+    background: var(--btn-bg);
+    color: var(--site-text);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .helpExample {
+    background: var(--site-bg-subtle);
+    border-color: var(--border-color);
+}
+
+/* ── Bank page: section header titles & inline-color overrides ─────────── */
+[data-theme="dark"] .bank-section-header h2 {
+    color: var(--site-text);
+}
+
+[data-theme="dark"] .bank-section-header {
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .infoBtn {
+    background: var(--btn-bg);
+    color: var(--site-text);
+    border-color: var(--btn-border);
+}
+
+[data-theme="dark"] .infoBtn:hover {
+    border-color: var(--border-color-med);
+}
+
+/* Velocity / inflation labels & sub-block dividers */
+[data-theme="dark"] .bank-vel-chart-block {
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .bank-vel-toggle-label {
+    color: var(--site-text);
+}
+
+/* Section panel internals */
+[data-theme="dark"] .bank-section-panel-title {
+    color: var(--site-muted);
+}
+
+[data-theme="dark"] .bank-panel-toggle {
+    background: var(--site-bg-subtle);
+    color: var(--site-muted);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .bank-panel-toggle:hover {
+    background: var(--btn-bg);
+    color: var(--site-text);
+}
+
+/* Guide panel */
+[data-theme="dark"] .bank-intro-guide-panel {
+    background: var(--site-bg-alt);
+    border-color: var(--border-color);
+}
+
+/* Infrastructure table */
+[data-theme="dark"] #infraTable th {
+    background: var(--site-bg-subtle);
+    color: var(--site-text);
+    border-color: var(--border-color-med);
+}
+
+[data-theme="dark"] #infraTable td {
+    color: var(--site-text);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] #infraTable .infra-data-row:hover td {
+    background: var(--site-bg-subtle);
+}
+
+[data-theme="dark"] #infraTable .infra-data-row td:first-child {
+    color: var(--site-muted);
+}
+
+/* Infra detail expansion rows */
+[data-theme="dark"] .infra-details-row td {
+    background: var(--site-bg-subtle);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .infra-details-meta {
+    color: var(--site-muted);
+}
+
+[data-theme="dark"] .infra-details-title {
+    color: var(--link-color);
+}
+
+[data-theme="dark"] .infra-details-long {
+    color: var(--site-text);
+    background: var(--site-bg-alt);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .infra-details-items-label,
+[data-theme="dark"] .infra-detail-item,
+[data-theme="dark"] .infra-details-total {
+    color: var(--site-text);
+}
+
+[data-theme="dark"] .infra-detail-qty {
+    color: var(--link-color);
+}
+
+[data-theme="dark"] .infra-details-total {
+    border-color: var(--border-color);
+}
+
+/* Infra pager buttons */
+[data-theme="dark"] .bank-infra-pager button {
+    background: var(--btn-bg);
+    color: var(--site-text);
+    border-color: var(--btn-border);
+}
+
+[data-theme="dark"] .bank-infra-pager button:hover:not(:disabled) {
+    background: var(--site-bg-subtle);
+}
+
+/* Inflation apply button (dark bg → invert for dark mode) */
+[data-theme="dark"] .bank-infl-apply-btn {
+    background: #e5e7eb;
+    color: #111827;
+    border-color: #e5e7eb;
+}
+
+/* Mobile panel open button */
+[data-theme="dark"] .bank-panel-open-btn {
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
+/* Inline style overrides (color:#666, color:#555 in Bank.html) */
+[data-theme="dark"] #velItemSubtitle {
+    color: var(--site-muted) !important;
+}
+
+[data-theme="dark"] #wealthDonutLabel {
+    color: var(--site-muted) !important;
+}
+
+[data-theme="dark"] .bank-intro-currency-header strong {
+    color: var(--site-text);
+}
+
+/* Wealth legend text */
+[data-theme="dark"] .wealth-legend-row {
+    color: var(--site-text);
+}
+
+/* helpExampleTitle inside modal */
+[data-theme="dark"] .helpExampleTitle {
+    color: var(--site-text);
 }

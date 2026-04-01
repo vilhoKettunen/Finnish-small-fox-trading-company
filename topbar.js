@@ -24,6 +24,14 @@
     margin-right: 16px;
     font-size: 14px;
   }
+  #btnThemeToggle {
+    font-size: 18px;
+    margin-right: 8px;
+    padding: 2px 6px;
+    line-height: 1;
+    opacity: .85;
+  }
+  #btnThemeToggle:hover { opacity: 1; }
   #topBar .right {
     margin-left: auto;
     display: flex;
@@ -212,6 +220,7 @@
       <span id="topBalanceTarget" class="balance-chip balance-target" style="display:none;"></span>
       <span id="topBalance" class="balance-chip balance-you" style="display:none;"></span>
       <!-- Mobile USER toggle -->
+      <button id="btnThemeToggle" type="button" title="Toggle theme">◑</button>
       <button id="tbUserToggle" class="tb-mobile-toggle tb-user-toggle" type="button"
               aria-expanded="false" aria-controls="tbUserDrawer">👤 ▼</button>
     </div>
@@ -244,6 +253,15 @@ if (!document.getElementById('topbar-shared-style')) {
     // If page already provided markup, still ensure the body padding class is set
             document.body.classList.add('withTopBar');
     }
+
+        // Sync theme toggle icon with current preference
+        var themeBtn = document.getElementById('btnThemeToggle');
+        if (themeBtn && window.themeToggle) {
+            var icons = { auto: '\u25D1', light: '\u2600', dark: '\u263E' };
+            var pref = window.themeToggle.getPreference();
+            themeBtn.textContent = icons[pref] || '\u25D1';
+            themeBtn.title = 'Theme: ' + pref;
+        }
     }
 
     const state = {
@@ -373,6 +391,20 @@ if (!document.getElementById('topbar-shared-style')) {
 
             const btn = ev.target.closest('button');
     if (!btn) return;
+
+            // ── Theme toggle ──
+            if (btn.id === 'btnThemeToggle') {
+                if (window.themeToggle) {
+                    var icons = { auto: '\u25D1', light: '\u2600', dark: '\u263E' };
+                    var order = ['auto', 'light', 'dark'];
+                    var cur = order.indexOf(window.themeToggle.getPreference());
+                    var next = order[(cur + 1) % 3];
+                    window.themeToggle.setPreference(next);
+                    btn.textContent = icons[next];
+                    btn.title = 'Theme: ' + next;
+                }
+                return;
+            }
 
             // ── Mobile toggle: NAV drawer ──
             if (btn.id === 'tbMenuToggle') {

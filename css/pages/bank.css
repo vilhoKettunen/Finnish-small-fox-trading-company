@@ -52,7 +52,7 @@ body.no-side-decor h1 {
 .bank-section-header {
     display: flex;
     justify-content: space-between;
-  align-items: center;
+    align-items: center;
     gap: 1rem;
     border-bottom: 1px solid #eee;
     padding-bottom: 0.5rem;
@@ -68,8 +68,8 @@ body.no-side-decor h1 {
 
 /* ─── Chart containers ──────────────────────────────────────────────────── */
 .bank-chart-container {
-  position: relative;
-height: 300px;
+    position: relative;
+    height: 300px;
     margin-bottom: 8px;
 }
 
@@ -94,14 +94,14 @@ height: 300px;
     transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-    .bank-toggle-btn:hover {
-        background: #e5e7eb;
-    }
+.bank-toggle-btn:hover {
+    background: #e5e7eb;
+}
 
-    .bank-toggle-btn.active {
-     background: #2563eb;
-        color: #fff;
-        border-color: #2563eb;
+.bank-toggle-btn.active {
+    background: #2563eb;
+    color: #fff;
+    border-color: #2563eb;
 }
 
 /* ─── Mode select dropdowns ─────────────────────────────────────────────── */
@@ -124,17 +124,17 @@ height: 300px;
     color: #111827;
     font-size: 0.85rem;
     white-space: nowrap;
-  cursor: pointer;
+    cursor: pointer;
 }
 
-    .infoBtn:hover {
-   border-color: #cbd5e1;
-    }
+.infoBtn:hover {
+    border-color: #cbd5e1;
+}
 
 /* ─── Intro currency block ──────────────────────────────────────────────── */
 .bank-intro-currency {
     background: #f9fafb;
-  border: 1px solid #e5e7eb;
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
     padding: 12px 14px;
     margin-bottom: 10px;
@@ -193,10 +193,10 @@ height: 300px;
 
 .bank-vel-toggle-label {
     display: inline-flex;
- align-items: center;
+    align-items: center;
     gap: 5px;
     font-size: 0.88rem;
-  color: #374151;
+    color: #374151;
     cursor: pointer;
 }
 
@@ -214,6 +214,10 @@ height: 300px;
     align-items: center;
 }
 
+.bank-infl-item-row button {
+    flex-shrink: 0;
+}
+
 .bank-infl-chips {
     display: flex;
     flex-wrap: wrap;
@@ -222,14 +226,37 @@ height: 300px;
 }
 
 .bank-infl-apply-btn {
-  background: #111827;
+    background: #111827;
     color: #fff;
     border-color: #111827;
 }
 
-    .bank-infl-apply-btn:hover {
- filter: brightness(1.1);
-    }
+.bank-infl-apply-btn:hover {
+    filter: brightness(1.1);
+}
+
+/* ─── Dark-mode overrides ───────────────────────────────────────────────── */
+
+
+[data-theme="dark"] .helpExample {
+    background: #111827;
+    border-color: #374151;
+}
+
+[data-theme="dark"] .infoBtn {
+    background: #374151;
+    color: #e5e7eb;
+    border-color: #4b5563;
+}
+
+[data-theme="dark"] .chip {
+    background: #374151;
+    border-color: #4b5563;
+}
+
+[data-theme="dark"] .chipText {
+    color: #e5e7eb;
+}
 
 /* ─── Infrastructure table ──────────────────────────────────────────────── */
 .infra-table-wrap {
@@ -256,7 +283,7 @@ height: 300px;
 
 #infraTable td {
     padding: 8px 12px;
-  border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
     vertical-align: top;
     color: #111827;
 }
@@ -266,7 +293,7 @@ height: 300px;
 }
 
 #infraTable .infra-data-row td:first-child {
-white-space: nowrap;
+    white-space: nowrap;
     color: #6b7280;
     font-size: 0.88em;
 }
@@ -277,7 +304,7 @@ white-space: nowrap;
 }
 
 #infraTable .infra-data-row td:last-child {
-  white-space: nowrap;
+    white-space: nowrap;
 }
 
 /* ─── Inline details row ─────────────────────────────────────────────────── */
@@ -318,7 +345,7 @@ white-space: nowrap;
 }
 
 .infra-details-items-label {
-  font-weight: 700;
+    font-weight: 700;
     margin-bottom: 4px;
     color: #374151;
 }
@@ -376,19 +403,19 @@ white-space: nowrap;
     transition: background 0.12s;
 }
 
- .bank-infra-pager button:hover:not(:disabled) {
-        background: #e5e7eb;
-    }
+.bank-infra-pager button:hover:not(:disabled) {
+    background: #e5e7eb;
+}
 
-    .bank-infra-pager button:disabled {
-        opacity: 0.45;
-      cursor: default;
-    }
+.bank-infra-pager button:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
 
 /* ─── Info modal ────────────────────────────────────────────────────────── */
 .modalCard {
     width: min(720px, 95vw);
-  background: #fff;
+    background: #fff;
     border-radius: 12px;
     padding: 1rem;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
@@ -405,7 +432,7 @@ white-space: nowrap;
 .modalTitle {
     font-weight: 800;
     color: #111827;
- font-size: 1.1rem;
+    font-size: 1.1rem;
 }
 
 .modalClose {
@@ -437,7 +464,7 @@ white-space: nowrap;
     transform: translateY(-50%);
     z-index: 200;
     background: #fff;
-  border-radius: 12px 0 0 12px;
+    border-radius: 12px 0 0 12px;
     box-shadow: -2px 0 14px rgba(0, 0, 0, 0.12);
     display: flex;
     flex-direction: row;
@@ -464,7 +491,7 @@ white-space: nowrap;
 
 .bank-section-panel-title {
     font-size: 0.72rem;
- font-weight: 700;
+    font-weight: 700;
     color: #6b7280;
     text-transform: uppercase;
     letter-spacing: 0.07em;
@@ -489,8 +516,8 @@ white-space: nowrap;
     background: #f3f4f6;
     border: none;
     border-right: 1px solid #e5e7eb;
- border-radius: 12px 0 0 12px;
-cursor: pointer;
+    border-radius: 12px 0 0 12px;
+    cursor: pointer;
     font-size: 16px;
     color: #6b7280;
     display: flex;
@@ -500,10 +527,10 @@ cursor: pointer;
     padding: 0;
 }
 
-    .bank-panel-toggle:hover {
-        background: #e5e7eb;
- color: #111827;
-    }
+.bank-panel-toggle:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
 
 /* ─── Mobile: panel hidden by default, floating open button ─────────────── */
 .bank-panel-open-btn {
@@ -511,51 +538,51 @@ cursor: pointer;
 }
 
 @media (max-width: 900px) {
-body {
+    body {
         padding-right: 12px;
     }
 
     .bank-section-panel {
         /* On mobile start fully hidden off-screen */
-     transform: translateY(-50%) translateX(100%);
+        transform: translateY(-50%) translateX(100%);
         border-radius: 12px 0 0 12px;
         box-shadow: -4px 0 20px rgba(0, 0, 0, 0.18);
     }
 
-        .bank-section-panel.mobile-open {
-         transform: translateY(-50%) translateX(0);
-     }
+    .bank-section-panel.mobile-open {
+        transform: translateY(-50%) translateX(0);
+    }
 
     .bank-section-panel.collapsed {
-  transform: translateY(-50%) translateX(calc(100% - 28px));
-        }
+        transform: translateY(-50%) translateX(calc(100% - 28px));
+    }
 
     /* Floating open button, bottom-right */
     .bank-panel-open-btn {
         display: block;
         position: fixed;
         bottom: 20px;
-   right: 16px;
+        right: 16px;
         z-index: 199;
-      background: #2563eb;
-     color: #fff;
+        background: #2563eb;
+        color: #fff;
         border: none;
- border-radius: 24px;
+        border-radius: 24px;
         padding: 8px 16px;
-   font-size: 13px;
+        font-size: 13px;
         font-weight: 600;
-   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
         cursor: pointer;
     }
 
-      .bank-panel-open-btn:hover {
-   background: #1d4ed8;
-        }
+    .bank-panel-open-btn:hover {
+        background: #1d4ed8;
+    }
 }
 
 /* ─── small utility ─────────────────────────────────────────────────────── */
 .small {
-  font-size: 0.88em;
+    font-size: 0.88em;
     color: #6b7280;
 }
 
@@ -592,6 +619,10 @@ body {
     cursor: pointer;
 }
 
-  .chipRemove:hover {
-        color: #b91c1c;
-    }
+.chipRemove:hover {
+    color: #b91c1c;
+}
+
+.dropdown-wrap {
+    margin-right: 40px;
+}
