@@ -41,7 +41,7 @@
    <p class="subtitle">EW design, formulas, mechanics, and research framework for<br>Vak's Store &mdash; Vintage Story TOPS server</p>
       <p class="cover-date">Published: 2025</p>
             <div style="margin-top:16px;">
-    <p style="font-size:14px;color:#5a4b3b;margin-bottom:8px;font-style:italic;">
+    <p class="es-note" style="font-size:14px;margin-bottom:8px;">
          This page is the detailed technical companion to the Whitepaper.<br>
          It assumes you have read the Whitepaper's summary sections first.
       </p>
@@ -534,7 +534,7 @@ to real economic behavior, not a policy target.
     </p>
             <div class="es-formula">
             canonicalEW = requestedUnits &times; storePricePerUnit( side )<br>
-      <span style="font-size:12px;color:#6b5040;">(backend: storePricePerInd_( catalog, pegItemName, side ))</span>
+      <span class="es-note">(backend: storePricePerInd_( catalog, pegItemName, side ))</span>
         </div>
   <p>
          Where <em>side</em> is either BUY or SELL, chosen by the merchant at listing creation.
@@ -550,7 +550,7 @@ to real economic behavior, not a policy target.
      </p>
         <div class="es-formula">
       canonicalEW = requestedUnits &times; pegQtyPerInd &times; storePricePerUnit( primarySide )<br>
-       <span style="font-size:12px;color:#6b5040;">(backend: primaryPeg.pegQtyPerInd &times; primaryPegPricePerInd)</span>
+       <span class="es-note">(backend: primaryPeg.pegQtyPerInd &times; primaryPegPricePerInd)</span>
             </div>
    <p>
         HALF mode listings do <em>not</em> automatically reprice. The merchant controls the exact
@@ -599,7 +599,7 @@ to real economic behavior, not a policy target.
       </p>
           <div class="es-formula">
  payItemQty = ceil( requestedUnits &times; pegQtyPerInd )<br>
-         <span style="font-size:12px;color:#6b5040;">(backend: ceilInt_( rawPayItems ))</span>
+         <span class="es-note">(backend: ceilInt_( rawPayItems ))</span>
             </div>
             <p>This protects the merchant from receiving less than the agreed quantity.</p>
 
