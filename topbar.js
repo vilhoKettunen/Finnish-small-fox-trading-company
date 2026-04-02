@@ -13,16 +13,21 @@
     align-items: center;
     padding: 0 20px;
     z-index: 1000;
+    font-family: Arial, sans-serif;
     font-size: 14px;
     gap: 12px;
   }
-  #topBar button {
+  #topBar button,
+  #topBar a[data-nav] {
     color: #fff;
     background: none;
     border: none;
     cursor: pointer;
     margin-right: 16px;
+    font: inherit;
     font-size: 14px;
+    text-decoration: none;
+    padding: 6px;
   }
   #topBar .right {
     margin-left: auto;
@@ -143,8 +148,9 @@
       border-top: 2px solid rgba(0,0,0,0.15);
     }
 
-    /* Nav drawer buttons: full-width list style with dark text */
-    #tbNavDrawer button[data-nav] {
+    /* Nav drawer links: full-width list style with dark text */
+    #tbNavDrawer [data-nav] {
+      display: block;
       width: 100%;
       text-align: left;
       padding: 12px 20px;
@@ -152,9 +158,10 @@
       border-bottom: 1px solid rgba(0,0,0,0.08);
       font-size: 15px;
       color: #000;
+      text-decoration: none;
       /*background: transparent;*/
     }
-    #tbNavDrawer button[data-nav]:last-child {
+    #tbNavDrawer [data-nav]:last-child {
       border-bottom: none;
     }
     /* User drawer items */
@@ -194,17 +201,17 @@
 
     <!-- NAV drawer (inline on PC, collapsible on mobile) -->
     <div id="tbNavDrawer" class="tb-drawer tb-nav-drawer">
-      <button type="button" data-nav="store">Store</button>
-      <button type="button" data-nav="history">Account History</button>
-      <button type="button" data-nav="ocm">OCM</button>
-      <button type="button" data-nav="Merchant">OCM Merchant</button>
-      <button type="button" data-nav="leaderboards">Leaderboards</button>
-      <button type="button" data-nav="workpay">Work Pay Rates</button>
-      <button type="button" data-nav="bank">Bank</button>
-      <button type="button" data-nav="queueEstimator">Queue Estimator</button>
-      <button type="button" data-nav="instructions">Instructions</button>
-      <button type="button" data-nav="whitepaper">Whitepaper</button>
-      <button id="adminPanelBtn" style="display:none" type="button" data-nav="admin">Admin Panel</button>
+      <a href="index.html" data-nav="store">Store</a>
+      <a href="AccountHistory.html" data-nav="history">Account History</a>
+      <a href="OCMHome.html" data-nav="ocm">OCM</a>
+      <a href="OCMUser.html" data-nav="Merchant">OCM Merchant</a>
+      <a href="Leaderboards.html" data-nav="leaderboards">Leaderboards</a>
+      <a href="WorkPayRates.html" data-nav="workpay">Work Pay Rates</a>
+      <a href="Bank.html" data-nav="bank">Bank</a>
+      <a href="QueueEstimator.html" data-nav="queueEstimator">Queue Estimator</a>
+      <a href="Instructions.html" data-nav="instructions">Instructions</a>
+      <a href="Whitepaper.html" data-nav="whitepaper">Whitepaper</a>
+      <a id="adminPanelBtn" style="display:none" href="Admin.html" data-nav="admin">Admin Panel</a>
     </div>
 
     <!-- Right area: always-visible balance chips + mobile user toggle -->
@@ -371,8 +378,22 @@ if (!document.getElementById('topbar-shared-style')) {
         root.addEventListener('click', ev => {
             ev.stopPropagation();
 
+            // ── Nav links (<a> tags) ──
+            // Browser handles navigation natively (supports open-in-new-tab, ctrl+click, etc.).
+            // We only need to guard admin and close drawers on mobile.
+            const link = ev.target.closest('a[data-nav]');
+            if (link) {
+                if (link.dataset.nav === 'admin' && (!state.idToken || !state.isAdmin)) {
+                    ev.preventDefault();
+                    alert('Admin only');
+                    return;
+                }
+                closeAllDrawers();
+                return;
+            }
+
             const btn = ev.target.closest('button');
-    if (!btn) return;
+            if (!btn) return;
 
             // ── Mobile toggle: NAV drawer ──
             if (btn.id === 'tbMenuToggle') {
@@ -428,25 +449,6 @@ if (!document.getElementById('topbar-shared-style')) {
                 closeAllDrawers();
                 return;
             }
-
-            // ── Nav routing ──
-            if (btn.dataset && btn.dataset.nav) {
-      const nav = btn.dataset.nav;
-    if (nav === 'store') window.location.href = 'index.html';
-     else if (nav === 'history') window.location.href = 'AccountHistory.html';
-                else if (nav === 'ocm') window.location.href = 'OCMHome.html';
-else if (nav === 'Merchant') window.location.href = 'OCMUser.html';
-            else if (nav === 'leaderboards') window.location.href = 'Leaderboards.html';
-    else if (nav === 'workpay') window.location.href = 'WorkPayRates.html';
-          else if (nav === 'bank') window.location.href = 'Bank.html';
-    else if (nav === 'queueEstimator') window.location.href = 'QueueEstimator.html';
-                else if (nav === 'instructions') window.location.href = 'Instructions.html';
-       else if (nav === 'whitepaper') window.location.href = 'Whitepaper.html';
-            else if (nav === 'admin') {
-            if (!state.idToken || !state.isAdmin) { alert('Admin only'); return; }
-   window.location.href = 'Admin.html';
-   }
- }
         });
 
         // Outside-click: close both drawers when user clicks anywhere outside the top bar
