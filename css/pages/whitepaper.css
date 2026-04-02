@@ -1,7 +1,7 @@
 /* css/pages/whitepaper.css
    Page-specific styles for Whitepaper.html.
    Extends VintageStoryEconomics.css patterns.
-   NOTE: Do NOT redefine #topBar styles here � topbar.js already injects its own. */
+   NOTE: Do NOT redefine #topBar styles here � topbar.js already injects its own. */
 
 body {
     background: #efe6d6;
@@ -15,16 +15,16 @@ body {
     width: 780px;
     margin: 0 auto;
     background: linear-gradient(180deg, #fbf6ef 0%, #f7efe0 100%);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
     padding: 48px 60px;
-    border: 1px solid rgba(0,0,0,0.06);
+    border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .cover {
     text-align: center;
     margin-bottom: 32px;
     padding-bottom: 24px;
-    border-bottom: 1px dashed rgba(0,0,0,0.12);
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.12);
 }
 
 .title {
@@ -47,20 +47,25 @@ body {
     font-style: italic;
 }
 
+.cover-note {
+    color: #5a4b3b;
+}
+
 /* GitHub badge */
 .wp-gh-badge {
     display: inline-block;
     margin-top: 8px;
     padding: 4px 12px;
- border: 1px solid #9c8060;
+    border: 1px solid #9c8060;
     border-radius: 4px;
     font-size: 13px;
-  color: #5a4030;
-    background: rgba(255,255,255,0.4);
+    color: #5a4030;
+    background: rgba(255, 255, 255, 0.4);
     text-decoration: none;
 }
+
 .wp-gh-badge:hover {
-    background: rgba(255,255,255,0.65);
+    background: rgba(255, 255, 255, 0.65);
     text-decoration: underline;
 }
 
@@ -70,7 +75,7 @@ h2 {
     font-size: 22px;
     margin-top: 32px;
     color: #3b2f24;
-    border-bottom: 1px dashed rgba(0,0,0,0.08);
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
     padding-bottom: 8px;
 }
 
@@ -97,7 +102,7 @@ p {
     background: transparent;
     border: none;
     font-family: "EB Garamond", Georgia, serif;
- font-size: 15px;
+    font-size: 15px;
     line-height: 1.9;
     white-space: pre-wrap;
     padding: 0;
@@ -110,15 +115,16 @@ p {
 }
 
 .toclist a:hover {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
 /* Chapters */
 .chapter {
     margin-bottom: 24px;
+    padding: 16px 20px;
 }
 
-/* Inline note style � e.g. "EW = BT" clarification */
+/* Inline note style � e.g. "EW = BT" clarification */
 .wp-note {
     font-size: 13px;
     color: #6b5040;
@@ -131,7 +137,7 @@ p {
     background: rgba(255, 240, 200, 0.35);
     padding: 12px 18px;
     border-radius: 6px;
-  margin: 20px 0;
+    margin: 20px 0;
 }
 
 .wp-seealso p {
@@ -144,7 +150,7 @@ p {
 .wp-seealso ul {
     margin: 4px 0 0 0;
     padding-left: 1.2em;
-list-style: "? ";
+    list-style: "? ";
 }
 
 .wp-seealso li {
@@ -162,11 +168,21 @@ list-style: "? ";
     text-decoration: underline;
 }
 
+/* Inline links styled to match the whitepaper palette */
+.wp-link {
+    color: #7a5c2e;
+    text-decoration: none;
+}
+
+.wp-link:hover {
+    text-decoration: underline;
+}
+
 /* Colophon / footer */
 .colophon {
     margin-top: 40px;
     padding-top: 20px;
-    border-top: 1px dashed rgba(0,0,0,0.12);
+    border-top: 1px dashed rgba(0, 0, 0, 0.12);
     font-size: 14px;
     color: #5a4b3b;
 }
@@ -190,33 +206,129 @@ list-style: "? ";
 @media (max-width: 840px) {
     .book {
         width: auto;
-     padding: 24px 20px;
+        padding: 24px 20px;
     }
+
     body {
         padding: 1rem;
     }
+
     .title {
-   font-size: 28px;
+        font-size: 28px;
     }
 }
 
 @media print {
     body {
         background: white;
-  padding: 0;
+        padding: 0;
     }
+
     .book {
         box-shadow: none;
-      border: none;
+        border: none;
         width: auto;
-   padding: 24mm;
+        padding: 24mm;
         margin: 0;
     }
-    .chapter, .toc {
+
+    .chapter,
+    .toc {
         page-break-before: always;
-}
+    }
+
     @page {
         size: A4;
         margin: 18mm;
     }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DARK THEME OVERRIDES
+   ══════════════════════════════════════════════════════════════ */
+[data-theme="dark"] body {
+    background: #1a1a2e;
+}
+
+[data-theme="dark"] .book {
+    background: linear-gradient(180deg, #1f2937 0%, #1a2332 100%);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .cover {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .title {
+    color: #f3efe8;
+}
+
+[data-theme="dark"] .subtitle {
+    color: #b0a898;
+}
+
+[data-theme="dark"] .cover-date {
+    color: #9a8e80;
+}
+
+[data-theme="dark"] .cover-note {
+    color: #b0a898;
+}
+
+[data-theme="dark"] .wp-gh-badge {
+    border-color: #6b7280;
+    color: #c8bfb0;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .wp-gh-badge:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] h2 {
+    color: #e5d9cc;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] h3 {
+    color: #d4c5b2;
+}
+
+[data-theme="dark"] p {
+    color: #d1d5db;
+}
+
+[data-theme="dark"] .toclist a {
+    color: #d4a855;
+}
+
+[data-theme="dark"] .wp-note {
+    color: #b0a090;
+}
+
+[data-theme="dark"] .wp-seealso {
+    border-color: #6b7280;
+    background: rgba(255, 240, 200, 0.06);
+}
+
+[data-theme="dark"] .wp-seealso p {
+    color: #c8bfb0;
+}
+
+[data-theme="dark"] .wp-seealso a {
+    color: #d4a855;
+}
+
+[data-theme="dark"] .colophon {
+    border-top-color: rgba(255, 255, 255, 0.12);
+    color: #b0a898;
+}
+
+[data-theme="dark"] .colophon a {
+    color: #d4a855;
+}
+
+[data-theme="dark"] .wp-link {
+    color: #d4a855;
 }
