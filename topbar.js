@@ -1,6 +1,6 @@
-﻿// Lightweight, reusable top bar for all pages.
+// Lightweight, reusable top bar for all pages.
 (function () {
-    const css = `
+    const css = /*css*/ `
   #topBar {
     position: fixed;
     top: 0;
@@ -24,6 +24,14 @@
     margin-right: 16px;
     font-size: 14px;
   }
+  #btnThemeToggle {
+    font-size: 18px;
+    margin-right: 8px;
+    padding: 2px 6px;
+    line-height: 1;
+    opacity: .85;
+  }
+  #btnThemeToggle:hover { opacity: 1; }
   #topBar .right {
     margin-left: auto;
     display: flex;
@@ -77,7 +85,7 @@
     transition: max-height 0.2s ease;
   }
   .tb-drawer.tb-open {
-    max-height: 400px;
+    max-height: 460px; 
   }
 
   /* ── On PC (≥ 980px): drawers behave as inline flex — normal layout ── */
@@ -181,9 +189,32 @@
       background: transparent;
     }
   }
+
+  /* ── Dark-mode mobile drawer overrides ── */
+  @media (max-width: 980px) {
+    [data-theme="dark"] #tbNavDrawer,
+    [data-theme="dark"] #tbUserDrawer {
+      background: #1f2937 !important;
+      color: #e5e7eb;
+      border-top-color: rgba(255,255,255,0.1);
+    }
+    [data-theme="dark"] #tbNavDrawer button[data-nav] {
+      color: #e5e7eb;
+      border-bottom-color: rgba(255,255,255,0.08);
+    }
+    [data-theme="dark"] #tbUserDrawer #topUser {
+      color: #e5e7eb;
+      border-bottom-color: rgba(255,255,255,0.08);
+    }
+    [data-theme="dark"] #tbUserDrawer #btnSettings,
+    [data-theme="dark"] #tbUserDrawer #btnLogin,
+    [data-theme="dark"] #tbUserDrawer #btnLogout {
+      color: #e5e7eb;
+    }
+  }
   `;
 
-    const html = `
+    const html = /*html*/`
   <div id="topBar" role="navigation" aria-label="Main">
     <!-- Mobile NAV toggle -->
     <button id="tbMenuToggle" class="tb-mobile-toggle tb-menu-toggle" type="button"
@@ -194,17 +225,17 @@
 
     <!-- NAV drawer (inline on PC, collapsible on mobile) -->
     <div id="tbNavDrawer" class="tb-drawer tb-nav-drawer">
-      <button type="button" data-nav="store">Store</button>
-      <button type="button" data-nav="history">Account History</button>
-      <button type="button" data-nav="ocm">OCM</button>
-      <button type="button" data-nav="Merchant">OCM Merchant</button>
-      <button type="button" data-nav="leaderboards">Leaderboards</button>
-      <button type="button" data-nav="workpay">Work Pay Rates</button>
-      <button type="button" data-nav="bank">Bank</button>
-      <button type="button" data-nav="queueEstimator">Queue Estimator</button>
-      <button type="button" data-nav="instructions">Instructions</button>
-      <button type="button" data-nav="whitepaper">Whitepaper</button>
-      <button id="adminPanelBtn" style="display:none" type="button" data-nav="admin">Admin Panel</button>
+      <a href="index.html" data-nav="store">Store</a>
+      <a href="AccountHistory.html" data-nav="history">Account History</a>
+      <a href="OCMHome.html" data-nav="ocm">OCM</a>
+      <a href="OCMUser.html" data-nav="Merchant">OCM Merchant</a>
+      <a href="Leaderboards.html" data-nav="leaderboards">Leaderboards</a>
+      <a href="WorkPayRates.html" data-nav="workpay">Work Pay Rates</a>
+      <a href="Bank.html" data-nav="bank">Bank</a>
+      <a href="QueueEstimator.html" data-nav="queueEstimator">Queue Estimator</a>
+      <a href="Instructions.html" data-nav="instructions">Instructions</a>
+      <a href="Whitepaper.html" data-nav="whitepaper">Whitepaper</a>
+      <a id="adminPanelBtn" style="display:none" href="Admin.html" data-nav="admin">Admin Panel</a>
     </div>
 
     <!-- Right area: always-visible balance chips + mobile user toggle -->
@@ -244,6 +275,15 @@ if (!document.getElementById('topbar-shared-style')) {
     // If page already provided markup, still ensure the body padding class is set
             document.body.classList.add('withTopBar');
     }
+
+        // Sync theme toggle icon with current preference
+        var themeBtn = document.getElementById('btnThemeToggle');
+        if (themeBtn && window.themeToggle) {
+            var icons = { auto: '\u25D1', light: '\u2600', dark: '\u263E' };
+            var pref = window.themeToggle.getPreference();
+            themeBtn.textContent = icons[pref] || '\u25D1';
+            themeBtn.title = 'Theme: ' + pref;
+        }
     }
 
     const state = {
@@ -373,6 +413,20 @@ if (!document.getElementById('topbar-shared-style')) {
 
             const btn = ev.target.closest('button');
     if (!btn) return;
+
+            // ── Theme toggle ──
+            if (btn.id === 'btnThemeToggle') {
+                if (window.themeToggle) {
+                    var icons = { auto: '\u25D1', light: '\u2600', dark: '\u263E' };
+                    var order = ['auto', 'light', 'dark'];
+                    var cur = order.indexOf(window.themeToggle.getPreference());
+                    var next = order[(cur + 1) % 3];
+                    window.themeToggle.setPreference(next);
+                    btn.textContent = icons[next];
+                    btn.title = 'Theme: ' + next;
+                }
+                return;
+            }
 
             // ── Mobile toggle: NAV drawer ──
             if (btn.id === 'tbMenuToggle') {

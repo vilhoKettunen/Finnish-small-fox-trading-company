@@ -199,6 +199,10 @@ window.PriceHistory.Charts = (function () {
     const isListCategory = categoryKey === 'common' || categoryKey === 'metals';
 
     if (inflationChartInstance) inflationChartInstance.destroy();
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var lineColor = isDark ? '#60a5fa' : '#111827';
+    var fillColor = isDark ? 'rgba(96,165,250,0.12)' : 'rgba(17,24,39,0.08)';
+
     inflationChartInstance = new Chart(ctx, {
       type: 'line',
       data: {
@@ -207,8 +211,8 @@ window.PriceHistory.Charts = (function () {
           {
             label: 'Inflation Index (base=100)',
             data: indexValues,
-            borderColor: '#111827',
-            backgroundColor: 'rgba(17,24,39,0.08)',
+            borderColor: lineColor,
+            backgroundColor: fillColor,
             borderWidth: 2,
             tension: 0.2,
             fill: true,
@@ -252,7 +256,7 @@ window.PriceHistory.Charts = (function () {
                   top.forEach((t, i) => {
                     const pct = isFinite(t.sharePct) ? t.sharePct : 0;
                     const w = isFinite(t.weight) ? t.weight : 0;
-                    lines.push(`${i + 1}) ${t.name} — ${pct.toFixed(1)}% (w=${w.toFixed(2)})`);
+                    lines.push(`${i + 1}) ${t.name} ï¿½ ${pct.toFixed(1)}% (w=${w.toFixed(2)})`);
                   });
                 }
 

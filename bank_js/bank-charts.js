@@ -279,6 +279,8 @@ pointRadius: 1
       }
     }
 
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
     instances[canvasId] = new Chart(ctx, {
       type: 'line',
       data: {
@@ -286,8 +288,8 @@ pointRadius: 1
         datasets: [{
        label: 'Inflation Index (base=100)',
     data: filteredValues,
-   borderColor: '#111827',
-          backgroundColor: 'rgba(17,24,39,0.08)',
+   borderColor: isDark ? '#93c5fd' : '#111827',
+          backgroundColor: isDark ? 'rgba(147,197,253,0.1)' : 'rgba(17,24,39,0.08)',
           borderWidth: 2,
         tension: 0.2,
   fill: true,

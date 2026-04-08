@@ -4,33 +4,33 @@ body {
     background: #efe6d6;
     font-family: "EB Garamond", Georgia, serif;
     color: #2b2318;
-margin: 0;
+    margin: 0;
     padding: 2rem;
 }
 
 .book {
     width: 780px;
     margin: 0 auto;
-background: linear-gradient(180deg, #fbf6ef 0%, #f7efe0 100%);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    background: linear-gradient(180deg, #fbf6ef 0%, #f7efe0 100%);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
     padding: 48px 60px;
-    border: 1px solid rgba(0,0,0,0.06);
+    border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .cover {
-text-align: center;
+    text-align: center;
     margin-bottom: 24px;
 }
 
 .title {
     font-family: "Playfair Display", serif;
     font-size: 40px;
-margin: 8px 0;
+    margin: 8px 0;
 }
 
 .subtitle {
     font-size: 14px;
-color: #5a4b3b;
+    color: #5a4b3b;
     margin-bottom: 4px;
 }
 
@@ -39,7 +39,7 @@ h2 {
     font-size: 22px;
     margin-top: 24px;
     color: #3b2f24;
-    border-bottom: 1px dashed rgba(0,0,0,0.08);
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
     padding-bottom: 8px;
 }
 
@@ -61,7 +61,7 @@ p {
     background: transparent;
     border: none;
     font-family: monospace;
-font-size: 14px;
+    font-size: 14px;
 }
 
 .colophon ul {
@@ -71,24 +71,26 @@ font-size: 14px;
 @media print {
     body {
         background: white;
-  padding: 0;
+        padding: 0;
     }
 
     .book {
         box-shadow: none;
-   border: none;
-    width: auto;
-   padding: 24mm;
-    margin: 0;
+        border: none;
+        width: auto;
+        padding: 24mm;
+        margin: 0;
     }
 
-    .chapter, .preface, .toc {
-    page-break-before: always;
+    .chapter,
+    .preface,
+    .toc {
+        page-break-before: always;
     }
 
     @page {
-    size: A5;
-    margin: 18mm;
+        size: A5;
+        margin: 18mm;
     }
 }
 
@@ -109,8 +111,9 @@ font-size: 14px;
     gap: 12px;
 }
 
-#topBar a, #topBar button {
-color: #fff;
+#topBar a,
+#topBar button {
+    color: #fff;
     text-decoration: none;
     margin-right: 16px;
     background: none;
@@ -133,7 +136,7 @@ body.withTopBar {
 .balance-chip {
     padding: 2px 6px;
     border-radius: 4px;
-    background: rgba(255,255,255,0.08);
+    background: rgba(255, 255, 255, 0.08);
     white-space: nowrap;
 }
 
@@ -185,6 +188,61 @@ body.withTopBar {
 
 .order-link {
     color: #66c;
-text-decoration: underline;
+    text-decoration: underline;
     cursor: pointer;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DARK THEME
+   ══════════════════════════════════════════════════════════════ */
+[data-theme="dark"] body {
+    background: #1a1a2e;
+    color: #d1d5db;
+}
+
+[data-theme="dark"] .book {
+    background: linear-gradient(180deg, #1f2937 0%, #1a2332 100%);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .subtitle {
+    color: #b0a898;
+}
+
+[data-theme="dark"] h2 {
+    color: #e5d9cc;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] h3 {
+    color: #d4c5b2;
+}
+
+[data-theme="dark"] p {
+    color: #d1d5db;
+}
+
+[data-theme="dark"] .toclist {
+    color: #b0a898;
+}
+
+[data-theme="dark"] .colophon ul {
+    color: #b0a898;
+}
+
+[data-theme="dark"] .colophon a {
+    color: #d4a855;
+}
+
+[data-theme="dark"] .instr-help-link {
+    color: var(--help-link-color);
+    background: var(--help-link-bg);
+    border-color: var(--help-link-border);
+}
+
+[data-theme="dark"] #orderPopup {
+    background: #1f2937;
+    border-color: #4b5563;
+    color: #e5e7eb;
 }

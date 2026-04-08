@@ -1,10 +1,10 @@
 /* css/pages/economyspecs.css
    Page-specific styles for EconomySpecifications.html.
    Duplicates base .book/.chapter/.cover/.toc/.colophon patterns from whitepaper.css
-   independently � do NOT @import whitepaper.css (avoid cascade conflicts).
+   independently � do NOT @import whitepaper.css (avoid cascade conflicts).
    Adds page-specific classes: .es-formula, .es-example, .es-table, .es-statemachine,
    .es-callout, .es-warning, .es-research, .es-note, .es-companion-badge, .es-disclaimer.
-   NOTE: Do NOT redefine #topBar styles here � topbar.js injects its own. */
+   NOTE: Do NOT redefine #topBar styles here � topbar.js injects its own. */
 
 /* ?? Base page ??????????????????????????????????????????????????????????? */
 body {
@@ -20,9 +20,9 @@ body {
     width: 780px;
     margin: 0 auto;
     background: linear-gradient(180deg, #fbf6ef 0%, #f7efe0 100%);
- box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
     padding: 48px 60px;
-    border: 1px solid rgba(0,0,0,0.06);
+    border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 /* ?? Cover ???????????????????????????????????????????????????????????????? */
@@ -30,7 +30,7 @@ body {
     text-align: center;
     margin-bottom: 32px;
     padding-bottom: 24px;
-    border-bottom: 1px dashed rgba(0,0,0,0.12);
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.12);
 }
 
 .title {
@@ -61,13 +61,14 @@ body {
     border: 1px solid #9c8060;
     border-radius: 4px;
     font-size: 13px;
-  color: #5a4030;
-    background: rgba(255,255,255,0.4);
+    color: #5a4030;
+    background: rgba(255, 255, 255, 0.4);
     text-decoration: none;
     font-style: normal;
 }
+
 .es-companion-badge:hover {
-    background: rgba(255,255,255,0.65);
+    background: rgba(255, 255, 255, 0.65);
     text-decoration: underline;
 }
 
@@ -86,7 +87,7 @@ h2 {
     font-size: 22px;
     margin-top: 32px;
     color: #3b2f24;
-    border-bottom: 1px dashed rgba(0,0,0,0.08);
+    border-bottom: 1px dashed rgba(0, 0, 0, 0.08);
     padding-bottom: 8px;
 }
 
@@ -99,7 +100,7 @@ h3 {
 
 p {
     line-height: 1.7;
- font-size: 16px;
+    font-size: 16px;
     margin: 0 0 1em 0;
     text-align: justify;
 }
@@ -121,7 +122,7 @@ p {
 }
 
 .toclist a {
- color: #7a5c2e;
+    color: #7a5c2e;
     text-decoration: none;
 }
 
@@ -132,10 +133,12 @@ p {
 /* ?? Chapters ????????????????????????????????????????????????????????????? */
 .chapter {
     margin-bottom: 24px;
+    padding-inline: 14px;
 }
 
 /* ?? Lists ???????????????????????????????????????????????????????????????? */
-ul, ol {
+ul,
+ol {
     margin: 0 0 1em 0;
     padding-left: 1.6em;
     line-height: 1.75;
@@ -148,7 +151,7 @@ li {
 
 /* ?? Page-specific blocks ????????????????????????????????????????????????? */
 
-/* Formula block � LaTeX-style display (light tan background, left border) */
+/* Formula block � LaTeX-style display (light tan background, left border) */
 .es-formula {
     background: #f5efe0;
     border-left: 3px solid #9c8060;
@@ -161,9 +164,9 @@ li {
     color: #2b2318;
 }
 
-/* Worked example box � slight green tint, dashed left border */
+/* Worked example box � slight green tint, dashed left border */
 .es-example {
-    background: rgba(220,240,220,0.4);
+    background: rgba(220, 240, 220, 0.4);
     border-left: 3px solid #6a9e6a;
     padding: 12px 18px;
     border-radius: 4px;
@@ -172,24 +175,24 @@ li {
     line-height: 1.75;
 }
 
-/* Warning / limitation note � amber tinted */
+/* Warning / limitation note � amber tinted */
 .es-warning {
-    background: rgba(255,235,180,0.5);
+    background: rgba(255, 235, 180, 0.5);
     border: 1px solid #c8a030;
- padding: 12px 18px;
+    padding: 12px 18px;
     border-radius: 4px;
     margin: 12px 0;
     font-size: 15px;
     line-height: 1.7;
 }
 
-/* Research context note � blue-grey tinted */
+/* Research context note � blue-grey tinted */
 .es-research {
-    background: rgba(200,220,240,0.4);
+    background: rgba(200, 220, 240, 0.4);
     border-left: 3px solid #5a8ab0;
- padding: 12px 18px;
+    padding: 12px 18px;
     border-radius: 4px;
-  margin: 12px 0;
+    margin: 12px 0;
     font-size: 15px;
     line-height: 1.7;
 }
@@ -216,17 +219,17 @@ li {
 }
 
 .es-table tr:nth-child(even) td {
-    background: rgba(245,235,215,0.5);
+    background: rgba(245, 235, 215, 0.5);
 }
 
-/* State machine � CSS Unicode flow diagram */
+/* State machine � CSS Unicode flow diagram */
 .es-statemachine {
-font-family: monospace;
+    font-family: monospace;
     font-size: 12px;
     line-height: 1.8;
-padding: 14px 22px;
+    padding: 14px 22px;
     background: #f9f5ed;
- border: 1px dashed #9c8060;
+    border: 1px dashed #9c8060;
     border-radius: 4px;
     margin: 12px 0;
     overflow-x: auto;
@@ -247,10 +250,10 @@ padding: 14px 22px;
 .es-note {
     font-size: 12px;
     color: #6b5040;
- font-style: italic;
+    font-style: italic;
 }
 
-/* See-also callout � reuses .wp-seealso appearance */
+/* See-also callout � reuses .wp-seealso appearance */
 .es-callout.wp-seealso {
     border: 1px dashed #9c8060;
     background: rgba(255, 240, 200, 0.35);
@@ -279,7 +282,7 @@ padding: 14px 22px;
 
 .es-callout.wp-seealso a {
     color: #7a5c2e;
-  font-weight: bold;
+    font-weight: bold;
     text-decoration: none;
 }
 
@@ -310,13 +313,13 @@ padding: 14px 22px;
 }
 
 .wp-seealso li {
- margin-bottom: 4px;
+    margin-bottom: 4px;
     font-size: 15px;
 }
 
 .wp-seealso a {
     color: #7a5c2e;
- font-weight: bold;
+    font-weight: bold;
     text-decoration: none;
 }
 
@@ -328,7 +331,8 @@ padding: 14px 22px;
 .colophon {
     margin-top: 40px;
     padding-top: 20px;
-    border-top: 1px dashed rgba(0,0,0,0.12);
+    padding-inline: 14px;
+    border-top: 1px dashed rgba(0, 0, 0, 0.12);
     font-size: 14px;
     color: #5a4b3b;
 }
@@ -364,7 +368,7 @@ padding: 14px 22px;
     }
 
     .es-table {
-    font-size: 12px;
+        font-size: 12px;
     }
 
     .es-formula {
@@ -386,16 +390,163 @@ padding: 14px 22px;
         box-shadow: none;
         border: none;
         width: auto;
-   padding: 24mm;
- margin: 0;
+        padding: 24mm;
+        margin: 0;
     }
 
-    .chapter, .toc {
+    .chapter,
+    .toc {
         page-break-before: always;
     }
 
     @page {
-     size: A4;
-      margin: 18mm;
+        size: A4;
+        margin: 18mm;
     }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DARK THEME OVERRIDES
+   ══════════════════════════════════════════════════════════════ */
+[data-theme="dark"] body {
+    background: #1a1a2e;
+}
+
+[data-theme="dark"] .book {
+    background: linear-gradient(180deg, #1f2937 0%, #1a2332 100%);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .cover {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .title {
+    color: #f3efe8;
+}
+
+[data-theme="dark"] .subtitle {
+    color: #b0a898;
+}
+
+[data-theme="dark"] .cover-date {
+    color: #9a8e80;
+}
+
+[data-theme="dark"] .es-companion-badge {
+    border-color: #6b7280;
+    color: #c8bfb0;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .es-companion-badge:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .es-disclaimer {
+    color: #9a8e80;
+}
+
+[data-theme="dark"] h2 {
+    color: #e5d9cc;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] h3 {
+    color: #d4c5b2;
+}
+
+[data-theme="dark"] p {
+    color: #d1d5db;
+}
+
+[data-theme="dark"] li {
+    color: #d1d5db;
+}
+
+[data-theme="dark"] .toclist a {
+    color: #d4a855;
+}
+
+[data-theme="dark"] .es-note {
+    color: #b0a090;
+}
+
+/* Formula block */
+[data-theme="dark"] .es-formula {
+    background: rgba(255, 255, 255, 0.05);
+    border-left-color: #7a6840;
+    color: #d1d5db;
+}
+
+/* Worked example box */
+[data-theme="dark"] .es-example {
+    background: rgba(100, 180, 100, 0.08);
+    border-left-color: #5a8a5a;
+    color: #d1d5db;
+}
+
+/* Warning / limitation note */
+[data-theme="dark"] .es-warning {
+    background: rgba(200, 160, 48, 0.1);
+    border-color: #8a7030;
+    color: #d1d5db;
+}
+
+/* Research context note */
+[data-theme="dark"] .es-research {
+    background: rgba(90, 138, 176, 0.1);
+    border-left-color: #5a8ab0;
+    color: #d1d5db;
+}
+
+/* Table */
+[data-theme="dark"] .es-table th {
+    background: #2a3040;
+    border-color: #4b5563;
+    color: #d4c5b2;
+}
+
+[data-theme="dark"] .es-table td {
+    border-color: #374151;
+    color: #d1d5db;
+}
+
+[data-theme="dark"] .es-table tr:nth-child(even) td {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* State machine diagram */
+[data-theme="dark"] .es-statemachine {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: #6b7280;
+    color: #d1d5db;
+}
+
+/* See-also / callout */
+[data-theme="dark"] .es-callout.wp-seealso,
+[data-theme="dark"] .wp-seealso {
+    border-color: #6b7280;
+    background: rgba(255, 240, 200, 0.06);
+}
+
+[data-theme="dark"] .es-callout.wp-seealso p,
+[data-theme="dark"] .wp-seealso p {
+    color: #c8bfb0;
+}
+
+[data-theme="dark"] .es-callout.wp-seealso a,
+[data-theme="dark"] .wp-seealso a {
+    color: #d4a855;
+}
+
+/* Colophon / footer */
+[data-theme="dark"] .colophon {
+    border-top-color: rgba(255, 255, 255, 0.12);
+    color: #b0a898;
+}
+
+[data-theme="dark"] .colophon a {
+    color: #d4a855;
 }
