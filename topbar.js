@@ -1,6 +1,6 @@
 ﻿// Lightweight, reusable top bar for all pages.
 (function () {
-    const css = `
+    const css = /*css*/ `
   #topBar {
     position: fixed;
     top: 0;
@@ -85,7 +85,7 @@
     transition: max-height 0.2s ease;
   }
   .tb-drawer.tb-open {
-    max-height: 400px;
+    max-height: 460px; 
   }
 
   /* ── On PC (≥ 980px): drawers behave as inline flex — normal layout ── */
@@ -214,7 +214,7 @@
   }
   `;
 
-    const html = `
+    const html = /*html*/`
   <div id="topBar" role="navigation" aria-label="Main">
     <!-- Mobile NAV toggle -->
     <button id="tbMenuToggle" class="tb-mobile-toggle tb-menu-toggle" type="button"
