@@ -16,7 +16,7 @@
         return hits > 0 ? 30 + hits : -1;
     }
 
-    // Player search dropdown (admin on-behalf). Ported from `admin_js_old _working/index.html`.
+    // Player search dropdown (admin on-behalf).
     window.attachOnBehalfSearch = window.attachOnBehalfSearch || function attachOnBehalfSearch() {
         const input = document.getElementById('obPlayerSearchInput');
         const list = document.getElementById('obPlayerSearchList');
@@ -24,6 +24,10 @@
 
         // ensure players cache exists
         window.__playersCache = window.__playersCache || [];
+
+        // guard against double-install
+        if (input.__obSearchAttached) return;
+        input.__obSearchAttached = true;
 
         input.addEventListener('input', () => {
             const q = input.value;
@@ -93,100 +97,124 @@
         if (!window.currentUser?.isAdmin) return alert('Admin only');
         const input = document.getElementById('obPlayerSearchInput');
         const userId = input?.dataset?.userId || '';
-      const st = document.getElementById('onBehalfStatus');
+        const st = document.getElementById('onBehalfStatus');
         if (!userId) { if (st) st.textContent = 'Select a player from the list first.'; return; }
         const u = (window.__playersCache || []).find(p => p.userId === userId);
-      if (!u) { if (st) st.textContent = 'Selected player not found.'; return; }
+        if (!u) { if (st) st.textContent = 'Selected player not found.'; return; }
+
+        // Preserve admin self-balance snapshot (set during login) if not present.
+        if (window.topBalanceSelfBT == null) window.topBalanceSelfBT = Number(window.currentBalanceBT) || 0;
 
         window.submitForUser = { userId: u.userId, email: u.email || null, playerName: u.playerName || null, mailbox: u.mailbox || null };
 
         // Show loading state in top bar chip immediately before the async fetch.
         if (window.topbarSetAuthState) {
-   window.topbarSetAuthState({
-      idToken: window.googleIdToken || null,
-   user: window.currentUser || null,
-         isAdmin: true,
-       balanceBT: window.topBalanceSelfBT ?? window.currentBalanceBT,
-       targetUser: window.submitForUser,
-           targetBalanceBT: null,
-    targetLoading: true
-  });
-      }
+            window.topbarSetAuthState({
+                idToken: window.googleIdToken || null,
+                user: window.currentUser || null,
+                isAdmin: true,
+                // balanceBT: window.topBalanceSelfBT ?? window.currentBalanceBT,
+                balanceBT: window.topBalanceSelfBT ?? window.currentBalanceBT,
+                targetUser: window.submitForUser,
+                targetBalanceBT: null,
+                targetLoading: true
+            });
+        }
 
         if (st) st.textContent = `Target set: ${u.playerName || u.email || u.userId}. Loading balance...`;
 
-   try {
-  // Fetch target balance directly — single network call, result threaded to both
-      // Combined Totals (via setCurrentBalance) and the top bar chip (via refreshTopBarBalances).
-const targetBal = await window.fetchBalanceForUser(window.submitForUser);
+        try {
+            // Fetch target balance directly — single network call, result threaded to both
+            // Combined Totals (via setCurrentBalance) and the top bar chip (via refreshTopBarBalances).
+            const targetBal = await window.fetchBalanceForUser(window.submitForUser);
 
             // Update Combined Totals baseline with target's balance.
-     window.setCurrentBalance && window.setCurrentBalance(targetBal);
+            window.setCurrentBalance && window.setCurrentBalance(targetBal);
 
             // Update onBehalfStatus text.
             if (st) st.textContent = `Target set: ${u.playerName || u.email || u.userId}. Balance: ${Number(targetBal).toFixed(2)} EW`;
 
-     // Strip any stale pinned sell row.
-  if (Array.isArray(window.sellCart)) {
-            window.sellCart = window.sellCart.filter(e => !e.isAccountBalancePinned);
-           try { window.renderSellList && window.renderSellList(); } catch { }
-         try { window.calculateNet && window.calculateNet(); } catch { }
+            // Update topbar target chip (keep admin balance constant)
+            try {
+                window.topbarSetAuthState && window.topbarSetAuthState({
+                    idToken: window.googleIdToken || null,
+                    user: window.currentUser || null,
+                    isAdmin: true,
+                    balanceBT: window.topBalanceSelfBT ?? window.currentBalanceBT,
+                    targetUser: window.submitForUser,
+                    targetBalanceBT: targetBal,
+                    targetLoading: false
+                });
+            } catch { }
+
+            // Strip any stale pinned sell row.
+            if (Array.isArray(window.sellCart)) {
+                window.sellCart = window.sellCart.filter(e => !e.isAccountBalancePinned);
+                try { window.renderSellList && window.renderSellList(); } catch { }
+                try { window.calculateNet && window.calculateNet(); } catch { }
             }
 
-  // Refresh top bar: fetch admin's own balance and pass target balance through.
-      // The guard inside refreshTopBarBalances ensures currentBalanceBT is NOT overwritten.
-  await window.refreshTopBarBalances({ targetBalanceBT: targetBal });
+            // Keep legacy hook if it exists.
+            try { await window.refreshTopBarBalances?.({ targetBalanceBT: targetBal }); } catch { }
 
         } catch (e) {
-         if (st) st.textContent = `Balance load failed: ${e.message}`;
-         // Clear the loading chip on error.
+            if (st) st.textContent = `Balance load failed: ${e.message}`;
+            // Clear the loading chip on error.
             if (window.topbarSetAuthState) {
-     window.topbarSetAuthState({
-         idToken: window.googleIdToken || null,
-              user: window.currentUser || null,
-        isAdmin: true,
-          balanceBT: window.topBalanceSelfBT ?? window.currentBalanceBT,
-         targetUser: window.submitForUser,
-       targetBalanceBT: null,
-      targetLoading: false
-       });
-    }
+                window.topbarSetAuthState({
+                    idToken: window.googleIdToken || null,
+                    user: window.currentUser || null,
+                    isAdmin: true,
+                    balanceBT: window.topBalanceSelfBT ?? window.currentBalanceBT,
+                    targetUser: window.submitForUser,
+                    targetBalanceBT: null,
+                    targetLoading: false
+                });
+            }
         }
     };
 
     window.clearOnBehalfTarget = window.clearOnBehalfTarget || async function clearOnBehalfTarget() {
-  window.submitForUser = null;
-   const st = document.getElementById('onBehalfStatus');
+        window.submitForUser = null;
+        const st = document.getElementById('onBehalfStatus');
         if (st) st.textContent = 'On-behalf target cleared. Loading your balance...';
 
+        // Restore admin balance immediately (non-blocking), then refresh from backend.
+        if (window.topBalanceSelfBT != null) {
+            window.setCurrentBalance && window.setCurrentBalance(window.topBalanceSelfBT);
+        }
+
         // Clear target chip immediately.
-   if (window.topbarSetAuthState) {
-     window.topbarSetAuthState({
-   idToken: window.googleIdToken || null,
-      user: window.currentUser || null,
-    isAdmin: true,
-              balanceBT: window.topBalanceSelfBT ?? window.currentBalanceBT,
+        if (window.topbarSetAuthState) {
+            window.topbarSetAuthState({
+                idToken: window.googleIdToken || null,
+                user: window.currentUser || null,
+                isAdmin: true,
+                balanceBT: window.topBalanceSelfBT ?? window.currentBalanceBT,
                 targetUser: null,
-            targetBalanceBT: null
-      });
+                targetBalanceBT: null
+            });
         }
 
         // Clear the input field.
-  const input = document.getElementById('obPlayerSearchInput');
+        const input = document.getElementById('obPlayerSearchInput');
         if (input) { input.value = ''; input.dataset.userId = ''; }
 
         // Strip any stale pinned sell row.
-if (Array.isArray(window.sellCart)) {
-       window.sellCart = window.sellCart.filter(e => !e.isAccountBalancePinned);
+        if (Array.isArray(window.sellCart)) {
+            window.sellCart = window.sellCart.filter(e => !e.isAccountBalancePinned);
             try { window.renderSellList && window.renderSellList(); } catch { }
-      }
+        }
 
-// Fetch admin's own balance, restore Combined Totals and top bar.
-        // refreshPinnedBalanceForActiveTarget now resolves to currentUser (admin) since submitForUser is null.
-   await window.refreshPinnedBalanceForActiveTarget();
-        await window.refreshTopBarBalances({ targetBalanceBT: null });
+        // Fetch admin's own balance in background; keep old balance if it fails.
+        try {
+            await window.refreshPinnedBalanceForActiveTarget?.();
+        } catch { }
+        try {
+            await window.refreshTopBarBalances?.({ targetBalanceBT: null });
+        } catch { }
 
- if (st) st.textContent = 'On-behalf target cleared.';
+        if (st) st.textContent = 'On-behalf target cleared.';
     };
 
 })();
