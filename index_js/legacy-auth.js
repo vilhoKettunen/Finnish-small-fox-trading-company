@@ -11,11 +11,11 @@
  }
 
  function updateLoginTermsWarning_() {
- // Delegate to shared panel helper
+ // Delegate to shared panel helper (login-panel.js)
  if (typeof window.setLoginTermsWarningVisible_ === 'function') {
-     window.setLoginTermsWarningVisible_(!window.googleIdToken);
+ window.setLoginTermsWarningVisible_(!window.googleIdToken);
  } else {
-     setDisplay_('loginTermsWarning', !window.googleIdToken);
+ setDisplay_('loginTermsWarning', !window.googleIdToken);
  }
  }
 
@@ -41,6 +41,22 @@
  } catch {
  // If defineProperty fails, we fall back to explicit calls in login flow.
  }
+ })();
+
+ // Small DOM wait: SharedLogin may mount the login panel later (onload). If that happens
+ // ensure the warning element receives correct visibility state as soon as it exists.
+ (function ensureLoginWarningOnceMounted_() {
+ const waitMs = 200; const max = 5000; let elapsed = 0;
+ const t = setInterval(() => {
+ const el = document.getElementById('loginTermsWarning');
+ if (el) {
+ try { updateLoginTermsWarning_(); } catch {};
+ clearInterval(t);
+ return;
+ }
+ elapsed += waitMs;
+ if (elapsed >= max) clearInterval(t);
+ }, waitMs);
  })();
 
  function computeProfileIncomplete_(u) {
@@ -79,16 +95,17 @@
  const n = document.getElementById('setupDeletionNote');
  if (n) n.style.display = 'none';
  setupDeletionNoteTimer_ = null;
- }, 120000);
+ },120000);
  }
 
  // expose minimal hook
  window.updateLoginTermsWarning = window.updateLoginTermsWarning || updateLoginTermsWarning_;
+ window.updateLoginTermsWarning_ = window.updateLoginTermsWarning_ || updateLoginTermsWarning_;
 
- // submitSetup is now defined in shared/login-panel.js and available globally.
+ // submitSetup is defined in shared/login-panel.js and available globally.
  // We do NOT re-define it here to avoid overwriting the shared version.
 
- // ===== Missing UI helpers (ported behavior) =====
+ // ===== Missing UI helpers (needed by shared/login-panel.js + legacy flow) =====
  window.showRecaptchaWidget = window.showRecaptchaWidget || function showRecaptchaWidget() {
  const c = document.getElementById('recaptchaContainer');
  if (c) c.style.display = 'block';
@@ -117,48 +134,70 @@
  if (g) g.style.display = 'none';
  };
 
- // ===== Balance fetch & pin =====
+ // ===== Balance globals (used by top bar + Combined Totals) =====
+ // Always initialize to safe defaults, then overwrite from `me` immediately on login.
+ window.currentBalanceBT = Number(window.currentBalanceBT) ||0;
+ // Admin-only: preserved self balance while acting on-behalf
+ if (window.topBalanceSelfBT === undefined) window.topBalanceSelfBT = undefined;
+
  window.getActiveTarget = window.getActiveTarget || function getActiveTarget() {
  return window.submitForUser || window.currentUser;
  };
 
+ // Balance fetch helper used by admin (on-behalf) and pinned refresh
  window.fetchBalanceForUser = window.fetchBalanceForUser || async function fetchBalanceForUser(user) {
- if (!window.googleIdToken || !user) return 0;
+ if (!window.googleIdToken || !user) return0;
  const qs = new URLSearchParams({ action: 'getBalance', idToken: window.googleIdToken });
  if (user.userId) qs.append('userId', user.userId);
  const r = await fetch(`${window.WEB_APP_URL}?${qs.toString()}`);
  const j = await r.json();
  if (!j.ok) throw new Error(j.error || 'getBalance failed');
- const v = Number(j.data?.balanceBT ?? j.balanceBT ?? j.data?.balance ?? 0);
- return isNaN(v) ? 0 : v;
- };
-
- window.upsertPinnedBalanceRow = window.upsertPinnedBalanceRow || function upsertPinnedBalanceRow(balanceBT) {
- if (!Array.isArray(window.sellCart)) window.sellCart = [];
- window.sellCart = window.sellCart.filter(e => !e.isAccountBalancePinned);
- window.sellCart.unshift({
- name: 'Account Balance',
- qty: 1,
- price: Number(balanceBT) || 0,
- isBalance: true,
- isAccountBalancePinned: true,
- source: 'BALANCE'
- });
- try { window.renderSellList && window.renderSellList(); } catch { }
- try { window.calculateNet && window.calculateNet(); } catch { }
+ const v = Number(j.data?.balanceBT ?? j.balanceBT ?? j.data?.balance ??0);
+ return isNaN(v) ?0 : v;
  };
 
  window.setCurrentBalance = window.setCurrentBalance || function setCurrentBalance(bal) {
- window.currentBalanceBT = Number(bal) || 0;
+ window.currentBalanceBT = Number(bal) ||0;
  try { window.updateCombinedTotals && window.updateCombinedTotals(); } catch { }
  };
 
+ // Make balance refresh helper context-aware: refresh target balance during on-behalf without overwriting admin self balance; refresh self balance when not on-behalf; update top bar silently.
  window.refreshPinnedBalanceForActiveTarget = window.refreshPinnedBalanceForActiveTarget || async function refreshPinnedBalanceForActiveTarget() {
  const target = window.getActiveTarget();
  if (!target || !window.googleIdToken) return;
  try {
  const bal = await window.fetchBalanceForUser(target);
+ // If admin is acting on-behalf, treat this as a TARGET-balance refresh.
+ // Keep admin self balance in `topBalanceSelfBT` unchanged.
+ if (window.currentUser?.isAdmin && window.submitForUser) {
+ window.setCurrentBalance && window.setCurrentBalance(bal);
+ try {
+ window.topbarSetAuthState && window.topbarSetAuthState({
+ idToken: window.googleIdToken,
+ user: window.currentUser,
+ isAdmin: true,
+ balanceBT: window.topBalanceSelfBT ?? window.currentBalanceBT,
+ targetUser: window.submitForUser,
+ targetBalanceBT: bal,
+ targetLoading: false
+ });
+ } catch { }
+ } else {
+ // Regular users (and admins not on-behalf): refresh self balance.
  window.setCurrentBalance(bal);
+ if (window.currentUser?.isAdmin) window.topBalanceSelfBT = Number(bal) ||0;
+ try {
+ window.topbarSetAuthState && window.topbarSetAuthState({
+ idToken: window.googleIdToken,
+ user: window.currentUser,
+ isAdmin: !!window.currentUser?.isAdmin,
+ balanceBT: window.currentBalanceBT,
+ targetUser: null,
+ targetBalanceBT: null,
+ targetLoading: false
+ });
+ } catch { }
+ }
 
  if (Array.isArray(window.sellCart)) {
  window.sellCart = window.sellCart.filter(e => !e.isAccountBalancePinned);
@@ -179,6 +218,7 @@
  // In split version, open orders indicator may be absent; avoid crashing.
  window.refreshOpenOrders = window.refreshOpenOrders || function refreshOpenOrders() { };
 
+ // ===== Google Identity (button + callback) =====
  window.initGoogleIdentity = window.initGoogleIdentity || function initGoogleIdentity() {
  if (!window.google || !google.accounts || !google.accounts.id) return;
  google.accounts.id.initialize({
@@ -188,19 +228,29 @@
  auto_select: true,
  use_fedcm_for_prompt: true
  });
- google.accounts.id.renderButton(document.getElementById('googleBtn'), { theme: 'outline', size: 'large', type: 'standard', shape: 'rectangular', logo_alignment: 'left' });
+
+ const btnHost = document.getElementById('googleBtn');
+ if (btnHost) {
+ google.accounts.id.renderButton(btnHost, {
+ theme: 'outline',
+ size: 'large',
+ type: 'standard',
+ shape: 'rectangular',
+ logo_alignment: 'left'
+ });
+ }
  };
 
  window.handleCredentialResponse = window.handleCredentialResponse || function handleCredentialResponse(resp) {
- // Q7 guard: if cookie restore already succeeded, skip redundant full login flow
+ // Guard: if cookie restore already succeeded, skip redundant full login flow
  if (window._autoLoginDone) return;
  window.onGoogleSignIn(resp);
  };
 
  window.startLogin = window.startLogin || function startLogin() {
-  if (window.google && google.accounts && google.accounts.id) {
-    try { google.accounts.id.prompt(); } catch { }
-  }
+ if (window.google && google.accounts && google.accounts.id) {
+ try { google.accounts.id.prompt(); } catch { }
+ }
  };
 
  window.checkHashForIdToken = window.checkHashForIdToken || function checkHashForIdToken() {
@@ -216,19 +266,24 @@
  window.onGoogleSignIn = window.onGoogleSignIn || async function onGoogleSignIn(resp) {
  const statusEl = document.getElementById('loginStatus');
  window.googleIdToken = resp && resp.credential;
- if (!window.googleIdToken) { statusEl.textContent = 'Login error: no credential'; updateLoginTermsWarning_(); return; }
- statusEl.textContent = 'Verifying token...';
+ if (!window.googleIdToken) {
+ if (statusEl) statusEl.textContent = 'Login error: no credential';
+ updateLoginTermsWarning_();
+ return;
+ }
+ if (statusEl) statusEl.textContent = 'Verifying token...';
  try {
  const tResp = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(window.googleIdToken)}`);
  if (!tResp.ok) throw new Error('tokeninfo failed ' + tResp.status);
  const info = await tResp.json();
  if (info.aud !== window.OAUTH_CLIENT_ID) throw new Error('Invalid audience');
+
  window.saveIdToken && window.saveIdToken(window.googleIdToken);
- statusEl.textContent = 'Loading profile...';
+ if (statusEl) statusEl.textContent = 'Loading profile...';
  await onLoginMeApply_(window.googleIdToken);
- statusEl.textContent = 'Logged in.';
+ if (statusEl) statusEl.textContent = 'Logged in.';
  } catch (e) {
- statusEl.textContent = 'Login error: ' + e.message;
+ if (statusEl) statusEl.textContent = 'Login error: ' + e.message;
  }
  };
 
@@ -240,22 +295,28 @@
  window.currentUser = window.normalizeUser(meJson.data.user || {}) || {};
  window.currentUser.isAdmin = !!meJson.data.isAdmin;
 
+ // Balance from `me` is correct at login time (no refetch needed).
+ // For admins, preserve self-balance separately so on-behalf does not lose it.
+ const meBal = Number(meJson.data?.user?.balanceBT);
+ const safeMeBal = isFinite(meBal) ? meBal :0;
+ if (window.currentUser.isAdmin) window.topBalanceSelfBT = safeMeBal;
+ window.setCurrentBalance ? window.setCurrentBalance(safeMeBal) : (window.currentBalanceBT = safeMeBal);
+
  // Notify section panel of admin status
  window.IndexSectionPanel && window.IndexSectionPanel.onAdminChange(!!window.currentUser.isAdmin);
 
  updateLoginTermsWarning_();
  window.SharedLogin && window.SharedLogin.evaluateSetupForm(window.currentUser);
 
- // BUG 5: Show topbar early with "(temp)" balance indicator while balance is loading
+ // Optional early set (kept for compatibility with existing UI)
  const tempUser = Object.assign({}, window.currentUser);
  if (window.topbarSetAuthState) {
-   window.topbarSetAuthState({
-     idToken: window.googleIdToken,
-     user: tempUser,
-     isAdmin: !!window.currentUser.isAdmin,
-     balanceBT: window.currentBalanceBT,
-     balanceLabel: '(temp)'
-   });
+ window.topbarSetAuthState({
+ idToken: window.googleIdToken,
+ user: tempUser,
+ isAdmin: !!window.currentUser.isAdmin,
+ balanceBT: window.currentBalanceBT
+ });
  }
 
  const adminBtn = document.getElementById('adminPanelBtn');
@@ -291,15 +352,17 @@
 
  setSetupHighlightAndNote_(window.currentUser);
 
- // BUG 5: Fetch balance THEN update topbar with the real value (removes "(temp)")
+ // Do NOT refetch balance on initial login; balance already applied from `me`.
+ // Still refresh pinned balance if other code expects sell-cart pinned cleanup.
  await window.refreshPinnedBalanceForActiveTarget();
+
  // Push final correct balance to topbar after balance is populated
  window.updateTopBarAuth && window.updateTopBarAuth();
 
  window.refreshOpenOrders && window.refreshOpenOrders();
  }
 
- // Silent restore — skips external tokeninfo re-verification (Q8 fast-path)
+ // Silent restore — skips external tokeninfo re-verification
  window.tryRestoreAuthIndex_ = window.tryRestoreAuthIndex_ || async function tryRestoreAuthIndex_() {
  if (!window.initAuthFromStorage) return;
  try {
@@ -310,10 +373,10 @@
  window.googleIdToken = r.idToken;
  window.saveIdToken && window.saveIdToken(r.idToken);
  await onLoginMeApply_(r.idToken);
- } catch (e) {
- // Backend rejected ? clear cookie, allow GSI auto_select to try
+ } catch {
+ // Backend rejected — clear cookie, allow GSI auto_select to try
  window.clearSavedIdToken && window.clearSavedIdToken();
- window._autoLoginDone = false; // allow GSI to re-trigger
+ window._autoLoginDone = false;
  }
  };
 
