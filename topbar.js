@@ -189,6 +189,29 @@
       background: transparent;
     }
   }
+
+  /* ── Dark-mode mobile drawer overrides ── */
+  @media (max-width: 980px) {
+    [data-theme="dark"] #tbNavDrawer,
+    [data-theme="dark"] #tbUserDrawer {
+      background: #1f2937 !important;
+      color: #e5e7eb;
+      border-top-color: rgba(255,255,255,0.1);
+    }
+    [data-theme="dark"] #tbNavDrawer button[data-nav] {
+      color: #e5e7eb;
+      border-bottom-color: rgba(255,255,255,0.08);
+    }
+    [data-theme="dark"] #tbUserDrawer #topUser {
+      color: #e5e7eb;
+      border-bottom-color: rgba(255,255,255,0.08);
+    }
+    [data-theme="dark"] #tbUserDrawer #btnSettings,
+    [data-theme="dark"] #tbUserDrawer #btnLogin,
+    [data-theme="dark"] #tbUserDrawer #btnLogout {
+      color: #e5e7eb;
+    }
+  }
   `;
 
     const html = `
