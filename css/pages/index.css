@@ -386,7 +386,7 @@ highlight-action {
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 12px10px;
+    padding: 0px 0px;
     background: #1a73e8;
     color: #fff;
     border-radius: 8px;
@@ -394,7 +394,7 @@ highlight-action {
     font-weight: 600;
     border: none;
     cursor: pointer;
-    box-shadow: 01px0 rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
     transition: transform .06s, box-shadow .06s, background .12s;
     min-height: 48px;
 }
@@ -404,7 +404,7 @@ highlight-action {
 }
 
 .link-btn:hover {
-    box-shadow: 04px10px rgba(26, 115, 232, 0.12);
+    box-shadow: 0 4px 10px rgba(26, 115, 232, 0.12);
     background: #155fc4;
 }
 
@@ -549,6 +549,25 @@ highlight-action {
     background: var(--btn-bg);
     border-color: var(--btn-border);
     color: var(--site-text);
+}
+
+[data-theme="dark"] .link-btn {
+    background: #2563eb;
+    color: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .link-btn:hover {
+    background: #3b82f6;
+}
+
+[data-theme="dark"] .link-btn.internal {
+    background: #475569;
+    color: #fff;
+}
+
+[data-theme="dark"] .link-btn.internal:hover {
+    background: #64748b;
 }
 
 .idx-section-panel-title {
