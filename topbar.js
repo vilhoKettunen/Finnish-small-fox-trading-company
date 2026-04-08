@@ -1,6 +1,6 @@
 ﻿// Lightweight, reusable top bar for all pages.
 (function () {
-    const css = `
+    const css = /*css*/ `
   #topBar {
     position: fixed;
     top: 0;
@@ -24,6 +24,14 @@
     margin-right: 16px;
     font-size: 14px;
   }
+  #btnThemeToggle {
+    font-size: 18px;
+    margin-right: 8px;
+    padding: 2px 6px;
+    line-height: 1;
+    opacity: .85;
+  }
+  #btnThemeToggle:hover { opacity: 1; }
   #topBar .right {
     margin-left: auto;
     display: flex;
@@ -77,7 +85,7 @@
     transition: max-height 0.2s ease;
   }
   .tb-drawer.tb-open {
-    max-height: 400px;
+    max-height: 460px; 
   }
 
   /* ── On PC (≥ 980px): drawers behave as inline flex — normal layout ── */
@@ -181,9 +189,32 @@
       background: transparent;
     }
   }
+
+  /* ── Dark-mode mobile drawer overrides ── */
+  @media (max-width: 980px) {
+    [data-theme="dark"] #tbNavDrawer,
+    [data-theme="dark"] #tbUserDrawer {
+      background: #1f2937 !important;
+      color: #e5e7eb;
+      border-top-color: rgba(255,255,255,0.1);
+    }
+    [data-theme="dark"] #tbNavDrawer button[data-nav] {
+      color: #e5e7eb;
+      border-bottom-color: rgba(255,255,255,0.08);
+    }
+    [data-theme="dark"] #tbUserDrawer #topUser {
+      color: #e5e7eb;
+      border-bottom-color: rgba(255,255,255,0.08);
+    }
+    [data-theme="dark"] #tbUserDrawer #btnSettings,
+    [data-theme="dark"] #tbUserDrawer #btnLogin,
+    [data-theme="dark"] #tbUserDrawer #btnLogout {
+      color: #e5e7eb;
+    }
+  }
   `;
 
-    const html = `
+    const html = /*html*/`
   <div id="topBar" role="navigation" aria-label="Main">
     <!-- Mobile NAV toggle -->
     <button id="tbMenuToggle" class="tb-mobile-toggle tb-menu-toggle" type="button"
@@ -212,6 +243,7 @@
       <span id="topBalanceTarget" class="balance-chip balance-target" style="display:none;"></span>
       <span id="topBalance" class="balance-chip balance-you" style="display:none;"></span>
       <!-- Mobile USER toggle -->
+      <button id="btnThemeToggle" type="button" title="Toggle theme">◑</button>
       <button id="tbUserToggle" class="tb-mobile-toggle tb-user-toggle" type="button"
               aria-expanded="false" aria-controls="tbUserDrawer">👤 ▼</button>
     </div>
@@ -244,6 +276,15 @@ if (!document.getElementById('topbar-shared-style')) {
     // If page already provided markup, still ensure the body padding class is set
             document.body.classList.add('withTopBar');
     }
+
+        // Sync theme toggle icon with current preference
+        var themeBtn = document.getElementById('btnThemeToggle');
+        if (themeBtn && window.themeToggle) {
+            var icons = { auto: '\u25D1', light: '\u2600', dark: '\u263E' };
+            var pref = window.themeToggle.getPreference();
+            themeBtn.textContent = icons[pref] || '\u25D1';
+            themeBtn.title = 'Theme: ' + pref;
+        }
     }
 
     const state = {
@@ -373,6 +414,20 @@ if (!document.getElementById('topbar-shared-style')) {
 
             const btn = ev.target.closest('button');
     if (!btn) return;
+
+            // ── Theme toggle ──
+            if (btn.id === 'btnThemeToggle') {
+                if (window.themeToggle) {
+                    var icons = { auto: '\u25D1', light: '\u2600', dark: '\u263E' };
+                    var order = ['auto', 'light', 'dark'];
+                    var cur = order.indexOf(window.themeToggle.getPreference());
+                    var next = order[(cur + 1) % 3];
+                    window.themeToggle.setPreference(next);
+                    btn.textContent = icons[next];
+                    btn.title = 'Theme: ' + next;
+                }
+                return;
+            }
 
             // ── Mobile toggle: NAV drawer ──
             if (btn.id === 'tbMenuToggle') {
