@@ -16,8 +16,6 @@
  font-size:14px;
  gap:12px;
  }
-
- /* Base control styling */
  #topBar button {
  color: #fff;
  background: none;
@@ -41,7 +39,7 @@
  border-radius:6px;
  }
 
- /* Topbar “pill/button” nav links to match site */
+ /* Desktop/topbar nav links: white text on the black bar */
  #tbNavDrawer a[data-nav] {
  display: inline-flex;
  align-items: center;
@@ -49,14 +47,19 @@
  padding:6px10px;
  margin-right:16px;
  border-radius:10px;
- color: #1a1008;
- background: url('/images/pack_Ground/paper.png') repeat #e8dcc8;
- border:1px solid rgba(0,0,0,0.15);
- box-shadow: inset01px0 rgba(255,255,255,0.35);
+ color: #fff;
+ background: transparent;
+ border:1px solid transparent;
  line-height:1;
  user-select: none;
  }
  #tbNavDrawer a[data-nav]:hover { opacity: .8; }
+
+ /* Make the active page link slightly emphasized if pages optionally set aria-current */
+ #tbNavDrawer a[aria-current="page"] {
+ border-color: rgba(255,255,255,0.25);
+ background: rgba(255,255,255,0.06);
+ }
 
  #btnThemeToggle {
  font-size:18px;
