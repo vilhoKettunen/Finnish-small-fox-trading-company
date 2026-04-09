@@ -1,218 +1,261 @@
 // Lightweight, reusable top bar for all pages.
 (function () {
-    const css = /*css*/ `
-  #topBar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 52px;
-    background: #000 !important;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    padding: 0 20px;
-    z-index: 1000;
-    font-size: 14px;
-    gap: 12px;
-  }
-  #topBar button {
-    color: #fff;
-    background: none;
-    border: none;
-    cursor: pointer;
-    margin-right: 16px;
-    font-size: 14px;
-  }
-  #btnThemeToggle {
-    font-size: 18px;
-    margin-right: 8px;
-    padding: 2px 6px;
-    line-height: 1;
-    opacity: .85;
-  }
-  #btnThemeToggle:hover { opacity: 1; }
-  #topBar .right {
-    margin-left: auto;
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-  body.withTopBar { padding-top: 72px; }
-  .balance-chip {
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: rgba(255,255,255,0.08);
-    white-space: nowrap;
-  }
-  .balance-you.positive { color: #2ecc71; }
-  .balance-you.negative { color: #ff5252; }
-  .balance-target { color: #f0c200; }
-  #topUser { color: #fff; opacity: .9; }
+ const css = /*css*/ `
+ #topBar {
+ position: fixed;
+ top:0;
+ left:0;
+ right:0;
+ height:52px;
+ background: #000 !important;
+ color: #fff;
+ display: flex;
+ align-items: center;
+ padding:020px;
+ z-index:1000;
+ font-size:14px;
+ gap:12px;
+ }
 
-  /* ── Mobile toggle buttons (hidden on PC) ── */
-  .tb-mobile-toggle {
-    display: none;
-    align-items: center;
-    justify-content: center;
-    background: none;
-    border: none;
-    color: #fff;
-    cursor: pointer;
-    font-size: 18px;
-    padding: 6px 8px;
-    margin-right: 0;
-    line-height: 1;
-    flex-shrink: 0;
-  }
+ /* Base control styling */
+ #topBar button {
+ color: #fff;
+ background: none;
+ border: none;
+ cursor: pointer;
+ margin-right:16px;
+ font-size:14px;
+ }
 
-  /* ── Drawer base (both nav and user drawers) ── */
-  .tb-drawer {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 52px;
-    left: 0;
-    right: 0;
-    background: #000;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    z-index: 998;
-    padding: 4px 0;
-    overflow: hidden;
-    /* Slide animation */
-    max-height: 0;
-    transition: max-height 0.2s ease;
-  }
-  .tb-drawer.tb-open {
-    max-height: 460px; 
-  }
+ /* Ensure any anchors in the bar never render as default blue/visited purple */
+ #topBar a {
+ color: inherit;
+ text-decoration: none;
+ -webkit-tap-highlight-color: transparent;
+ }
+ #topBar a:visited { color: inherit; }
+ #topBar a:focus-visible,
+ #topBar button:focus-visible {
+ outline:2px solid rgba(255,255,255,0.75);
+ outline-offset:2px;
+ border-radius:6px;
+ }
 
-  /* ── On PC (≥ 980px): drawers behave as inline flex — normal layout ── */
-  @media (min-width: 980px) {
-    .tb-drawer {
-      position: static;
-      flex-direction: row;
-      align-items: center;
-      flex-wrap: wrap;
-      background: transparent;
-      border-top: none;
-      padding: 0;
-      max-height: none;
-      overflow: visible;
-      z-index: auto;
-    }
-    .tb-drawer.tb-open {
-      max-height: none;
-    }
-    /* Nav drawer: inline with the rest of the bar */
-    #tbNavDrawer {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 0;
-    }
-    /* User drawer: inline inside .right */
-    #tbUserDrawer {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 12px;
-    }
-  }
+ /* Topbar “pill/button” nav links to match site */
+ #tbNavDrawer a[data-nav] {
+ display: inline-flex;
+ align-items: center;
+ justify-content: center;
+ padding:6px10px;
+ margin-right:16px;
+ border-radius:10px;
+ color: #1a1008;
+ background: url('/images/pack_Ground/paper.png') repeat #e8dcc8;
+ border:1px solid rgba(0,0,0,0.15);
+ box-shadow: inset01px0 rgba(255,255,255,0.35);
+ line-height:1;
+ user-select: none;
+ }
+ #tbNavDrawer a[data-nav]:hover { opacity: .8; }
 
-  /* ── Mobile (< 980px) ── */
-  @media (max-width: 980px) {
-    #topBar {
-      height: 52px;
-      flex-wrap: nowrap;
-      gap: 8px;
-      padding: 0 10px;
-    }
-    .tb-mobile-toggle {
-      display: inline-flex;
-    }
-    .right {
-      gap: 6px;
-    }
-    /* Balance chips: truncate if too wide */
-    .balance-chip {
-      max-width: 110px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+ #btnThemeToggle {
+ font-size:18px;
+ margin-right:8px;
+ padding:2px6px;
+ line-height:1;
+ opacity: .85;
+ }
+ #btnThemeToggle:hover { opacity:1; }
+ #topBar .right {
+ margin-left: auto;
+ display: flex;
+ gap:12px;
+ align-items: center;
+ flex-wrap: wrap;
+ }
+ body.withTopBar { padding-top:72px; }
+ .balance-chip {
+ padding:2px6px;
+ border-radius:4px;
+ background: rgba(255,255,255,0.08);
+ white-space: nowrap;
+ }
+ .balance-you.positive { color: #2ecc71; }
+ .balance-you.negative { color: #ff5252; }
+ .balance-target { color: #f0c200; }
+ #topUser { color: #fff; opacity: .9; }
 
-    /* Drawers use a paper texture background on mobile so text is readable */
-    #tbNavDrawer,
-    #tbUserDrawer {
-      background: url('/images/pack_Ground/paper.png') repeat #e8dcc8 !important;
-      color: #1a1008;
-      border-top: 2px solid rgba(0,0,0,0.15);
-    }
+ /* ── Mobile toggle buttons (hidden on PC) ── */
+ .tb-mobile-toggle {
+ display: none;
+ align-items: center;
+ justify-content: center;
+ background: none;
+ border: none;
+ color: #fff;
+ cursor: pointer;
+ font-size:18px;
+ padding:6px8px;
+ margin-right:0;
+ line-height:1;
+ flex-shrink:0;
+ }
 
-    /* Nav drawer buttons: full-width list style with dark text */
-    #tbNavDrawer button[data-nav] {
-      width: 100%;
-      text-align: left;
-      padding: 12px 20px;
-      margin-right: 0;
-      border-bottom: 1px solid rgba(0,0,0,0.08);
-      font-size: 15px;
-      color: #000;
-      /*background: transparent;*/
-    }
-    #tbNavDrawer button[data-nav]:last-child {
-      border-bottom: none;
-    }
-    /* User drawer items */
-    #tbUserDrawer {
-      padding: 8px 20px;
-      gap: 0;
-    }
-    #tbUserDrawer #topUser {
-      display: block;
-      padding: 8px 0 10px 0;
-      font-weight: bold;
-      border-bottom: 1px solid rgba(0,0,0,0.08);
-      margin-bottom: 8px;
-      width: 100%;
-      color: #000;
-    }
-    #tbUserDrawer #btnSettings,
-    #tbUserDrawer #btnLogin,
-    #tbUserDrawer #btnLogout {
-      display: inline-block;
-      margin-right: 12px;
-      padding: 6px 0;
-      color: #000;
-      background: transparent;
-    }
-  }
+ /* ── Drawer base (both nav and user drawers) ── */
+ .tb-drawer {
+ display: flex;
+ flex-direction: column;
+ position: fixed;
+ top:52px;
+ left:0;
+ right:0;
+ background: #000;
+ border-top:1px solid rgba(255,255,255,0.1);
+ z-index:998;
+ padding:4px0;
+ overflow: hidden;
+ /* Slide animation */
+ max-height:0;
+ transition: max-height0.2s ease;
+ }
+ .tb-drawer.tb-open {
+ max-height:460px; 
+ }
 
-  /* ── Dark-mode mobile drawer overrides ── */
-  @media (max-width: 980px) {
-    [data-theme="dark"] #tbNavDrawer,
-    [data-theme="dark"] #tbUserDrawer {
-      background: #1f2937 !important;
-      color: #e5e7eb;
-      border-top-color: rgba(255,255,255,0.1);
-    }
-    [data-theme="dark"] #tbNavDrawer button[data-nav] {
-      color: #e5e7eb;
-      border-bottom-color: rgba(255,255,255,0.08);
-    }
-    [data-theme="dark"] #tbUserDrawer #topUser {
-      color: #e5e7eb;
-      border-bottom-color: rgba(255,255,255,0.08);
-    }
-    [data-theme="dark"] #tbUserDrawer #btnSettings,
-    [data-theme="dark"] #tbUserDrawer #btnLogin,
-    [data-theme="dark"] #tbUserDrawer #btnLogout {
-      color: #e5e7eb;
-    }
-  }
-  `;
+ /* ── On PC (≥980px): drawers behave as inline flex — normal layout ── */
+ @media (min-width:980px) {
+ .tb-drawer {
+ position: static;
+ flex-direction: row;
+ align-items: center;
+ flex-wrap: wrap;
+ background: transparent;
+ border-top: none;
+ padding:0;
+ max-height: none;
+ overflow: visible;
+ z-index: auto;
+ }
+ .tb-drawer.tb-open {
+ max-height: none;
+ }
+ /* Nav drawer: inline with the rest of the bar */
+ #tbNavDrawer {
+ display: flex;
+ flex-direction: row;
+ align-items: center;
+ flex-wrap: wrap;
+ gap:0;
+ }
+ /* User drawer: inline inside .right */
+ #tbUserDrawer {
+ display: flex;
+ flex-direction: row;
+ align-items: center;
+ gap:12px;
+ }
+ }
+
+ /* ── Mobile (<980px) ── */
+ @media (max-width:980px) {
+ #topBar {
+ height:52px;
+ flex-wrap: nowrap;
+ gap:8px;
+ padding:010px;
+ }
+ .tb-mobile-toggle {
+ display: inline-flex;
+ }
+ .right {
+ gap:6px;
+ }
+ /* Balance chips: truncate if too wide */
+ .balance-chip {
+ max-width:110px;
+ overflow: hidden;
+ text-overflow: ellipsis;
+ }
+
+ /* Drawers use a paper texture background on mobile so text is readable */
+ #tbNavDrawer,
+ #tbUserDrawer {
+ background: url('/images/pack_Ground/paper.png') repeat #e8dcc8 !important;
+ color: #1a1008;
+ border-top:2px solid rgba(0,0,0,0.15);
+ }
+
+ /* Nav drawer items: full-width list style with dark text */
+ #tbNavDrawer a[data-nav],
+ #tbNavDrawer button[data-nav] {
+ width: calc(100% -40px);
+ margin:6px20px;
+ text-align: left;
+ padding:12px14px;
+ border-radius:12px;
+ border:1px solid rgba(0,0,0,0.15);
+ font-size:15px;
+ color: #1a1008;
+ background: url('/images/pack_Ground/paper.png') repeat #e8dcc8;
+ box-shadow: inset01px0 rgba(255,255,255,0.35);
+ opacity:1;
+ }
+ #tbNavDrawer a[data-nav]:hover,
+ #tbNavDrawer button[data-nav]:hover {
+ opacity: .8;
+ }
+
+ /* User drawer items */
+ #tbUserDrawer {
+ padding:8px20px;
+ gap:0;
+ }
+ #tbUserDrawer #topUser {
+ display: block;
+ padding:8px010px0;
+ font-weight: bold;
+ border-bottom:1px solid rgba(0,0,0,0.08);
+ margin-bottom:8px;
+ width:100%;
+ color: #000;
+ }
+ #tbUserDrawer #btnSettings,
+ #tbUserDrawer #btnLogin,
+ #tbUserDrawer #btnLogout {
+ display: inline-block;
+ margin-right:12px;
+ padding:6px0;
+ color: #000;
+ background: transparent;
+ }
+ }
+
+ /* ── Dark-mode mobile drawer overrides ── */
+ @media (max-width:980px) {
+ [data-theme="dark"] #tbNavDrawer,
+ [data-theme="dark"] #tbUserDrawer {
+ background: #1f2937 !important;
+ color: #e5e7eb;
+ border-top-color: rgba(255,255,255,0.1);
+ }
+ [data-theme="dark"] #tbNavDrawer a[data-nav],
+ [data-theme="dark"] #tbNavDrawer button[data-nav] {
+ color: #e5e7eb;
+ background: #111827;
+ border-color: rgba(255,255,255,0.10);
+ box-shadow: none;
+ }
+ [data-theme="dark"] #tbUserDrawer #topUser {
+ color: #e5e7eb;
+ border-bottom-color: rgba(255,255,255,0.08);
+ }
+ [data-theme="dark"] #tbUserDrawer #btnSettings,
+ [data-theme="dark"] #tbUserDrawer #btnLogin,
+ [data-theme="dark"] #tbUserDrawer #btnLogout {
+ color: #e5e7eb;
+ }
+ }
+ `;
 
     const html = /*html*/`
   <div id="topBar" role="navigation" aria-label="Main">
@@ -400,116 +443,124 @@ if (!document.getElementById('topbar-shared-style')) {
     }
 
     function wireTopbarEvents() {
-        const root = document.getElementById('topBar');
+ const root = document.getElementById('topBar');
  if (!root) return;
 
-        // Guard: prevent double-registration (R5)
-        if (root._topbarEventsWired) return;
-        root._topbarEventsWired = true;
+ // Guard: prevent double-registration (R5)
+ if (root._topbarEventsWired) return;
+ root._topbarEventsWired = true;
 
-        // Stop outside-click handler from firing on topBar clicks
-        root.addEventListener('click', ev => {
-            ev.stopPropagation();
+ // Stop outside-click handler from firing on topBar clicks
+ root.addEventListener('click', ev => {
+ ev.stopPropagation();
 
-            const btn = ev.target.closest('button');
-    if (!btn) return;
+ // Close drawers immediately on nav selection (mobile UX), while preserving native navigation.
+ const navLink = ev.target.closest('#tbNavDrawer [data-nav]');
+ if (navLink) {
+ closeAllDrawers();
 
-            // ── Theme toggle ──
-            if (btn.id === 'btnThemeToggle') {
-                if (window.themeToggle) {
-                    var icons = { auto: '\u25D1', light: '\u2600', dark: '\u263E' };
-                    var order = ['auto', 'light', 'dark'];
-                    var cur = order.indexOf(window.themeToggle.getPreference());
-                    var next = order[(cur + 1) % 3];
-                    window.themeToggle.setPreference(next);
-                    btn.textContent = icons[next];
-                    btn.title = 'Theme: ' + next;
-                }
-                return;
-            }
-
-            // ── Mobile toggle: NAV drawer ──
-            if (btn.id === 'tbMenuToggle') {
-                const navDrawer = document.getElementById('tbNavDrawer');
-                const userDrawer = document.getElementById('tbUserDrawer');
-                const userToggle = document.getElementById('tbUserToggle');
-                const isOpen = navDrawer && navDrawer.classList.contains('tb-open');
-                closeAllDrawers();
-                if (!isOpen && navDrawer) {
-                    navDrawer.classList.add('tb-open');
-                    btn.setAttribute('aria-expanded', 'true');
-                }
-                return;
-            }
-
-            // ── Mobile toggle: USER drawer ──
-            if (btn.id === 'tbUserToggle') {
-                const userDrawer = document.getElementById('tbUserDrawer');
-                const isOpen = userDrawer && userDrawer.classList.contains('tb-open');
-                closeAllDrawers();
-                if (!isOpen && userDrawer) {
-                    userDrawer.classList.add('tb-open');
-                    btn.setAttribute('aria-expanded', 'true');
-                }
-                return;
-            }
-
-            // ── Login ──
-            if (btn.id === 'btnLogin') {
-                scrollToGoogleButton();
-                closeAllDrawers();
-                return;
-            }
-
-            // ── Settings ──
-            if (btn.id === 'btnSettings') {
-                if (!state.idToken) {
-                    scrollToGoogleButton();
-                    return;
-                }
-                window.location.href = 'AccountSettings.html';
-                return;
-            }
-
-            // ── Logout ──
-            if (btn.id === 'btnLogout') {
-                if (typeof window.logout === 'function') window.logout();
-                state.idToken = null; state.user = null; state.isAdmin = false; state.balanceBT = null;
-        state.targetUser = null; state.targetBalanceBT = null; state.targetLoading = false;
-                if (window.clearSavedIdToken) window.clearSavedIdToken();
-                updateTopBarAuth();
-                window.hideInfraSection?.();
-                closeAllDrawers();
-                return;
-            }
-
-            // ── Nav routing ──
-            if (btn.dataset && btn.dataset.nav) {
-      const nav = btn.dataset.nav;
-    if (nav === 'store') window.location.href = 'index.html';
-     else if (nav === 'history') window.location.href = 'AccountHistory.html';
-                else if (nav === 'ocm') window.location.href = 'OCMHome.html';
-else if (nav === 'Merchant') window.location.href = 'OCMUser.html';
-            else if (nav === 'leaderboards') window.location.href = 'Leaderboards.html';
-    else if (nav === 'workpay') window.location.href = 'WorkPayRates.html';
-          else if (nav === 'bank') window.location.href = 'Bank.html';
-    else if (nav === 'queueEstimator') window.location.href = 'QueueEstimator.html';
-                else if (nav === 'instructions') window.location.href = 'Instructions.html';
-       else if (nav === 'whitepaper') window.location.href = 'Whitepaper.html';
-            else if (nav === 'admin') {
-            if (!state.idToken || !state.isAdmin) { alert('Admin only'); return; }
-   window.location.href = 'Admin.html';
-   }
+ // Admin guard, but keep anchor semantics for others.
+ if (navLink.dataset && navLink.dataset.nav === 'admin' && (!state.idToken || !state.isAdmin)) {
+ ev.preventDefault();
+ alert('Admin only');
+ return;
  }
-        });
+ return;
+ }
 
-        // Outside-click: close both drawers when user clicks anywhere outside the top bar
-        document.addEventListener('click', function () {
-            closeAllDrawers();
-        });
-    }
+ const btn = ev.target.closest('button');
+ if (!btn) return;
 
-    // Page calls this whenever auth or balance changes.
+ // ── Theme toggle ──
+ if (btn.id === 'btnThemeToggle') {
+ if (window.themeToggle) {
+ var icons = { auto: '\u25D1', light: '\u2600', dark: '\u263E' };
+ var order = ['auto', 'light', 'dark'];
+ var cur = order.indexOf(window.themeToggle.getPreference());
+ var next = order[(cur +1) %3];
+ window.themeToggle.setPreference(next);
+ btn.textContent = icons[next];
+ btn.title = 'Theme: ' + next;
+ }
+ return;
+ }
+
+ // ── Mobile toggle: NAV drawer ──
+ if (btn.id === 'tbMenuToggle') {
+ const navDrawer = document.getElementById('tbNavDrawer');
+ const isOpen = navDrawer && navDrawer.classList.contains('tb-open');
+ closeAllDrawers();
+ if (!isOpen && navDrawer) {
+ navDrawer.classList.add('tb-open');
+ btn.setAttribute('aria-expanded', 'true');
+ }
+ return;
+ }
+
+ // ── Mobile toggle: USER drawer ──
+ if (btn.id === 'tbUserToggle') {
+ const userDrawer = document.getElementById('tbUserDrawer');
+ const isOpen = userDrawer && userDrawer.classList.contains('tb-open');
+ closeAllDrawers();
+ if (!isOpen && userDrawer) {
+ userDrawer.classList.add('tb-open');
+ btn.setAttribute('aria-expanded', 'true');
+ }
+ return;
+ }
+
+ // ── Login ──
+ if (btn.id === 'btnLogin') {
+ scrollToGoogleButton();
+ closeAllDrawers();
+ return;
+ }
+
+ // ── Settings ──
+ if (btn.id === 'btnSettings') {
+ if (!state.idToken) {
+ scrollToGoogleButton();
+ return;
+ }
+ window.location.href = 'AccountSettings.html';
+ return;
+ }
+
+ // ── Logout ──
+ if (btn.id === 'btnLogout') {
+ if (typeof window.logout === 'function') window.logout();
+ state.idToken = null; state.user = null; state.isAdmin = false; state.balanceBT = null;
+ state.targetUser = null; state.targetBalanceBT = null; state.targetLoading = false;
+ if (window.clearSavedIdToken) window.clearSavedIdToken();
+ updateTopBarAuth();
+ window.hideInfraSection?.();
+ closeAllDrawers();
+ return;
+ }
+
+ // ── (Legacy) button-based nav routing, kept for compatibility ──
+ if (btn.dataset && btn.dataset.nav) {
+ const nav = btn.dataset.nav;
+ closeAllDrawers();
+ if (nav === 'store') window.location.href = 'index.html';
+ else if (nav === 'history') window.location.href = 'AccountHistory.html';
+ else if (nav === 'ocm') window.location.href = 'OCMHome.html';
+ else if (nav === 'Merchant') window.location.href = 'OCMUser.html';
+ else if (nav === 'leaderboards') window.location.href = 'Leaderboards.html';
+ else if (nav === 'workpay') window.location.href = 'WorkPayRates.html';
+ else if (nav === 'bank') window.location.href = 'Bank.html';
+ else if (nav === 'queueEstimator') window.location.href = 'QueueEstimator.html';
+ else if (nav === 'instructions') window.location.href = 'Instructions.html';
+ else if (nav === 'whitepaper') window.location.href = 'Whitepaper.html';
+ else if (nav === 'admin') {
+ if (!state.idToken || !state.isAdmin) { alert('Admin only'); return; }
+ window.location.href = 'Admin.html';
+ }
+ }
+ });
+ }
+
+ // Page calls this whenever auth or balance changes.
     // Accepts optional targetUser / targetBalanceBT / targetLoading for admin on-behalf chip.
     window.topbarSetAuthState = function (info) {
         state.idToken = info && info.idToken || null;
