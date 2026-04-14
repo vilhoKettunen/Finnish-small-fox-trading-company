@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="shared/theme-toggle.js"></script>
+    <meta charset="UTF-8">
+    <title>Vak's Internship Pitch — Anego Studios</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="Vilho Kettunen's internship proposal for an in-game economy layer for Vintage Story — presented to Anego Studios." />
+    <meta property="og:description" content="Vilho Kettunen's internship proposal for an in-game economy layer for Vintage Story." />
+    <meta name="twitter:description" content="Internship proposal: An economy layer for Vintage Story" />
+    <link rel="icon" href="favicon.ico">
+
+    <!-- Shared CSS framework -->
+    <link rel="stylesheet" href="css/site-theme.css">
+    <link rel="stylesheet" href="css/site-layout.css">
+    <link rel="stylesheet" href="css/panels-paper.css">
+    
+    <!-- Page-specific CSS -->
+    <link rel="stylesheet" href="css/pages/vak_anego_pitch.css">
+
+    <!-- Font imports -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Serif+4:wght@300;400;600&display=swap">
+
+    <!-- Shared scripts -->
+    <script src="app-config.js"></script>
+    <script src="topbar.js"></script>
+    <script src="shared/site-footer.js"></script>
+</head>
+<body class="pitch-page no-side-decor">
+    <!-- Top bar injected by topbar.js -->
+
+    <div class="pitch section">
+        <div class="header">
+            <p class="eyebrow">Internship proposal · Anego Studios · 2026</p>
+            <h1>An economy layer for Vintage Story — and the data to understand it</h1>
+            <p class="tagline">A proposal from Vilho Kettunen (Vak), game programming student, XAMK Finland</p>
+            <div style ="display:flex; gap: 1.5rem; flex-wrap: wrap;">
+                <a href="https://vakstore.com">vakstore.com</a>
+                <a href="https://github.com/vilhoKettunen/Finnish-small-fox-trading-company">github.com/vilhoKettunen/Finnish-small-fox-trading-company</a>
+</div>
+        </div>
+
+        <h2>What I built and why it matters</h2>
+        <p>
+            For the past five months I designed, built, and operated a complete trading platform for the Vintage Story TOPS server — solo, from scratch, while in my first year of university. It runs a custom ledger currency called EW (Exchange Weight) that solves three problems the base game cannot: barter friction, Rusty Gear inflation, and price opacity.
+        </p>
+
+        <div class="three-col">
+            <div class="mini-card card">
+                <div class="mini-card-label">Logged dev hours</div>
+                <div class="mini-card-value">~320</div>
+                <div class="mini-card-sub">Nov 2025 – Mar 2026</div>
+            </div>
+            <div class="mini-card card">
+                <div class="mini-card-label">Active users</div>
+                <div class="mini-card-value">30–75</div>
+                <div class="mini-card-sub">real players, real trades</div>
+            </div>
+            <div class="mini-card card">
+                <div class="mini-card-label">Wipe cycles</div>
+                <div class="mini-card-value">2+</div>
+                <div class="mini-card-sub">solvency goal achieved in prior wipe</div>
+            </div>
+        </div>
+
+        <p>
+            The system is not a prototype. It handles Google OAuth authentication, admin-approved trade queues, a player-to-player marketplace with peg-based pricing, a public Bank Dashboard showing EW circulation and wealth distribution, daily velocity tracking, and a metals-backed insurance mechanism — all built on a static frontend served via Cloudflare, a Worker proxy, and a Google Apps Script backend. Some players describe the game as nearly unplayable without it.
+        </p>
+
+        <div class="highlight-box box">
+            <p><strong>Vak's Store has already contributed to two rounds of optimization work in Vintage Story.</strong> Tyron visited the site. This is not a cold pitch — it is a follow-up to something that already caught the team's attention organically.</p>
+        </div>
+
+        <h2>The problem worth solving at the base game level</h2>
+        <p>
+            Rusty Gears inflate because mob farms print them at zero economic cost. Barter is slow, trust-dependent, and geographically punishing on a large server. New players have no price reference and are routinely exploited by veterans. These problems exist on every TOPS-style server and will keep existing until something structural changes.
+        </p>
+        <p>
+            Vintage Story's design philosophy — everything costs real effort, almost everything has value — is exactly what makes a well-designed economy <strong>possible</strong> here in a way it simply isn't in Minecraft or most MMOs. The game deserves an economy layer worthy of that design.
+        </p>
+
+        <div class="two-col">
+            <div class="col-card panel">
+                <div class="col-card-title">What exists today (Vak's Store)</div>
+                <ul>
+                    <li>Manual admin-approved trades</li>
+                    <li>Single server (TOPS)</li>
+                    <li>Community-run, one operator</li>
+                    <li>Dependent on Vak's availability</li>
+                    <li>Data collected but not natively integrated</li>
+                </ul>
+            </div>
+            <div class="col-card panel">
+                <div class="col-card-title">What it could become (in-game)</div>
+                <ul>
+                    <li>Automated, always-on, no admin bottleneck</li>
+                    <li>Multi-server, each economy independent</li>
+                    <li>Native to the game, not a third-party tool</li>
+                    <li>Public economy data visible to all players</li>
+                    <li>Real research environment, open to academia</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>The vision: Vintage Story as a living economics laboratory</h2>
+
+        <div class="vision-block section">
+            <p>"Imagine every Vintage Story server running the same economic framework — each one a small, isolated economy with its own population, culture, and dynamics. All of it public. Players learn supply and demand by living it. Researchers study small-scale market behavior without controlled experiments. Developers see exactly how their design decisions ripple through real economies."</p>
+        </div>
+
+        <p>
+            This is not speculative. The architecture already exists in miniature on TOPS. The EW model — issuance tied to real item supply, dual-sink destruction, algorithmic price adjustment, and full public observability — is documented, tested across multiple wipe cycles, and proven to be more stable than Rusty Gears in every measurable dimension.
+        </p>
+        <p>
+            Extending it to a native, multi-server system would give Vintage Story something no other survival game has: a transparent, research-grade economy that teaches real economic principles through play, with no real money at stake.
+        </p>
+
+        <h2>What I bring to this</h2>
+        <ul>
+            <li><strong>Economics specialization in a field that rarely has it.</strong> Most game programmers implement what designers specify. I design, implement, document, and iterate on economic systems — and I understand why they work or fail.</li>
+            <li><strong>Demonstrated delivery.</strong> Not a portfolio of academic exercises — a live system with real users, real data, and real impact on a commercial game.</li>
+            <li><strong>Deep familiarity with Vintage Story specifically.</strong> I have studied the game's economy, its RG inflation mechanics, its anti-automation design philosophy, and how it compares to Minecraft, RuneScape, and Eve Online. I understand what Tyron built and why.</li>
+            <li><strong>AI-augmented workflow.</strong> I use AI tools to learn faster, debug faster, and document more thoroughly than my experience level alone would allow. The whitepaper, economy specifications, and report were all produced at a professional documentation standard while I was a first-year student.</li>
+            <li><strong>810 internship hours needed to graduate</strong> — structured, committed, and credentialed.</li>
+        </ul>
+
+        <h2>What I am asking for</h2>
+        <p>
+            A conversation about whether any of this fits Tyron's vision for the game. Not necessarily a full hire — just the chance to work on the economy and trading side of Vintage Story in some form during my internship period.
+        </p>
+        <p>
+            I am flexible on compensation given the studio's size and understand this is a small team. I chose to approach Anego first — before larger studios that have also expressed interest in economy specialists — because I believe Vintage Story is the right game for this work and because I want to contribute to something I genuinely love.
+        </p>
+
+        <hr class="rule">
+
+        <div class="footer-strip section">
+            <span class="footer-name">Vilho Kettunen (Vak) · XAMK, Game Programming · Finland · 2026</span>
+            <div style="display:flex; gap: 1.5rem; flex-wrap: wrap;">
+                <a href="https://vakstore.com">vakstore.com</a>
+                <a href="https://vakstore.com/Whitepaper.html">Whitepaper</a>
+                <a href="https://vakstore.com/Portfolio_VakStore.html">Portfolio</a>
+                <a href="https://github.com/vilhoKettunen/Finnish-small-fox-trading-company">GitHub</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = () => {
+            window.initSharedTopBar && window.initSharedTopBar();
+            document.body.classList.add('withTopBar');
+        };
+    </script>
+</body>
+</html>

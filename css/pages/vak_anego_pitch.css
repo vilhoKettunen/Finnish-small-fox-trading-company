@@ -1,0 +1,281 @@
+/* ??????????????????????????????????????????????????????????????
+   VAK ANEGO PITCH PAGE — Page-specific styling
+   ?????????????????????????????????????????????????????????????? */
+
+body.pitch-page {
+    background: #ffffff;
+}
+
+.pitch {
+    font-family: 'Source Serif 4', Georgia, serif;
+    color: var(--site-text);
+    max-width: 740px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem;
+    line-height: 1.75;
+}
+
+.header {
+    border-bottom: 2px solid var(--site-text);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--site-muted);
+    margin-bottom: 0.75rem;
+}
+
+h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 0.5rem;
+    text-shadow: var(--heading-shadow);
+    color: var(--site-text);
+}
+
+.tagline {
+    font-size: 15px;
+    color: var(--site-muted);
+    font-style: italic;
+}
+
+.meta-row {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1rem;
+    font-size: 12px;
+    color: var(--site-muted);
+    letter-spacing: 0.05em;
+    flex-wrap: wrap;
+}
+
+.meta-row span::before {
+    content: '— ';
+}
+
+h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 17px;
+    font-weight: 700;
+    margin: 2rem 0 0.75rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 0.5px solid var(--border-color);
+    text-shadow: var(--heading-shadow);
+    color: var(--site-text);
+}
+
+p {
+    font-size: 14.5px;
+    margin-bottom: 0.9rem;
+    color: var(--site-text);
+}
+
+/* Card and panel elements — paper backgrounds handled by panels-paper.css */
+.highlight-box {
+    padding: 1rem 1.25rem;
+    margin: 1.25rem 0;
+    border-radius: 0 var(--paper-radius) var(--paper-radius) 0;
+    border-left: 3px solid var(--site-text);
+}
+
+.highlight-box p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--site-text);
+}
+
+.three-col {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 1.25rem 0;
+}
+
+.mini-card {
+    padding: 0.9rem 1rem;
+    border-radius: var(--paper-radius);
+}
+
+.mini-card-label {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--site-muted);
+    margin-bottom: 0.4rem;
+}
+
+.mini-card-value {
+    font-size: 20px;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--site-text);
+}
+
+.mini-card-sub {
+    font-size: 11px;
+    color: var(--site-muted);
+    margin-top: 0.2rem;
+}
+
+ul {
+    padding-left: 1.25rem;
+    margin-bottom: 0.9rem;
+}
+
+li {
+    font-size: 14.5px;
+    margin-bottom: 0.35rem;
+    color: var(--site-text);
+}
+
+.two-col {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin: 1.25rem 0;
+}
+
+.col-card {
+    padding: 1rem 1.1rem;
+    border-radius: var(--paper-radius);
+}
+
+.col-card-title {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--site-muted);
+    margin-bottom: 0.6rem;
+}
+
+.col-card p,
+.col-card li {
+    font-size: 13.5px;
+    color: var(--site-text);
+}
+
+.col-card ul {
+    margin: 0;
+}
+
+.vision-block {
+    padding: 1.5rem;
+    margin: 1.25rem 0;
+    border-radius: var(--paper-radius);
+}
+
+.vision-block p {
+    font-size: 15px;
+    font-style: italic;
+    margin: 0;
+    line-height: 1.8;
+    color: var(--site-text);
+}
+
+.footer-strip {
+    margin-top: 2.5rem;
+    padding-top: 1.25rem;
+    border-top: 0.5px solid var(--paper-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.footer-strip a {
+    font-size: 12px;
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+.footer-strip a:hover {
+    color: var(--link-hover);
+    text-decoration: underline;
+}
+
+.footer-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--site-text);
+}
+
+strong {
+    font-weight: 600;
+    color: var(--site-text);
+}
+
+.rule {
+    border: none;
+    border-top: 0.5px solid var(--paper-border);
+    margin: 1.75rem 0;
+}
+
+/* ??????????????????????????????????????????????????????????????
+   DARK MODE OVERRIDES
+   ?????????????????????????????????????????????????????????????? */
+
+[data-theme="dark"] .pitch {
+    background-color: var(--paper-bg-color);
+}
+
+[data-theme="dark"] h2 {
+    border-color: var(--border-color);
+    color: var(--site-text);
+}
+
+[data-theme="dark"] .mini-card,
+[data-theme="dark"] .col-card,
+[data-theme="dark"] .highlight-box,
+[data-theme="dark"] .vision-block {
+    background-color: var(--paper-bg-color);
+    border-color: var(--paper-border);
+}
+
+[data-theme="dark"] .footer-strip {
+    border-color: var(--border-color);
+}
+
+/* ??????????????????????????????????????????????????????????????
+   RESPONSIVE DESIGN
+   ?????????????????????????????????????????????????????????????? */
+
+@media (max-width: 768px) {
+    .pitch {
+        padding: 2rem 1.5rem;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    h2 {
+        font-size: 16px;
+    }
+
+    .three-col {
+        grid-template-columns: 1fr;
+    }
+
+    .two-col {
+        grid-template-columns: 1fr;
+    }
+
+    .meta-row {
+        gap: 1rem;
+        font-size: 11px;
+    }
+
+    .footer-strip {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
