@@ -36,11 +36,11 @@ window.queueEstimatorUI = (function() {
         }
 
         const latestFile = window.QueueEstimatorStorage.getLatestFile();
-        if (latestFile) {
-            currentFileId = latestFile.id;
-            currentSessionId = 0;
-         loadFileForDisplay(latestFile);
-      updateFileSelector();
+      if (latestFile) {
+    currentFileId = latestFile.id;
+        currentSessionId = latestFile.sessions.length - 1;
+    loadFileForDisplay(latestFile);
+  updateFileSelector();
    showFileHistoryPanel();
         }
     }
@@ -193,33 +193,33 @@ window.queueEstimatorUI = (function() {
         const sessionsData = [];
         for (const sessionId of sessionIds) {
     const entries = parseResult.sessions[sessionId];
-            
+       
    // Validate
   const validation = window.QueueEstimatorCore.validateLog(entries);
-            if (!validation.valid) continue;
+  if (!validation.valid) continue;
 
     // Analyze
     const analysis = window.QueueEstimatorCore.analyzeQueueProgression(entries);
-            if (!analysis) continue;
+         if (!analysis) continue;
 
-         // Estimate
+     // Estimate
             const estimate = window.QueueEstimatorCore.estimateTimeToZero(entries, analysis);
 
-            sessionsData.push({
-      sessionId: parseInt(sessionId),
+        sessionsData.push({
+   sessionId: parseInt(sessionId),
         startPosition: analysis.startPosition,
-                endPosition: analysis.endPosition,
+   endPosition: analysis.endPosition,
                 positionsCleared: analysis.positionsCleared,
          duration: analysis.totalTimeMinutes,
    analysis: analysis,
-        estimate: estimate,
-           entries: entries
-        });
+estimate: estimate,
+       entries: entries
+     });
         }
 
   if (sessionsData.length === 0) {
-            showError('Failed to analyze any sessions in the file.');
-            return;
+     showError('Failed to analyze any sessions in the file.');
+       return;
      }
 
   // Save file to storage
@@ -229,14 +229,14 @@ window.queueEstimatorUI = (function() {
             sessions: sessionsData
  };
 
-        const savedFile = window.QueueEstimatorStorage.saveFile(fileData);
+ const savedFile = window.QueueEstimatorStorage.saveFile(fileData);
         currentFileId = savedFile.id;
-      currentSessionId = 0;
+      currentSessionId = savedFile.sessions.length - 1;
 
-        // Load and display
-        loadFileForDisplay(savedFile);
+   // Load and display
+    loadFileForDisplay(savedFile);
         updateFileSelector();
-        showFileHistoryPanel();
+     showFileHistoryPanel();
     }
 
     /**
@@ -349,14 +349,16 @@ if (!fileData.sessions || fileData.sessions.length === 0) {
         const selector = document.getElementById('qeFileSelector');
     if (!selector || !selector.value) return;
 
-        const fileId = selector.value;
-        currentFileId = fileId;
+  const fileId = selector.value;
+      currentFileId = fileId;
       currentSessionId = 0;
 
         const file = window.QueueEstimatorStorage.getFile(fileId);
-        if (file) {
-            loadFileForDisplay(file);
-            updateFileSelector();
+    if (file) {
+ // Default to newest session (last one in array)
+ currentSessionId = file.sessions.length - 1;
+     loadFileForDisplay(file);
+     updateFileSelector();
             updateSessionButtons(file);
         }
     };
@@ -502,26 +504,26 @@ infoEl.innerHTML = `
      */
     window.deleteFileConfirm = function(fileId) {
         if (confirm('Are you sure you want to delete this file?')) {
-            window.QueueEstimatorStorage.deleteFile(fileId);
+    window.QueueEstimatorStorage.deleteFile(fileId);
 
           // If deleted file was selected, load new one
-            if (fileId === currentFileId) {
+    if (fileId === currentFileId) {
     const latestFile = window.QueueEstimatorStorage.getLatestFile();
-         if (latestFile) {
+    if (latestFile) {
         currentFileId = latestFile.id;
-       currentSessionId = 0;
+       currentSessionId = latestFile.sessions.length - 1;
          loadFileForDisplay(latestFile);
 } else {
-      // No more files
-      reset();
+  // No more files
+   reset();
         }
         }
-     
+   
           updateFileSelector();
-            updateStorageInfo();
-       updateStorageFilesList();
+         updateStorageInfo();
+           updateStorageFilesList();
    }
-    };
+};
 
     /**
      * Clear all files (with confirmation)
