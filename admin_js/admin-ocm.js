@@ -121,33 +121,21 @@
  window.ensureOcmCatalogLoaded = async function ensureOcmCatalogLoaded() {
  if (Admin.state.ocmCatalog && Admin.state.ocmCatalog.length) return;
  try {
-- const r = await window.apiGet('ocmGetCatalogSnapshot', {});
-- const d = r.data || r.result || r;
-- const raw = d.items || [];
 
-- // Normalize loaded catalog so all UI sees consistent numeric prices
-- Admin.state.ocmCatalog = raw.map(x => {
-- const it = Object.assign({}, x);
-- it.bundleSize = Number(it.bundleSize ||1) ||1;
-- if (it.buyEach != null) it.buyEach = parseMaybeScaledBt_(it.buyEach);
-- if (it.sellEach != null) it.sellEach = parseMaybeScaledBt_(it.sellEach);
-- if (it.buyStack != null) it.buyStack = parseMaybeScaledBt_(it.buyStack);
-- if (it.sellStack != null) it.sellStack = parseMaybeScaledBt_(it.sellStack);
-- return it;
-- });
-+ if (!window.OcmCatalog || typeof window.OcmCatalog.ensureLoaded !== 'function') {
-+ throw new Error('Shared OcmCatalog loader is not available');
-+ }
-+ await window.OcmCatalog.ensureLoaded();
-+ Admin.state.ocmCatalog = (window.OcmCatalog.get() || []).map(x => {
-+ const it = Object.assign({}, x);
-+ it.bundleSize = Number(it.bundleSize ||1) ||1;
-+ if (it.buyEach != null) it.buyEach = parseBtNumber_(it.buyEach);
-+ if (it.sellEach != null) it.sellEach = parseBtNumber_(it.sellEach);
-+ if (it.buyStack != null) it.buyStack = parseBtNumber_(it.buyStack);
-+ if (it.sellStack != null) it.sellStack = parseBtNumber_(it.sellStack);
-+ return it;
-+ });
+
+ if (!window.OcmCatalog || typeof window.OcmCatalog.ensureLoaded !== 'function') {
+ throw new Error('Shared OcmCatalog loader is not available');
+ }
+ await window.OcmCatalog.ensureLoaded();
+ Admin.state.ocmCatalog = (window.OcmCatalog.get() || []).map(x => {
+ const it = Object.assign({}, x);
+ it.bundleSize = Number(it.bundleSize ||1) ||1;
+ if (it.buyEach != null) it.buyEach = parseBtNumber_(it.buyEach);
+ if (it.sellEach != null) it.sellEach = parseBtNumber_(it.sellEach);
+ if (it.buyStack != null) it.buyStack = parseBtNumber_(it.buyStack);
+ if (it.sellStack != null) it.sellStack = parseBtNumber_(it.sellStack);
+ return it;
+ });
  } catch {
  Admin.state.ocmCatalog = [];
  }
@@ -383,21 +371,16 @@
          // ----- Favor calculations (match OCMUser behavior) -----
          function pctLine_(who, pct) {
              if (pct == null || !isFinite(pct)) return '';
-- const p = Number(pct);
-- const abs = Math.abs(p).toFixed(1);
-- if (p >=0) {
-- return `<span class="trade-favor good">${esc(who)} favor: ${esc(abs)}% cheaper compared to store</span>`;
-- }
-- return `<span class="trade-favor bad">${esc(who)} disfavor: ${esc(abs)}% more expensive compared to store</span>`;
-+ if (window.OcmFavor && typeof window.OcmFavor.formatLineHtml === 'function') {
-+ return window.OcmFavor.formatLineHtml(who, pct);
-+ }
-+ const p = Number(pct);
-+ const abs = Math.abs(p).toFixed(1);
-+ if (p >=0) {
-+ return `<span class="trade-favor good">${esc(who)} favor: ${esc(abs)}% cheaper compared to store</span>`;
-+ }
-+ return `<span class="trade-favor bad">${esc(who)} disfavor: ${esc(abs)}% more expensive compared to store</span>`;
+
+ if (window.OcmFavor && typeof window.OcmFavor.formatLineHtml === 'function') {
+ return window.OcmFavor.formatLineHtml(who, pct);
+ }
+ const p = Number(pct);
+ const abs = Math.abs(p).toFixed(1);
+ if (p >=0) {
+ return `<span class="trade-favor good">${esc(who)} favor: ${esc(abs)}% cheaper compared to store</span>`;
+ }
+ return `<span class="trade-favor bad">${esc(who)} disfavor: ${esc(abs)}% more expensive compared to store</span>`;
          }
 
          let customerPctRaw = null;

@@ -156,6 +156,67 @@
  return '#1';
  }
 
+ // ── Display Net Worth ──────────────────────────────────────────────────────
+ function displayNetWorth(stats) {
+ // Check if net worth data is available
+ if (!stats || typeof stats !== 'object') {
+ setVisible('netWorthSection', false);
+ setVisible('netWorthNotReady', true);
+ return;
+ }
+
+ // Extract values (with defaults for safety)
+ const rnw = Number(stats.realizableNetWorth) || 0;
+ const pnw = Number(stats.potentialNetWorth) || 0;
+ const liquidBalance = Number(stats.liquidBalance) || 0;
+ const lockedInListings = Number(stats.lockedInListings) || 0;
+ const insuredValue = Number(stats.insuredValue) || 0;
+ const listingRnw = Number(stats.listingRNW) || 0;
+ const listingRnwFromSell = Number(stats.listingRNWFromSell) || 0;
+ const listingRnwFromBuy = Number(stats.listingRNWFromBuy) || 0;
+ const listingPnw = Number(stats.listingPNW) || 0;
+ const listingPnwFromSell = Number(stats.listingPNWFromSell) || 0;
+ const listingPnwFromBuy = Number(stats.listingPNWFromBuy) || 0;
+ const updatedAt = stats.netWorthCalculatedAt || stats.computedAt || '';
+
+ // Format currency (2 decimals + EW suffix)
+ const formatCurrency = (value) => {
+ return Number(value).toFixed(2) + ' EW';
+ };
+
+ // Format timestamp to locale string
+ const formatTimestamp = (iso) => {
+ if (!iso) return 'Unknown';
+ try {
+ const date = new Date(iso);
+ return date.toLocaleString();
+ } catch (e) {
+ return iso;
+ }
+ };
+
+ // Update DOM elements - RNW
+ setText('rnwValue', formatCurrency(rnw));
+ setText('liquidValue', formatCurrency(liquidBalance));
+ setText('lockedValue', formatCurrency(lockedInListings));
+ setText('insuredValue', formatCurrency(insuredValue));
+ setText('listingRnwValue', formatCurrency(listingRnw));
+ setText('listingRnwFromSellValue', formatCurrency(listingRnwFromSell));
+ setText('listingRnwFromBuyValue', formatCurrency(listingRnwFromBuy));
+
+ // Update DOM elements - PNW
+ setText('pnwValue', formatCurrency(pnw));
+ setText('listingPnwValue', formatCurrency(listingPnw));
+ setText('listingPnwFromSellValue', formatCurrency(listingPnwFromSell));
+ setText('listingPnwFromBuyValue', formatCurrency(listingPnwFromBuy));
+
+ setText('netWorthTimestamp', 'Last updated: ' + formatTimestamp(updatedAt));
+
+ // Show the section, hide not-ready message
+ setVisible('netWorthSection', true);
+ setVisible('netWorthNotReady', false);
+ }
+
  // A2 fix: read from top5.storeTop5, not stats.store.favorites
  function renderStoreFavorites_() {
  const buyMode  = String(byId('selStoreBuyMode')?.value  || 'byValue');
@@ -257,6 +318,7 @@
  setText('statsStatus', googleIdToken ? 'No statistics yet.' : 'Login to see statistics.');
  setText('preStatsRaw', '—');
  renderTop5_();
+ displayNetWorth(null);
  return;
  }
 
@@ -322,6 +384,9 @@
  isComputing: statsState.isComputing
  };
  setText('preStatsRaw', JSON.stringify(dbg, null, 2));
+
+ // Display net worth
+ displayNetWorth(st);
  }
 
  function applyStatsResponse_(d) {

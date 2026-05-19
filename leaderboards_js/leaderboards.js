@@ -157,19 +157,19 @@ const start  = fmtIso_(x && x.start);
 
    // Store leaderboards
         renderTable_('tb_storeMaxBuyValueEW',      lb && lb.storeMaxBuyValueEW,      v => fmtNumber_(v, 2));
-        renderTable_('tb_storeMaxSellValueEW',     lb && lb.storeMaxSellValueEW,     v => fmtNumber_(v, 2));
+        renderTable_('tb_storeMaxSellValueEW',   lb && lb.storeMaxSellValueEW,     v => fmtNumber_(v, 2));
       renderTable_('tb_storeTradesWithStoreCount', lb && lb.storeTradesWithStoreCount, v => fmtNumber_(v, 0));
-        renderTable_('tb_storeTotalBuyValueEW',    lb && lb.storeTotalBuyValueEW,    v => fmtNumber_(v, 2));
+     renderTable_('tb_storeTotalBuyValueEW',    lb && lb.storeTotalBuyValueEW,    v => fmtNumber_(v, 2));
       renderTable_('tb_storeTotalSellValueEW',   lb && lb.storeTotalSellValueEW,   v => fmtNumber_(v, 2));
         renderTableFavorites_('tb_storeFavoriteBuyItemByValueEW',  lb && lb.storeFavoriteBuyItemByValueEW);
         renderTableFavorites_('tb_storeFavoriteSellItemByValueEW', lb && lb.storeFavoriteSellItemByValueEW);
 
   // OCM leaderboards
         renderTable_('tb_ocmAsCustomerCount',  lb && lb.ocmAsCustomerCount,  v => fmtNumber_(v, 0));
-      renderTable_('tb_ocmAsMerchantCount',  lb && lb.ocmAsMerchantCount,  v => fmtNumber_(v, 0));
-    renderTable_('tb_ocmFeesPaidEW',    lb && lb.ocmFeesPaidEW,       v => fmtNumber_(v, 2));
-     renderTable_('tb_ocmMaxTradeValueEW',  lb && lb.ocmMaxTradeValueEW,  v => fmtNumber_(v, 2));
-        renderTable_('tb_ocmTotalValueEW',     lb && lb.ocmTotalValueEW,     v => fmtNumber_(v, 2));
+   renderTable_('tb_ocmAsMerchantCount',  lb && lb.ocmAsMerchantCount,  v => fmtNumber_(v, 0));
+    renderTable_('tb_ocmFeesPaidEW',    lb && lb.ocmFeesPaidEW,  v => fmtNumber_(v, 2));
+  renderTable_('tb_ocmMaxTradeValueEW',  lb && lb.ocmMaxTradeValueEW,  v => fmtNumber_(v, 2));
+        renderTable_('tb_ocmTotalValueEW',     lb && lb.ocmTotalValueEW,   v => fmtNumber_(v, 2));
 
         // Store participation — Current period (ongoing periods show "Ongoing" for end)
         renderTablePeriods_('tb_weekBoughtEW',   lbpC && lbpC.weekBoughtEW,   v => fmtNumber_(v, 2), 7);
@@ -180,21 +180,29 @@ const start  = fmtIso_(x && x.start);
      renderTablePeriods_('tb_yearSoldEW',     lbpC && lbpC.yearSoldEW,     v => fmtNumber_(v, 2), 365);
 
         // Store participation — Record period (show "Ongoing..." when not yet full-window)
-        renderTableRecordPeriods_('tb_record_weekBoughtEW',   lbpR && lbpR.weekBoughtEW,   v => fmtNumber_(v, 2), 7);
-        renderTableRecordPeriods_('tb_record_weekSoldEW',     lbpR && lbpR.weekSoldEW,     v => fmtNumber_(v, 2), 7);
+      renderTableRecordPeriods_('tb_record_weekBoughtEW',   lbpR && lbpR.weekBoughtEW,   v => fmtNumber_(v, 2), 7);
+      renderTableRecordPeriods_('tb_record_weekSoldEW',     lbpR && lbpR.weekSoldEW,     v => fmtNumber_(v, 2), 7);
     renderTableRecordPeriods_('tb_record_monthBoughtEW',  lbpR && lbpR.monthBoughtEW,  v => fmtNumber_(v, 2), 30);
         renderTableRecordPeriods_('tb_record_monthSoldEW',    lbpR && lbpR.monthSoldEW,    v => fmtNumber_(v, 2), 30);
     renderTableRecordPeriods_('tb_record_yearBoughtEW',   lbpR && lbpR.yearBoughtEW,   v => fmtNumber_(v, 2), 365);
         renderTableRecordPeriods_('tb_record_yearSoldEW', lbpR && lbpR.yearSoldEW,     v => fmtNumber_(v, 2), 365);
+
+        // RNW leaderboard
+        renderTable_('tb_storeRealizableNetWorth', lb && lb.storeRealizableNetWorth, v => fmtNumber_(v, 2));
+
+   // Listing RNW/PNW leaderboards (Phase 8)
+        renderTable_('tb_listingRNW', lb && lb.listingRNW, v => fmtNumber_(v, 2));
+        renderTable_('tb_listingPNW', lb && lb.listingPNW, v => fmtNumber_(v, 2));
  }
 
     // A6 fix: added 6 record tbody IDs
     function renderAllEmpty_() {
-        const simpleIds = [
+    const simpleIds = [
         'tb_storeMaxBuyValueEW', 'tb_storeMaxSellValueEW', 'tb_storeTradesWithStoreCount',
-        'tb_storeTotalBuyValueEW', 'tb_storeTotalSellValueEW',
+   'tb_storeTotalBuyValueEW', 'tb_storeTotalSellValueEW',
         'tb_ocmAsCustomerCount', 'tb_ocmAsMerchantCount', 'tb_ocmFeesPaidEW',
-  'tb_ocmMaxTradeValueEW', 'tb_ocmTotalValueEW'
+  'tb_ocmMaxTradeValueEW', 'tb_ocmTotalValueEW', 'tb_storeRealizableNetWorth',
+   'tb_listingRNW', 'tb_listingPNW'
  ];
         simpleIds.forEach(id => renderTable_(id, []));
 

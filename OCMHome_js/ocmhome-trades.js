@@ -68,7 +68,8 @@
 
  const primaryName = primaryPeg?.itemName || listing.pricing?.pegItemName || null;
  const primaryRatio = Number(primaryPeg?.pegQtyPerInd ?? listing.pricing?.pegQtyPerUnit ??0);
- const primarySide = listingSide;
+ // FIXED: For canonical EW, always use SELL side (store payout value)
+ const primarySide = 'SELL';
  const primaryEach = (primaryName && primaryRatio) ? O.perIndPriceFromCatalog_(primaryName, primarySide) : null;
  const canonicalEW = (primaryEach != null && primaryRatio) ? (u.units * primaryRatio * primaryEach) : null;
 
@@ -102,7 +103,7 @@
  function computeValueLinesForTrade_(listing, u, selectedPegName, selectedPegRatio) {
  const listingName = String(listing?.itemName || '').trim();
  const pegName = String(selectedPegName || '').trim();
- if (!listingName || !pegName) return { buy: 'BUY: �', sell: 'SELL: �' };
+ if (!listingName || !pegName) return { buy: 'BUY: —', sell: 'SELL: —' };
 
  const leftQty = u.units;
  const rightQty = Math.ceil((Number(selectedPegRatio ||0) * u.units) -1e-12);
@@ -118,18 +119,17 @@
  return null;
  }
 
- const soldBuy = perInd(listingName, 'BUY');
+ // FIXED: Use SELL side for all value line calculations (consistent with canonical EW)
  const soldSell = perInd(listingName, 'SELL');
- const pegBuy = perInd(pegName, 'BUY');
  const pegSell = perInd(pegName, 'SELL');
 
- const buy = (soldBuy != null && pegBuy != null)
- ? `BUY: ${fmt2(leftQty * soldBuy)} EW (${listingName}) | ${fmt2(rightQty * pegBuy)} EW (${pegName})`
- : 'BUY: �';
+ const buy = (soldSell != null && pegSell != null)
+ ? `BUY: ${fmt2(leftQty * soldSell)} EW (${listingName}) | ${fmt2(rightQty * pegSell)} EW (${pegName})`
+ : 'BUY: —';
 
  const sell = (soldSell != null && pegSell != null)
  ? `SELL: ${fmt2(leftQty * soldSell)} EW (${listingName}) | ${fmt2(rightQty * pegSell)} EW (${pegName})`
- : 'SELL: �';
+ : 'SELL: —';
 
  return { buy, sell };
  }
@@ -390,69 +390,66 @@
                     return null;
                 }
 
-                const tradedBuyPer = listingName ? perInd(listingName, 'BUY') : null;
+                // FIXED: Use SELL side consistently for all calculations
                 const tradedSellPer = listingName ? perInd(listingName, 'SELL') : null;
-                const pegBuyPer = pegName ? perInd(pegName, 'BUY') : null;
-                const pegSellPer = pegName ? perInd(pegName, 'SELL') : null;
+             const pegSellPer = pegName ? perInd(pegName, 'SELL') : null;
 
-                const tradedBuyTotal = (tradedBuyPer != null) ? (leftQty * tradedBuyPer) : null;
-                const tradedSellTotal = (tradedSellPer != null) ? (leftQty * tradedSellPer) : null;
-                const pegBuyTotal = (pegBuyPer != null) ? (rightQty * pegBuyPer) : null;
-                const pegSellTotal = (pegSellPer != null) ? (rightQty * pegSellPer) : null;
+     const tradedSellTotal = (tradedSellPer != null) ? (leftQty * tradedSellPer) : null;
+             const pegSellTotal = (pegSellPer != null) ? (rightQty * pegSellPer) : null;
 
-                const listingType = String(listing?.type || '').toUpperCase();
+             const listingType = String(listing?.type || '').toUpperCase();
 
-                let customerPct = null;
-                let merchantPct = null;
+           let customerPct = null;
+       let merchantPct = null;
 
-                if (listingType === 'BUY') {
-                    // BUY rules
-                    const denomCustomer = (paymentChoice === 'ITEM') ? pegSellTotal : pegBuyTotal;
+             if (listingType === 'BUY') {
+       // BUY rules: customer pays EW (peg SELL value), merchant gets items (traded SELL value)
+        const denomCustomer = pegSellTotal;
 
-                    if (tradedBuyTotal != null && denomCustomer != null && isFinite(tradedBuyTotal) && isFinite(denomCustomer) && denomCustomer > 0) {
-                        customerPct = (1 - (Number(tradedBuyTotal) / Number(denomCustomer))) * 100;
-                    }
+     if (tradedSellTotal != null && denomCustomer != null && isFinite(tradedSellTotal) && isFinite(denomCustomer) && denomCustomer > 0) {
+     customerPct = (1 - (Number(tradedSellTotal) / Number(denomCustomer))) * 100;
+             }
 
-                    if (pegBuyTotal != null && tradedSellTotal != null && isFinite(pegBuyTotal) && isFinite(tradedSellTotal) && tradedSellTotal > 0) {
-                        merchantPct = (1 - (Number(pegBuyTotal) / Number(tradedSellTotal))) * 100;
-                    }
+if (pegSellTotal != null && tradedSellTotal != null && isFinite(pegSellTotal) && isFinite(tradedSellTotal) && tradedSellTotal > 0) {
+            merchantPct = (1 - (Number(pegSellTotal) / Number(tradedSellTotal))) * 100;
+     }
                 } else {
-                    // SELL rules (keep existing behavior)
-                    const customerNumerator = (paymentChoice === 'ITEM') ? pegBuyTotal : pegSellTotal;
-                    if (tradedSellTotal != null && customerNumerator != null && isFinite(tradedSellTotal) && tradedSellTotal > 0 && isFinite(customerNumerator)) {
-                        customerPct = (1 - (Number(customerNumerator) / Number(tradedSellTotal))) * 100;
-                    }
+   // SELL rules: keep consistent with BUY (all use SELL side)
+        const customerNumerator = pegSellTotal;
+  if (tradedSellTotal != null && customerNumerator != null && isFinite(tradedSellTotal) && tradedSellTotal > 0 && isFinite(customerNumerator)) {
+       customerPct = (1 - (Number(customerNumerator) / Number(tradedSellTotal))) * 100;
+          }
 
-                    if (tradedBuyTotal != null && pegSellTotal != null && isFinite(tradedBuyTotal) && tradedBuyTotal > 0 && isFinite(pegSellTotal)) {
-                        merchantPct = (1 - (Number(tradedBuyTotal) / Number(pegSellTotal))) * 100;
-                    }
+             if (tradedSellTotal != null && pegSellTotal != null && isFinite(tradedSellTotal) && tradedSellTotal > 0 && isFinite(pegSellTotal)) {
+        merchantPct = (1 - (Number(tradedSellTotal) / Number(pegSellTotal))) * 100;
+          }
+          }
+
+         function renderFavorLine_(el, who, pct) {
+              if (!el || pct == null || !isFinite(pct)) { if (el) el.style.display = 'none'; return; }
+         if (window.OcmFavor && typeof window.OcmFavor.renderLine === 'function') {
+           // renders inner <span class="trade-favor good|bad">...
+          window.OcmFavor.renderLine(el, who, pct);
+    return;
+               }
+    // fallback
+    const good = pct >=0;
+      const label = good ? `${who} favor` : `${who} disfavor`;
+        const word = good ? 'cheaper' : 'more expensive';
+       const magTxt = Math.abs(pct).toFixed(1);
+
+          el.classList.remove('good', 'bad');
+            el.classList.add(good ? 'good' : 'bad');
+              el.textContent = `${label}: ${magTxt}% ${word} compared to store`;
+el.style.display = '';
                 }
 
-                function renderFavorLine_(el, who, pct) {
-                    if (!el || pct == null || !isFinite(pct)) { if (el) el.style.display = 'none'; return; }
-                    if (window.OcmFavor && typeof window.OcmFavor.renderLine === 'function') {
-                    // renders inner <span class="trade-favor good|bad">...
-                    window.OcmFavor.renderLine(el, who, pct);
-                    return;
-                    }
-                   // fallback
-                   const good = pct >=0;
-                   const label = good ? `${who} favor` : `${who} disfavor`;
-                   const word = good ? 'cheaper' : 'more expensive';
-                   const magTxt = Math.abs(pct).toFixed(1);
-
-                   el.classList.remove('good', 'bad');
-                   el.classList.add(good ? 'good' : 'bad');
-                   el.textContent = `${label}: ${magTxt}% ${word} compared to store`;
-                   el.style.display = '';
-                }
-
-                renderFavorLine_(customerFavorEl, 'Customer', customerPct);
-                renderFavorLine_(merchantFavorEl, 'Merchant', merchantPct);
-            } catch {
-                if (customerFavorEl) customerFavorEl.style.display = 'none';
-                if (merchantFavorEl) merchantFavorEl.style.display = 'none';
-            }
+          renderFavorLine_(customerFavorEl, 'Customer', customerPct);
+   renderFavorLine_(merchantFavorEl, 'Merchant', merchantPct);
+      } catch {
+      if (customerFavorEl) customerFavorEl.style.display = 'none';
+         if (merchantFavorEl) merchantFavorEl.style.display = 'none';
+   }
         }
 
         calcBtn.addEventListener('click', () => {

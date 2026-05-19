@@ -86,6 +86,20 @@
      <thead><tr><th>#</th><th>Name</th><th>Item</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Value (EW)</th><th style="text-align:right;">Requests</th></tr></thead>
  <tbody id="tb_storeFavoriteSellItemByValueEW"></tbody>
     </table>
+
+    <h3 style="margin-top:14px;">OCM Listing Realizable Net Worth</h3>
+    <div class="small muted" style="margin-top:4px;">Total market value of all active OCM listings (what you could sell them for)</div>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">RNW (EW)</th></tr></thead>
+     <tbody id="tb_listingRNW"></tbody>
+    </table>
+
+    <h3 style="margin-top:14px;">OCM Listing Potential Net Worth</h3>
+    <div class="small muted" style="margin-top:4px;">Potential value including upside from peg markups</div>
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">PNW (EW)</th></tr></thead>
+     <tbody id="tb_listingPNW"></tbody>
+    </table>
    </section>
 
    <section class="section" aria-label="Store participation" style="margin-top:14px;">
@@ -206,9 +220,19 @@
     </table>
 
   <h3 style="margin-top:14px;">Total trade value (EW)</h3>
-    <table>
+<table>
 <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">Value</th></tr></thead>
      <tbody id="tb_ocmTotalValueEW"></tbody>
+    </table>
+   </section>
+
+   <section class="section" aria-label="Realizable Net Worth leaderboard">
+  <h2>Top 10 by Realizable Net Worth</h2>
+    <div class="small muted" style="margin-bottom:10px;">Total value of all current assets (liquid balance + locked EW + insured value)</div>
+
+    <table>
+     <thead><tr><th>#</th><th>Name</th><th style="text-align:right;">RNW (EW)</th></tr></thead>
+     <tbody id="tb_storeRealizableNetWorth"></tbody>
     </table>
    </section>
   </div>

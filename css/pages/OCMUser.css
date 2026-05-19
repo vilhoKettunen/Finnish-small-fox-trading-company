@@ -82,28 +82,63 @@ th {
 font-family: Consolas, monospace;
 }
 
-.pill {
-    display: inline-block;
-    padding: 2px 6px;
-    border-radius: 999px;
-    font-size: 11px;
-    background: #eee;
+/* ===== OCM RNW/PNW Display ===== */
+.value-rnw, .value-pnw, .value-locked {
+ text-align: right;
+ min-width: 120px;
+ font-weight: bold;
 }
 
-.pill-active {
-    background: #e9ffe8;
+.value-rnw {
+ color: #2e7d32; /* Green for RNW (realizable) */
 }
 
-.pill-pending {
-    background: #fff8d0;
+.value-pnw {
+ color: #1976d2; /* Blue for PNW (potential) */
 }
 
-.pill-paused {
-    background: #eee;
+.value-locked {
+ color: #f57c00; /* Orange for Locked EW */
+ background-color: rgba(245, 124, 0, 0.05);
 }
 
-.pill-restock {
-    background: #e8f7ff;
+/* Table column alignment */
+table th,
+table td {
+ border: 1px solid #ddd;
+ padding: 8px 6px;
+ font-size: 13px;
+ vertical-align: top;
+}
+
+table th {
+ background: #f5f5f5;
+ text-align: left;
+}
+
+table tbody tr:hover {
+ background-color: #fafafa;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 1024px) {
+ .value-locked {
+  display: none;
+ }
+}
+
+@media (max-width: 768px) {
+ table {
+  font-size: 12px;
+ }
+ 
+ table th, table td {
+  padding: 6px 4px;
+ }
+ 
+ .value-rnw, .value-pnw, .value-locked {
+  display: none;
+ }
 }
 
 .tabs {
