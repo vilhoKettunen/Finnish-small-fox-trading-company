@@ -48,6 +48,8 @@ body.no-paper .colophon {
 .chart-card,
 .peg-box,
 .peg-row,
+.article-card,
+#article-content,
 .picklist-container {
     /* ensure paper image is visible even if a background-color was set earlier */
     background-image: url("../images/pack_Ground/paper.png") !important;
@@ -157,7 +159,7 @@ table {
     pointer-events: none;
 }
 
-#loginTermsWarning>* {
+#loginTermsWarning > * {
     position: relative;
 }
 

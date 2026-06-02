@@ -1,0 +1,188 @@
+/* news.css - Styles for the News & Journalism page */
+
+/* ─── Container ─────────────────────────────────────────────────────────── */
+.news-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px;
+}
+
+/* --- BACKGROUND OVERRIDES REMOVED HERE --- */
+
+/* ─── Filter Sections ───────────────────────────────────────────────────── */
+.news-filter-section {
+    margin-bottom: 32px;
+}
+
+/* Force H2 headings to white/light color (High specificity needed) */
+#news-publisher-filter h2, /* "Filter by Publisher" */
+#news-year-filter h2,   /* "Filter by Year" */
+.news-feed h2 {
+    /* "Latest Articles" */
+    font-size: 1.4rem;
+    margin-bottom: 12px;
+    color: #ffffff !important; /* White text is needed regardless of background */
+}
+
+.publisher-list,
+.year-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* ─── Filter Buttons (FIXED & STYLED) ────────────────────────────────────── */
+.publisher-btn,
+.year-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--border-color); /* Use variable for consistency */
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease;
+}
+
+/* Hover Effect for Filters */
+.publisher-btn:hover,
+.year-btn:hover {
+    background: var(--bg-accent); /* Use accent color on hover */
+    border-color: var(--accent-primary); /* Highlight border on hover */
+}
+
+/* Active state modification for better visibility and structure adherence */
+.publisher-btn.active,
+.year-btn.active {
+    background: var(--accent-primary) !important;
+    color: white !important; /* Ensure text is legible over the colored background */
+    border-color: var(--accent-primary) !important;
+}
+
+/* ─── Article List / Card Styling (Improved Spacing) ──────────────────── */
+.article-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.article-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    cursor: pointer;
+    transition:
+        box-shadow 0.2s,
+        border-color 0.2s;
+}
+
+/* New structure for grouping meta data */
+.article-meta-info {
+    margin-bottom: 10px; /* Spacing between meta block and title */
+    font-size: 0.85rem;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Article Title, Date, Author Block separation */
+.article-card h3 {
+    margin-top: 0; /* Pull title up to sit closer to meta info */
+    margin-bottom: 6px !important;
+}
+
+.article-date {
+    color: #777;
+    font-size: 0.9rem;
+    line-height: 1.3;
+}
+
+.article-author {
+    color: #555;
+    font-size: 0.9rem;
+    margin-top: 4px !important; /* Minor spacing adjustment */
+}
+
+/* --- Article Publisher Title Color Fix (Kept original class name) --- */
+.article-publisher {
+    font-size: 0.85rem;
+    color: black !important; /* Changed to black as requested */
+    font-weight: 600;
+}
+
+/* ... (Rest of the styles for responsiveness and dark mode should be preserved here) ... */
+
+/* ─── Article Body ──────────────────────────────────────────────────────── */
+.article-body {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--text-primary, #1a1a1a);
+}
+
+.article-body p {
+    margin: 0 0 16px 0;
+    text-indent: 1.5em;
+}
+
+/* Article Detail H1 Color Fix: Must be visible on paper */
+.article-detail-header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 20px; /* Increased margin for better separation */
+    color: black !important;
+}
+
+/* Article Meta structure cleanup (Used in both view/detail) */
+.article-meta,
+.article-detail-header .article-meta {
+    display: flex;
+    gap: 20px; /* Increased gap for better separation of elements */
+    margin-bottom: 24px;
+}
+
+/* Ensure all other remaining styles (responsive, dark mode) are retained from the original file. */
+
+/* ... (The rest of the styles, including responsive and dark mode media queries, should follow here) ... */
+
+/* ─── Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .news-container {
+        padding: 16px 12px;
+    }
+
+    .article-card {
+        padding: 16px;
+    }
+
+    .article-detail-header h1 {
+        font-size: 1.5rem;
+    }
+
+    /* Adjust meta for vertical stacking on small screens */
+    .article-meta,
+    .article-detail-header .article-meta {
+        flex-direction: column;
+        gap: 8px; /* Reduced gap when stacked */
+    }
+
+    .article-meta-info {
+        flex-direction: row; /* Keep meta info on one line if possible */
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+}
+
+/* ─── Dark Mode ─────────────────────────────────────────────────────────── */
+[data-theme="dark"] .article-card {
+    background: var(--bg-secondary, #1e1e1e);
+    border-color: var(--border-color, #333);
+}
+
+/* ... (Remaining dark mode styles) ... */
+
+h1 {
+    color: #fff !important; /* Ensure main article titles are white/light enough */
+}

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>News & Journalism - Vak Store</title>
+        <meta
+            name="description"
+            content="Community news and journalism from TOPS server publishers."
+        />
+        <link rel="icon" href="favicon.ico" />
+        <link rel="stylesheet" href="css/site-theme.css" />
+
+        <link rel="stylesheet" href="css/shared/universal-dropdown.css" />
+        <link rel="stylesheet" href="css/shared/instr-help-link.css" />
+        <link rel="stylesheet" href="css/ocm-shared.css" />
+        <link rel="stylesheet" href="css/site-layout.css" />
+        <link rel="stylesheet" href="css/pages/news.css" />
+        <link rel="stylesheet" href="css/panels-paper.css" />
+        <script src="shared/theme-toggle.js"></script>
+        <!-- Top bar dependencies -->
+        <script src="auth-storage.js"></script>
+        <script src="app-config.js"></script>
+        <script src="api-client.js"></script>
+        <script src="shared/site-decor.js"></script>
+        <script src="shared/universal-dropdown.js"></script>
+        <!-- Google Authentication & reCAPTCHA (If the top bar requires user login info) -->
+        <script
+            src="https://accounts.google.com/gsi/client"
+            async
+            defer
+        ></script>
+        <script
+            src="https://www.google.com/recaptcha/api.js"
+            async
+            defer
+        ></script>
+        <!-- End Shared Dependencies -->
+        <script src="topbar.js"></script>
+        <script src="shared/site-footer.js"></script>
+        <script src="news_js/news.js"></script>
+    </head>
+    <body class="news-page withTopBar">
+        <div id="topbar-container">
+            <!-- top bar injected by topbar.js -->
+        </div>
+
+        <main class="news-container">
+            <!-- Publisher filter section -->
+            <section id="news-publisher-filter" class="news-filter-section">
+                <h2>Filter by Publisher</h2>
+                <div id="publisher-list" class="publisher-list">
+                    <!-- Populated by news.js -->
+                </div>
+            </section>
+
+            <!-- Year filter section -->
+            <section id="news-year-filter" class="news-filter-section">
+                <h2>Filter by Year</h2>
+                <div id="year-list" class="year-list">
+                    <!-- Populated by news.js -->
+                </div>
+            </section>
+
+            <!-- News feed -->
+            <section id="news-feed" class="news-feed">
+                <h2>Latest Articles</h2>
+                <div id="article-list" class="article-list">
+                    <!-- Populated by news.js -->
+                    <p class="loading-msg">Loading articles...</p>
+                </div>
+            </section>
+
+            <!-- Article detail view -->
+            <section
+                id="article-detail"
+                class="article-detail"
+                style="display: none"
+            >
+                <button id="back-to-feed" class="back-btn" type="button">
+                    &larr; Back to Feed
+                </button>
+                <div id="article-content">
+                    <!-- Populated by news.js -->
+                </div>
+            </section>
+        </main>
+
+        <script>
+            // Initialize shared components
+            document.addEventListener("DOMContentLoaded", function () {
+                // 1. Ensure Top Bar is fully initialized first, as it affects overall layout.
+                if (typeof initSharedTopBar === "function") {
+                    initSharedTopBar();
+                }
+
+                // 2. Restore auth from stored token
+                if (typeof initAuthFromStorage === "function") {
+                    initAuthFromStorage();
+                }
+            });
+        </script>
+    </body>
+</html>

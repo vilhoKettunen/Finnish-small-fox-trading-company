@@ -1,6 +1,6 @@
 // Lightweight, reusable top bar for all pages.
 (function () {
-    const css = /*css*/ `
+  const css = /*css*/ `
   #topBar {
     position: fixed;
     top: 0;
@@ -260,7 +260,7 @@
   }
   `;
 
-    const html = /*html*/`
+  const html = /*html*/ `
   <div id="topBar" role="navigation" aria-label="Main">
     <!-- Mobile NAV toggle -->
     <button id="tbMenuToggle" class="tb-mobile-toggle tb-menu-toggle" type="button"
@@ -281,6 +281,7 @@
       <a href="QueueEstimator.html" data-nav="queueEstimator">Queue Estimator</a>
       <a href="Instructions.html" data-nav="instructions">Instructions</a>
       <a href="Whitepaper.html" data-nav="whitepaper">Whitepaper</a>
+      <a href="news.html" data-nav="news">News</a>
       <a id="adminPanelBtn" style="display:none" href="Admin.html" data-nav="admin">Admin Panel</a>
     </div>
 
@@ -304,288 +305,326 @@
     </div>
   </div>`;
 
-    function ensureTopBar() {
-        // Always ensure the shared top-bar stylesheet is present (but only insert it once)
-        if (!document.getElementById('topbar-shared-style')) {
-            const s = document.createElement('style');
-            s.id = 'topbar-shared-style';
-            s.textContent = css;
-            document.head.appendChild(s);
-        }
+  function ensureTopBar() {
+    // Always ensure the shared top-bar stylesheet is present (but only insert it once)
+    if (!document.getElementById("topbar-shared-style")) {
+      const s = document.createElement("style");
+      s.id = "topbar-shared-style";
+      s.textContent = css;
+      document.head.appendChild(s);
+    }
 
-        // If markup is missing, insert the default top bar HTML
-        if (!document.getElementById('topBar')) {
-            const wrap = document.createElement('div');
-            wrap.innerHTML = html;
-            document.body.insertBefore(wrap.firstElementChild, document.body.firstChild);
-            document.body.classList.add('withTopBar');
+    // If markup is missing, insert the default top bar HTML
+    if (!document.getElementById("topBar")) {
+      const wrap = document.createElement("div");
+      wrap.innerHTML = html;
+      document.body.insertBefore(
+        wrap.firstElementChild,
+        document.body.firstChild,
+      );
+      document.body.classList.add("withTopBar");
+    } else {
+      // If page already provided markup, still ensure the body padding class is set
+      document.body.classList.add("withTopBar");
+    }
+
+    // Sync theme toggle icon with current preference
+    var themeBtn = document.getElementById("btnThemeToggle");
+    if (themeBtn && window.themeToggle) {
+      var icons = { auto: "\u25D1", light: "\u2600", dark: "\u263E" };
+      var pref = window.themeToggle.getPreference();
+      themeBtn.textContent = icons[pref] || "\u25D1";
+      themeBtn.title = "Theme: " + pref;
+    }
+  }
+
+  const state = {
+    idToken: null,
+    user: null,
+    isAdmin: false,
+    balanceBT: null,
+    balanceLabel: null,
+    targetUser: null,
+    targetBalanceBT: null,
+    targetLoading: false,
+  };
+
+  function displayName(u) {
+    if (!u) return "";
+    const name = (u.playerName && u.playerName.trim()) || "";
+    const email = (u.email && u.email.trim()) || "";
+    if (name && email) return `${name} (${email})`;
+    return email || name || "";
+  }
+
+  /** Returns true when the viewport is in mobile range (< 768px). */
+  function isMobile() {
+    return window.innerWidth < 768;
+  }
+
+  function updateTopBarAuth() {
+    const logged = !!state.idToken;
+    const admin = !!state.isAdmin;
+    const balEl = document.getElementById("topBalance");
+    const balTargetEl = document.getElementById("topBalanceTarget");
+    const topUser = document.getElementById("topUser");
+    const btnLogin = document.getElementById("btnLogin");
+    const btnLogout = document.getElementById("btnLogout");
+    const btnSettings = document.getElementById("btnSettings");
+    const adminBtn = document.getElementById("adminPanelBtn");
+
+    if (logged) {
+      const b = Number(state.balanceBT);
+      const safe = isFinite(b) ? b : 0;
+      if (balEl) {
+        balEl.style.display = "inline-block";
+        // Q4-B: shorten text on mobile — hide "Balance:" prefix
+        if (isMobile()) {
+          const labelSuffix = state.balanceLabel
+            ? ` ${state.balanceLabel}`
+            : "";
+          balEl.textContent = `${safe.toFixed(0)} EW${labelSuffix}`;
         } else {
-            // If page already provided markup, still ensure the body padding class is set
-            document.body.classList.add('withTopBar');
+          const labelSuffix = state.balanceLabel
+            ? ` ${state.balanceLabel}`
+            : "";
+          balEl.textContent = `Balance: ${safe.toFixed(0)} EW${labelSuffix}`;
         }
+        balEl.classList.remove("positive", "negative");
+        balEl.classList.add(safe >= 0 ? "positive" : "negative");
+      }
+      if (topUser) topUser.textContent = displayName(state.user);
+      if (btnSettings) btnSettings.style.display = "inline-block";
+      if (btnLogin) btnLogin.style.display = "none";
+      if (btnLogout) btnLogout.style.display = "inline-block";
 
-        // Sync theme toggle icon with current preference
-        var themeBtn = document.getElementById('btnThemeToggle');
-        if (themeBtn && window.themeToggle) {
-            var icons = { auto: '\u25D1', light: '\u2600', dark: '\u263E' };
-            var pref = window.themeToggle.getPreference();
-            themeBtn.textContent = icons[pref] || '\u25D1';
-            themeBtn.title = 'Theme: ' + pref;
-        }
-    }
-
-    const state = {
-        idToken: null,
-        user: null,
-        isAdmin: false,
-        balanceBT: null,
-        balanceLabel: null,
-        targetUser: null,
-        targetBalanceBT: null,
-        targetLoading: false
-    };
-
-    function displayName(u) {
-        if (!u) return '';
-        const name = (u.playerName && u.playerName.trim()) || '';
-        const email = (u.email && u.email.trim()) || '';
-        if (name && email) return `${name} (${email})`;
-        return email || name || '';
-    }
-
-    /** Returns true when the viewport is in mobile range (< 768px). */
-    function isMobile() {
-        return window.innerWidth < 768;
-    }
-
-    function updateTopBarAuth() {
-        const logged = !!state.idToken;
-        const admin = !!state.isAdmin;
-        const balEl = document.getElementById('topBalance');
-        const balTargetEl = document.getElementById('topBalanceTarget');
-        const topUser = document.getElementById('topUser');
-        const btnLogin = document.getElementById('btnLogin');
-        const btnLogout = document.getElementById('btnLogout');
-        const btnSettings = document.getElementById('btnSettings');
-        const adminBtn = document.getElementById('adminPanelBtn');
-
-        if (logged) {
-            const b = Number(state.balanceBT); const safe = isFinite(b) ? b : 0;
-            if (balEl) {
-                balEl.style.display = 'inline-block';
-                // Q4-B: shorten text on mobile — hide "Balance:" prefix
-                if (isMobile()) {
-                    const labelSuffix = state.balanceLabel ? ` ${state.balanceLabel}` : '';
-                    balEl.textContent = `${safe.toFixed(0)} EW${labelSuffix}`;
-                } else {
-                    const labelSuffix = state.balanceLabel ? ` ${state.balanceLabel}` : '';
-                    balEl.textContent = `Balance: ${safe.toFixed(0)} EW${labelSuffix}`;
-                }
-                balEl.classList.remove('positive', 'negative');
-                balEl.classList.add(safe >= 0 ? 'positive' : 'negative');
-            }
-            if (topUser) topUser.textContent = displayName(state.user);
-            if (btnSettings) btnSettings.style.display = 'inline-block';
-            if (btnLogin) btnLogin.style.display = 'none';
-            if (btnLogout) btnLogout.style.display = 'inline-block';
-
-            // Target chip — shown when a target user is active (admin on-behalf)
-            if (balTargetEl) {
-                if (state.targetUser) {
-                    const tName = (state.targetUser.playerName || state.targetUser.email || 'Target');
-                    if (state.targetLoading) {
-                        balTargetEl.textContent = `${tName}: ... EW`;
-                    } else {
-                        const tb = Number(state.targetBalanceBT);
-                        const safeTb = isFinite(tb) ? tb : 0;
-                        balTargetEl.textContent = `${tName}: ${safeTb.toFixed(0)} EW`;
-                    }
-                    balTargetEl.style.display = 'inline-block';
-                } else {
-                    balTargetEl.style.display = 'none';
-                    balTargetEl.textContent = '';
-                }
-            }
+      // Target chip — shown when a target user is active (admin on-behalf)
+      if (balTargetEl) {
+        if (state.targetUser) {
+          const tName =
+            state.targetUser.playerName || state.targetUser.email || "Target";
+          if (state.targetLoading) {
+            balTargetEl.textContent = `${tName}: ... EW`;
+          } else {
+            const tb = Number(state.targetBalanceBT);
+            const safeTb = isFinite(tb) ? tb : 0;
+            balTargetEl.textContent = `${tName}: ${safeTb.toFixed(0)} EW`;
+          }
+          balTargetEl.style.display = "inline-block";
         } else {
-            if (balEl) { balEl.style.display = 'none'; balEl.textContent = ''; }
-            if (balTargetEl) { balTargetEl.style.display = 'none'; balTargetEl.textContent = ''; }
-            if (topUser) topUser.textContent = '';
-            if (btnSettings) btnSettings.style.display = 'none';
-            if (btnLogin) btnLogin.style.display = 'inline-block';
-            if (btnLogout) btnLogout.style.display = 'none';
+          balTargetEl.style.display = "none";
+          balTargetEl.textContent = "";
         }
-        if (adminBtn) adminBtn.style.display = admin ? 'inline-block' : 'none';
+      }
+    } else {
+      if (balEl) {
+        balEl.style.display = "none";
+        balEl.textContent = "";
+      }
+      if (balTargetEl) {
+        balTargetEl.style.display = "none";
+        balTargetEl.textContent = "";
+      }
+      if (topUser) topUser.textContent = "";
+      if (btnSettings) btnSettings.style.display = "none";
+      if (btnLogin) btnLogin.style.display = "inline-block";
+      if (btnLogout) btnLogout.style.display = "none";
     }
+    if (adminBtn) adminBtn.style.display = admin ? "inline-block" : "none";
+  }
 
-    // Re-render balance text on resize so "Balance:" prefix shows/hides correctly (Q4-B)
-    window.addEventListener('resize', function () {
-        if (state.idToken) updateTopBarAuth();
+  // Re-render balance text on resize so "Balance:" prefix shows/hides correctly (Q4-B)
+  window.addEventListener("resize", function () {
+    if (state.idToken) updateTopBarAuth();
+  });
+
+  function scrollToGoogleButton() {
+    // Prefer element with id="googleBtn" or any Google sign-in button container
+    var el =
+      document.getElementById("googleBtn") ||
+      document.querySelector("[data-google-login], .g_id_signin");
+    if (el && el.scrollIntoView) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.focus && el.focus();
+    }
+  }
+
+  function closeAllDrawers() {
+    const navDrawer = document.getElementById("tbNavDrawer");
+    const userDrawer = document.getElementById("tbUserDrawer");
+    const menuToggle = document.getElementById("tbMenuToggle");
+    const userToggle = document.getElementById("tbUserToggle");
+    if (navDrawer) navDrawer.classList.remove("tb-open");
+    if (userDrawer) userDrawer.classList.remove("tb-open");
+    if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+    if (userToggle) userToggle.setAttribute("aria-expanded", "false");
+  }
+
+  function wireTopbarEvents() {
+    const root = document.getElementById("topBar");
+    if (!root) return;
+
+    // Guard: prevent double-registration (R5)
+    if (root._topbarEventsWired) return;
+    root._topbarEventsWired = true;
+
+    // Stop outside-click handler from firing on topBar clicks
+    root.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+
+      // Close drawers immediately on nav selection (mobile UX), while preserving native navigation.
+      const navLink = ev.target.closest("#tbNavDrawer [data-nav]");
+      if (navLink) {
+        closeAllDrawers();
+
+        // Admin guard, but keep anchor semantics for others.
+        if (
+          navLink.dataset &&
+          navLink.dataset.nav === "admin" &&
+          (!state.idToken || !state.isAdmin)
+        ) {
+          ev.preventDefault();
+          alert("Admin only");
+          return;
+        }
+        return;
+      }
+
+      const btn = ev.target.closest("button");
+      if (!btn) return;
+
+      // ── Theme toggle ──
+      if (btn.id === "btnThemeToggle") {
+        if (window.themeToggle) {
+          var icons = { auto: "\u25D1", light: "\u2600", dark: "\u263E" };
+          var order = ["auto", "light", "dark"];
+          var cur = order.indexOf(window.themeToggle.getPreference());
+          var next = order[(cur + 1) % 3];
+          window.themeToggle.setPreference(next);
+          btn.textContent = icons[next];
+          btn.title = "Theme: " + next;
+        }
+        return;
+      }
+
+      // ── Mobile toggle: NAV drawer ──
+      if (btn.id === "tbMenuToggle") {
+        const navDrawer = document.getElementById("tbNavDrawer");
+        const isOpen = navDrawer && navDrawer.classList.contains("tb-open");
+        closeAllDrawers();
+        if (!isOpen && navDrawer) {
+          navDrawer.classList.add("tb-open");
+          btn.setAttribute("aria-expanded", "true");
+        }
+        return;
+      }
+
+      // ── Mobile toggle: USER drawer ──
+      if (btn.id === "tbUserToggle") {
+        const userDrawer = document.getElementById("tbUserDrawer");
+        const isOpen = userDrawer && userDrawer.classList.contains("tb-open");
+        closeAllDrawers();
+        if (!isOpen && userDrawer) {
+          userDrawer.classList.add("tb-open");
+          btn.setAttribute("aria-expanded", "true");
+        }
+        return;
+      }
+
+      // ── Login ──
+      if (btn.id === "btnLogin") {
+        scrollToGoogleButton();
+        closeAllDrawers();
+        return;
+      }
+
+      // ── Settings ──
+      if (btn.id === "btnSettings") {
+        if (!state.idToken) {
+          scrollToGoogleButton();
+          return;
+        }
+        window.location.href = "AccountSettings.html";
+        return;
+      }
+
+      // ── Logout ──
+      if (btn.id === "btnLogout") {
+        if (typeof window.logout === "function") window.logout();
+        state.idToken = null;
+        state.user = null;
+        state.isAdmin = false;
+        state.balanceBT = null;
+        state.targetUser = null;
+        state.targetBalanceBT = null;
+        state.targetLoading = false;
+        if (window.clearSavedIdToken) window.clearSavedIdToken();
+        updateTopBarAuth();
+        window.hideInfraSection?.();
+        closeAllDrawers();
+        return;
+      }
+
+      // ── (Legacy) button-based nav routing, kept for compatibility ──
+      if (btn.dataset && btn.dataset.nav) {
+        const nav = btn.dataset.nav;
+        closeAllDrawers();
+        if (nav === "store") window.location.href = "index.html";
+        else if (nav === "history")
+          window.location.href = "AccountHistory.html";
+        else if (nav === "ocm") window.location.href = "OCMHome.html";
+        else if (nav === "Merchant") window.location.href = "OCMUser.html";
+        else if (nav === "leaderboards")
+          window.location.href = "Leaderboards.html";
+        else if (nav === "workpay") window.location.href = "WorkPayRates.html";
+        else if (nav === "bank") window.location.href = "Bank.html";
+        else if (nav === "queueEstimator")
+          window.location.href = "QueueEstimator.html";
+        else if (nav === "instructions")
+          window.location.href = "Instructions.html";
+        else if (nav === "whitepaper") window.location.href = "Whitepaper.html";
+        else if (nav === "admin") {
+          if (!state.idToken || !state.isAdmin) {
+            alert("Admin only");
+            return;
+          }
+          window.location.href = "Admin.html";
+        }
+      }
     });
 
-    function scrollToGoogleButton() {
-        // Prefer element with id="googleBtn" or any Google sign-in button container
-        var el = document.getElementById('googleBtn') || document.querySelector('[data-google-login], .g_id_signin');
-        if (el && el.scrollIntoView) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.focus && el.focus();
-        }
+    // Outside-click: close both drawers when user clicks anywhere outside the top bar
+    document.addEventListener("click", function () {
+      closeAllDrawers();
+    });
+  }
+
+  // Page calls this whenever auth or balance changes.
+  // Accepts optional targetUser / targetBalanceBT / targetLoading for admin on-behalf chip.
+  window.topbarSetAuthState = function (info) {
+    state.idToken = (info && info.idToken) || null;
+    state.user = (info && info.user) || null;
+    state.isAdmin = !!(info && info.isAdmin);
+    state.balanceBT = info && info.balanceBT != null ? info.balanceBT : null;
+    state.balanceLabel =
+      info && info.balanceLabel ? String(info.balanceLabel) : null;
+    // Target chip fields (optional — other pages don't pass these and chip stays hidden)
+    state.targetUser = (info && info.targetUser) || null;
+    state.targetBalanceBT =
+      info && info.targetBalanceBT != null ? info.targetBalanceBT : null;
+    state.targetLoading = !!(info && info.targetLoading);
+    updateTopBarAuth();
+  };
+
+  window.initSharedTopBar = function () {
+    ensureTopBar();
+    wireTopbarEvents();
+    updateTopBarAuth();
+    if (
+      !window._autoLoginDone &&
+      typeof window.tryRestoreAuthGlobal === "function"
+    ) {
+      window.tryRestoreAuthGlobal().catch(function () {});
     }
-
-    function closeAllDrawers() {
-        const navDrawer = document.getElementById('tbNavDrawer');
-        const userDrawer = document.getElementById('tbUserDrawer');
-        const menuToggle = document.getElementById('tbMenuToggle');
-        const userToggle = document.getElementById('tbUserToggle');
-        if (navDrawer) navDrawer.classList.remove('tb-open');
-        if (userDrawer) userDrawer.classList.remove('tb-open');
-        if (menuToggle) menuToggle.setAttribute('aria-expanded', 'false');
-        if (userToggle) userToggle.setAttribute('aria-expanded', 'false');
-    }
-
-    function wireTopbarEvents() {
-        const root = document.getElementById('topBar');
-        if (!root) return;
-
-        // Guard: prevent double-registration (R5)
-        if (root._topbarEventsWired) return;
-        root._topbarEventsWired = true;
-
-        // Stop outside-click handler from firing on topBar clicks
-        root.addEventListener('click', ev => {
-            ev.stopPropagation();
-
-            // Close drawers immediately on nav selection (mobile UX), while preserving native navigation.
-            const navLink = ev.target.closest('#tbNavDrawer [data-nav]');
-            if (navLink) {
-                closeAllDrawers();
-
-                // Admin guard, but keep anchor semantics for others.
-                if (navLink.dataset && navLink.dataset.nav === 'admin' && (!state.idToken || !state.isAdmin)) {
-                    ev.preventDefault();
-                    alert('Admin only');
-                    return;
-                }
-                return;
-            }
-
-            const btn = ev.target.closest('button');
-            if (!btn) return;
-
-            // ── Theme toggle ──
-            if (btn.id === 'btnThemeToggle') {
-                if (window.themeToggle) {
-                    var icons = { auto: '\u25D1', light: '\u2600', dark: '\u263E' };
-                    var order = ['auto', 'light', 'dark'];
-                    var cur = order.indexOf(window.themeToggle.getPreference());
-                    var next = order[(cur + 1) % 3];
-                    window.themeToggle.setPreference(next);
-                    btn.textContent = icons[next];
-                    btn.title = 'Theme: ' + next;
-                }
-                return;
-            }
-
-            // ── Mobile toggle: NAV drawer ──
-            if (btn.id === 'tbMenuToggle') {
-                const navDrawer = document.getElementById('tbNavDrawer');
-                const isOpen = navDrawer && navDrawer.classList.contains('tb-open');
-                closeAllDrawers();
-                if (!isOpen && navDrawer) {
-                    navDrawer.classList.add('tb-open');
-                    btn.setAttribute('aria-expanded', 'true');
-                }
-                return;
-            }
-
-            // ── Mobile toggle: USER drawer ──
-            if (btn.id === 'tbUserToggle') {
-                const userDrawer = document.getElementById('tbUserDrawer');
-                const isOpen = userDrawer && userDrawer.classList.contains('tb-open');
-                closeAllDrawers();
-                if (!isOpen && userDrawer) {
-                    userDrawer.classList.add('tb-open');
-                    btn.setAttribute('aria-expanded', 'true');
-                }
-                return;
-            }
-
-            // ── Login ──
-            if (btn.id === 'btnLogin') {
-                scrollToGoogleButton();
-                closeAllDrawers();
-                return;
-            }
-
-            // ── Settings ──
-            if (btn.id === 'btnSettings') {
-                if (!state.idToken) {
-                    scrollToGoogleButton();
-                    return;
-                }
-                window.location.href = 'AccountSettings.html';
-                return;
-            }
-
-            // ── Logout ──
-            if (btn.id === 'btnLogout') {
-                if (typeof window.logout === 'function') window.logout();
-                state.idToken = null; state.user = null; state.isAdmin = false; state.balanceBT = null;
-                state.targetUser = null; state.targetBalanceBT = null; state.targetLoading = false;
-                if (window.clearSavedIdToken) window.clearSavedIdToken();
-                updateTopBarAuth();
-                window.hideInfraSection?.();
-                closeAllDrawers();
-                return;
-            }
-
-            // ── (Legacy) button-based nav routing, kept for compatibility ──
-            if (btn.dataset && btn.dataset.nav) {
-                const nav = btn.dataset.nav;
-                closeAllDrawers();
-                if (nav === 'store') window.location.href = 'index.html';
-                else if (nav === 'history') window.location.href = 'AccountHistory.html';
-                else if (nav === 'ocm') window.location.href = 'OCMHome.html';
-                else if (nav === 'Merchant') window.location.href = 'OCMUser.html';
-                else if (nav === 'leaderboards') window.location.href = 'Leaderboards.html';
-                else if (nav === 'workpay') window.location.href = 'WorkPayRates.html';
-                else if (nav === 'bank') window.location.href = 'Bank.html';
-                else if (nav === 'queueEstimator') window.location.href = 'QueueEstimator.html';
-                else if (nav === 'instructions') window.location.href = 'Instructions.html';
-                else if (nav === 'whitepaper') window.location.href = 'Whitepaper.html';
-                else if (nav === 'admin') {
-                    if (!state.idToken || !state.isAdmin) { alert('Admin only'); return; }
-                    window.location.href = 'Admin.html';
-                }
-            }
-        });
-
-        // Outside-click: close both drawers when user clicks anywhere outside the top bar
-        document.addEventListener('click', function () {
-            closeAllDrawers();
-        });
-    }
-
-    // Page calls this whenever auth or balance changes.
-    // Accepts optional targetUser / targetBalanceBT / targetLoading for admin on-behalf chip.
-    window.topbarSetAuthState = function (info) {
-        state.idToken = info && info.idToken || null;
-        state.user = info && info.user || null;
-        state.isAdmin = !!(info && info.isAdmin);
-        state.balanceBT = (info && info.balanceBT != null) ? info.balanceBT : null;
-        state.balanceLabel = (info && info.balanceLabel) ? String(info.balanceLabel) : null;
-        // Target chip fields (optional — other pages don't pass these and chip stays hidden)
-        state.targetUser = (info && info.targetUser) || null;
-        state.targetBalanceBT = (info && info.targetBalanceBT != null) ? info.targetBalanceBT : null;
-        state.targetLoading = !!(info && info.targetLoading);
-        updateTopBarAuth();
-    };
-
-    window.initSharedTopBar = function () {
-        ensureTopBar();
-        wireTopbarEvents();
-        updateTopBarAuth();
-        if (!window._autoLoginDone && typeof window.tryRestoreAuthGlobal === 'function') {
-            window.tryRestoreAuthGlobal().catch(function () { });
-        }
-    };
+  };
 })();

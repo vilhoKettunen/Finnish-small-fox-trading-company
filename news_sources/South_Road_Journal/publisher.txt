@@ -1,0 +1,9 @@
+# Publisher: South Road Journal
+
+**In-Game Name:** Heliastes
+**Role:** Editor-in-Chief
+**Description:** The South Road Journal was TOPS's preferred journal of record for four years, covering economic news, local scandals, cultural events, and investigative reporting across the server. Known for its satirical yet informative style, the SRJ covered everything from market crashes to pie-related crimes.
+**Location:** Throughway, TOPS
+**Status:** Acquired by TwoNutsHeim Publishing (October Year 4)
+**First Publication:** July Year 2
+**Last Publication:** October Year 4
